@@ -491,7 +491,7 @@ def policy_gradient_enhancements():
 def variance_reduction():
     text("Consider the simple mean estimation problem:")
     text("μ = E[f(i)] = Σ_i p(i) * f(i)")
-    probs = torch.tensor([0.1, 0.1, 0.1, 0.1])  # p(0), p(1), ... @inspect probs
+    probs = torch.tensor([0.1, 0.4, 0.2, 0.3])  # p(0), p(1), ... @inspect probs
     points = torch.tensor([-4., -6., 6., 8.])  # f(0), f(1), ... @inspect points
     
     text("This is the true mean we want to estimate (is unknown):")
