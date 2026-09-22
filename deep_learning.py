@@ -45,7 +45,7 @@ def pytorch_basics():
     text("In practice, you want to use PyTorch (or JAX), which is:") # @clear x y z
     text("- much more efficient and industrial grade, and")
     text("- already implements the many common operations.")
-    
+
     compare_numpy_and_pytorch()
     node_or_value()
     linear_models()
@@ -98,7 +98,7 @@ def node_or_value():
     l2 = y.detach() ** 2 + u  # @inspect z2
     l2.backward()  # @inspect z2 x.grad u.grad
     text("Note that `u.grad` is computed, but `x.grad` is not.")
-    
+
     text("Sometimes you want to just compute values with no gradients.")
     text("Common use case: prediction at test-time (not updating parameters).")
     with torch.no_grad():
@@ -118,7 +118,7 @@ def linear_models():
     text("- loss functions (e.g., `nn.CrossEntropyLoss`)")
     text("- optimizers (e.g., `torch.optim.SGD`)")
     text("...and much more.")
-    
+
     # Data
     x = torch.tensor([1., 2, 3, 4])  # @inspect x
     target_y = torch.tensor([0., 1, 0])  # @inspect target_y
@@ -277,7 +277,7 @@ def multi_layer_perceptron_linear():
     w1 = torch.tensor([[1., 2], [3, 4], [5, 6]])  # @inspect w1
     w2 = torch.tensor([[1., 0, -1], [2, -1, 2]])  # @inspect w2
     logits = (x @ w1) @ w2  # @inspect logits
-    
+
     text("Alternatively, collapse `w1` and `w2` into a single matrix:")
     logits2 = x @ (w1 @ w2)  # This is just a linear classifier!  @inspect logits2
     text("which we can rewrite as:")
@@ -294,7 +294,7 @@ class LinearMLP(nn.Module):
         self.w1 = nn.Linear(input_dim, hidden_dim)
         # Maps hidden layer to output logits
         self.w2 = nn.Linear(hidden_dim, num_classes)
-    
+
     def forward(self, x):  # @inspect x
         # Maps input to hidden layer (learned feature map)
         hidden = self.w1(x)  # @inspect hidden
@@ -352,7 +352,7 @@ class MultiLayerPerceptron(nn.Module):
         self.w1 = nn.Linear(input_dim, hidden_dim)
         # Maps hidden layer to output logits
         self.w2 = nn.Linear(hidden_dim, num_classes)
-    
+
     def forward(self, x):  # @inspect x
         # Maps input to hidden layer (learned feature map)
         x_transformed = self.w1(x)  # @inspect x_transformed
@@ -419,7 +419,7 @@ class DeepNeuralNetwork(nn.Module):
         self.w1 = nn.Linear(input_dim, hidden_dim)
         self.w2 = nn.Linear(hidden_dim, hidden_dim)
         self.w3 = nn.Linear(hidden_dim, num_classes)
-    
+
     def forward(self, x):  # @inspect x
         x = relu(self.w1(x))
         x = relu(self.w2(x))
@@ -460,7 +460,7 @@ def residual_connections():
     plot(result)
 
     text("The training is much faster!")
-    
+
 
 class DNNWithResidual(nn.Module):
     def __init__(self, input_dim: int, hidden_dim: int, num_classes: int):  # @inspect input_dim hidden_dim num_classes
@@ -468,7 +468,7 @@ class DNNWithResidual(nn.Module):
         self.w1 = nn.Linear(input_dim, hidden_dim)
         self.w2 = nn.Linear(hidden_dim, hidden_dim)
         self.w3 = nn.Linear(hidden_dim, num_classes)
-    
+
     def forward(self, x):  # @inspect x
         x = relu(self.w1(x))  # @inspect x
         x = x + relu(self.w2(x))  # @inspect x
@@ -480,7 +480,7 @@ class DNNWithResidual(nn.Module):
 
 
 def layer_normalization():
-    text("Motivation: don't want the magitude of activations to grow too big or small.") 
+    text("Motivation: don't want the magitude of activations to grow too big or small.")
     text("Solution: **layer normalization** (also see batch normalization)"), link("https://arxiv.org/abs/1607.06450")
 
     text("Here's the basic idea:")

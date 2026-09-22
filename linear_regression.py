@@ -24,7 +24,7 @@ def main():
     text("- Optimization algorithm: find parameters that minimize the loss function")
     text("- Gradient descent: iteratively updates the parameters in the direction of the negative gradient")
 
-    
+
 def prediction_task():
     text("Predict how well you do on an exam given the number of hours you study")
     text("- **Input**: number of hours you study (e.g., 3)")
@@ -134,7 +134,7 @@ def loss_function():
 
     text("Recall the training data:")
     training_data = get_training_data()  # @inspect training_data @stepover
-    
+
     text("How well does `params` fit `training_data`?")
     text("We define a loss function that measures how unhappy one point is based on params.")
     loss = compute_loss(params, training_data[0])  # @inspect loss
@@ -146,7 +146,7 @@ def loss_function():
     params2 = Parameters1D(weight=1, bias=1)  # @inspect params2
     train_loss2 = compute_train_loss(params2, training_data)  # @inspect train_loss2 @stepover
     text("It has higher training loss so it's worse.")
-    
+
 
 def f(params: Parameters1D, x: float) -> float:  # @inspect params x
     """Applies the linear predictor given by `params` to input `x`."""

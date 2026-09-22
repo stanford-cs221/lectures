@@ -1,4 +1,4 @@
-## CS221 Autumn 2025 Lectures
+## CS221 Autumn 2026 Lectures
 
 Welcome to CS221!  This repository contains all the (executable) lectures,
 which are made using [edtrace](https://github.com/percyliang/edtrace).
@@ -12,84 +12,86 @@ To run locally:
 
     apt-get install graphviz
     uv sync
+    rc
     python -m edtrace.execute -m welcome
 
-### Mon Sep 22: foundations (lecture 1)
+    git clone git@github.com:percyliang/edtrace
+    (cd edtrace/frontend && npm i)
+    npm --prefix edtrace/frontend run dev -- --port 2210
 
-- [welcome](https://stanford-cs221.github.io/autumn2025-lectures/?trace=welcome)
-- [history](https://stanford-cs221.github.io/autumn2025-lectures/?trace=history)
-- [tensors](https://stanford-cs221.github.io/autumn2025-lectures/?trace=tensors)
+### Lecture 1 (Tue Sep 22): Overview
 
-### Wed Sep 24: learning i (lecture 2)
+- [welcome](https://stanford-cs221.github.io/lectures/?trace=welcome)
+- [history](https://stanford-cs221.github.io/lectures/?trace=history)
+- [tensors](https://stanford-cs221.github.io/lectures/?trace=tensors)
 
-- [backpropagation](https://stanford-cs221.github.io/autumn2025-lectures/?trace=backpropagation)
-- [linear_regression](https://stanford-cs221.github.io/autumn2025-lectures/?trace=linear_regression)
+### Lecture 2 (Thu Sep 24): Learning I
 
-### Mon Sep 29: learning ii (lecture 3)
+- [backpropagation](https://stanford-cs221.github.io/lectures/?trace=backpropagation)
+- [linear_regression](https://stanford-cs221.github.io/lectures/?trace=linear_regression)
 
-- [linear_classification](https://stanford-cs221.github.io/autumn2025-lectures/?trace=linear_classification)
+### Lecture 3 (Tue Sep 29): Learning II
 
-### Wed Oct 1: learning iii (lecture 4)
+- [linear_classification](https://stanford-cs221.github.io/lectures/?trace=linear_classification)
 
-- [deep_learning](https://stanford-cs221.github.io/autumn2025-lectures/?trace=deep_learning)
+### Lecture 4 (Thu Oct 1): Learning III
 
-### Mon Oct 6: search i (lecture 5)
+- [deep_learning](https://stanford-cs221.github.io/lectures/?trace=deep_learning)
 
-- [search](https://stanford-cs221.github.io/autumn2025-lectures/?trace=search)
+### Lecture 5 (Tue Oct 6): Search I
 
-### Wed Oct 8: search ii (lecture 6)
+- [search](https://stanford-cs221.github.io/lectures/?trace=search)
 
-- [ucs_astar](https://stanford-cs221.github.io/autumn2025-lectures/?trace=ucs_astar)
+### Lecture 6 (Thu Oct 8): Search II
 
-### Mon Oct 13: Markov decision processes (lecture 7)
+- [ucs_astar](https://stanford-cs221.github.io/lectures/?trace=ucs_astar)
 
-- [mdp](https://stanford-cs221.github.io/autumn2025-lectures/?trace=mdp)
+### Lecture 7 (Tue Oct 13): MDPs I
 
-### Wed Oct 15: reinforcement learning (lecture 8)
+- [mdp](https://stanford-cs221.github.io/lectures/?trace=mdp)
 
-- [reinforcement_learning](https://stanford-cs221.github.io/autumn2025-lectures/?trace=reinforcement_learning)
+### Lecture 8 (Thu Oct 15): MDPs II
 
-### Mon Oct 20: policy gradient (lecture 9)
+- [reinforcement_learning](https://stanford-cs221.github.io/lectures/?trace=reinforcement_learning)
 
-- [policy_gradient](https://stanford-cs221.github.io/autumn2025-lectures/?trace=policy_gradient)
+### Lecture 9 (Tue Oct 20): MDPs III
 
-### Wed Oct 22: games i (lecture 10)
+- [policy_gradient](https://stanford-cs221.github.io/lectures/?trace=policy_gradient)
 
-- [games](https://stanford-cs221.github.io/autumn2025-lectures/?trace=games)
+### Lecture 10 (Thu Oct 22): RL Applications
 
-### Mon Oct 27: games ii (lecture 11)
+- [td_learning](https://stanford-cs221.github.io/lectures/?trace=td_learning)
 
-- [td_learning](https://stanford-cs221.github.io/autumn2025-lectures/?trace=td_learning)
-- [simultaneous_games](https://stanford-cs221.github.io/autumn2025-lectures/?trace=simultaneous_games)
+### Lecture 11 (Tue Oct 27): Games I
 
-### Wed Oct 29: bayes i (lecture 12)
+- [games](https://stanford-cs221.github.io/lectures/?trace=games)
 
-- [bayes](https://stanford-cs221.github.io/autumn2025-lectures/?trace=bayes)
+### Lecture 12 (Thu Oct 29): Games II
 
-### Mon Nov 3: gibbs sampling (lecture 13)
+- [simultaneous_games](https://stanford-cs221.github.io/lectures/?trace=simultaneous_games)
 
-- [gibbs_sampling](https://stanford-cs221.github.io/autumn2025-lectures/?trace=gibbs_sampling)
+### Lecture 13 (Thu Nov 5): Bayesian Networks I
 
-### Wed Nov 5: learning (lecture 14)
+- [bayes](https://stanford-cs221.github.io/lectures/?trace=bayes)
 
-- [bayes_learning](https://stanford-cs221.github.io/autumn2025-lectures/?trace=bayes_learning)
+### Lecture 14 (Tue Nov 10): Bayesian Networks II
 
-### Mon Nov 10: logic i (lecture 15)
+- [gibbs_sampling](https://stanford-cs221.github.io/lectures/?trace=gibbs_sampling)
 
-- [propositional_logic](https://stanford-cs221.github.io/autumn2025-lectures/?trace=propositional_logic)
+### Lecture 15 (Thu Nov 12): Bayesian Networks III
 
-### Wed Nov 12: logic ii (lecture 16)
+- [bayes_learning](https://stanford-cs221.github.io/lectures/?trace=bayes_learning)
 
-- [first_order_logic](https://stanford-cs221.github.io/autumn2025-lectures/?trace=first_order_logic)
+### Lecture 16 (Tue Nov 17): Logic I
 
-### Mon Nov 17: introduction to language models (lecture 17)
+- [propositional_logic](https://stanford-cs221.github.io/lectures/?trace=propositional_logic)
 
-- [language_models](https://stanford-cs221.github.io/autumn2025-lectures/language_models.pdf)
+### Lecture 17 (Thu Nov 19): Logic II
 
-### Wed Nov 19: AI & Society (lecture 18)
+- [first_order_logic](https://stanford-cs221.github.io/lectures/?trace=first_order_logic)
 
-- [society](https://stanford-cs221.github.io/autumn2025-lectures/?trace=society)
+### Lecture 18 (Tue Dec 1): AI & Society
 
-### Mon Dec 1: Economics of AI (lecture 19)
+- [society](https://stanford-cs221.github.io/lectures/?trace=society)
 
-- [economics](https://docs.google.com/presentation/d/1jCn1OV4H1HKzQ0PWzRn2_bfOWKw43eS33wyramBt2z8/edit)
+### Lecture 19 (Thu Dec 3): Fireside Chat, Conclusion

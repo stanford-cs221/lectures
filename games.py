@@ -43,7 +43,7 @@ def main():
 def modeling():
     link("https://stanford-cs221.github.io/autumn2023/modules/module.html#include=games%2Fmodeling.js&mode=print6pp", title="[Autumn 2023 lecture]")
     image("images/game-tree.png", width=500)
-    
+
     text("This lecture: two-player zero-sum games")
     text("- Two players: *agent* and *opponent*")
     text("- Zero-sum: utility of agent = -utility of opponent")
@@ -97,7 +97,7 @@ class Game:
     def start_state(self) -> Any:
         """Where the game starts."""
         raise NotImplementedError
-    
+
     def successors(self, state: Any) -> dict[str, Any]:
         """What are the possible successor states?"""
         raise NotImplementedError
@@ -105,11 +105,11 @@ class Game:
     def player(self, state: Any) -> str:
         """Which player should move in `state`?"""
         raise NotImplementedError
-    
+
     def is_end(self, state: Any) -> bool:
         """Is the game over?"""
         raise NotImplementedError
-    
+
     def utility(self, state: Any) -> float:
         """What is the utility of the game (for the agent)."""
         raise NotImplementedError
@@ -171,14 +171,14 @@ class HalvingGame(Game):
 
     def start_state(self) -> Any:
         return HalvingState(n=self.n, player="agent")
-    
+
     def successors(self, state: HalvingState) -> dict[str, Any]:
         next_player = "opp" if state.player == "agent" else "agent"
         return {
             "decrement": HalvingState(n=state.n - 1, player=next_player),
             "half": HalvingState(n=state.n // 2, player=next_player),
         }
-    
+
     def player(self, state: HalvingState) -> str:
         return state.player
 
@@ -222,7 +222,7 @@ def simulate(game: Game, policies: dict[str, Policy]) -> Rollout:
     # See who wins?
     utility = game.utility(state)  # @inspect utility @stepover
     return Rollout(steps=steps, utility=utility)
-    
+
 
 def game_evaluation():
     link("https://stanford-cs221.github.io/autumn2023/modules/module.html#include=games%2Fgame-evaluation.js&mode=print6pp", title="[Autumn 2023 lecture]")

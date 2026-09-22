@@ -22,7 +22,7 @@ def main():
 
     text("Summary")
     text("- Use tensors to represent everything")
-    text("- Express computations using few tensor operations for efficiency (a puzzle!)")
+    text("- Express computations using a few tensor operations for efficiency (a puzzle!)")
     text("- Use einops to make computations more legible")
     text("- Practice (it's like learning a new language)!")
 
@@ -93,19 +93,19 @@ def tensor_examples():
     # A D-dimensional data point
     D = 2  # Number of dimensions
     x = np.ones(D)  # @inspect x
-    text("Here, `np.ones` is arbitrary; we're just trying getting a tensor of the right shape.")
+    text("Here, `np.ones` is arbitrary; we're just trying to get a tensor of the right shape.")
 
     text("We often batch examples together (for efficiency).")  # @clear x
     N = 3  # Number of examples
     # A dataset of N examples, each D-dimensional point
     x = np.ones((N, D))  # @inspect x
 
-    text("In language modeling, each example is a whole sequence of length")  # @clear x
+    text("In language modeling, each example is a whole sequence of length.")  # @clear x
     L = 4  # Length of sequence
     # A dataset of N examples, each length L, each position is D-dimensional
     x = np.ones((N, L, D))  # @inspect x
 
-    text("In vision, images have..")  # @clear x
+    text("In vision, images have")  # @clear x
     H = 2  # A height
     W = 2  # A width
     C = 3  # A number of channels (red, green, blue)
@@ -153,12 +153,6 @@ def elementwise_operations():
     y = x * 3  # @inspect y
     y = x / 2  # @inspect y
 
-    text("`triu` (`tril`) takes the upper (lower) triangular part of a matrix.")  # @clear y
-    x = np.ones((3, 3))  # @inspect x
-    y = np.triu(x)  # @inspect y
-    y = np.tril(x)  # @inspect y
-    text("This is useful for masking parts of the input (for Transformers).")
-
     text("You can create zeros and ones with the same shape as another tensor:")
     y = np.zeros_like(x)  # @inspect y
     y = np.ones_like(x)  # @inspect y
@@ -177,7 +171,7 @@ def matrix_multiplication():
     y = x @ w  # @inspect y
     assert y.shape == (2, 4, 3)
     text("In this case, for each slice x[0], x[1], ..., we multiply by `w`.")
-    text("Terminology: w is broadcasted to each slice of x.")
+    text("Terminology: w is **broadcasted** to each slice of x.")
 
 
 def efficiency():
@@ -195,10 +189,10 @@ def efficiency():
                 for k in range(N):
                     y[i, j] += x[i, k] * w[k, j]
         return y
-    python_time = timeit.timeit(slow_matmul, number=1)  # @inspect slow_time @stepover
+    python_time = timeit.timeit(slow_matmul, number=1)  # @inspect python_time @stepover
 
     text("Let's now do it in NumPy.")
-    numpy_time = timeit.timeit(lambda: x @ w, number=1)  # @inspect fast_time @stepover
+    numpy_time = timeit.timeit(lambda: x @ w, number=1)  # @inspect numpy_time @stepover
 
     # How much faster is NumPy than Python?
     speedup = python_time / numpy_time  # @inspect speedup
@@ -215,7 +209,7 @@ def einops():
     einops_einsum()
     einops_reduce()
     einops_rearrange()
-    
+
 
 def einops_motivation():
     text("Traditional PyTorch code:")
@@ -249,7 +243,7 @@ def einops_einsum():
     z = einsum(x, y, "batch seq1 hidden, batch seq2 hidden -> batch seq1 seq2")  # @inspect z
     text("Dimensions that are not named in the output are summed over.")
 
-    text("Or can use `...` to represent broadcasting over any number of dimensions:")
+    text("We can use `...` to represent broadcasting over any number of dimensions (instead of writing `batch`):")
     z = einsum(x, y, "... seq1 hidden, ... seq2 hidden -> ... seq1 seq2")  # @inspect z
 
 

@@ -37,7 +37,7 @@ def main():
 
     text("Next time: a deeper look at the players in the AI ecosystem")
 
-    
+
 def why_care():
     text("Why should we technologists care about society (why this lecture)?")
 
@@ -98,12 +98,12 @@ def dual_use_technology():
     text("- Nuclear power (nuclear energy or nuclear weapons)")
     text("- Cybersecurity tools (penetration testing or cyberattacks)")
     text("- Encryption (protecting user privacy or concealing criminal activity)")
-    
+
     text("AI is a dual use technology.")
 
     text("But we can still steer AI in a way that tilts towards benefits...")
 
-    
+
 def benefits_misuse_accidents():
     text("We can taxonomize the ways in which AI impacts society along two axes:")
 

@@ -3,8 +3,7 @@ from util import article_link
 
 
 def main():
-    link("https://stanford-cs221.github.io/autumn2023/modules/module.html#include=general%2Fhistory.js&slideId=turing&level=0&mode=print6pp", title="Slides from Autumn 2023")
-
+    text("# A Brief History of AI")
     turing_test()
 
     text("The history of AI is the story of three intellectual traditions:")
@@ -58,11 +57,11 @@ def symbolic_ai():
     text("- English: *The spirit is willing but the flesh is weak.*")
     text("- Russian: ...")
     text("- English: *The vodka is good but the meat is rotten.*")
-    
+
     text("1966: ALPAC report cut off government funding for machine translation, first AI winter ❄️")
 
     text("What went wrong?")
-    text("Problems")
+    text("Problems:")
     text("- Limited computation: search space grew exponentially, outpacing hardware")
     text("- Limited information: complexity of AI problems (number of words, objects, concepts in the world)")
     text("Silver lining: useful contributions (John McCarthy)")
@@ -71,8 +70,8 @@ def symbolic_ai():
     text("- Time-sharing: allow multiple people to use the same computer at once")
 
     text("Knowledge-based systems (70-80s)")
-    image("images/knowledge-key.jpg"),
-    text("Expert systems: elicit specific domain knowledge from experts in form of rules"),
+    image("images/knowledge-key.jpg")
+    text("Expert systems: elicit specific domain knowledge from experts in the form of rules")
     image("images/mycin-rule.png")
     text("Systems:")
     text("- DENDRAL: infer molecular structure from mass spectrometry")
@@ -99,7 +98,7 @@ def neural_ai():
 
     text("Revival of connectionism")
     text("- 1980: Neocognitron, a.k.a. convolutional neural networks for images (Fukushima)")
-    text("- 1986: popularization of backpropagation for training multi-layer networks (Rumelhardt, Hinton, Williams)")
+    text("- 1986: popularization of backpropagation for training multi-layer networks (Rumelhart, Hinton, Williams)")
     text("- 1989: applied convolutional neural networks to recognizing handwritten digits for USPS (LeCun)")
 
     text("Neural networks were hard to train and were unpopular in the 2000s")
@@ -132,43 +131,51 @@ def statistical_ai():
 
 
 def foundation_models():
-    text("### Pretrained language models")
-    text("- ELMo: pretraining with LSTMs, fine-tuning helps downstream tasks "), link("https://arxiv.org/abs/1802.05365")
-    text("- BERT: pretraining with Transformer, fine-tuning helps downstream tasks "), link("https://arxiv.org/abs/1810.04805")
-    text("- Google's T5 (11B): cast everything as text-to-text "), link("https://arxiv.org/abs/1910.10683")
-    image("images/t5.png", width=400)
+    text("Pretrained language models (~2018):")
+    text("- Key idea: train models on tons of raw data to build good **representations**")
+    text("- Example model: BERT "), link("https://arxiv.org/abs/1810.04805")
+    image("images/bert-pretrain-finetune.png", width=800)
+    text("- Masked LM pretrained to fill in the blanks on documents")
+    text("- **Fine-tune** for downstream tasks (e.g., question answering)")
 
-    text("### Scaling up")
-    text("- GPT-2: fluent text, first signs of zero-shot capabilities "), link("https://cdn.openai.com/better-language-models/language_models_are_unsupervised_multitask_learners.pdf", title="[Radford+ 2019]")
-    text("- Scaling laws: provide hope / predictability for scaling "), link("https://arxiv.org/abs/2001.08361")
-    text("- GPT-3: in-context learning, closed "), link("https://arxiv.org/abs/2005.14165")
+    text("Scaling up text **generation** (~2020):")
+    text("- GPT-2: 1.5B parameters, fluent text, first signs of zero-shot capabilities "), link("https://cdn.openai.com/better-language-models/language_models_are_unsupervised_multitask_learners.pdf", title="[Radford+ 2019]")
+    text("- Scaling laws: provide predictability for scaling "), link("https://arxiv.org/abs/2001.08361")
+    text("- GPT-3: 175B parameters, in-context learning "), link("https://arxiv.org/abs/2005.14165")
     text("- Chinchilla: compute-optimal scaling laws "), link("https://arxiv.org/abs/2005.14165")
-    text("- Llama 3 "), link("https://arxiv.org/abs/2407.21783")
-    text("- DeepSeek v3 "), link("https://arxiv.org/abs/2412.19437")
 
-    text("### Reasoning")
-    text("- Answering hard questions requires thinking")
-    text("- Language models produce \"thoughts\" before producing a response")
-    text("- Models: OpenAI's o1-o4, DeepSeek's r1")
+    text("Aligning **chat** language models (~2022):")
+    text("- Make language models follow instructions, can chat with")
+    text("- Reinforcement learning from human feedback (RLHF) "), link("https://arxiv.org/abs/2203.02155")
+    text("- Led to ChatGPT (2022)")
+
+    text("Reasoning models (~2023):")
+    text("- Answering hard questions requires **thinking**")
+    text("- Language models produce a sequence of chain-of-thought tokens before producing a response")
+    text("- OpenAI's o1 and later DeepSeek's r1 paved the way")
+
+    text("Agents (~2025):")
+    text("- Solving tasks requires taking **actions** in the world")
+    text("- Examples: web search, calculator, writing code, various APIs")
+    text("- Led to coding agents, computer use agents, cybersecurity agents, etc.")
+    text("- Frontier: multi-agent collaboration")
 
     text("### Industrialization of AI")
-    image("https://upload.wikimedia.org/wikipedia/commons/thumb/c/cc/Industrialisation.jpg/440px-Industrialisation.jpg", width=400)
+    image("images/industrialization.jpg", width=400)
+    text("- xAI builds cluster with 200,000 H100s to train Grok. "), article_link("https://www.tomshardware.com/pc-components/gpus/elon-musk-is-doubling-the-worlds-largest-ai-gpu-cluster-expanding-colossus-gpu-cluster-to-200-000-soon-has-floated-300-000-in-the-past")
+    text("- Stargate (OpenAI, NVIDIA, Oracle) invests $500B over 4 years. "), article_link("https://openai.com/index/announcing-the-stargate-project/")
 
-    text("GPT-4 supposedly has 1.8T parameters. "), article_link("https://www.hpcwire.com/2024/03/19/the-generative-ai-future-is-now-nvidias-huang-says")
-    text("GPT-4 supposedly cost $100M to train. "), article_link("https://www.wired.com/story/openai-ceo-sam-altman-the-age-of-giant-ai-models-is-already-over/")
-    text("xAI builds cluster with 200,000 H100s to train Grok. "), article_link("https://www.tomshardware.com/pc-components/gpus/elon-musk-is-doubling-the-worlds-largest-ai-gpu-cluster-expanding-colossus-gpu-cluster-to-200-000-soon-has-floated-300-000-in-the-past")
-    text("Stargate (OpenAI, NVIDIA, Oracle) invests $500B over 4 years. "), article_link("https://openai.com/index/announcing-the-stargate-project/")
+    text("AI becomes mainstream:")
+    text("- Widespread adoption: ChatGPT (2022) acquired 100M users after 2 months")
+    text("- Policymaking: governments trying to figure out how to regulate AI (safety, national security, competition)")
 
     text("There are no public details on how frontier models are built.")
     text("From the GPT-4 technical report "), link("https://arxiv.org/abs/2303.08774"), text(":")
     image("images/gpt4-no-details.png", width=600)
 
-    text("AI has emerged from research and now is shaping businesses and public policy.")
-    text("The research is still far from done...")
-
 
 def parting_thoughts():
-    text("Fierce battles between the traditions")
+    text("Fierce battles between the traditions:")
     text("- Minsky/Papert promoted symbolic AI and killed neural networks research")
     text("- Statistical ML in the 2000s thought neural networks were dead")
 
@@ -178,9 +185,9 @@ def parting_thoughts():
     text("- Deep learning was initially all about perception, but now turn to reasoning (goals of symbolic AI)")
 
     text("AI is a melting pot:")
-    text("- Symbolic AI: provided the vision and ambition")
-    text("- Neural AI: provided the model architectures")
-    text("- Statistical AI: provided the rigor (e.g., optimization, generalization)")
+    text("- Symbolic AI: provided the vision and ambition, agent scaffolds")
+    text("- Neural AI: provided the core paradigm (training neural networks)")
+    text("- Statistical AI: provided the rigor (e.g., optimization, variance, generalization)")
 
     text("This class: we will see elements of all three traditions")
 

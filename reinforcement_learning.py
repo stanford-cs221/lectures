@@ -235,7 +235,7 @@ def introduce_model_based():
     text("Define an exploration policy that chooses a random valid action:")
     exploration_policy = partial(walk_tram_policy, mdp.num_locs)
     try_out_exploration_policy(exploration_policy)
-    
+
     # Define the agent (RL algorithm)
     rl = ModelBasedValueIteration(exploration_policy=exploration_policy, discount=1)
     try_out_model_based_value_iteration(rl)
@@ -265,8 +265,8 @@ def introduce_model_based():
     text("- Once have estimated policy, exploit!")
 
     text("Can we estimate the optimal policy more directly?")
-    
-    
+
+
 class ModelBasedValueIteration(RLAlgorithm):
     """
     Model-based RL algorithm that uses value iteration to estimate the MDP.
@@ -308,7 +308,7 @@ class EstimatedMDP(MDP):
 
     def start_state(self) -> Any:
         return self.start_state_
-    
+
     def successors(self, state: Any) -> list[Step]:
         """Compute successors based on the transition counts and rewards."""
         successors = []  # @inspect successors
@@ -324,7 +324,7 @@ class EstimatedMDP(MDP):
                 successors.append(step)  # @inspect successors
 
         return successors
-    
+
     def is_end(self, state: Any) -> bool:
         return state in self.end_states
 
@@ -354,7 +354,7 @@ class EstimatedMDP(MDP):
 def try_out_model_based_value_iteration(rl: ModelBasedValueIteration):
     action = rl.get_action(state=1)  # @inspect action
     rl.incorporate_feedback(state=1, action="walk", reward=-1, next_state=2, is_end=False)
-    
+
 def try_out_exploration_policy(exploration_policy: Policy):
     text("The exploration policy tries all valid actions.")
     action = exploration_policy(state=1)  # @inspect action
@@ -393,7 +393,7 @@ def introduce_model_free_monte_carlo():
     text("Previously: model-based value iteration:")
     text("1. Estimate the MDP first.")
     text("2. Use value iteration to compute the optimal policy of the estimated MDP.")
-    
+
     image("images/value_iteration_recurrence.png", width=400)
     text("Optimal policy: π`*`(s) = argmax_a Q`*`(s, a)")
     text("where Q`*`(s, a) = Σ_s' T(s, a, s') (R(s, a, s') + γ V`*`(s'))")
@@ -580,7 +580,7 @@ class SARSA(RLAlgorithm):
     def get_action(self, state: Any) -> Any:
         if len(self.Q[state]) == 0:
             return self.exploration_policy(state) # @stepover
-        
+
         if np.random.random() < self.epsilon:
             return self.exploration_policy(state) # @stepover
         else:
@@ -605,7 +605,7 @@ class SARSA(RLAlgorithm):
 
 def try_out_sarsa(rl: SARSA):
     action = rl.get_action(state=1)  # @inspect action
-    
+
     rl.incorporate_feedback(state=1, action="walk", reward=-1, next_state=2, is_end=False)
     rl.incorporate_feedback(state=2, action="tram", reward=-2, next_state=2, is_end=False)
     rl.incorporate_feedback(state=2, action="tram", reward=-2, next_state=4, is_end=True)
@@ -618,7 +618,7 @@ def introduce_q_learning():
     text("Q-learning: estimate Q-values of the optimal policy Q`*`(s, a)")
 
     text("But we don't know the optimal policy...")
-    
+
     mdp = FlakyTramMDP(num_locs=10, failure_prob=0.4)  # @stepover
     np.random.seed(1)
 
@@ -648,7 +648,7 @@ class QLearning(SARSA):
 
 def try_out_q_learning(rl: QLearning):
     action = rl.get_action(state=1)  # @inspect action
-    
+
     rl.incorporate_feedback(state=1, action="walk", reward=-1, next_state=2, is_end=False)
     rl.incorporate_feedback(state=2, action="tram", reward=-2, next_state=2, is_end=False)
     rl.incorporate_feedback(state=2, action="tram", reward=-2, next_state=4, is_end=True)

@@ -60,7 +60,7 @@ def motivation():
     text("- Logic enables expressive representation/reasoning")
     text("- Think of a logic as a language")
     text("- Defined by syntax, semantics, and inference rules")
-    
+
     text("Next: propositional logic")
     text("Later: first-order logic")
 
@@ -109,7 +109,7 @@ def syntax_versus_semantics():
     text("Different syntax, same semantics:")
     text("- Syntax: `2 + 3`, semantics: 5")
     text("- Syntax: `3 + 2`, semantics: 5")
-    
+
     text("Same syntax, different semantics:")
     text("- Syntax: `3 / 2`, semantics: 1 (Python 2.7)")
     text("- Syntax: `3 / 2`, semantics: 1.5 (Python 3)")
@@ -372,7 +372,7 @@ def entailment_contradiction_contingency():
 
 def ask_tell():
     text("Now let's explore what you can do with a knowledge base.")
-    
+
     Rain = Bool("Rain")
     Wet = Bool("Wet")
     symbols = [Rain, Wet]
@@ -437,7 +437,7 @@ def ask_tell():
 
     kb = [Rain, Wet]  # It is raining and wet.
     new_kb, result = tell(kb, Not(Rain))  # It is not raining.  @inspect new_kb result
-    
+
     kb = [Rain]  # It is raining.
     new_kb, result = tell(kb, Not(Wet))  # It is not wet.  @inspect new_kb result
 
@@ -453,7 +453,7 @@ def connection_to_bayesian_networks():
     text("Recall that a Bayesian network defines a joint distribution over a set of variables.")
     P = ProbTable("Rain Wet", [[0.5, 0.1], [0.1, 0.3]])  # P(Rain, Wet) @inspect P @stepover
     text("For every assignment, we have a probability (between 0 and 1).")
-    
+
     text("Translating terminology between Bayesian networks ↔ propositional logic")
     text("- Random variables ↔ propositional symbols")
     text("- Models ↔ assignments")
@@ -506,7 +506,7 @@ def satisfiability():
     solver = Solver()
     for f in kb:  # @inspect f
         solver.add(f)
-    
+
     # Perform model checking
     result = solver.check()  # @inspect result @clear f
 

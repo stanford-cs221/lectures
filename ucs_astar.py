@@ -49,13 +49,13 @@ class DiamondSearchProblem(SearchProblem):
 
     def start_state(self) -> str:
         return "A"
-    
+
     def successors(self, state: str) -> list[Step]:
         return [
             Step(action=new_state, cost=cost, state=new_state) \
             for new_state, cost in self.graph[state].items()
         ]
-    
+
 
     def is_end(self, state: str) -> bool:
         return state == "D"
@@ -79,7 +79,7 @@ class GridSearchProblem(SearchProblem):
         return 0 <= r < self.num_rows and \
                0 <= c < self.num_cols and \
                self.rows[r][c] != "#"
-    
+
     def successors(self, state: tuple[int, int]) -> list[Step]:
         """Return the successors of a state (up, down, left, right)."""
         r, c = state
@@ -102,7 +102,7 @@ class GridSearchProblem(SearchProblem):
     @property
     def num_rows(self) -> int:
         return len(self.rows)
-    
+
     @property
     def num_cols(self) -> int:
         return len(self.rows[0])
@@ -144,7 +144,7 @@ def ucs_motivation():
     text("High-level strategy:")
     image("images/ucs-strategy.png", width=400)
     text("- **Explored**: states we've found the minimum cost path to")
-    text("- **Frontier**: states we've seen, still trying to figure out how the best way to get there") 
+    text("- **Frontier**: states we've seen, still trying to figure out how the best way to get there")
     text("- **Unexplored**: states we haven't seen yet")
 
 
@@ -392,7 +392,7 @@ class LineSearchProblem(SearchProblem):
         if state <= 2:
             successors.append(Step(action="right", cost=1, state=state + 1))
         return successors
-    
+
     def is_end(self, state: int) -> bool:
         return state == 2
 
@@ -421,7 +421,7 @@ class ModifiedSearchProblem(SearchProblem):
     def __init__(self, problem: SearchProblem, heuristic: Heuristic):
         self.problem = problem
         self.heuristic = heuristic
-    
+
     def start_state(self) -> Any:
         return self.problem.start_state()
 
@@ -433,7 +433,7 @@ class ModifiedSearchProblem(SearchProblem):
             modified_cost = successor.cost + self.heuristic(successor.state) - self.heuristic(state)  # @inspect modified_cost @stepover
             successors.append(Step(successor.action, modified_cost, successor.state))
         return successors
-    
+
     def is_end(self, state: Any) -> bool:
         return self.problem.is_end(state)
 
@@ -524,7 +524,7 @@ def search_fewer_states():
     text("Let's compare UCS and A*")
     solution, num_explored = uniform_cost_search(problem)  # @inspect solution num_explored @stepover
     solution, num_explored = astar_search(problem, heuristic=heuristic)  # @inspect solution num_explored @stepover
-    
+
     text("For accounting purposes, need to include the cost of solving the relaxed problem!")
     num_explored += num_explored_relaxed  # @inspect num_explored
 
@@ -543,7 +543,7 @@ def search_fewer_states():
 
 def independent_subproblems():
    text("Motivating example: solving the 8 puzzle")
-   image("images/8-puzzle.png", width=400) 
+   image("images/8-puzzle.png", width=400)
 
    text("Original problem: tiles cannot overlap")
    text("Relaxed problem: tiles **can** overlap")
@@ -567,7 +567,7 @@ def unifying_principle():
     text("Definition: A **relaxation** of a search problem is a modified problem where")
     text("- States, actions, successors are the same")
     text("- Cost_relaxed(s, a) <= Cost(s, a)")
-    
+
     text("Theorem: Let h(s) be the future cost of a relaxed problem. Then h is a consistent heuristic.")
     text("Proof:")
     text("h(s)")

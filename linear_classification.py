@@ -42,7 +42,7 @@ def main():
     text("- Multiclass classification: one logit per class, convert to probabilities with softmax")
     text("- Representing text as tensors: tokenize + convert tokens to indices (one-hot vectors)")
 
-    
+
 def prediction_task():
     text("Example task: image classification")
     text("- **Input**: an image; e.g.")
@@ -157,7 +157,7 @@ def zero_one_loss_function():
 
     text("Recall the training data:")
     training_data = get_training_data()  # @inspect training_data @stepover
-    
+
     text("How well does `params` fit `training_data`?")
     text("We define a loss function that measures how unhappy one point is based on params.")
 
@@ -200,7 +200,7 @@ def zero_one_loss(example: Example, params: Parameters) -> float:  # @inspect ex
 
 
 def zero_one_loss_inline(example: Example, params: Parameters) -> float:  # @inspect example params
-    # logit: sign is prediction, magnitude is how confident we are 
+    # logit: sign is prediction, magnitude is how confident we are
     logit = example.x @ params.weight + params.bias  # @inspect logit
     # margin: sign measures correct (+) or not (-)
     margin = logit * example.target_y  # @inspect margin
@@ -302,10 +302,10 @@ def logistic_loss_function():
     params = Parameters(weight=np.array([1, -1]), bias=1)  # @inspect params
     example = Example(x=np.array([2, 0]), target_y=1)  # @inspect example
 
-    text("So far, our predictor turns a logit into a single prediction")    
+    text("So far, our predictor turns a logit into a single prediction")
     predicted_y = binary_classifier(params, example.x)  # @inspect predicted_y @stepover
     text("Thresholding is a very discrete operation...")
-    
+
     text("Instead, let us make things continuous by having a classifier output a probability distribution (continuous) over labels.")  # @clear predicted_y
     text("The key to doing this will be the **logistic** function.")
     logistic_function()
@@ -344,7 +344,7 @@ def logistic_loss_function():
 
 
 def logistic_loss(example: Example, params: Parameters) -> float:  # @inspect example params
-    # logit: sign is prediction, magnitude is how confident we are 
+    # logit: sign is prediction, magnitude is how confident we are
     logit = example.x @ params.weight + params.bias  # @inspect logit
     # margin: sign measures correct (+) or not (-)
     margin = logit * example.target_y  # @inspect margin
@@ -544,7 +544,7 @@ def representing_text():
 
     text("Equivalently, we can operate directly on the indices:")
     y_bow_index = np.mean(w[indices])  # @inspect y_bow_index
-    
+
     text("Bag of words:")
     text("- Pro: doesn't depend on the length of the text")
     text("- Con: doesn't pay attention to word order (*dog bites man* = *man bites dog*)")

@@ -137,7 +137,7 @@ def function_approximation():
 
     text("Compute policy π(s) = argmax_a Q_θ(s, a):")
     action = rl.pi(state=1)  # @inspect action
- 
+
     text("Using these pieces, the agent interacts with the environment:")  # @clear phi action value
     text("2, 3. loss function and optimization algorithm defined in `incorporate_feedback`")
     rl.get_action(state=1)
@@ -155,7 +155,7 @@ def function_approximation():
     pi = {state: rl.pi(state) for state in states}  # @inspect pi @stepover
     text("And the corresponding values V_θ(s) = Q_θ(s, π_θ(s)):")
     V = {state: rl.Q(state, pi[state]) for state in states}  # @inspect V @stepover
-    
+
     text("Let's compare with the true values by solving the MDP:")
     result = value_iteration(mdp)  # @inspect result.values result.pi
     text("It's in the ballpark, and more accurate for more visited states.")
@@ -265,7 +265,7 @@ def policy_gradient():
 
 def imitation_learning():
     text("If we had demonstrations of the policy, it'd be easy.")
-    
+
     text("Suppose we have a rollout 𝜏:")
     rollout = Rollout(steps=[
         Step(action="walk", prob=1, reward=-1, state=2),
@@ -331,9 +331,9 @@ def policy_gradient_math():
 
     text("Breaking down the gradient:")
     text("∇`_`θ J(θ, 𝜏) = utility(𝜏) * Σ`_`t ∇`_`θ log π`_`θ(a`_`t | s`_`{t-1})")
-    
+
     text("This is the REINFORCE algorithm "), link("https://link.springer.com/article/10.1007/BF00992696", title="[Williams, 1992]")
-    
+
     text("Intuition:")
     text("- Just performing imitation learning on demonstrations from own policy weighted by utility.")
     text("- If utility(𝜏) ∈ {0, 1} (success/failure), then this is just imitation learning on own successful demonstrations.")
@@ -493,7 +493,7 @@ def variance_reduction():
     text("μ = E[f(i)] = Σ_i p(i) * f(i)")
     probs = torch.tensor([0.1, 0.4, 0.2, 0.3])  # p(0), p(1), ... @inspect probs
     points = torch.tensor([-4., -6., 6., 8.])  # f(0), f(1), ... @inspect points
-    
+
     text("This is the true mean we want to estimate (is unknown):")
     mu = probs @ points  # @inspect mu
 

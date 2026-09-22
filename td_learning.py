@@ -22,7 +22,7 @@ def main():
     text("- Turn-based → simultaneous games")
     text("- Zero-sum → non-zero-sum")
 
-    
+
 def review_games():
     text("Principle: minimax (also expectimax, expectiminimax)")
     image("images/minimax.png", width=500)
@@ -68,7 +68,7 @@ def td_learning_motivation():
     text("So we'll use reinforcement learning...")
     text("...not due to unknown MDP (original motivation),")
     text("...but because the number of states is exponential!")
-    
+
 
 def td_learning():
     link("https://stanford-cs221.github.io/autumn2023/modules/module.html#include=games%2Ftd-learning.js&mode=print6pp", title="[Autumn 2023 lecture]")

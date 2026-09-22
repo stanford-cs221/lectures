@@ -123,12 +123,12 @@ def ask(kb: list[Formula], f: Formula) -> str:
     solver.add(kb + [Not(f)])
     if solver.check() == unsat:
         return "Yes"
-    
+
     solver = Solver()
     solver.add(kb + [f])
     if solver.check() == unsat:
         return "No"
-    
+
     return "I don't know"
 
 
@@ -299,7 +299,7 @@ def first_order_logic_semantics():
     text("Recall that in first-order logic, atomic formulas are predicates applied to terms.")
     term = Knows(alice, arithmetic)  # formula Knows(alice, arithmetic)
     term = Student(alice)  # formula Student(alice)
-    
+
     text("So let's define a model as an assignment of truth values to atomic formulas.")
     w = {Student(alice): True, Knows(alice, arithmetic): True}
 
@@ -530,7 +530,7 @@ def first_order_logic_inference_rules():
     text("Definition: a **definite clause** is a formula of the following form:")
     text("∀ x_1 ... x_n. (a_1 ∧ ... ∧ a_k) → b")
     text("...where x_1, ..., x_n are variables, a_1, ..., a_k, b are atomic formulas.")
-    
+
     text("Example: ∀ x, y, z. (Takes(x, y) ∧ Covers(y, z)) → Knows(x, z)")
     text("Here:")
     text("- Variables are x, y, z")
@@ -639,7 +639,7 @@ def substitute(f: Formula, subst: dict[Variable, Term]) -> Formula:  # @inspect 
 
 def introduce_unification():
     text("Unification: find a substitution that makes two terms equal")
-    
+
     result = unify(Knows(x, y), Knows(alice, bob), {}) # @inspect result
     result = unify(Knows(alice, y), Knows(x, z), {}) # @inspect result @stepover
     result = unify(Knows(alice, y), Knows(bob, z), {}) # Should fail! @inspect result @stepover

@@ -1,7 +1,7 @@
 [project]
-name = "autumn2025-lectures"
+name = "lectures"
 version = "0.1.0"
-description = "Executable lectures for CS221 (Autumn 2025)"
+description = "Executable lectures for CS221 (Autumn 2026)"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [

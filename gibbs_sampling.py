@@ -85,7 +85,7 @@ def rejection_sampling(program: Callable, query: Callable, evidence: Callable, n
         sample = program()  # @inspect sample @stepover
         if evidence(sample):  # @stepover
             counts[query(sample)] += 1  # @stepover @inspect counts
-    
+
     # Normalize counts to obtain probabilities
     total_count = sum(counts.values())  # @inspect total_count
     probs = {q: counts[q] / total_count for q in counts}  # @inspect probs
@@ -99,7 +99,7 @@ def introduce_gibbs_sampling():
     text("- Pro: each sample is independent")
     text("- Con: we have to start from scratch for every sample")
     text("- Con: not using evidence while generating sample, leading to rejection")
-    
+
     text("**Gibbs sampling**: start with the previous sample (which always satisfies the evidence)")
     text("Basic idea:")
     text("- Start with an arbitrary sample")
@@ -120,7 +120,7 @@ def introduce_gibbs_sampling():
     text("- A more general MCMC algorithm is Metropolis-Hastings (uses a proposal distribution).")
     text("- Theory: use mixing times to study effective running time (how correlated samples are)?")
     text("- Practice: simple and effective, but can be slow")
-    
+
 
 def gibbs_telephone():
     text("**Example**: telephone")
@@ -155,7 +155,7 @@ def gibbs_telephone():
     text("For each variable X_i, change it based on all other variables")
     text("- Compute the conditional distribution of X_i given all other variables")
     text("- Sample X_i from this conditional distribution")
-    
+
     text("Initialize with an arbitrary sample that satisfies the evidence (D = 1):")
     x = {"A": 1, "B": 0, "C": 1}  # @inspect x
 
@@ -271,7 +271,7 @@ def gibbs_alarm():
 
     # Initialize with an arbitrary sample that satisfies the evidence
     x = {"B": 1, "E": 1, "A": 1}  # @inspect x
-    
+
     # Iterate over each variable (that's not evidence)
     def compute_prob(x, var, value):
         y = x | {var: value}
@@ -381,7 +381,7 @@ def introduce_conditional_independence():
     text("**Conditional independence**")
     text("Two variables A and B are conditionally independent given C = c iff:")
     text("P(A = a, B = b | C = c) = P(A = a | C = c) P(B = b | C = c) for all a, b")
-    
+
     text("Example 4 again (C → A, B):")
     text("P(A = a, B = b | C = c) = p(c) p(a | c) p(b | c) / p(c) = p(a | c) p(b | c)")
     text("A and B are conditionally independent given C = c")
@@ -402,7 +402,7 @@ def introduce_conditional_independence():
     text("2. Recursively remove any non-shaded leaves")
     text("3. Connect parents to each other (marriage)")
     text("3. Return whether there is a path from A to B that doesn't go through any shaded nodes")
-    
+
     text("**Medical diagnosis example**")
     text("Variables: Cold C, Allergies A, Cough H, Itchy eyes I")
     image("images/medical-bayes.png", width=200)
@@ -410,7 +410,7 @@ def introduce_conditional_independence():
     text("C and I are independent")
     text("C and I are independent given A")
     text("C and I are independent given A, H")
-    
+
 
 if __name__ == "__main__":
     main()

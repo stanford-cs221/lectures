@@ -97,10 +97,10 @@ class Step:
 class MDP:
     def start_state(self) -> Any:
         raise NotImplementedError
-    
+
     def successors(self, state: Any) -> list[Step]:
         raise NotImplementedError
-    
+
     def is_end(self, state: Any) -> bool:
         raise NotImplementedError
 
@@ -115,7 +115,7 @@ class FlakyTramMDP(MDP):
 
     def start_state(self) -> Any:
         return 1
-    
+
     def successors(self, state: Any) -> list[Step]:  # @inspect state
         successors = []
 
@@ -195,7 +195,7 @@ def introduce_policies():
 
     text("Note that these values are estimates!")
     text("Can we compute them exactly?")
-    
+
 
 def always_stay_policy(state: int) -> str:
     return "stay"
@@ -228,7 +228,7 @@ class Rollout:
         self.steps = steps  # @inspect self.steps
         self.discount = discount  # @inspect self.discount
         self.utility = compute_utility(steps, discount)  # @inspect self.utility
-        
+
 
 def compute_utility(steps: list[Step], discount: float) -> float:
     """Computes the utility (discounted sum of rewards) of a rollout."""
@@ -305,7 +305,7 @@ def introduce_q_values():
     text("First, we introduce **Q-values**.")
     text("Q(s, a, V) = measures value of taking action a in state s, and obtaining some value V")
     text("Here, V(s) is the value of some policy from state s.")
-    
+
     text("Let's consider our flaky tram MDP example again.")
     mdp = FlakyTramMDP(num_locs=10, failure_prob=0.4)  # @stepover
 
@@ -380,7 +380,7 @@ def get_action_successors(mdp: MDP, state: Any) -> dict[str, list[Step]]:
 
     return action_to_successors
 
-            
+
 def compute_q_value(successors: list[Step], discount: float, values: dict[Any, float]) -> float:  # @inspect successors values
     """Compute the Q-value for a list of `successors` (possible transitions) given the `values`."""
     weighted_utilities = []  # @inspect weighted_utilities
@@ -414,7 +414,7 @@ def policy_evaluation(mdp: MDP, policy: Policy, max_iters: int = 100, tolerance:
     - distances: list[float]: iteration -> maximum change in values that iteration (for debugging)
     """
     values = get_initial_values(mdp)  # @stepover @inspect values
-    
+
     distances = []
     for iter in range(max_iters):  # @inspect iter
         # Get ready to compute values
@@ -559,17 +559,17 @@ def value_iteration_for_state(mdp: MDP, state: Any, values: dict[Any, float]) ->
 class DiceGameMDP(MDP):
     def start_state(self) -> Any:
         return "in"
-    
+
     def successors(self, state: Any) -> list[Step]:
         return [
             Step(action="quit", prob=1, reward=10, state="end"),
             Step(action="stay", prob=1/3, reward=4, state="end"),
             Step(action="stay", prob=2/3, reward=4, state="in"),
         ]
-    
+
     def is_end(self, state: Any) -> bool:
         return state == "end"
-    
+
     def discount(self) -> float:
         return 1
 

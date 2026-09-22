@@ -125,10 +125,10 @@ def motivation():
     text("For each value of `w`, we can compute the objective.")
     loss = objective(np.array([1, 0, 1]))  # @inspect loss @stepover
     loss = objective(np.array([1, 0, -1]))  # @inspect loss @stepover
-    
+
     text("Ultimate goal is to find `w` that minimizes `objective(w)`.")
     text("For now: given a fixed `w`, how should we tweak `w` to improve `objective(w)`?")
-    
+
 
 def gradients():
     text("Recall from your multivariable calculus course:")
@@ -197,14 +197,14 @@ def example_vector():
     text("Now let's consider a general vector function:")
     def f(x: np.ndarray):
         return np.sum(x) ** 2
-    
+
     text("Input a 2-dimensional vector, and output a scalar.")
     y = f(np.array([1, 2]))  # @inspect y @stepover
 
     text("We have a partial derivative, one for each dimension.")
     text("- df/dx[0]: how much does f change if we change x[0]?")
     text("- df/dx[1]: how much does f change if we change x[1]?")
-    
+
     text("The **gradient** is the vector of the partial derivatives:")
     text("- ∇f = (df/dx[0], df/dx[1])")
 
@@ -353,7 +353,7 @@ class Node:
         recurse(self)
         return dot
 
-    
+
 class Input(Node):
     """Represents an input (leaf node) in the computation graph."""
     def __init__(self, name: str, value: float):
@@ -363,7 +363,7 @@ class Input(Node):
     def forward(self):
         # Value is already set
         pass
-    
+
     def backward(self):
         # No dependencies
         pass
@@ -374,7 +374,7 @@ class Add(Node):
     def forward(self):  # @inspect self
         x, y = self.dependencies  # @inspect x.value y.value
         self.value = x.value + y.value  # @inspect self
-    
+
     def backward(self):  # @inspect self
         x, y = self.dependencies
         x.grad += self.grad  # @inspect self
@@ -386,7 +386,7 @@ class Subtract(Node):
     def forward(self):  # @inspect self
         x, y = self.dependencies  # @inspect x.value y.value
         self.value = x.value - y.value  # @inspect self
-    
+
     def backward(self):  # @inspect self
         x, y = self.dependencies
         x.grad += self.grad  # @inspect self
@@ -398,7 +398,7 @@ class Multiply(Node):
     def forward(self):
         x, y = self.dependencies  # @inspect x.value y.value
         self.value = x.value @ y.value  # @inspect self.value
-    
+
     def backward(self):  # @inspect self
         x, y = self.dependencies
         x.grad += self.grad @ y.value.T  # @inspect self
@@ -410,7 +410,7 @@ class DotProduct(Node):
     def forward(self):
         x, y = self.dependencies  # @inspect x.value y.value
         self.value = x.value @ y.value  # @inspect self.value
-    
+
     def backward(self):  # @inspect self
         x, y = self.dependencies
         x.grad += self.grad * y.value  # @inspect self
@@ -422,7 +422,7 @@ class Squared(Node):
     def forward(self):
         x, = self.dependencies  # @inspect x.value
         self.value = x.value ** 2  # @inspect self.value
-    
+
     def backward(self):  # @inspect self
         x, = self.dependencies
         x.grad += 2 * x.value * self.grad  # @inspect self

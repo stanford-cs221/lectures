@@ -98,7 +98,7 @@ def review_probability():
     text("- Then divide by this probability:")
     text("- P(S = 0 | R = 1) = P(S = 0, R = 1) / P(R = 1) = 0.08 / 0.1 = 0.8")
     text("- P(S = 1 | R = 1) = P(S = 1, R = 1) / P(R = 1) = 0.02 / 0.1 = 0.2")
-    
+
     text("We can also use einops to compute the conditional distribution,")
     text("...but there are a few steps.")
     R1 = np.array([0, 1])  # Evidence [R = 1]
@@ -358,7 +358,7 @@ def introduce_medical_diagnosis():
     text("Now we can answer any question we want.")  # @clear p_c p_a p_h_given_ca p_i_given_a
 
     text("**P(C = 1 | H = 1)**: cold given cough?")
-    
+
     text("Select based on the evidence, marginalizing out non-query/evidence:")
     h1 = np.array([0, 1]) # Evidence [H = 1]
     P_CH1 = ProbTable("C H=1", einsum(P_CAHI.p, h1, "c a h i, h -> c"))  # P(C | H = 1) @inspect P_CH1 @clear P_CAHI @stepover
@@ -441,7 +441,7 @@ def language_models():
     text("Application: jailbreaking language models "), link("https://arxiv.org/abs/2502.01236")
     text("Given a particular response (e.g., \"Sure, here's how you make a bomb\")")
     text("...find prompts that likely generated it.")
-    
+
 
 def Bernoulli(prob: float) -> int:
     """Return 1 with probability `prob` and 0 with probability `1 - prob`."""
@@ -551,7 +551,7 @@ def rejection_sampling(program: Callable, query: Callable, evidence: Callable, n
         sample = program()  # @inspect sample @stepover
         if evidence(sample):  # @stepover
             counts[query(sample)] += 1  # @stepover @inspect counts
-    
+
     # Normalize counts to obtain probabilities
     total_count = sum(counts.values())  # @inspect total_count
     probs = {q: counts[q] / total_count for q in counts}  # @inspect probs

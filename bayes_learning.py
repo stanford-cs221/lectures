@@ -55,11 +55,11 @@ def review_bayesian_networks():
     text("1. X → C → Y")
     text("2. X ← C → Y")
     text("3. X → Z ← Y unless C = Z or a descendent of Z (remember explaining away!)")
-    
+
     text("Contrasting pairs:")
     text("1. A ← C → B: A and B are independent given C but not marginally independent")
-    text("2. A → C ← B: A and B are marginally independent but not independent given C") 
-    
+    text("2. A → C ← B: A and B are marginally independent but not independent given C")
+
     text("Let's play a game on the whiteboard, building up a Bayesian network involving A and B.")
 
     text("This class: where do all these probabilities come from?")
@@ -115,7 +115,7 @@ def two_variables():
     image("images/pgm-g-r.png", width=150)
     text("P(G = g, R = r) = p_G(g) p_R(r | g)")
     text("Parameters: θ = (p_G, p_R)")
-    
+
     text("Training data:")
     training_data = [
         {"G": "drama", "R": 4},
@@ -227,7 +227,7 @@ def parameter_sharing():
     text("P(G = g, R_1 = r_1, R_2 = r_2) = p_G(g) p_R(r_1 | g) p_R(r_2 | g)")
     text("Parameters: θ = (p_G, p_R)")
     text("Note that this is the same example but now we have a single p_R that is used for both R1 and R2.")
-    
+
     text("Key idea: **parameter sharing**")
     image("images/parameter-sharing.png", width=400)
     text("Intuition: each node is powered by some local conditional distribution.")
@@ -306,7 +306,7 @@ def hidden_markov_model():
 
 
 def general_bayesian_networks():
-    text("Variables (X_1, ..., X_n)") 
+    text("Variables (X_1, ..., X_n)")
 
     text("**Parameters**")
     text("Let D be the set of types of local conditional distributions")
@@ -314,7 +314,7 @@ def general_bayesian_networks():
 
     text("Parameters θ = {p_d: d in D}")
     text("- Example: θ = {p_start, p_trans, p_emit} for the HMM")
-    
+
     text("**Joint distribution**")
     text("Each X_i is generated from p_{d_i}")
     text("P(X_1 = x_1, ..., X_n = x_n) = Π_i p_{d_i}(X_i | x_parents(X_i))")
@@ -360,7 +360,7 @@ def fully_observable_learning(network_structure, training_data, pseudocounts=Non
     else:
         counts = deepcopy(pseudocounts)  # @inspect counts
 
-    # Count 
+    # Count
     for x in training_data:  # For each assignment x... @inspect x
         for var, value in x.items():  # @inspect var value
             parameter_name, parent_vars = network_structure[var]  # @inspect parameter_name parent_vars
@@ -423,7 +423,7 @@ def maximum_likelihood_two_variables():
     image("images/pgm-g-r.png", width=150)
     text("P(G = g, R = r) = p_G(g) p_R(r | g)")
     text("Parameters: θ = (p_G, p_R)")
-    
+
     training_data = [
         {"G": "drama", "R": 4},
         {"G": "drama", "R": 5},
@@ -520,7 +520,7 @@ def introduce_expectation_maximization():
     text("It's a chicken and egg problem:")
     text("- If know parameters θ, can compute distribution over unobserved variables P(G = g | R1 = r1, R2 = r2; θ).")
     text("- If know unobserved variables, can compute parameters θ.")
-    
+
     text("Let's just initialize the parameters θ randomly, and then iterate:")
     text("- E-step: compute P(G = g | R1 = r1, R2 = r2; θ) to provide weighted full assignments.")
     text("- M-step: compute θ that maximizes the expected log likelihood of the weighted assignments.")

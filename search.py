@@ -39,7 +39,7 @@ def main():
 
     # Modeling
     search_problem()
-    
+
     # Exact methods: compute minimum cost solution
     introduce_exhaustive_search()
     introduce_dynamic_programming()
@@ -67,7 +67,7 @@ def main():
     text("- Dynamic programming: find exact solution, exponentially faster (if the number of states is small).")
     text("- Best-of-n: find approximate solution by throwing `n` darts")
     text("- Beam search: find approximate solution by keeping track of `beam_width` partial solutions.")
-    
+
     text("Synergy between learning and search")
     text("- Costs are learned from data")
     text("- Search: find the best solution given those costs")
@@ -114,7 +114,7 @@ def example_travel_problem():
     successors = problem.successors(state)  # From each state, where can we go @inspect successors
     is_end = problem.is_end(successors[0].state)  # Are we done? @inspect is_end
 
-    text("A search problem has the following components:")  # @clear 
+    text("A search problem has the following components:")  # @clear
     text("- `start_state()`: the initial state.")
     text("- `successors(state)`: specifies the actions one can take in `state`, their costs, and the resulting states.")
     text("- `is_end(state)`: whether `state` is an end state.")
@@ -223,7 +223,7 @@ class LimitedTravelSearchProblem(SearchProblem):
     def is_end(self, state: TravelState) -> bool:
         # Have we reached the destination?  Don't care about how many tickets we have
         return state.loc == self.num_locs
-    
+
 
 @dataclass
 class Solution:
@@ -240,7 +240,7 @@ class Solution:
 
 def introduce_exhaustive_search():
     text("Objective: given a search problem, find a sequence of actions that minimizes the total cost.")
-    
+
     text("Exhaustive search: simply try all possible solutions (sequences of actions).")
     text("There are many ways to enumerate solutions.")
     text("We'll choose a particular formulation")
@@ -259,7 +259,7 @@ def introduce_exhaustive_search():
 
     text("Let's do an example.")
     problem = TravelSearchProblem(num_locs=4)  # @stepover
-    
+
     solution, num_explored = exhaustive_search(problem)  # @inspect solution num_explored
     text("Notice that the number of states explored (9) is larger than the number of states (4).")
     text("...this means we're exploring some states more than once.")
@@ -351,7 +351,7 @@ def introduce_dynamic_programming():
     text("When can you even use dynamic programming?")  # @clear solution num_explored
     text("- In general, memory is more precious than time. Can always run program for longer, but memory doesn't grow.")
     text("- So run dynamic programming only when number of states fits in memory.")
-    
+
     text("When does dynamic programming provide speedup over exhaustive search?")
     text("- Intuition: DP is useful when there are a lot of ways to reach a state.")
     text("- If every action takes you to a new state, might as well do exhaustive search (no cache).")
@@ -365,7 +365,7 @@ def dynamic_programming(problem: SearchProblem) -> tuple[Solution | None, int, d
     """Perform dynamic programming on `problem` to find the minimum cost solution."""
     # Keep track of how many states we've explored (time complexity)
     num_explored = 0  # @inspect num_explored
-    
+
     # NEW: cache solutions for each state
     cache: dict[Any, Solution] = {}  # From state -> future solution @inspect cache
 
@@ -375,7 +375,7 @@ def dynamic_programming(problem: SearchProblem) -> tuple[Solution | None, int, d
         # NEW: check cache first
         if state in cache:
             return cache[state]
-        
+
         # Keep track of how many states we've explored
         nonlocal num_explored
         num_explored += 1  # @inspect num_explored
@@ -544,7 +544,7 @@ class LanguageModelSearchProblem(SearchProblem):
     def start_state(self) -> str:
         """State starts with prompt."""
         return self.prompt  # @inspect self.prompt
-    
+
     def successors(self, state: str) -> list[Step]:  # @inspect state
         """Return successors from `state`."""
         # Tokenize the state (prompt + prefix of the response so far)
@@ -601,7 +601,7 @@ def lm_policy(problem: LanguageModelSearchProblem, state: str) -> Step:  # @insp
 
     # Convert costs to probabilities
     probs = torch.softmax(-torch.tensor(costs), dim=-1)  # @inspect probs
-    
+
     # Sample an element from the `probs` distribution
     index = torch.multinomial(probs, num_samples=1)[0]  # @inspect index
 

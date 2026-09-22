@@ -106,7 +106,7 @@ def minimax_theorem():
 
     text("In general, the second player can always play a pure strategy:")
     image("images/second-pure.png", width=500)
-    
+
     text("In general, player A plays π_A = [p, 1-p].")
     image("images/mixed-a-b.png", width=400)
     text("Minimax value of the game:")
@@ -176,7 +176,7 @@ def nash_equilibria():
     text("Examples of Nash equilibria:")
     image("images/payoff-morra.png", width=500)
     text("Nash equilibrium (also the minimax strategy): [7/12, 5/12]")
-    
+
     image("images/payoff-collaborative-morra.png", width=500)
     text("Nash equilibrium: both players play 1 or both players play 2")
 

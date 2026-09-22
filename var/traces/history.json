@@ -1,6 +1,6 @@
 {
   "files": {
-    "history.py": "from edtrace import text, image, link\nfrom util import article_link\n\n\ndef main():\n    link(\"https://stanford-cs221.github.io/autumn2023/modules/module.html#include=general%2Fhistory.js&slideId=turing&level=0&mode=print6pp\", title=\"Slides from Autumn 2023\")\n\n    turing_test()\n\n    text(\"The history of AI is the story of three intellectual traditions:\")\n    image(\"images/symbolic-neural-statistical.png\", width=500)\n\n    symbolic_ai()\n    neural_ai()\n    statistical_ai()\n\n    foundation_models()\n    parting_thoughts()\n\n\ndef turing_test():\n    text(\"In 1950, this man:\")\n    image(\"images/alan-turing.jpg\", width=150)\n    text(\"published this paper:\")\n    image(\"images/turing-1950-paper.jpg\", width=300)\n\n    text(\"Alan Turing asked: \\\"Can machines think?\\\"\")\n    text(\"More basically: How could you tell?\")\n    text(\"His answer: Imitation Game (the Turing Test)\")\n    image(\"images/turing-test.jpg\", width=200)\n\n    text(\"Significance: ground philosophical question in objective measurement\")\n    text(\"Left open the solution: machine learning? logic?\")\n\n\ndef symbolic_ai():\n    text(\"1956: John McCarthy organized workshop at Dartmouth College\")\n    image(\"images/dartmouth.jpg\", width=100)\n    text(\"- Convened the leading thinkers of the day (Shannon, Minsky, etc.)\")\n    text(\"- Goal was to make a \\\"significant advance\\\" in 2 months\")\n    text(\"- Coined the term \\\"artificial intelligence\\\"\")\n\n    text(\"1952: Arthur Samuel\\'s checkers playing program\")\n    text(\"- Weights were learned\")\n    text(\"- Played at strong amateur level\")\n\n    text(\"1955: Newell &amp; Simon\\'s Logic Theorist\")\n    text(\"- Used search + heuristics\")\n    text(\"- Came up with new proof for theorems in Principia Mathematica\")\n\n    text(\"Overwhelming optimism...\")\n    text(\"- Herbert Simon: *Machines will be capable, within twenty years, of doing any work a man can do.*\")\n    text(\"- Marvin Minsky: *Within 10 years the problems of artificial intelligence will be substantially solved.*\")\n    text(\"- Claude Shannon: *I visualize a time when we will be to robots what dogs are to humans, and I\\'m rooting for the machines.*\")\n\n    text(\"Underwhelming results...\")\n    text(\"Folklore example from machine translation:\")\n    text(\"- English: *The spirit is willing but the flesh is weak.*\")\n    text(\"- Russian: ...\")\n    text(\"- English: *The vodka is good but the meat is rotten.*\")\n    \n    text(\"1966: ALPAC report cut off government funding for machine translation, first AI winter \u2744\ufe0f\")\n\n    text(\"What went wrong?\")\n    text(\"Problems\")\n    text(\"- Limited computation: search space grew exponentially, outpacing hardware\")\n    text(\"- Limited information: complexity of AI problems (number of words, objects, concepts in the world)\")\n    text(\"Silver lining: useful contributions (John McCarthy)\")\n    text(\"- Lisp: advanced programming language\")\n    text(\"- Garbage collection: don't have to (de)allocate memory\")\n    text(\"- Time-sharing: allow multiple people to use the same computer at once\")\n\n    text(\"Knowledge-based systems (70-80s)\")\n    image(\"images/knowledge-key.jpg\"),\n    text(\"Expert systems: elicit specific domain knowledge from experts in form of rules\"),\n    image(\"images/mycin-rule.png\")\n    text(\"Systems:\")\n    text(\"- DENDRAL: infer molecular structure from mass spectrometry\")\n    text(\"- MYCIN: diagnose blood infections, recommend antibiotics\")\n    text(\"- XCON: convert customer orders into parts specification\")\n\n    text(\"Wins:\")\n    text(\"- Knowledge helped both the information and computation gap\")\n    text(\"- First real application that impacted industry\")\n    text(\"Shortcomings:\")\n    text(\"- Deterministic rules couldn't handle the uncertainty of the real world\")\n    text(\"- Rules quickly became too complex to create and maintain\")\n\n    text(\"1987: Collapse of Lisp machines and second AI winter \u2744\ufe0f\")\n\n\ndef neural_ai():\n    text(\"Artificial neural networks\")\n    text(\"- 1943: artificial neural networks, relate neural circuitry and mathematical logic (McCulloch/Pitts)\")\n    text(\"- 1949: \\\"cells that fire together wire together\\\" learning rule (Hebb)\")\n    text(\"- 1958: Perceptron algorithm for linear classifiers (Rosenblatt)\")\n    text(\"- 1959: ADALINE device for linear regression (Widrow/Hoff)\")\n    text(\"- 1969: Perceptrons book showed that linear models could not solve XOR, killed neural nets research (Minsky/Papert)\")\n\n    text(\"Revival of connectionism\")\n    text(\"- 1980: Neocognitron, a.k.a. convolutional neural networks for images (Fukushima)\")\n    text(\"- 1986: popularization of backpropagation for training multi-layer networks (Rumelhardt, Hinton, Williams)\")\n    text(\"- 1989: applied convolutional neural networks to recognizing handwritten digits for USPS (LeCun)\")\n\n    text(\"Neural networks were hard to train and were unpopular in the 2000s\")\n\n    text(\"Deep learning\")\n    text(\"- 2006: unsupervised layerwise pre-training of deep networks (Hinton et al.)\")\n    text(\"- 2009: neural networks outperform Hidden Markov Models in speech recognition, transformed speech community\")\n    text(\"- 2012: AlexNet obtains huge gains in object recognition; transformed computer vision community\")\n    text(\"- 2014: sequence-to-sequence modeling (for machine translation) \"), link(\"https://arxiv.org/abs/1409.3215\")\n    text(\"- 2014: Adam optimizer \"), link(\"https://arxiv.org/abs/1412.6980\")\n    text(\"- 2015: Attention mechanism (for machine translation) \"), link(\"https://arxiv.org/abs/1409.0473\")\n    text(\"- 2016: AlphaGo uses deep reinforcement learning, defeat world champion Lee Sedol in Go\")\n    text(\"- 2017: Transformer architecture (for machine translation) \"), link(\"https://arxiv.org/abs/1706.03762\")\n\n\ndef statistical_ai():\n    text(\"Early ideas outside AI\")\n    text(\"- 1801: linear regression (Gauss, Legendre)\")\n    text(\"- 1936: linear classification (Fisher)\")\n    text(\"- 1951: stochastic gradient descent (Robbins/Monro)\")\n    text(\"- 1956: Uniform cost search for shortest paths (Dijkstra)\")\n    text(\"- 1957: Markov decision processes (Bellman)\")\n\n    text(\"Statistical machine learning\")\n    text(\"- 1985: Bayesian networks enabled reasoning under uncertainty (Pearl)\")\n    text(\"- 1995: support vector machines (Cortes/Vapnik) became popular in ML: easier to train, rooted in statistical learning theory\")\n    text(\"- 1999: variational inference was popularized by Jordan/Jaakkola\")\n    text(\"- 2001: conditional random fields allowed for predicting structures (Lafferty/McCallum/Pereira)\")\n    text(\"- 2003: topic modeling allowed for hierarchies and uncertainty over parameters (Blei/Ng/Jordan)\")\n\n\ndef foundation_models():\n    text(\"### Pretrained language models\")\n    text(\"- ELMo: pretraining with LSTMs, fine-tuning helps downstream tasks \"), link(\"https://arxiv.org/abs/1802.05365\")\n    text(\"- BERT: pretraining with Transformer, fine-tuning helps downstream tasks \"), link(\"https://arxiv.org/abs/1810.04805\")\n    text(\"- Google's T5 (11B): cast everything as text-to-text \"), link(\"https://arxiv.org/abs/1910.10683\")\n    image(\"images/t5.png\", width=400)\n\n    text(\"### Scaling up\")\n    text(\"- GPT-2: fluent text, first signs of zero-shot capabilities \"), link(\"https://cdn.openai.com/better-language-models/language_models_are_unsupervised_multitask_learners.pdf\", title=\"[Radford+ 2019]\")\n    text(\"- Scaling laws: provide hope / predictability for scaling \"), link(\"https://arxiv.org/abs/2001.08361\")\n    text(\"- GPT-3: in-context learning, closed \"), link(\"https://arxiv.org/abs/2005.14165\")\n    text(\"- Chinchilla: compute-optimal scaling laws \"), link(\"https://arxiv.org/abs/2005.14165\")\n    text(\"- Llama 3 \"), link(\"https://arxiv.org/abs/2407.21783\")\n    text(\"- DeepSeek v3 \"), link(\"https://arxiv.org/abs/2412.19437\")\n\n    text(\"### Reasoning\")\n    text(\"- Answering hard questions requires thinking\")\n    text(\"- Language models produce \\\"thoughts\\\" before producing a response\")\n    text(\"- Models: OpenAI's o1-o4, DeepSeek's r1\")\n\n    text(\"### Industrialization of AI\")\n    image(\"https://upload.wikimedia.org/wikipedia/commons/thumb/c/cc/Industrialisation.jpg/440px-Industrialisation.jpg\", width=400)\n\n    text(\"GPT-4 supposedly has 1.8T parameters. \"), article_link(\"https://www.hpcwire.com/2024/03/19/the-generative-ai-future-is-now-nvidias-huang-says\")\n    text(\"GPT-4 supposedly cost $100M to train. \"), article_link(\"https://www.wired.com/story/openai-ceo-sam-altman-the-age-of-giant-ai-models-is-already-over/\")\n    text(\"xAI builds cluster with 200,000 H100s to train Grok. \"), article_link(\"https://www.tomshardware.com/pc-components/gpus/elon-musk-is-doubling-the-worlds-largest-ai-gpu-cluster-expanding-colossus-gpu-cluster-to-200-000-soon-has-floated-300-000-in-the-past\")\n    text(\"Stargate (OpenAI, NVIDIA, Oracle) invests $500B over 4 years. \"), article_link(\"https://openai.com/index/announcing-the-stargate-project/\")\n\n    text(\"There are no public details on how frontier models are built.\")\n    text(\"From the GPT-4 technical report \"), link(\"https://arxiv.org/abs/2303.08774\"), text(\":\")\n    image(\"images/gpt4-no-details.png\", width=600)\n\n    text(\"AI has emerged from research and now is shaping businesses and public policy.\")\n    text(\"The research is still far from done...\")\n\n\ndef parting_thoughts():\n    text(\"Fierce battles between the traditions\")\n    text(\"- Minsky/Papert promoted symbolic AI and killed neural networks research\")\n    text(\"- Statistical ML in the 2000s thought neural networks were dead\")\n\n    text(\"Deeper connections\")\n    text(\"- McCulloch/Pitts introduced artificial neural networks, but paper is about how to implement logical operations\")\n    text(\"- Go is defined purely using symbols, but deep neural networks are key to playing the game\")\n    text(\"- Deep learning was initially all about perception, but now turn to reasoning (goals of symbolic AI)\")\n\n    text(\"AI is a melting pot:\")\n    text(\"- Symbolic AI: provided the vision and ambition\")\n    text(\"- Neural AI: provided the model architectures\")\n    text(\"- Statistical AI: provided the rigor (e.g., optimization, generalization)\")\n\n    text(\"This class: we will see elements of all three traditions\")\n\n\nif __name__ == \"__main__\":\n    main()\n"
+    "history.py": "from edtrace import text, image, link\nfrom util import article_link\n\n\ndef main():\n    text(\"# A Brief History of AI\")\n    turing_test()\n\n    text(\"The history of AI is the story of three intellectual traditions:\")\n    image(\"images/symbolic-neural-statistical.png\", width=500)\n\n    symbolic_ai()\n    neural_ai()\n    statistical_ai()\n\n    foundation_models()\n    parting_thoughts()\n\n\ndef turing_test():\n    text(\"In 1950, this man:\")\n    image(\"images/alan-turing.jpg\", width=150)\n    text(\"published this paper:\")\n    image(\"images/turing-1950-paper.jpg\", width=300)\n\n    text(\"Alan Turing asked: \\\"Can machines think?\\\"\")\n    text(\"More basically: How could you tell?\")\n    text(\"His answer: Imitation Game (the Turing Test)\")\n    image(\"images/turing-test.jpg\", width=200)\n\n    text(\"Significance: ground philosophical question in objective measurement\")\n    text(\"Left open the solution: machine learning? logic?\")\n\n\ndef symbolic_ai():\n    text(\"1956: John McCarthy organized workshop at Dartmouth College\")\n    image(\"images/dartmouth.jpg\", width=100)\n    text(\"- Convened the leading thinkers of the day (Shannon, Minsky, etc.)\")\n    text(\"- Goal was to make a \\\"significant advance\\\" in 2 months\")\n    text(\"- Coined the term \\\"artificial intelligence\\\"\")\n\n    text(\"1952: Arthur Samuel\\'s checkers playing program\")\n    text(\"- Weights were learned\")\n    text(\"- Played at strong amateur level\")\n\n    text(\"1955: Newell &amp; Simon\\'s Logic Theorist\")\n    text(\"- Used search + heuristics\")\n    text(\"- Came up with new proof for theorems in Principia Mathematica\")\n\n    text(\"Overwhelming optimism...\")\n    text(\"- Herbert Simon: *Machines will be capable, within twenty years, of doing any work a man can do.*\")\n    text(\"- Marvin Minsky: *Within 10 years the problems of artificial intelligence will be substantially solved.*\")\n    text(\"- Claude Shannon: *I visualize a time when we will be to robots what dogs are to humans, and I\\'m rooting for the machines.*\")\n\n    text(\"Underwhelming results...\")\n    text(\"Folklore example from machine translation:\")\n    text(\"- English: *The spirit is willing but the flesh is weak.*\")\n    text(\"- Russian: ...\")\n    text(\"- English: *The vodka is good but the meat is rotten.*\")\n\n    text(\"1966: ALPAC report cut off government funding for machine translation, first AI winter \u2744\ufe0f\")\n\n    text(\"What went wrong?\")\n    text(\"Problems:\")\n    text(\"- Limited computation: search space grew exponentially, outpacing hardware\")\n    text(\"- Limited information: complexity of AI problems (number of words, objects, concepts in the world)\")\n    text(\"Silver lining: useful contributions (John McCarthy)\")\n    text(\"- Lisp: advanced programming language\")\n    text(\"- Garbage collection: don't have to (de)allocate memory\")\n    text(\"- Time-sharing: allow multiple people to use the same computer at once\")\n\n    text(\"Knowledge-based systems (70-80s)\")\n    image(\"images/knowledge-key.jpg\")\n    text(\"Expert systems: elicit specific domain knowledge from experts in the form of rules\")\n    image(\"images/mycin-rule.png\")\n    text(\"Systems:\")\n    text(\"- DENDRAL: infer molecular structure from mass spectrometry\")\n    text(\"- MYCIN: diagnose blood infections, recommend antibiotics\")\n    text(\"- XCON: convert customer orders into parts specification\")\n\n    text(\"Wins:\")\n    text(\"- Knowledge helped both the information and computation gap\")\n    text(\"- First real application that impacted industry\")\n    text(\"Shortcomings:\")\n    text(\"- Deterministic rules couldn't handle the uncertainty of the real world\")\n    text(\"- Rules quickly became too complex to create and maintain\")\n\n    text(\"1987: Collapse of Lisp machines and second AI winter \u2744\ufe0f\")\n\n\ndef neural_ai():\n    text(\"Artificial neural networks\")\n    text(\"- 1943: artificial neural networks, relate neural circuitry and mathematical logic (McCulloch/Pitts)\")\n    text(\"- 1949: \\\"cells that fire together wire together\\\" learning rule (Hebb)\")\n    text(\"- 1958: Perceptron algorithm for linear classifiers (Rosenblatt)\")\n    text(\"- 1959: ADALINE device for linear regression (Widrow/Hoff)\")\n    text(\"- 1969: Perceptrons book showed that linear models could not solve XOR, killed neural nets research (Minsky/Papert)\")\n\n    text(\"Revival of connectionism\")\n    text(\"- 1980: Neocognitron, a.k.a. convolutional neural networks for images (Fukushima)\")\n    text(\"- 1986: popularization of backpropagation for training multi-layer networks (Rumelhart, Hinton, Williams)\")\n    text(\"- 1989: applied convolutional neural networks to recognizing handwritten digits for USPS (LeCun)\")\n\n    text(\"Neural networks were hard to train and were unpopular in the 2000s\")\n\n    text(\"Deep learning\")\n    text(\"- 2006: unsupervised layerwise pre-training of deep networks (Hinton et al.)\")\n    text(\"- 2009: neural networks outperform Hidden Markov Models in speech recognition, transformed speech community\")\n    text(\"- 2012: AlexNet obtains huge gains in object recognition; transformed computer vision community\")\n    text(\"- 2014: sequence-to-sequence modeling (for machine translation) \"), link(\"https://arxiv.org/abs/1409.3215\")\n    text(\"- 2014: Adam optimizer \"), link(\"https://arxiv.org/abs/1412.6980\")\n    text(\"- 2015: Attention mechanism (for machine translation) \"), link(\"https://arxiv.org/abs/1409.0473\")\n    text(\"- 2016: AlphaGo uses deep reinforcement learning, defeat world champion Lee Sedol in Go\")\n    text(\"- 2017: Transformer architecture (for machine translation) \"), link(\"https://arxiv.org/abs/1706.03762\")\n\n\ndef statistical_ai():\n    text(\"Early ideas outside AI\")\n    text(\"- 1801: linear regression (Gauss, Legendre)\")\n    text(\"- 1936: linear classification (Fisher)\")\n    text(\"- 1951: stochastic gradient descent (Robbins/Monro)\")\n    text(\"- 1956: Uniform cost search for shortest paths (Dijkstra)\")\n    text(\"- 1957: Markov decision processes (Bellman)\")\n\n    text(\"Statistical machine learning\")\n    text(\"- 1985: Bayesian networks enabled reasoning under uncertainty (Pearl)\")\n    text(\"- 1995: support vector machines (Cortes/Vapnik) became popular in ML: easier to train, rooted in statistical learning theory\")\n    text(\"- 1999: variational inference was popularized by Jordan/Jaakkola\")\n    text(\"- 2001: conditional random fields allowed for predicting structures (Lafferty/McCallum/Pereira)\")\n    text(\"- 2003: topic modeling allowed for hierarchies and uncertainty over parameters (Blei/Ng/Jordan)\")\n\n\ndef foundation_models():\n    text(\"Pretrained language models (~2018):\")\n    text(\"- Key idea: train models on tons of raw data to build good **representations**\")\n    text(\"- Example model: BERT \"), link(\"https://arxiv.org/abs/1810.04805\")\n    image(\"images/bert-pretrain-finetune.png\", width=800)\n    text(\"- Masked LM pretrained to fill in the blanks on documents\")\n    text(\"- **Fine-tune** for downstream tasks (e.g., question answering)\")\n\n    text(\"Scaling up text **generation** (~2020):\")\n    text(\"- GPT-2: 1.5B parameters, fluent text, first signs of zero-shot capabilities \"), link(\"https://cdn.openai.com/better-language-models/language_models_are_unsupervised_multitask_learners.pdf\", title=\"[Radford+ 2019]\")\n    text(\"- Scaling laws: provide predictability for scaling \"), link(\"https://arxiv.org/abs/2001.08361\")\n    text(\"- GPT-3: 175B parameters, in-context learning \"), link(\"https://arxiv.org/abs/2005.14165\")\n    text(\"- Chinchilla: compute-optimal scaling laws \"), link(\"https://arxiv.org/abs/2005.14165\")\n\n    text(\"Aligning **chat** language models (~2022):\")\n    text(\"- Make language models follow instructions, can chat with\")\n    text(\"- Reinforcement learning from human feedback (RLHF) \"), link(\"https://arxiv.org/abs/2203.02155\")\n    text(\"- Led to ChatGPT (2022)\")\n\n    text(\"Reasoning models (~2023):\")\n    text(\"- Answering hard questions requires **thinking**\")\n    text(\"- Language models produce a sequence of chain-of-thought tokens before producing a response\")\n    text(\"- OpenAI's o1 and later DeepSeek's r1 paved the way\")\n\n    text(\"Agents (~2025):\")\n    text(\"- Solving tasks requires taking **actions** in the world\")\n    text(\"- Examples: web search, calculator, writing code, various APIs\")\n    text(\"- Led to coding agents, computer use agents, cybersecurity agents, etc.\")\n    text(\"- Frontier: multi-agent collaboration\")\n\n    text(\"### Industrialization of AI\")\n    image(\"images/industrialization.jpg\", width=400)\n    text(\"- xAI builds cluster with 200,000 H100s to train Grok. \"), article_link(\"https://www.tomshardware.com/pc-components/gpus/elon-musk-is-doubling-the-worlds-largest-ai-gpu-cluster-expanding-colossus-gpu-cluster-to-200-000-soon-has-floated-300-000-in-the-past\")\n    text(\"- Stargate (OpenAI, NVIDIA, Oracle) invests $500B over 4 years. \"), article_link(\"https://openai.com/index/announcing-the-stargate-project/\")\n\n    text(\"AI becomes mainstream:\")\n    text(\"- Widespread adoption: ChatGPT (2022) acquired 100M users after 2 months\")\n    text(\"- Policymaking: governments trying to figure out how to regulate AI (safety, national security, competition)\")\n\n    text(\"There are no public details on how frontier models are built.\")\n    text(\"From the GPT-4 technical report \"), link(\"https://arxiv.org/abs/2303.08774\"), text(\":\")\n    image(\"images/gpt4-no-details.png\", width=600)\n\n\ndef parting_thoughts():\n    text(\"Fierce battles between the traditions:\")\n    text(\"- Minsky/Papert promoted symbolic AI and killed neural networks research\")\n    text(\"- Statistical ML in the 2000s thought neural networks were dead\")\n\n    text(\"Deeper connections\")\n    text(\"- McCulloch/Pitts introduced artificial neural networks, but paper is about how to implement logical operations\")\n    text(\"- Go is defined purely using symbols, but deep neural networks are key to playing the game\")\n    text(\"- Deep learning was initially all about perception, but now turn to reasoning (goals of symbolic AI)\")\n\n    text(\"AI is a melting pot:\")\n    text(\"- Symbolic AI: provided the vision and ambition, agent scaffolds\")\n    text(\"- Neural AI: provided the core paradigm (training neural networks)\")\n    text(\"- Statistical AI: provided the rigor (e.g., optimization, variance, generalization)\")\n\n    text(\"This class: we will see elements of all three traditions\")\n\n\nif __name__ == \"__main__\":\n    main()\n"
   },
   "hidden_line_numbers": {
     "history.py": []
@@ -24,24 +24,16 @@
           "path": "history.py",
           "line_number": 6,
           "function_name": "main",
-          "code": "link(\"https://stanford-cs221.github.io/autumn2023/modules/module.html#include=general%2Fhistory.js&slideId=turing&level=0&mode=print6pp\", title=\"Slides from Autumn 2023\")"
+          "code": "text(\"# A Brief History of AI\")"
         }
       ],
       "env": {},
       "renderings": [
         {
-          "type": "link",
-          "data": null,
+          "type": "markdown",
+          "data": "# A Brief History of AI",
           "style": {},
-          "external_link": {
-            "title": "Slides from Autumn 2023",
-            "authors": null,
-            "organization": null,
-            "date": null,
-            "url": "https://stanford-cs221.github.io/autumn2023/modules/module.html#include=general%2Fhistory.js&slideId=turing&level=0&mode=print6pp",
-            "description": null,
-            "notes": null
-          },
+          "external_link": null,
           "internal_link": null
         }
       ]
@@ -50,7 +42,7 @@
       "stack": [
         {
           "path": "history.py",
-          "line_number": 8,
+          "line_number": 7,
           "function_name": "main",
           "code": "turing_test()"
         }
@@ -62,13 +54,13 @@
       "stack": [
         {
           "path": "history.py",
-          "line_number": 8,
+          "line_number": 7,
           "function_name": "main",
           "code": "turing_test()"
         },
         {
           "path": "history.py",
-          "line_number": 21,
+          "line_number": 20,
           "function_name": "turing_test",
           "code": "def turing_test():"
         }
@@ -80,13 +72,13 @@
       "stack": [
         {
           "path": "history.py",
-          "line_number": 8,
+          "line_number": 7,
           "function_name": "main",
           "code": "turing_test()"
         },
         {
           "path": "history.py",
-          "line_number": 22,
+          "line_number": 21,
           "function_name": "turing_test",
           "code": "text(\"In 1950, this man:\")"
         }
@@ -106,13 +98,13 @@
       "stack": [
         {
           "path": "history.py",
-          "line_number": 8,
+          "line_number": 7,
           "function_name": "main",
           "code": "turing_test()"
         },
         {
           "path": "history.py",
-          "line_number": 23,
+          "line_number": 22,
           "function_name": "turing_test",
           "code": "image(\"images/alan-turing.jpg\", width=150)"
         }
@@ -134,13 +126,13 @@
       "stack": [
         {
           "path": "history.py",
-          "line_number": 8,
+          "line_number": 7,
           "function_name": "main",
           "code": "turing_test()"
         },
         {
           "path": "history.py",
-          "line_number": 24,
+          "line_number": 23,
           "function_name": "turing_test",
           "code": "text(\"published this paper:\")"
         }
@@ -160,13 +152,13 @@
       "stack": [
         {
           "path": "history.py",
-          "line_number": 8,
+          "line_number": 7,
           "function_name": "main",
           "code": "turing_test()"
         },
         {
           "path": "history.py",
-          "line_number": 25,
+          "line_number": 24,
           "function_name": "turing_test",
           "code": "image(\"images/turing-1950-paper.jpg\", width=300)"
         }
@@ -188,13 +180,13 @@
       "stack": [
         {
           "path": "history.py",
-          "line_number": 8,
+          "line_number": 7,
           "function_name": "main",
           "code": "turing_test()"
         },
         {
           "path": "history.py",
-          "line_number": 27,
+          "line_number": 26,
           "function_name": "turing_test",
           "code": "text(\"Alan Turing asked: \\\"Can machines think?\\\"\")"
         }
@@ -214,13 +206,13 @@
       "stack": [
         {
           "path": "history.py",
-          "line_number": 8,
+          "line_number": 7,
           "function_name": "main",
           "code": "turing_test()"
         },
         {
           "path": "history.py",
-          "line_number": 28,
+          "line_number": 27,
           "function_name": "turing_test",
           "code": "text(\"More basically: How could you tell?\")"
         }
@@ -240,13 +232,13 @@
       "stack": [
         {
           "path": "history.py",
-          "line_number": 8,
+          "line_number": 7,
           "function_name": "main",
           "code": "turing_test()"
         },
         {
           "path": "history.py",
-          "line_number": 29,
+          "line_number": 28,
           "function_name": "turing_test",
           "code": "text(\"His answer: Imitation Game (the Turing Test)\")"
         }
@@ -266,13 +258,13 @@
       "stack": [
         {
           "path": "history.py",
-          "line_number": 8,
+          "line_number": 7,
           "function_name": "main",
           "code": "turing_test()"
         },
         {
           "path": "history.py",
-          "line_number": 30,
+          "line_number": 29,
           "function_name": "turing_test",
           "code": "image(\"images/turing-test.jpg\", width=200)"
         }
@@ -294,13 +286,13 @@
       "stack": [
         {
           "path": "history.py",
-          "line_number": 8,
+          "line_number": 7,
           "function_name": "main",
           "code": "turing_test()"
         },
         {
           "path": "history.py",
-          "line_number": 32,
+          "line_number": 31,
           "function_name": "turing_test",
           "code": "text(\"Significance: ground philosophical question in objective measurement\")"
         }
@@ -320,13 +312,13 @@
       "stack": [
         {
           "path": "history.py",
-          "line_number": 8,
+          "line_number": 7,
           "function_name": "main",
           "code": "turing_test()"
         },
         {
           "path": "history.py",
-          "line_number": 33,
+          "line_number": 32,
           "function_name": "turing_test",
           "code": "text(\"Left open the solution: machine learning? logic?\")"
         }
@@ -346,7 +338,7 @@
       "stack": [
         {
           "path": "history.py",
-          "line_number": 8,
+          "line_number": 7,
           "function_name": "main",
           "code": "turing_test()"
         }
@@ -358,7 +350,7 @@
       "stack": [
         {
           "path": "history.py",
-          "line_number": 10,
+          "line_number": 9,
           "function_name": "main",
           "code": "text(\"The history of AI is the story of three intellectual traditions:\")"
         }
@@ -378,7 +370,7 @@
       "stack": [
         {
           "path": "history.py",
-          "line_number": 11,
+          "line_number": 10,
           "function_name": "main",
           "code": "image(\"images/symbolic-neural-statistical.png\", width=500)"
         }
@@ -400,7 +392,7 @@
       "stack": [
         {
           "path": "history.py",
-          "line_number": 13,
+          "line_number": 12,
           "function_name": "main",
           "code": "symbolic_ai()"
         }
@@ -412,13 +404,13 @@
       "stack": [
         {
           "path": "history.py",
-          "line_number": 13,
+          "line_number": 12,
           "function_name": "main",
           "code": "symbolic_ai()"
         },
         {
           "path": "history.py",
-          "line_number": 36,
+          "line_number": 35,
           "function_name": "symbolic_ai",
           "code": "def symbolic_ai():"
         }
@@ -430,13 +422,13 @@
       "stack": [
         {
           "path": "history.py",
-          "line_number": 13,
+          "line_number": 12,
           "function_name": "main",
           "code": "symbolic_ai()"
         },
         {
           "path": "history.py",
-          "line_number": 37,
+          "line_number": 36,
           "function_name": "symbolic_ai",
           "code": "text(\"1956: John McCarthy organized workshop at Dartmouth College\")"
         }
@@ -456,13 +448,13 @@
       "stack": [
         {
           "path": "history.py",
-          "line_number": 13,
+          "line_number": 12,
           "function_name": "main",
           "code": "symbolic_ai()"
         },
         {
           "path": "history.py",
-          "line_number": 38,
+          "line_number": 37,
           "function_name": "symbolic_ai",
           "code": "image(\"images/dartmouth.jpg\", width=100)"
         }
@@ -484,13 +476,13 @@
       "stack": [
         {
           "path": "history.py",
-          "line_number": 13,
+          "line_number": 12,
           "function_name": "main",
           "code": "symbolic_ai()"
         },
         {
           "path": "history.py",
-          "line_number": 39,
+          "line_number": 38,
           "function_name": "symbolic_ai",
           "code": "text(\"- Convened the leading thinkers of the day (Shannon, Minsky, etc.)\")"
         }
@@ -510,13 +502,13 @@
       "stack": [
         {
           "path": "history.py",
-          "line_number": 13,
+          "line_number": 12,
           "function_name": "main",
           "code": "symbolic_ai()"
         },
         {
           "path": "history.py",
-          "line_number": 40,
+          "line_number": 39,
           "function_name": "symbolic_ai",
           "code": "text(\"- Goal was to make a \\\"significant advance\\\" in 2 months\")"
         }
@@ -536,13 +528,13 @@
       "stack": [
         {
           "path": "history.py",
-          "line_number": 13,
+          "line_number": 12,
           "function_name": "main",
           "code": "symbolic_ai()"
         },
         {
           "path": "history.py",
-          "line_number": 41,
+          "line_number": 40,
           "function_name": "symbolic_ai",
           "code": "text(\"- Coined the term \\\"artificial intelligence\\\"\")"
         }
@@ -562,13 +554,13 @@
       "stack": [
         {
           "path": "history.py",
-          "line_number": 13,
+          "line_number": 12,
           "function_name": "main",
           "code": "symbolic_ai()"
         },
         {
           "path": "history.py",
-          "line_number": 43,
+          "line_number": 42,
           "function_name": "symbolic_ai",
           "code": "text(\"1952: Arthur Samuel\\'s checkers playing program\")"
         }
@@ -588,13 +580,13 @@
       "stack": [
         {
           "path": "history.py",
-          "line_number": 13,
+          "line_number": 12,
           "function_name": "main",
           "code": "symbolic_ai()"
         },
         {
           "path": "history.py",
-          "line_number": 44,
+          "line_number": 43,
           "function_name": "symbolic_ai",
           "code": "text(\"- Weights were learned\")"
         }
@@ -614,13 +606,13 @@
       "stack": [
         {
           "path": "history.py",
-          "line_number": 13,
+          "line_number": 12,
           "function_name": "main",
           "code": "symbolic_ai()"
         },
         {
           "path": "history.py",
-          "line_number": 45,
+          "line_number": 44,
           "function_name": "symbolic_ai",
           "code": "text(\"- Played at strong amateur level\")"
         }
@@ -640,13 +632,13 @@
       "stack": [
         {
           "path": "history.py",
-          "line_number": 13,
+          "line_number": 12,
           "function_name": "main",
           "code": "symbolic_ai()"
         },
         {
           "path": "history.py",
-          "line_number": 47,
+          "line_number": 46,
           "function_name": "symbolic_ai",
           "code": "text(\"1955: Newell &amp; Simon\\'s Logic Theorist\")"
         }
@@ -666,13 +658,13 @@
       "stack": [
         {
           "path": "history.py",
-          "line_number": 13,
+          "line_number": 12,
           "function_name": "main",
           "code": "symbolic_ai()"
         },
         {
           "path": "history.py",
-          "line_number": 48,
+          "line_number": 47,
           "function_name": "symbolic_ai",
           "code": "text(\"- Used search + heuristics\")"
         }
@@ -692,13 +684,13 @@
       "stack": [
         {
           "path": "history.py",
-          "line_number": 13,
+          "line_number": 12,
           "function_name": "main",
           "code": "symbolic_ai()"
         },
         {
           "path": "history.py",
-          "line_number": 49,
+          "line_number": 48,
           "function_name": "symbolic_ai",
           "code": "text(\"- Came up with new proof for theorems in Principia Mathematica\")"
         }
@@ -718,13 +710,13 @@
       "stack": [
         {
           "path": "history.py",
-          "line_number": 13,
+          "line_number": 12,
           "function_name": "main",
           "code": "symbolic_ai()"
         },
         {
           "path": "history.py",
-          "line_number": 51,
+          "line_number": 50,
           "function_name": "symbolic_ai",
           "code": "text(\"Overwhelming optimism...\")"
         }
@@ -744,13 +736,13 @@
       "stack": [
         {
           "path": "history.py",
-          "line_number": 13,
+          "line_number": 12,
           "function_name": "main",
           "code": "symbolic_ai()"
         },
         {
           "path": "history.py",
-          "line_number": 52,
+          "line_number": 51,
           "function_name": "symbolic_ai",
           "code": "text(\"- Herbert Simon: *Machines will be capable, within twenty years, of doing any work a man can do.*\")"
         }
@@ -770,13 +762,13 @@
       "stack": [
         {
           "path": "history.py",
-          "line_number": 13,
+          "line_number": 12,
           "function_name": "main",
           "code": "symbolic_ai()"
         },
         {
           "path": "history.py",
-          "line_number": 53,
+          "line_number": 52,
           "function_name": "symbolic_ai",
           "code": "text(\"- Marvin Minsky: *Within 10 years the problems of artificial intelligence will be substantially solved.*\")"
         }
@@ -796,13 +788,13 @@
       "stack": [
         {
           "path": "history.py",
-          "line_number": 13,
+          "line_number": 12,
           "function_name": "main",
           "code": "symbolic_ai()"
         },
         {
           "path": "history.py",
-          "line_number": 54,
+          "line_number": 53,
           "function_name": "symbolic_ai",
           "code": "text(\"- Claude Shannon: *I visualize a time when we will be to robots what dogs are to humans, and I\\'m rooting for the machines.*\")"
         }
@@ -822,13 +814,13 @@
       "stack": [
         {
           "path": "history.py",
-          "line_number": 13,
+          "line_number": 12,
           "function_name": "main",
           "code": "symbolic_ai()"
         },
         {
           "path": "history.py",
-          "line_number": 56,
+          "line_number": 55,
           "function_name": "symbolic_ai",
           "code": "text(\"Underwhelming results...\")"
         }
@@ -848,13 +840,13 @@
       "stack": [
         {
           "path": "history.py",
-          "line_number": 13,
+          "line_number": 12,
           "function_name": "main",
           "code": "symbolic_ai()"
         },
         {
           "path": "history.py",
-          "line_number": 57,
+          "line_number": 56,
           "function_name": "symbolic_ai",
           "code": "text(\"Folklore example from machine translation:\")"
         }
@@ -874,13 +866,13 @@
       "stack": [
         {
           "path": "history.py",
-          "line_number": 13,
+          "line_number": 12,
           "function_name": "main",
           "code": "symbolic_ai()"
         },
         {
           "path": "history.py",
-          "line_number": 58,
+          "line_number": 57,
           "function_name": "symbolic_ai",
           "code": "text(\"- English: *The spirit is willing but the flesh is weak.*\")"
         }
@@ -900,13 +892,13 @@
       "stack": [
         {
           "path": "history.py",
-          "line_number": 13,
+          "line_number": 12,
           "function_name": "main",
           "code": "symbolic_ai()"
         },
         {
           "path": "history.py",
-          "line_number": 59,
+          "line_number": 58,
           "function_name": "symbolic_ai",
           "code": "text(\"- Russian: ...\")"
         }
@@ -926,13 +918,13 @@
       "stack": [
         {
           "path": "history.py",
-          "line_number": 13,
+          "line_number": 12,
           "function_name": "main",
           "code": "symbolic_ai()"
         },
         {
           "path": "history.py",
-          "line_number": 60,
+          "line_number": 59,
           "function_name": "symbolic_ai",
           "code": "text(\"- English: *The vodka is good but the meat is rotten.*\")"
         }
@@ -952,13 +944,13 @@
       "stack": [
         {
           "path": "history.py",
-          "line_number": 13,
+          "line_number": 12,
           "function_name": "main",
           "code": "symbolic_ai()"
         },
         {
           "path": "history.py",
-          "line_number": 62,
+          "line_number": 61,
           "function_name": "symbolic_ai",
           "code": "text(\"1966: ALPAC report cut off government funding for machine translation, first AI winter \u2744\ufe0f\")"
         }
@@ -978,13 +970,13 @@
       "stack": [
         {
           "path": "history.py",
-          "line_number": 13,
+          "line_number": 12,
           "function_name": "main",
           "code": "symbolic_ai()"
         },
         {
           "path": "history.py",
-          "line_number": 64,
+          "line_number": 63,
           "function_name": "symbolic_ai",
           "code": "text(\"What went wrong?\")"
         }
@@ -1004,22 +996,22 @@
       "stack": [
         {
           "path": "history.py",
-          "line_number": 13,
+          "line_number": 12,
           "function_name": "main",
           "code": "symbolic_ai()"
         },
         {
           "path": "history.py",
-          "line_number": 65,
+          "line_number": 64,
           "function_name": "symbolic_ai",
-          "code": "text(\"Problems\")"
+          "code": "text(\"Problems:\")"
         }
       ],
       "env": {},
       "renderings": [
         {
           "type": "markdown",
-          "data": "Problems",
+          "data": "Problems:",
           "style": {},
           "external_link": null,
           "internal_link": null
@@ -1030,13 +1022,13 @@
       "stack": [
         {
           "path": "history.py",
-          "line_number": 13,
+          "line_number": 12,
           "function_name": "main",
           "code": "symbolic_ai()"
         },
         {
           "path": "history.py",
-          "line_number": 66,
+          "line_number": 65,
           "function_name": "symbolic_ai",
           "code": "text(\"- Limited computation: search space grew exponentially, outpacing hardware\")"
         }
@@ -1056,13 +1048,13 @@
       "stack": [
         {
           "path": "history.py",
-          "line_number": 13,
+          "line_number": 12,
           "function_name": "main",
           "code": "symbolic_ai()"
         },
         {
           "path": "history.py",
-          "line_number": 67,
+          "line_number": 66,
           "function_name": "symbolic_ai",
           "code": "text(\"- Limited information: complexity of AI problems (number of words, objects, concepts in the world)\")"
         }
@@ -1082,13 +1074,13 @@
       "stack": [
         {
           "path": "history.py",
-          "line_number": 13,
+          "line_number": 12,
           "function_name": "main",
           "code": "symbolic_ai()"
         },
         {
           "path": "history.py",
-          "line_number": 68,
+          "line_number": 67,
           "function_name": "symbolic_ai",
           "code": "text(\"Silver lining: useful contributions (John McCarthy)\")"
         }
@@ -1108,13 +1100,13 @@
       "stack": [
         {
           "path": "history.py",
-          "line_number": 13,
+          "line_number": 12,
           "function_name": "main",
           "code": "symbolic_ai()"
         },
         {
           "path": "history.py",
-          "line_number": 69,
+          "line_number": 68,
           "function_name": "symbolic_ai",
           "code": "text(\"- Lisp: advanced programming language\")"
         }
@@ -1134,13 +1126,13 @@
       "stack": [
         {
           "path": "history.py",
-          "line_number": 13,
+          "line_number": 12,
           "function_name": "main",
           "code": "symbolic_ai()"
         },
         {
           "path": "history.py",
-          "line_number": 70,
+          "line_number": 69,
           "function_name": "symbolic_ai",
           "code": "text(\"- Garbage collection: don't have to (de)allocate memory\")"
         }
@@ -1160,13 +1152,13 @@
       "stack": [
         {
           "path": "history.py",
-          "line_number": 13,
+          "line_number": 12,
           "function_name": "main",
           "code": "symbolic_ai()"
         },
         {
           "path": "history.py",
-          "line_number": 71,
+          "line_number": 70,
           "function_name": "symbolic_ai",
           "code": "text(\"- Time-sharing: allow multiple people to use the same computer at once\")"
         }
@@ -1186,13 +1178,13 @@
       "stack": [
         {
           "path": "history.py",
-          "line_number": 13,
+          "line_number": 12,
           "function_name": "main",
           "code": "symbolic_ai()"
         },
         {
           "path": "history.py",
-          "line_number": 73,
+          "line_number": 72,
           "function_name": "symbolic_ai",
           "code": "text(\"Knowledge-based systems (70-80s)\")"
         }
@@ -1212,15 +1204,15 @@
       "stack": [
         {
           "path": "history.py",
-          "line_number": 13,
+          "line_number": 12,
           "function_name": "main",
           "code": "symbolic_ai()"
         },
         {
           "path": "history.py",
-          "line_number": 74,
+          "line_number": 73,
           "function_name": "symbolic_ai",
-          "code": "image(\"images/knowledge-key.jpg\"),"
+          "code": "image(\"images/knowledge-key.jpg\")"
         }
       ],
       "env": {},
@@ -1238,22 +1230,22 @@
       "stack": [
         {
           "path": "history.py",
-          "line_number": 13,
+          "line_number": 12,
           "function_name": "main",
           "code": "symbolic_ai()"
         },
         {
           "path": "history.py",
-          "line_number": 75,
+          "line_number": 74,
           "function_name": "symbolic_ai",
-          "code": "text(\"Expert systems: elicit specific domain knowledge from experts in form of rules\"),"
+          "code": "text(\"Expert systems: elicit specific domain knowledge from experts in the form of rules\")"
         }
       ],
       "env": {},
       "renderings": [
         {
           "type": "markdown",
-          "data": "Expert systems: elicit specific domain knowledge from experts in form of rules",
+          "data": "Expert systems: elicit specific domain knowledge from experts in the form of rules",
           "style": {},
           "external_link": null,
           "internal_link": null
@@ -1264,13 +1256,13 @@
       "stack": [
         {
           "path": "history.py",
-          "line_number": 13,
+          "line_number": 12,
           "function_name": "main",
           "code": "symbolic_ai()"
         },
         {
           "path": "history.py",
-          "line_number": 76,
+          "line_number": 75,
           "function_name": "symbolic_ai",
           "code": "image(\"images/mycin-rule.png\")"
         }
@@ -1290,13 +1282,13 @@
       "stack": [
         {
           "path": "history.py",
-          "line_number": 13,
+          "line_number": 12,
           "function_name": "main",
           "code": "symbolic_ai()"
         },
         {
           "path": "history.py",
-          "line_number": 77,
+          "line_number": 76,
           "function_name": "symbolic_ai",
           "code": "text(\"Systems:\")"
         }
@@ -1316,13 +1308,13 @@
       "stack": [
         {
           "path": "history.py",
-          "line_number": 13,
+          "line_number": 12,
           "function_name": "main",
           "code": "symbolic_ai()"
         },
         {
           "path": "history.py",
-          "line_number": 78,
+          "line_number": 77,
           "function_name": "symbolic_ai",
           "code": "text(\"- DENDRAL: infer molecular structure from mass spectrometry\")"
         }
@@ -1342,13 +1334,13 @@
       "stack": [
         {
           "path": "history.py",
-          "line_number": 13,
+          "line_number": 12,
           "function_name": "main",
           "code": "symbolic_ai()"
         },
         {
           "path": "history.py",
-          "line_number": 79,
+          "line_number": 78,
           "function_name": "symbolic_ai",
           "code": "text(\"- MYCIN: diagnose blood infections, recommend antibiotics\")"
         }
@@ -1368,13 +1360,13 @@
       "stack": [
         {
           "path": "history.py",
-          "line_number": 13,
+          "line_number": 12,
           "function_name": "main",
           "code": "symbolic_ai()"
         },
         {
           "path": "history.py",
-          "line_number": 80,
+          "line_number": 79,
           "function_name": "symbolic_ai",
           "code": "text(\"- XCON: convert customer orders into parts specification\")"
         }
@@ -1394,13 +1386,13 @@
       "stack": [
         {
           "path": "history.py",
-          "line_number": 13,
+          "line_number": 12,
           "function_name": "main",
           "code": "symbolic_ai()"
         },
         {
           "path": "history.py",
-          "line_number": 82,
+          "line_number": 81,
           "function_name": "symbolic_ai",
           "code": "text(\"Wins:\")"
         }
@@ -1420,13 +1412,13 @@
       "stack": [
         {
           "path": "history.py",
-          "line_number": 13,
+          "line_number": 12,
           "function_name": "main",
           "code": "symbolic_ai()"
         },
         {
           "path": "history.py",
-          "line_number": 83,
+          "line_number": 82,
           "function_name": "symbolic_ai",
           "code": "text(\"- Knowledge helped both the information and computation gap\")"
         }
@@ -1446,13 +1438,13 @@
       "stack": [
         {
           "path": "history.py",
-          "line_number": 13,
+          "line_number": 12,
           "function_name": "main",
           "code": "symbolic_ai()"
         },
         {
           "path": "history.py",
-          "line_number": 84,
+          "line_number": 83,
           "function_name": "symbolic_ai",
           "code": "text(\"- First real application that impacted industry\")"
         }
@@ -1472,13 +1464,13 @@
       "stack": [
         {
           "path": "history.py",
-          "line_number": 13,
+          "line_number": 12,
           "function_name": "main",
           "code": "symbolic_ai()"
         },
         {
           "path": "history.py",
-          "line_number": 85,
+          "line_number": 84,
           "function_name": "symbolic_ai",
           "code": "text(\"Shortcomings:\")"
         }
@@ -1498,13 +1490,13 @@
       "stack": [
         {
           "path": "history.py",
-          "line_number": 13,
+          "line_number": 12,
           "function_name": "main",
           "code": "symbolic_ai()"
         },
         {
           "path": "history.py",
-          "line_number": 86,
+          "line_number": 85,
           "function_name": "symbolic_ai",
           "code": "text(\"- Deterministic rules couldn't handle the uncertainty of the real world\")"
         }
@@ -1524,13 +1516,13 @@
       "stack": [
         {
           "path": "history.py",
-          "line_number": 13,
+          "line_number": 12,
           "function_name": "main",
           "code": "symbolic_ai()"
         },
         {
           "path": "history.py",
-          "line_number": 87,
+          "line_number": 86,
           "function_name": "symbolic_ai",
           "code": "text(\"- Rules quickly became too complex to create and maintain\")"
         }
@@ -1550,13 +1542,13 @@
       "stack": [
         {
           "path": "history.py",
-          "line_number": 13,
+          "line_number": 12,
           "function_name": "main",
           "code": "symbolic_ai()"
         },
         {
           "path": "history.py",
-          "line_number": 89,
+          "line_number": 88,
           "function_name": "symbolic_ai",
           "code": "text(\"1987: Collapse of Lisp machines and second AI winter \u2744\ufe0f\")"
         }
@@ -1576,7 +1568,7 @@
       "stack": [
         {
           "path": "history.py",
-          "line_number": 13,
+          "line_number": 12,
           "function_name": "main",
           "code": "symbolic_ai()"
         }
@@ -1588,7 +1580,7 @@
       "stack": [
         {
           "path": "history.py",
-          "line_number": 14,
+          "line_number": 13,
           "function_name": "main",
           "code": "neural_ai()"
         }
@@ -1600,13 +1592,13 @@
       "stack": [
         {
           "path": "history.py",
-          "line_number": 14,
+          "line_number": 13,
           "function_name": "main",
           "code": "neural_ai()"
         },
         {
           "path": "history.py",
-          "line_number": 92,
+          "line_number": 91,
           "function_name": "neural_ai",
           "code": "def neural_ai():"
         }
@@ -1618,13 +1610,13 @@
       "stack": [
         {
           "path": "history.py",
-          "line_number": 14,
+          "line_number": 13,
           "function_name": "main",
           "code": "neural_ai()"
         },
         {
           "path": "history.py",
-          "line_number": 93,
+          "line_number": 92,
           "function_name": "neural_ai",
           "code": "text(\"Artificial neural networks\")"
         }
@@ -1644,13 +1636,13 @@
       "stack": [
         {
           "path": "history.py",
-          "line_number": 14,
+          "line_number": 13,
           "function_name": "main",
           "code": "neural_ai()"
         },
         {
           "path": "history.py",
-          "line_number": 94,
+          "line_number": 93,
           "function_name": "neural_ai",
           "code": "text(\"- 1943: artificial neural networks, relate neural circuitry and mathematical logic (McCulloch/Pitts)\")"
         }
@@ -1670,13 +1662,13 @@
       "stack": [
         {
           "path": "history.py",
-          "line_number": 14,
+          "line_number": 13,
           "function_name": "main",
           "code": "neural_ai()"
         },
         {
           "path": "history.py",
-          "line_number": 95,
+          "line_number": 94,
           "function_name": "neural_ai",
           "code": "text(\"- 1949: \\\"cells that fire together wire together\\\" learning rule (Hebb)\")"
         }
@@ -1696,13 +1688,13 @@
       "stack": [
         {
           "path": "history.py",
-          "line_number": 14,
+          "line_number": 13,
           "function_name": "main",
           "code": "neural_ai()"
         },
         {
           "path": "history.py",
-          "line_number": 96,
+          "line_number": 95,
           "function_name": "neural_ai",
           "code": "text(\"- 1958: Perceptron algorithm for linear classifiers (Rosenblatt)\")"
         }
@@ -1722,13 +1714,13 @@
       "stack": [
         {
           "path": "history.py",
-          "line_number": 14,
+          "line_number": 13,
           "function_name": "main",
           "code": "neural_ai()"
         },
         {
           "path": "history.py",
-          "line_number": 97,
+          "line_number": 96,
           "function_name": "neural_ai",
           "code": "text(\"- 1959: ADALINE device for linear regression (Widrow/Hoff)\")"
         }
@@ -1748,13 +1740,13 @@
       "stack": [
         {
           "path": "history.py",
-          "line_number": 14,
+          "line_number": 13,
           "function_name": "main",
           "code": "neural_ai()"
         },
         {
           "path": "history.py",
-          "line_number": 98,
+          "line_number": 97,
           "function_name": "neural_ai",
           "code": "text(\"- 1969: Perceptrons book showed that linear models could not solve XOR, killed neural nets research (Minsky/Papert)\")"
         }
@@ -1774,13 +1766,13 @@
       "stack": [
         {
           "path": "history.py",
-          "line_number": 14,
+          "line_number": 13,
           "function_name": "main",
           "code": "neural_ai()"
         },
         {
           "path": "history.py",
-          "line_number": 100,
+          "line_number": 99,
           "function_name": "neural_ai",
           "code": "text(\"Revival of connectionism\")"
         }
@@ -1800,13 +1792,13 @@
       "stack": [
         {
           "path": "history.py",
-          "line_number": 14,
+          "line_number": 13,
           "function_name": "main",
           "code": "neural_ai()"
         },
         {
           "path": "history.py",
-          "line_number": 101,
+          "line_number": 100,
           "function_name": "neural_ai",
           "code": "text(\"- 1980: Neocognitron, a.k.a. convolutional neural networks for images (Fukushima)\")"
         }
@@ -1826,22 +1818,22 @@
       "stack": [
         {
           "path": "history.py",
-          "line_number": 14,
+          "line_number": 13,
           "function_name": "main",
           "code": "neural_ai()"
         },
         {
           "path": "history.py",
-          "line_number": 102,
+          "line_number": 101,
           "function_name": "neural_ai",
-          "code": "text(\"- 1986: popularization of backpropagation for training multi-layer networks (Rumelhardt, Hinton, Williams)\")"
+          "code": "text(\"- 1986: popularization of backpropagation for training multi-layer networks (Rumelhart, Hinton, Williams)\")"
         }
       ],
       "env": {},
       "renderings": [
         {
           "type": "markdown",
-          "data": "- 1986: popularization of backpropagation for training multi-layer networks (Rumelhardt, Hinton, Williams)",
+          "data": "- 1986: popularization of backpropagation for training multi-layer networks (Rumelhart, Hinton, Williams)",
           "style": {},
           "external_link": null,
           "internal_link": null
@@ -1852,13 +1844,13 @@
       "stack": [
         {
           "path": "history.py",
-          "line_number": 14,
+          "line_number": 13,
           "function_name": "main",
           "code": "neural_ai()"
         },
         {
           "path": "history.py",
-          "line_number": 103,
+          "line_number": 102,
           "function_name": "neural_ai",
           "code": "text(\"- 1989: applied convolutional neural networks to recognizing handwritten digits for USPS (LeCun)\")"
         }
@@ -1878,13 +1870,13 @@
       "stack": [
         {
           "path": "history.py",
-          "line_number": 14,
+          "line_number": 13,
           "function_name": "main",
           "code": "neural_ai()"
         },
         {
           "path": "history.py",
-          "line_number": 105,
+          "line_number": 104,
           "function_name": "neural_ai",
           "code": "text(\"Neural networks were hard to train and were unpopular in the 2000s\")"
         }
@@ -1904,13 +1896,13 @@
       "stack": [
         {
           "path": "history.py",
-          "line_number": 14,
+          "line_number": 13,
           "function_name": "main",
           "code": "neural_ai()"
         },
         {
           "path": "history.py",
-          "line_number": 107,
+          "line_number": 106,
           "function_name": "neural_ai",
           "code": "text(\"Deep learning\")"
         }
@@ -1930,13 +1922,13 @@
       "stack": [
         {
           "path": "history.py",
-          "line_number": 14,
+          "line_number": 13,
           "function_name": "main",
           "code": "neural_ai()"
         },
         {
           "path": "history.py",
-          "line_number": 108,
+          "line_number": 107,
           "function_name": "neural_ai",
           "code": "text(\"- 2006: unsupervised layerwise pre-training of deep networks (Hinton et al.)\")"
         }
@@ -1956,13 +1948,13 @@
       "stack": [
         {
           "path": "history.py",
-          "line_number": 14,
+          "line_number": 13,
           "function_name": "main",
           "code": "neural_ai()"
         },
         {
           "path": "history.py",
-          "line_number": 109,
+          "line_number": 108,
           "function_name": "neural_ai",
           "code": "text(\"- 2009: neural networks outperform Hidden Markov Models in speech recognition, transformed speech community\")"
         }
@@ -1982,13 +1974,13 @@
       "stack": [
         {
           "path": "history.py",
-          "line_number": 14,
+          "line_number": 13,
           "function_name": "main",
           "code": "neural_ai()"
         },
         {
           "path": "history.py",
-          "line_number": 110,
+          "line_number": 109,
           "function_name": "neural_ai",
           "code": "text(\"- 2012: AlexNet obtains huge gains in object recognition; transformed computer vision community\")"
         }
@@ -2008,13 +2000,13 @@
       "stack": [
         {
           "path": "history.py",
-          "line_number": 14,
+          "line_number": 13,
           "function_name": "main",
           "code": "neural_ai()"
         },
         {
           "path": "history.py",
-          "line_number": 111,
+          "line_number": 110,
           "function_name": "neural_ai",
           "code": "text(\"- 2014: sequence-to-sequence modeling (for machine translation) \"), link(\"https://arxiv.org/abs/1409.3215\")"
         }
@@ -2030,7 +2022,7 @@
         },
         {
           "type": "link",
-          "data": null,
+          "data": "[Sutskever+ 2014]",
           "style": {},
           "external_link": {
             "title": "Sequence to Sequence Learning with Neural Networks",
@@ -2040,7 +2032,7 @@
               "Quoc V. Le"
             ],
             "organization": null,
-            "date": "2014-09-10T19:55:35Z",
+            "date": "2014-09-10",
             "url": "https://arxiv.org/abs/1409.3215",
             "description": "Deep Neural Networks (DNNs) are powerful models that have achieved excellent performance on difficult learning tasks. Although DNNs work well whenever large labeled training sets are available, they cannot be used to map sequences to sequences. In this paper, we present a general end-to-end approach to sequence learning that makes minimal assumptions on the sequence structure. Our method uses a multilayered Long Short-Term Memory (LSTM) to map the input sequence to a vector of a fixed dimensionality, and then another deep LSTM to decode the target sequence from the vector. Our main result is that on an English to French translation task from the WMT'14 dataset, the translations produced by the LSTM achieve a BLEU score of 34.8 on the entire test set, where the LSTM's BLEU score was penalized on out-of-vocabulary words. Additionally, the LSTM did not have difficulty on long sentences. For comparison, a phrase-based SMT system achieves a BLEU score of 33.3 on the same dataset. When we used the LSTM to rerank the 1000 hypotheses produced by the aforementioned SMT system, its BLEU score increases to 36.5, which is close to the previous best result on this task. The LSTM also learned sensible phrase and sentence representations that are sensitive to word order and are relatively invariant to the active and the passive voice. Finally, we found that reversing the order of the words in all source sentences (but not target sentences) improved the LSTM's performance markedly, because doing so introduced many short term dependencies between the source and the target sentence which made the optimization problem easier.",
             "notes": null
@@ -2053,13 +2045,13 @@
       "stack": [
         {
           "path": "history.py",
-          "line_number": 14,
+          "line_number": 13,
           "function_name": "main",
           "code": "neural_ai()"
         },
         {
           "path": "history.py",
-          "line_number": 112,
+          "line_number": 111,
           "function_name": "neural_ai",
           "code": "text(\"- 2014: Adam optimizer \"), link(\"https://arxiv.org/abs/1412.6980\")"
         }
@@ -2075,7 +2067,7 @@
         },
         {
           "type": "link",
-          "data": null,
+          "data": "[Kingma+ 2014]",
           "style": {},
           "external_link": {
             "title": "Adam: A Method for Stochastic Optimization",
@@ -2084,7 +2076,7 @@
               "Jimmy Ba"
             ],
             "organization": null,
-            "date": "2014-12-22T13:54:29Z",
+            "date": "2014-12-22",
             "url": "https://arxiv.org/abs/1412.6980",
             "description": "We introduce Adam, an algorithm for first-order gradient-based optimization of stochastic objective functions, based on adaptive estimates of lower-order moments. The method is straightforward to implement, is computationally efficient, has little memory requirements, is invariant to diagonal rescaling of the gradients, and is well suited for problems that are large in terms of data and/or parameters. The method is also appropriate for non-stationary objectives and problems with very noisy and/or sparse gradients. The hyper-parameters have intuitive interpretations and typically require little tuning. Some connections to related algorithms, on which Adam was inspired, are discussed. We also analyze the theoretical convergence properties of the algorithm and provide a regret bound on the convergence rate that is comparable to the best known results under the online convex optimization framework. Empirical results demonstrate that Adam works well in practice and compares favorably to other stochastic optimization methods. Finally, we discuss AdaMax, a variant of Adam based on the infinity norm.",
             "notes": null
@@ -2097,13 +2089,13 @@
       "stack": [
         {
           "path": "history.py",
-          "line_number": 14,
+          "line_number": 13,
           "function_name": "main",
           "code": "neural_ai()"
         },
         {
           "path": "history.py",
-          "line_number": 113,
+          "line_number": 112,
           "function_name": "neural_ai",
           "code": "text(\"- 2015: Attention mechanism (for machine translation) \"), link(\"https://arxiv.org/abs/1409.0473\")"
         }
@@ -2119,7 +2111,7 @@
         },
         {
           "type": "link",
-          "data": null,
+          "data": "[Bahdanau+ 2014]",
           "style": {},
           "external_link": {
             "title": "Neural Machine Translation by Jointly Learning to Align and Translate",
@@ -2129,7 +2121,7 @@
               "Yoshua Bengio"
             ],
             "organization": null,
-            "date": "2014-09-01T16:33:02Z",
+            "date": "2014-09-01",
             "url": "https://arxiv.org/abs/1409.0473",
             "description": "Neural machine translation is a recently proposed approach to machine translation. Unlike the traditional statistical machine translation, the neural machine translation aims at building a single neural network that can be jointly tuned to maximize the translation performance. The models proposed recently for neural machine translation often belong to a family of encoder-decoders and consists of an encoder that encodes a source sentence into a fixed-length vector from which a decoder generates a translation. In this paper, we conjecture that the use of a fixed-length vector is a bottleneck in improving the performance of this basic encoder-decoder architecture, and propose to extend this by allowing a model to automatically (soft-)search for parts of a source sentence that are relevant to predicting a target word, without having to form these parts as a hard segment explicitly. With this new approach, we achieve a translation performance comparable to the existing state-of-the-art phrase-based system on the task of English-to-French translation. Furthermore, qualitative analysis reveals that the (soft-)alignments found by the model agree well with our intuition.",
             "notes": null
@@ -2142,13 +2134,13 @@
       "stack": [
         {
           "path": "history.py",
-          "line_number": 14,
+          "line_number": 13,
           "function_name": "main",
           "code": "neural_ai()"
         },
         {
           "path": "history.py",
-          "line_number": 114,
+          "line_number": 113,
           "function_name": "neural_ai",
           "code": "text(\"- 2016: AlphaGo uses deep reinforcement learning, defeat world champion Lee Sedol in Go\")"
         }
@@ -2168,13 +2160,13 @@
       "stack": [
         {
           "path": "history.py",
-          "line_number": 14,
+          "line_number": 13,
           "function_name": "main",
           "code": "neural_ai()"
         },
         {
           "path": "history.py",
-          "line_number": 115,
+          "line_number": 114,
           "function_name": "neural_ai",
           "code": "text(\"- 2017: Transformer architecture (for machine translation) \"), link(\"https://arxiv.org/abs/1706.03762\")"
         }
@@ -2190,7 +2182,7 @@
         },
         {
           "type": "link",
-          "data": null,
+          "data": "[Vaswani+ 2017]",
           "style": {},
           "external_link": {
             "title": "Attention Is All You Need",
@@ -2205,7 +2197,7 @@
               "Illia Polosukhin"
             ],
             "organization": null,
-            "date": "2017-06-12T17:57:34Z",
+            "date": "2017-06-12",
             "url": "https://arxiv.org/abs/1706.03762",
             "description": "The dominant sequence transduction models are based on complex recurrent or convolutional neural networks in an encoder-decoder configuration. The best performing models also connect the encoder and decoder through an attention mechanism. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms, dispensing with recurrence and convolutions entirely. Experiments on two machine translation tasks show these models to be superior in quality while being more parallelizable and requiring significantly less time to train. Our model achieves 28.4 BLEU on the WMT 2014 English-to-German translation task, improving over the existing best results, including ensembles by over 2 BLEU. On the WMT 2014 English-to-French translation task, our model establishes a new single-model state-of-the-art BLEU score of 41.8 after training for 3.5 days on eight GPUs, a small fraction of the training costs of the best models from the literature. We show that the Transformer generalizes well to other tasks by applying it successfully to English constituency parsing both with large and limited training data.",
             "notes": null
@@ -2218,7 +2210,7 @@
       "stack": [
         {
           "path": "history.py",
-          "line_number": 14,
+          "line_number": 13,
           "function_name": "main",
           "code": "neural_ai()"
         }
@@ -2230,7 +2222,7 @@
       "stack": [
         {
           "path": "history.py",
-          "line_number": 15,
+          "line_number": 14,
           "function_name": "main",
           "code": "statistical_ai()"
         }
@@ -2242,13 +2234,13 @@
       "stack": [
         {
           "path": "history.py",
-          "line_number": 15,
+          "line_number": 14,
           "function_name": "main",
           "code": "statistical_ai()"
         },
         {
           "path": "history.py",
-          "line_number": 118,
+          "line_number": 117,
           "function_name": "statistical_ai",
           "code": "def statistical_ai():"
         }
@@ -2260,13 +2252,13 @@
       "stack": [
         {
           "path": "history.py",
-          "line_number": 15,
+          "line_number": 14,
           "function_name": "main",
           "code": "statistical_ai()"
         },
         {
           "path": "history.py",
-          "line_number": 119,
+          "line_number": 118,
           "function_name": "statistical_ai",
           "code": "text(\"Early ideas outside AI\")"
         }
@@ -2286,13 +2278,13 @@
       "stack": [
         {
           "path": "history.py",
-          "line_number": 15,
+          "line_number": 14,
           "function_name": "main",
           "code": "statistical_ai()"
         },
         {
           "path": "history.py",
-          "line_number": 120,
+          "line_number": 119,
           "function_name": "statistical_ai",
           "code": "text(\"- 1801: linear regression (Gauss, Legendre)\")"
         }
@@ -2312,13 +2304,13 @@
       "stack": [
         {
           "path": "history.py",
-          "line_number": 15,
+          "line_number": 14,
           "function_name": "main",
           "code": "statistical_ai()"
         },
         {
           "path": "history.py",
-          "line_number": 121,
+          "line_number": 120,
           "function_name": "statistical_ai",
           "code": "text(\"- 1936: linear classification (Fisher)\")"
         }
@@ -2338,13 +2330,13 @@
       "stack": [
         {
           "path": "history.py",
-          "line_number": 15,
+          "line_number": 14,
           "function_name": "main",
           "code": "statistical_ai()"
         },
         {
           "path": "history.py",
-          "line_number": 122,
+          "line_number": 121,
           "function_name": "statistical_ai",
           "code": "text(\"- 1951: stochastic gradient descent (Robbins/Monro)\")"
         }
@@ -2364,13 +2356,13 @@
       "stack": [
         {
           "path": "history.py",
-          "line_number": 15,
+          "line_number": 14,
           "function_name": "main",
           "code": "statistical_ai()"
         },
         {
           "path": "history.py",
-          "line_number": 123,
+          "line_number": 122,
           "function_name": "statistical_ai",
           "code": "text(\"- 1956: Uniform cost search for shortest paths (Dijkstra)\")"
         }
@@ -2390,13 +2382,13 @@
       "stack": [
         {
           "path": "history.py",
-          "line_number": 15,
+          "line_number": 14,
           "function_name": "main",
           "code": "statistical_ai()"
         },
         {
           "path": "history.py",
-          "line_number": 124,
+          "line_number": 123,
           "function_name": "statistical_ai",
           "code": "text(\"- 1957: Markov decision processes (Bellman)\")"
         }
@@ -2416,13 +2408,13 @@
       "stack": [
         {
           "path": "history.py",
-          "line_number": 15,
+          "line_number": 14,
           "function_name": "main",
           "code": "statistical_ai()"
         },
         {
           "path": "history.py",
-          "line_number": 126,
+          "line_number": 125,
           "function_name": "statistical_ai",
           "code": "text(\"Statistical machine learning\")"
         }
@@ -2442,13 +2434,13 @@
       "stack": [
         {
           "path": "history.py",
-          "line_number": 15,
+          "line_number": 14,
           "function_name": "main",
           "code": "statistical_ai()"
         },
         {
           "path": "history.py",
-          "line_number": 127,
+          "line_number": 126,
           "function_name": "statistical_ai",
           "code": "text(\"- 1985: Bayesian networks enabled reasoning under uncertainty (Pearl)\")"
         }
@@ -2468,13 +2460,13 @@
       "stack": [
         {
           "path": "history.py",
-          "line_number": 15,
+          "line_number": 14,
           "function_name": "main",
           "code": "statistical_ai()"
         },
         {
           "path": "history.py",
-          "line_number": 128,
+          "line_number": 127,
           "function_name": "statistical_ai",
           "code": "text(\"- 1995: support vector machines (Cortes/Vapnik) became popular in ML: easier to train, rooted in statistical learning theory\")"
         }
@@ -2494,13 +2486,13 @@
       "stack": [
         {
           "path": "history.py",
-          "line_number": 15,
+          "line_number": 14,
           "function_name": "main",
           "code": "statistical_ai()"
         },
         {
           "path": "history.py",
-          "line_number": 129,
+          "line_number": 128,
           "function_name": "statistical_ai",
           "code": "text(\"- 1999: variational inference was popularized by Jordan/Jaakkola\")"
         }
@@ -2520,13 +2512,13 @@
       "stack": [
         {
           "path": "history.py",
-          "line_number": 15,
+          "line_number": 14,
           "function_name": "main",
           "code": "statistical_ai()"
         },
         {
           "path": "history.py",
-          "line_number": 130,
+          "line_number": 129,
           "function_name": "statistical_ai",
           "code": "text(\"- 2001: conditional random fields allowed for predicting structures (Lafferty/McCallum/Pereira)\")"
         }
@@ -2546,13 +2538,13 @@
       "stack": [
         {
           "path": "history.py",
-          "line_number": 15,
+          "line_number": 14,
           "function_name": "main",
           "code": "statistical_ai()"
         },
         {
           "path": "history.py",
-          "line_number": 131,
+          "line_number": 130,
           "function_name": "statistical_ai",
           "code": "text(\"- 2003: topic modeling allowed for hierarchies and uncertainty over parameters (Blei/Ng/Jordan)\")"
         }
@@ -2572,7 +2564,7 @@
       "stack": [
         {
           "path": "history.py",
-          "line_number": 15,
+          "line_number": 14,
           "function_name": "main",
           "code": "statistical_ai()"
         }
@@ -2584,7 +2576,7 @@
       "stack": [
         {
           "path": "history.py",
-          "line_number": 17,
+          "line_number": 16,
           "function_name": "main",
           "code": "foundation_models()"
         }
@@ -2596,13 +2588,13 @@
       "stack": [
         {
           "path": "history.py",
-          "line_number": 17,
+          "line_number": 16,
           "function_name": "main",
           "code": "foundation_models()"
         },
         {
           "path": "history.py",
-          "line_number": 134,
+          "line_number": 133,
           "function_name": "foundation_models",
           "code": "def foundation_models():"
         }
@@ -2614,7 +2606,33 @@
       "stack": [
         {
           "path": "history.py",
-          "line_number": 17,
+          "line_number": 16,
+          "function_name": "main",
+          "code": "foundation_models()"
+        },
+        {
+          "path": "history.py",
+          "line_number": 134,
+          "function_name": "foundation_models",
+          "code": "text(\"Pretrained language models (~2018):\")"
+        }
+      ],
+      "env": {},
+      "renderings": [
+        {
+          "type": "markdown",
+          "data": "Pretrained language models (~2018):",
+          "style": {},
+          "external_link": null,
+          "internal_link": null
+        }
+      ]
+    },
+    {
+      "stack": [
+        {
+          "path": "history.py",
+          "line_number": 16,
           "function_name": "main",
           "code": "foundation_models()"
         },
@@ -2622,14 +2640,14 @@
           "path": "history.py",
           "line_number": 135,
           "function_name": "foundation_models",
-          "code": "text(\"### Pretrained language models\")"
+          "code": "text(\"- Key idea: train models on tons of raw data to build good **representations**\")"
         }
       ],
       "env": {},
       "renderings": [
         {
           "type": "markdown",
-          "data": "### Pretrained language models",
+          "data": "- Key idea: train models on tons of raw data to build good **representations**",
           "style": {},
           "external_link": null,
           "internal_link": null
@@ -2640,7 +2658,7 @@
       "stack": [
         {
           "path": "history.py",
-          "line_number": 17,
+          "line_number": 16,
           "function_name": "main",
           "code": "foundation_models()"
         },
@@ -2648,70 +2666,21 @@
           "path": "history.py",
           "line_number": 136,
           "function_name": "foundation_models",
-          "code": "text(\"- ELMo: pretraining with LSTMs, fine-tuning helps downstream tasks \"), link(\"https://arxiv.org/abs/1802.05365\")"
+          "code": "text(\"- Example model: BERT \"), link(\"https://arxiv.org/abs/1810.04805\")"
         }
       ],
       "env": {},
       "renderings": [
         {
           "type": "markdown",
-          "data": "- ELMo: pretraining with LSTMs, fine-tuning helps downstream tasks ",
+          "data": "- Example model: BERT ",
           "style": {},
           "external_link": null,
           "internal_link": null
         },
         {
           "type": "link",
-          "data": null,
-          "style": {},
-          "external_link": {
-            "title": "Deep contextualized word representations",
-            "authors": [
-              "Matthew E. Peters",
-              "Mark Neumann",
-              "Mohit Iyyer",
-              "Matt Gardner",
-              "Christopher Clark",
-              "Kenton Lee",
-              "Luke Zettlemoyer"
-            ],
-            "organization": null,
-            "date": "2018-02-15T00:05:11Z",
-            "url": "https://arxiv.org/abs/1802.05365",
-            "description": "We introduce a new type of deep contextualized word representation that models both (1) complex characteristics of word use (e.g., syntax and semantics), and (2) how these uses vary across linguistic contexts (i.e., to model polysemy). Our word vectors are learned functions of the internal states of a deep bidirectional language model (biLM), which is pre-trained on a large text corpus. We show that these representations can be easily added to existing models and significantly improve the state of the art across six challenging NLP problems, including question answering, textual entailment and sentiment analysis. We also present an analysis showing that exposing the deep internals of the pre-trained network is crucial, allowing downstream models to mix different types of semi-supervision signals.",
-            "notes": null
-          },
-          "internal_link": null
-        }
-      ]
-    },
-    {
-      "stack": [
-        {
-          "path": "history.py",
-          "line_number": 17,
-          "function_name": "main",
-          "code": "foundation_models()"
-        },
-        {
-          "path": "history.py",
-          "line_number": 137,
-          "function_name": "foundation_models",
-          "code": "text(\"- BERT: pretraining with Transformer, fine-tuning helps downstream tasks \"), link(\"https://arxiv.org/abs/1810.04805\")"
-        }
-      ],
-      "env": {},
-      "renderings": [
-        {
-          "type": "markdown",
-          "data": "- BERT: pretraining with Transformer, fine-tuning helps downstream tasks ",
-          "style": {},
-          "external_link": null,
-          "internal_link": null
-        },
-        {
-          "type": "link",
-          "data": null,
+          "data": "[Devlin+ 2018]",
           "style": {},
           "external_link": {
             "title": "BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding",
@@ -2722,7 +2691,7 @@
               "Kristina Toutanova"
             ],
             "organization": null,
-            "date": "2018-10-11T00:50:01Z",
+            "date": "2018-10-11",
             "url": "https://arxiv.org/abs/1810.04805",
             "description": "We introduce a new language representation model called BERT, which stands for Bidirectional Encoder Representations from Transformers. Unlike recent language representation models, BERT is designed to pre-train deep bidirectional representations from unlabeled text by jointly conditioning on both left and right context in all layers. As a result, the pre-trained BERT model can be fine-tuned with just one additional output layer to create state-of-the-art models for a wide range of tasks, such as question answering and language inference, without substantial task-specific architecture modifications. BERT is conceptually simple and empirically powerful. It obtains new state-of-the-art results on eleven natural language processing tasks, including pushing the GLUE score to 80.5% (7.7% point absolute improvement), MultiNLI accuracy to 86.7% (4.6% absolute improvement), SQuAD v1.1 question answering Test F1 to 93.2 (1.5 point absolute improvement) and SQuAD v2.0 Test F1 to 83.1 (5.1 point absolute improvement).",
             "notes": null
@@ -2735,7 +2704,35 @@
       "stack": [
         {
           "path": "history.py",
-          "line_number": 17,
+          "line_number": 16,
+          "function_name": "main",
+          "code": "foundation_models()"
+        },
+        {
+          "path": "history.py",
+          "line_number": 137,
+          "function_name": "foundation_models",
+          "code": "image(\"images/bert-pretrain-finetune.png\", width=800)"
+        }
+      ],
+      "env": {},
+      "renderings": [
+        {
+          "type": "image",
+          "data": "images/bert-pretrain-finetune.png",
+          "style": {
+            "width": 800
+          },
+          "external_link": null,
+          "internal_link": null
+        }
+      ]
+    },
+    {
+      "stack": [
+        {
+          "path": "history.py",
+          "line_number": 16,
           "function_name": "main",
           "code": "foundation_models()"
         },
@@ -2743,41 +2740,16 @@
           "path": "history.py",
           "line_number": 138,
           "function_name": "foundation_models",
-          "code": "text(\"- Google's T5 (11B): cast everything as text-to-text \"), link(\"https://arxiv.org/abs/1910.10683\")"
+          "code": "text(\"- Masked LM pretrained to fill in the blanks on documents\")"
         }
       ],
       "env": {},
       "renderings": [
         {
           "type": "markdown",
-          "data": "- Google's T5 (11B): cast everything as text-to-text ",
+          "data": "- Masked LM pretrained to fill in the blanks on documents",
           "style": {},
           "external_link": null,
-          "internal_link": null
-        },
-        {
-          "type": "link",
-          "data": null,
-          "style": {},
-          "external_link": {
-            "title": "Exploring the Limits of Transfer Learning with a Unified Text-to-Text Transformer",
-            "authors": [
-              "Colin Raffel",
-              "Noam Shazeer",
-              "Adam Roberts",
-              "Katherine Lee",
-              "Sharan Narang",
-              "Michael Matena",
-              "Yanqi Zhou",
-              "Wei Li",
-              "Peter J. Liu"
-            ],
-            "organization": null,
-            "date": "2019-10-23T17:37:36Z",
-            "url": "https://arxiv.org/abs/1910.10683",
-            "description": "Transfer learning, where a model is first pre-trained on a data-rich task before being fine-tuned on a downstream task, has emerged as a powerful technique in natural language processing (NLP). The effectiveness of transfer learning has given rise to a diversity of approaches, methodology, and practice. In this paper, we explore the landscape of transfer learning techniques for NLP by introducing a unified framework that converts all text-based language problems into a text-to-text format. Our systematic study compares pre-training objectives, architectures, unlabeled data sets, transfer approaches, and other factors on dozens of language understanding tasks. By combining the insights from our exploration with scale and our new ``Colossal Clean Crawled Corpus'', we achieve state-of-the-art results on many benchmarks covering summarization, question answering, text classification, and more. To facilitate future work on transfer learning for NLP, we release our data set, pre-trained models, and code.",
-            "notes": null
-          },
           "internal_link": null
         }
       ]
@@ -2786,7 +2758,7 @@
       "stack": [
         {
           "path": "history.py",
-          "line_number": 17,
+          "line_number": 16,
           "function_name": "main",
           "code": "foundation_models()"
         },
@@ -2794,17 +2766,15 @@
           "path": "history.py",
           "line_number": 139,
           "function_name": "foundation_models",
-          "code": "image(\"images/t5.png\", width=400)"
+          "code": "text(\"- **Fine-tune** for downstream tasks (e.g., question answering)\")"
         }
       ],
       "env": {},
       "renderings": [
         {
-          "type": "image",
-          "data": "images/t5.png",
-          "style": {
-            "width": 400
-          },
+          "type": "markdown",
+          "data": "- **Fine-tune** for downstream tasks (e.g., question answering)",
+          "style": {},
           "external_link": null,
           "internal_link": null
         }
@@ -2814,7 +2784,7 @@
       "stack": [
         {
           "path": "history.py",
-          "line_number": 17,
+          "line_number": 16,
           "function_name": "main",
           "code": "foundation_models()"
         },
@@ -2822,14 +2792,14 @@
           "path": "history.py",
           "line_number": 141,
           "function_name": "foundation_models",
-          "code": "text(\"### Scaling up\")"
+          "code": "text(\"Scaling up text **generation** (~2020):\")"
         }
       ],
       "env": {},
       "renderings": [
         {
           "type": "markdown",
-          "data": "### Scaling up",
+          "data": "Scaling up text **generation** (~2020):",
           "style": {},
           "external_link": null,
           "internal_link": null
@@ -2840,7 +2810,7 @@
       "stack": [
         {
           "path": "history.py",
-          "line_number": 17,
+          "line_number": 16,
           "function_name": "main",
           "code": "foundation_models()"
         },
@@ -2848,21 +2818,21 @@
           "path": "history.py",
           "line_number": 142,
           "function_name": "foundation_models",
-          "code": "text(\"- GPT-2: fluent text, first signs of zero-shot capabilities \"), link(\"https://cdn.openai.com/better-language-models/language_models_are_unsupervised_multitask_learners.pdf\", title=\"[Radford+ 2019]\")"
+          "code": "text(\"- GPT-2: 1.5B parameters, fluent text, first signs of zero-shot capabilities \"), link(\"https://cdn.openai.com/better-language-models/language_models_are_unsupervised_multitask_learners.pdf\", title=\"[Radford+ 2019]\")"
         }
       ],
       "env": {},
       "renderings": [
         {
           "type": "markdown",
-          "data": "- GPT-2: fluent text, first signs of zero-shot capabilities ",
+          "data": "- GPT-2: 1.5B parameters, fluent text, first signs of zero-shot capabilities ",
           "style": {},
           "external_link": null,
           "internal_link": null
         },
         {
           "type": "link",
-          "data": null,
+          "data": "[Radford+ 2019]",
           "style": {},
           "external_link": {
             "title": "[Radford+ 2019]",
@@ -2881,7 +2851,7 @@
       "stack": [
         {
           "path": "history.py",
-          "line_number": 17,
+          "line_number": 16,
           "function_name": "main",
           "code": "foundation_models()"
         },
@@ -2889,21 +2859,21 @@
           "path": "history.py",
           "line_number": 143,
           "function_name": "foundation_models",
-          "code": "text(\"- Scaling laws: provide hope / predictability for scaling \"), link(\"https://arxiv.org/abs/2001.08361\")"
+          "code": "text(\"- Scaling laws: provide predictability for scaling \"), link(\"https://arxiv.org/abs/2001.08361\")"
         }
       ],
       "env": {},
       "renderings": [
         {
           "type": "markdown",
-          "data": "- Scaling laws: provide hope / predictability for scaling ",
+          "data": "- Scaling laws: provide predictability for scaling ",
           "style": {},
           "external_link": null,
           "internal_link": null
         },
         {
           "type": "link",
-          "data": null,
+          "data": "[Kaplan+ 2020]",
           "style": {},
           "external_link": {
             "title": "Scaling Laws for Neural Language Models",
@@ -2920,7 +2890,7 @@
               "Dario Amodei"
             ],
             "organization": null,
-            "date": "2020-01-23T03:59:20Z",
+            "date": "2020-01-23",
             "url": "https://arxiv.org/abs/2001.08361",
             "description": "We study empirical scaling laws for language model performance on the cross-entropy loss. The loss scales as a power-law with model size, dataset size, and the amount of compute used for training, with some trends spanning more than seven orders of magnitude. Other architectural details such as network width or depth have minimal effects within a wide range. Simple equations govern the dependence of overfitting on model/dataset size and the dependence of training speed on model size. These relationships allow us to determine the optimal allocation of a fixed compute budget. Larger models are significantly more sample-efficient, such that optimally compute-efficient training involves training very large models on a relatively modest amount of data and stopping significantly before convergence.",
             "notes": null
@@ -2933,7 +2903,7 @@
       "stack": [
         {
           "path": "history.py",
-          "line_number": 17,
+          "line_number": 16,
           "function_name": "main",
           "code": "foundation_models()"
         },
@@ -2941,21 +2911,21 @@
           "path": "history.py",
           "line_number": 144,
           "function_name": "foundation_models",
-          "code": "text(\"- GPT-3: in-context learning, closed \"), link(\"https://arxiv.org/abs/2005.14165\")"
+          "code": "text(\"- GPT-3: 175B parameters, in-context learning \"), link(\"https://arxiv.org/abs/2005.14165\")"
         }
       ],
       "env": {},
       "renderings": [
         {
           "type": "markdown",
-          "data": "- GPT-3: in-context learning, closed ",
+          "data": "- GPT-3: 175B parameters, in-context learning ",
           "style": {},
           "external_link": null,
           "internal_link": null
         },
         {
           "type": "link",
-          "data": null,
+          "data": "[Brown+ 2020]",
           "style": {},
           "external_link": {
             "title": "Language Models are Few-Shot Learners",
@@ -2993,7 +2963,7 @@
               "Dario Amodei"
             ],
             "organization": null,
-            "date": "2020-05-28T17:29:03Z",
+            "date": "2020-05-28",
             "url": "https://arxiv.org/abs/2005.14165",
             "description": "Recent work has demonstrated substantial gains on many NLP tasks and benchmarks by pre-training on a large corpus of text followed by fine-tuning on a specific task. While typically task-agnostic in architecture, this method still requires task-specific fine-tuning datasets of thousands or tens of thousands of examples. By contrast, humans can generally perform a new language task from only a few examples or from simple instructions - something which current NLP systems still largely struggle to do. Here we show that scaling up language models greatly improves task-agnostic, few-shot performance, sometimes even reaching competitiveness with prior state-of-the-art fine-tuning approaches. Specifically, we train GPT-3, an autoregressive language model with 175 billion parameters, 10x more than any previous non-sparse language model, and test its performance in the few-shot setting. For all tasks, GPT-3 is applied without any gradient updates or fine-tuning, with tasks and few-shot demonstrations specified purely via text interaction with the model. GPT-3 achieves strong performance on many NLP datasets, including translation, question-answering, and cloze tasks, as well as several tasks that require on-the-fly reasoning or domain adaptation, such as unscrambling words, using a novel word in a sentence, or performing 3-digit arithmetic. At the same time, we also identify some datasets where GPT-3's few-shot learning still struggles, as well as some datasets where GPT-3 faces methodological issues related to training on large web corpora. Finally, we find that GPT-3 can generate samples of news articles which human evaluators have difficulty distinguishing from articles written by humans. We discuss broader societal impacts of this finding and of GPT-3 in general.",
             "notes": null
@@ -3006,7 +2976,7 @@
       "stack": [
         {
           "path": "history.py",
-          "line_number": 17,
+          "line_number": 16,
           "function_name": "main",
           "code": "foundation_models()"
         },
@@ -3028,7 +2998,7 @@
         },
         {
           "type": "link",
-          "data": null,
+          "data": "[Brown+ 2020]",
           "style": {},
           "external_link": {
             "title": "Language Models are Few-Shot Learners",
@@ -3066,7 +3036,7 @@
               "Dario Amodei"
             ],
             "organization": null,
-            "date": "2020-05-28T17:29:03Z",
+            "date": "2020-05-28",
             "url": "https://arxiv.org/abs/2005.14165",
             "description": "Recent work has demonstrated substantial gains on many NLP tasks and benchmarks by pre-training on a large corpus of text followed by fine-tuning on a specific task. While typically task-agnostic in architecture, this method still requires task-specific fine-tuning datasets of thousands or tens of thousands of examples. By contrast, humans can generally perform a new language task from only a few examples or from simple instructions - something which current NLP systems still largely struggle to do. Here we show that scaling up language models greatly improves task-agnostic, few-shot performance, sometimes even reaching competitiveness with prior state-of-the-art fine-tuning approaches. Specifically, we train GPT-3, an autoregressive language model with 175 billion parameters, 10x more than any previous non-sparse language model, and test its performance in the few-shot setting. For all tasks, GPT-3 is applied without any gradient updates or fine-tuning, with tasks and few-shot demonstrations specified purely via text interaction with the model. GPT-3 achieves strong performance on many NLP datasets, including translation, question-answering, and cloze tasks, as well as several tasks that require on-the-fly reasoning or domain adaptation, such as unscrambling words, using a novel word in a sentence, or performing 3-digit arithmetic. At the same time, we also identify some datasets where GPT-3's few-shot learning still struggles, as well as some datasets where GPT-3 faces methodological issues related to training on large web corpora. Finally, we find that GPT-3 can generate samples of news articles which human evaluators have difficulty distinguishing from articles written by humans. We discuss broader societal impacts of this finding and of GPT-3 in general.",
             "notes": null
@@ -3079,610 +3049,7 @@
       "stack": [
         {
           "path": "history.py",
-          "line_number": 17,
-          "function_name": "main",
-          "code": "foundation_models()"
-        },
-        {
-          "path": "history.py",
-          "line_number": 146,
-          "function_name": "foundation_models",
-          "code": "text(\"- Llama 3 \"), link(\"https://arxiv.org/abs/2407.21783\")"
-        }
-      ],
-      "env": {},
-      "renderings": [
-        {
-          "type": "markdown",
-          "data": "- Llama 3 ",
-          "style": {},
-          "external_link": null,
-          "internal_link": null
-        },
-        {
-          "type": "link",
-          "data": null,
-          "style": {},
-          "external_link": {
-            "title": "The Llama 3 Herd of Models",
-            "authors": [
-              "Aaron Grattafiori",
-              "Abhimanyu Dubey",
-              "Abhinav Jauhri",
-              "Abhinav Pandey",
-              "Abhishek Kadian",
-              "Ahmad Al-Dahle",
-              "Aiesha Letman",
-              "Akhil Mathur",
-              "Alan Schelten",
-              "Alex Vaughan",
-              "Amy Yang",
-              "Angela Fan",
-              "Anirudh Goyal",
-              "Anthony Hartshorn",
-              "Aobo Yang",
-              "Archi Mitra",
-              "Archie Sravankumar",
-              "Artem Korenev",
-              "Arthur Hinsvark",
-              "Arun Rao",
-              "Aston Zhang",
-              "Aurelien Rodriguez",
-              "Austen Gregerson",
-              "Ava Spataru",
-              "Baptiste Roziere",
-              "Bethany Biron",
-              "Binh Tang",
-              "Bobbie Chern",
-              "Charlotte Caucheteux",
-              "Chaya Nayak",
-              "Chloe Bi",
-              "Chris Marra",
-              "Chris McConnell",
-              "Christian Keller",
-              "Christophe Touret",
-              "Chunyang Wu",
-              "Corinne Wong",
-              "Cristian Canton Ferrer",
-              "Cyrus Nikolaidis",
-              "Damien Allonsius",
-              "Daniel Song",
-              "Danielle Pintz",
-              "Danny Livshits",
-              "Danny Wyatt",
-              "David Esiobu",
-              "Dhruv Choudhary",
-              "Dhruv Mahajan",
-              "Diego Garcia-Olano",
-              "Diego Perino",
-              "Dieuwke Hupkes",
-              "Egor Lakomkin",
-              "Ehab AlBadawy",
-              "Elina Lobanova",
-              "Emily Dinan",
-              "Eric Michael Smith",
-              "Filip Radenovic",
-              "Francisco Guzm\u00e1n",
-              "Frank Zhang",
-              "Gabriel Synnaeve",
-              "Gabrielle Lee",
-              "Georgia Lewis Anderson",
-              "Govind Thattai",
-              "Graeme Nail",
-              "Gregoire Mialon",
-              "Guan Pang",
-              "Guillem Cucurell",
-              "Hailey Nguyen",
-              "Hannah Korevaar",
-              "Hu Xu",
-              "Hugo Touvron",
-              "Iliyan Zarov",
-              "Imanol Arrieta Ibarra",
-              "Isabel Kloumann",
-              "Ishan Misra",
-              "Ivan Evtimov",
-              "Jack Zhang",
-              "Jade Copet",
-              "Jaewon Lee",
-              "Jan Geffert",
-              "Jana Vranes",
-              "Jason Park",
-              "Jay Mahadeokar",
-              "Jeet Shah",
-              "Jelmer van der Linde",
-              "Jennifer Billock",
-              "Jenny Hong",
-              "Jenya Lee",
-              "Jeremy Fu",
-              "Jianfeng Chi",
-              "Jianyu Huang",
-              "Jiawen Liu",
-              "Jie Wang",
-              "Jiecao Yu",
-              "Joanna Bitton",
-              "Joe Spisak",
-              "Jongsoo Park",
-              "Joseph Rocca",
-              "Joshua Johnstun",
-              "Joshua Saxe",
-              "Junteng Jia",
-              "Kalyan Vasuden Alwala",
-              "Karthik Prasad",
-              "Kartikeya Upasani",
-              "Kate Plawiak",
-              "Ke Li",
-              "Kenneth Heafield",
-              "Kevin Stone",
-              "Khalid El-Arini",
-              "Krithika Iyer",
-              "Kshitiz Malik",
-              "Kuenley Chiu",
-              "Kunal Bhalla",
-              "Kushal Lakhotia",
-              "Lauren Rantala-Yeary",
-              "Laurens van der Maaten",
-              "Lawrence Chen",
-              "Liang Tan",
-              "Liz Jenkins",
-              "Louis Martin",
-              "Lovish Madaan",
-              "Lubo Malo",
-              "Lukas Blecher",
-              "Lukas Landzaat",
-              "Luke de Oliveira",
-              "Madeline Muzzi",
-              "Mahesh Pasupuleti",
-              "Mannat Singh",
-              "Manohar Paluri",
-              "Marcin Kardas",
-              "Maria Tsimpoukelli",
-              "Mathew Oldham",
-              "Mathieu Rita",
-              "Maya Pavlova",
-              "Melanie Kambadur",
-              "Mike Lewis",
-              "Min Si",
-              "Mitesh Kumar Singh",
-              "Mona Hassan",
-              "Naman Goyal",
-              "Narjes Torabi",
-              "Nikolay Bashlykov",
-              "Nikolay Bogoychev",
-              "Niladri Chatterji",
-              "Ning Zhang",
-              "Olivier Duchenne",
-              "Onur \u00c7elebi",
-              "Patrick Alrassy",
-              "Pengchuan Zhang",
-              "Pengwei Li",
-              "Petar Vasic",
-              "Peter Weng",
-              "Prajjwal Bhargava",
-              "Pratik Dubal",
-              "Praveen Krishnan",
-              "Punit Singh Koura",
-              "Puxin Xu",
-              "Qing He",
-              "Qingxiao Dong",
-              "Ragavan Srinivasan",
-              "Raj Ganapathy",
-              "Ramon Calderer",
-              "Ricardo Silveira Cabral",
-              "Robert Stojnic",
-              "Roberta Raileanu",
-              "Rohan Maheswari",
-              "Rohit Girdhar",
-              "Rohit Patel",
-              "Romain Sauvestre",
-              "Ronnie Polidoro",
-              "Roshan Sumbaly",
-              "Ross Taylor",
-              "Ruan Silva",
-              "Rui Hou",
-              "Rui Wang",
-              "Saghar Hosseini",
-              "Sahana Chennabasappa",
-              "Sanjay Singh",
-              "Sean Bell",
-              "Seohyun Sonia Kim",
-              "Sergey Edunov",
-              "Shaoliang Nie",
-              "Sharan Narang",
-              "Sharath Raparthy",
-              "Sheng Shen",
-              "Shengye Wan",
-              "Shruti Bhosale",
-              "Shun Zhang",
-              "Simon Vandenhende",
-              "Soumya Batra",
-              "Spencer Whitman",
-              "Sten Sootla",
-              "Stephane Collot",
-              "Suchin Gururangan",
-              "Sydney Borodinsky",
-              "Tamar Herman",
-              "Tara Fowler",
-              "Tarek Sheasha",
-              "Thomas Georgiou",
-              "Thomas Scialom",
-              "Tobias Speckbacher",
-              "Todor Mihaylov",
-              "Tong Xiao",
-              "Ujjwal Karn",
-              "Vedanuj Goswami",
-              "Vibhor Gupta",
-              "Vignesh Ramanathan",
-              "Viktor Kerkez",
-              "Vincent Gonguet",
-              "Virginie Do",
-              "Vish Vogeti",
-              "V\u00edtor Albiero",
-              "Vladan Petrovic",
-              "Weiwei Chu",
-              "Wenhan Xiong",
-              "Wenyin Fu",
-              "Whitney Meers",
-              "Xavier Martinet",
-              "Xiaodong Wang",
-              "Xiaofang Wang",
-              "Xiaoqing Ellen Tan",
-              "Xide Xia",
-              "Xinfeng Xie",
-              "Xuchao Jia",
-              "Xuewei Wang",
-              "Yaelle Goldschlag",
-              "Yashesh Gaur",
-              "Yasmine Babaei",
-              "Yi Wen",
-              "Yiwen Song",
-              "Yuchen Zhang",
-              "Yue Li",
-              "Yuning Mao",
-              "Zacharie Delpierre Coudert",
-              "Zheng Yan",
-              "Zhengxing Chen",
-              "Zoe Papakipos",
-              "Aaditya Singh",
-              "Aayushi Srivastava",
-              "Abha Jain",
-              "Adam Kelsey",
-              "Adam Shajnfeld",
-              "Adithya Gangidi",
-              "Adolfo Victoria",
-              "Ahuva Goldstand",
-              "Ajay Menon",
-              "Ajay Sharma",
-              "Alex Boesenberg",
-              "Alexei Baevski",
-              "Allie Feinstein",
-              "Amanda Kallet",
-              "Amit Sangani",
-              "Amos Teo",
-              "Anam Yunus",
-              "Andrei Lupu",
-              "Andres Alvarado",
-              "Andrew Caples",
-              "Andrew Gu",
-              "Andrew Ho",
-              "Andrew Poulton",
-              "Andrew Ryan",
-              "Ankit Ramchandani",
-              "Annie Dong",
-              "Annie Franco",
-              "Anuj Goyal",
-              "Aparajita Saraf",
-              "Arkabandhu Chowdhury",
-              "Ashley Gabriel",
-              "Ashwin Bharambe",
-              "Assaf Eisenman",
-              "Azadeh Yazdan",
-              "Beau James",
-              "Ben Maurer",
-              "Benjamin Leonhardi",
-              "Bernie Huang",
-              "Beth Loyd",
-              "Beto De Paola",
-              "Bhargavi Paranjape",
-              "Bing Liu",
-              "Bo Wu",
-              "Boyu Ni",
-              "Braden Hancock",
-              "Bram Wasti",
-              "Brandon Spence",
-              "Brani Stojkovic",
-              "Brian Gamido",
-              "Britt Montalvo",
-              "Carl Parker",
-              "Carly Burton",
-              "Catalina Mejia",
-              "Ce Liu",
-              "Changhan Wang",
-              "Changkyu Kim",
-              "Chao Zhou",
-              "Chester Hu",
-              "Ching-Hsiang Chu",
-              "Chris Cai",
-              "Chris Tindal",
-              "Christoph Feichtenhofer",
-              "Cynthia Gao",
-              "Damon Civin",
-              "Dana Beaty",
-              "Daniel Kreymer",
-              "Daniel Li",
-              "David Adkins",
-              "David Xu",
-              "Davide Testuggine",
-              "Delia David",
-              "Devi Parikh",
-              "Diana Liskovich",
-              "Didem Foss",
-              "Dingkang Wang",
-              "Duc Le",
-              "Dustin Holland",
-              "Edward Dowling",
-              "Eissa Jamil",
-              "Elaine Montgomery",
-              "Eleonora Presani",
-              "Emily Hahn",
-              "Emily Wood",
-              "Eric-Tuan Le",
-              "Erik Brinkman",
-              "Esteban Arcaute",
-              "Evan Dunbar",
-              "Evan Smothers",
-              "Fei Sun",
-              "Felix Kreuk",
-              "Feng Tian",
-              "Filippos Kokkinos",
-              "Firat Ozgenel",
-              "Francesco Caggioni",
-              "Frank Kanayet",
-              "Frank Seide",
-              "Gabriela Medina Florez",
-              "Gabriella Schwarz",
-              "Gada Badeer",
-              "Georgia Swee",
-              "Gil Halpern",
-              "Grant Herman",
-              "Grigory Sizov",
-              "Guangyi",
-              "Zhang",
-              "Guna Lakshminarayanan",
-              "Hakan Inan",
-              "Hamid Shojanazeri",
-              "Han Zou",
-              "Hannah Wang",
-              "Hanwen Zha",
-              "Haroun Habeeb",
-              "Harrison Rudolph",
-              "Helen Suk",
-              "Henry Aspegren",
-              "Hunter Goldman",
-              "Hongyuan Zhan",
-              "Ibrahim Damlaj",
-              "Igor Molybog",
-              "Igor Tufanov",
-              "Ilias Leontiadis",
-              "Irina-Elena Veliche",
-              "Itai Gat",
-              "Jake Weissman",
-              "James Geboski",
-              "James Kohli",
-              "Janice Lam",
-              "Japhet Asher",
-              "Jean-Baptiste Gaya",
-              "Jeff Marcus",
-              "Jeff Tang",
-              "Jennifer Chan",
-              "Jenny Zhen",
-              "Jeremy Reizenstein",
-              "Jeremy Teboul",
-              "Jessica Zhong",
-              "Jian Jin",
-              "Jingyi Yang",
-              "Joe Cummings",
-              "Jon Carvill",
-              "Jon Shepard",
-              "Jonathan McPhie",
-              "Jonathan Torres",
-              "Josh Ginsburg",
-              "Junjie Wang",
-              "Kai Wu",
-              "Kam Hou U",
-              "Karan Saxena",
-              "Kartikay Khandelwal",
-              "Katayoun Zand",
-              "Kathy Matosich",
-              "Kaushik Veeraraghavan",
-              "Kelly Michelena",
-              "Keqian Li",
-              "Kiran Jagadeesh",
-              "Kun Huang",
-              "Kunal Chawla",
-              "Kyle Huang",
-              "Lailin Chen",
-              "Lakshya Garg",
-              "Lavender A",
-              "Leandro Silva",
-              "Lee Bell",
-              "Lei Zhang",
-              "Liangpeng Guo",
-              "Licheng Yu",
-              "Liron Moshkovich",
-              "Luca Wehrstedt",
-              "Madian Khabsa",
-              "Manav Avalani",
-              "Manish Bhatt",
-              "Martynas Mankus",
-              "Matan Hasson",
-              "Matthew Lennie",
-              "Matthias Reso",
-              "Maxim Groshev",
-              "Maxim Naumov",
-              "Maya Lathi",
-              "Meghan Keneally",
-              "Miao Liu",
-              "Michael L. Seltzer",
-              "Michal Valko",
-              "Michelle Restrepo",
-              "Mihir Patel",
-              "Mik Vyatskov",
-              "Mikayel Samvelyan",
-              "Mike Clark",
-              "Mike Macey",
-              "Mike Wang",
-              "Miquel Jubert Hermoso",
-              "Mo Metanat",
-              "Mohammad Rastegari",
-              "Munish Bansal",
-              "Nandhini Santhanam",
-              "Natascha Parks",
-              "Natasha White",
-              "Navyata Bawa",
-              "Nayan Singhal",
-              "Nick Egebo",
-              "Nicolas Usunier",
-              "Nikhil Mehta",
-              "Nikolay Pavlovich Laptev",
-              "Ning Dong",
-              "Norman Cheng",
-              "Oleg Chernoguz",
-              "Olivia Hart",
-              "Omkar Salpekar",
-              "Ozlem Kalinli",
-              "Parkin Kent",
-              "Parth Parekh",
-              "Paul Saab",
-              "Pavan Balaji",
-              "Pedro Rittner",
-              "Philip Bontrager",
-              "Pierre Roux",
-              "Piotr Dollar",
-              "Polina Zvyagina",
-              "Prashant Ratanchandani",
-              "Pritish Yuvraj",
-              "Qian Liang",
-              "Rachad Alao",
-              "Rachel Rodriguez",
-              "Rafi Ayub",
-              "Raghotham Murthy",
-              "Raghu Nayani",
-              "Rahul Mitra",
-              "Rangaprabhu Parthasarathy",
-              "Raymond Li",
-              "Rebekkah Hogan",
-              "Robin Battey",
-              "Rocky Wang",
-              "Russ Howes",
-              "Ruty Rinott",
-              "Sachin Mehta",
-              "Sachin Siby",
-              "Sai Jayesh Bondu",
-              "Samyak Datta",
-              "Sara Chugh",
-              "Sara Hunt",
-              "Sargun Dhillon",
-              "Sasha Sidorov",
-              "Satadru Pan",
-              "Saurabh Mahajan",
-              "Saurabh Verma",
-              "Seiji Yamamoto",
-              "Sharadh Ramaswamy",
-              "Shaun Lindsay",
-              "Shaun Lindsay",
-              "Sheng Feng",
-              "Shenghao Lin",
-              "Shengxin Cindy Zha",
-              "Shishir Patil",
-              "Shiva Shankar",
-              "Shuqiang Zhang",
-              "Shuqiang Zhang",
-              "Sinong Wang",
-              "Sneha Agarwal",
-              "Soji Sajuyigbe",
-              "Soumith Chintala",
-              "Stephanie Max",
-              "Stephen Chen",
-              "Steve Kehoe",
-              "Steve Satterfield",
-              "Sudarshan Govindaprasad",
-              "Sumit Gupta",
-              "Summer Deng",
-              "Sungmin Cho",
-              "Sunny Virk",
-              "Suraj Subramanian",
-              "Sy Choudhury",
-              "Sydney Goldman",
-              "Tal Remez",
-              "Tamar Glaser",
-              "Tamara Best",
-              "Thilo Koehler",
-              "Thomas Robinson",
-              "Tianhe Li",
-              "Tianjun Zhang",
-              "Tim Matthews",
-              "Timothy Chou",
-              "Tzook Shaked",
-              "Varun Vontimitta",
-              "Victoria Ajayi",
-              "Victoria Montanez",
-              "Vijai Mohan",
-              "Vinay Satish Kumar",
-              "Vishal Mangla",
-              "Vlad Ionescu",
-              "Vlad Poenaru",
-              "Vlad Tiberiu Mihailescu",
-              "Vladimir Ivanov",
-              "Wei Li",
-              "Wenchen Wang",
-              "Wenwen Jiang",
-              "Wes Bouaziz",
-              "Will Constable",
-              "Xiaocheng Tang",
-              "Xiaojian Wu",
-              "Xiaolan Wang",
-              "Xilun Wu",
-              "Xinbo Gao",
-              "Yaniv Kleinman",
-              "Yanjun Chen",
-              "Ye Hu",
-              "Ye Jia",
-              "Ye Qi",
-              "Yenda Li",
-              "Yilin Zhang",
-              "Ying Zhang",
-              "Yossi Adi",
-              "Youngjin Nam",
-              "Yu",
-              "Wang",
-              "Yu Zhao",
-              "Yuchen Hao",
-              "Yundi Qian",
-              "Yunlu Li",
-              "Yuzi He",
-              "Zach Rait",
-              "Zachary DeVito",
-              "Zef Rosnbrick",
-              "Zhaoduo Wen",
-              "Zhenyu Yang",
-              "Zhiwei Zhao",
-              "Zhiyu Ma"
-            ],
-            "organization": null,
-            "date": "2024-07-31T17:54:27Z",
-            "url": "https://arxiv.org/abs/2407.21783",
-            "description": "Modern artificial intelligence (AI) systems are powered by foundation models. This paper presents a new set of foundation models, called Llama 3. It is a herd of language models that natively support multilinguality, coding, reasoning, and tool usage. Our largest model is a dense Transformer with 405B parameters and a context window of up to 128K tokens. This paper presents an extensive empirical evaluation of Llama 3. We find that Llama 3 delivers comparable quality to leading language models such as GPT-4 on a plethora of tasks. We publicly release Llama 3, including pre-trained and post-trained versions of the 405B parameter language model and our Llama Guard 3 model for input and output safety. The paper also presents the results of experiments in which we integrate image, video, and speech capabilities into Llama 3 via a compositional approach. We observe this approach performs competitively with the state-of-the-art on image, video, and speech recognition tasks. The resulting models are not yet being broadly released as they are still under development.",
-            "notes": null
-          },
-          "internal_link": null
-        }
-      ]
-    },
-    {
-      "stack": [
-        {
-          "path": "history.py",
-          "line_number": 17,
+          "line_number": 16,
           "function_name": "main",
           "code": "foundation_models()"
         },
@@ -3690,230 +3057,102 @@
           "path": "history.py",
           "line_number": 147,
           "function_name": "foundation_models",
-          "code": "text(\"- DeepSeek v3 \"), link(\"https://arxiv.org/abs/2412.19437\")"
+          "code": "text(\"Aligning **chat** language models (~2022):\")"
         }
       ],
       "env": {},
       "renderings": [
         {
           "type": "markdown",
-          "data": "- DeepSeek v3 ",
+          "data": "Aligning **chat** language models (~2022):",
+          "style": {},
+          "external_link": null,
+          "internal_link": null
+        }
+      ]
+    },
+    {
+      "stack": [
+        {
+          "path": "history.py",
+          "line_number": 16,
+          "function_name": "main",
+          "code": "foundation_models()"
+        },
+        {
+          "path": "history.py",
+          "line_number": 148,
+          "function_name": "foundation_models",
+          "code": "text(\"- Make language models follow instructions, can chat with\")"
+        }
+      ],
+      "env": {},
+      "renderings": [
+        {
+          "type": "markdown",
+          "data": "- Make language models follow instructions, can chat with",
+          "style": {},
+          "external_link": null,
+          "internal_link": null
+        }
+      ]
+    },
+    {
+      "stack": [
+        {
+          "path": "history.py",
+          "line_number": 16,
+          "function_name": "main",
+          "code": "foundation_models()"
+        },
+        {
+          "path": "history.py",
+          "line_number": 149,
+          "function_name": "foundation_models",
+          "code": "text(\"- Reinforcement learning from human feedback (RLHF) \"), link(\"https://arxiv.org/abs/2203.02155\")"
+        }
+      ],
+      "env": {},
+      "renderings": [
+        {
+          "type": "markdown",
+          "data": "- Reinforcement learning from human feedback (RLHF) ",
           "style": {},
           "external_link": null,
           "internal_link": null
         },
         {
           "type": "link",
-          "data": null,
+          "data": "[Ouyang+ 2022]",
           "style": {},
           "external_link": {
-            "title": "DeepSeek-V3 Technical Report",
+            "title": "Training language models to follow instructions with human feedback",
             "authors": [
-              "DeepSeek-AI",
-              "Aixin Liu",
-              "Bei Feng",
-              "Bing Xue",
-              "Bingxuan Wang",
-              "Bochao Wu",
-              "Chengda Lu",
-              "Chenggang Zhao",
-              "Chengqi Deng",
-              "Chenyu Zhang",
-              "Chong Ruan",
-              "Damai Dai",
-              "Daya Guo",
-              "Dejian Yang",
-              "Deli Chen",
-              "Dongjie Ji",
-              "Erhang Li",
-              "Fangyun Lin",
-              "Fucong Dai",
-              "Fuli Luo",
-              "Guangbo Hao",
-              "Guanting Chen",
-              "Guowei Li",
-              "H. Zhang",
-              "Han Bao",
-              "Hanwei Xu",
-              "Haocheng Wang",
-              "Haowei Zhang",
-              "Honghui Ding",
-              "Huajian Xin",
-              "Huazuo Gao",
-              "Hui Li",
-              "Hui Qu",
-              "J. L. Cai",
-              "Jian Liang",
-              "Jianzhong Guo",
-              "Jiaqi Ni",
-              "Jiashi Li",
-              "Jiawei Wang",
-              "Jin Chen",
-              "Jingchang Chen",
-              "Jingyang Yuan",
-              "Junjie Qiu",
-              "Junlong Li",
-              "Junxiao Song",
-              "Kai Dong",
-              "Kai Hu",
-              "Kaige Gao",
-              "Kang Guan",
-              "Kexin Huang",
-              "Kuai Yu",
-              "Lean Wang",
-              "Lecong Zhang",
-              "Lei Xu",
-              "Leyi Xia",
-              "Liang Zhao",
-              "Litong Wang",
-              "Liyue Zhang",
-              "Meng Li",
-              "Miaojun Wang",
-              "Mingchuan Zhang",
-              "Minghua Zhang",
-              "Minghui Tang",
-              "Mingming Li",
-              "Ning Tian",
-              "Panpan Huang",
-              "Peiyi Wang",
-              "Peng Zhang",
-              "Qiancheng Wang",
-              "Qihao Zhu",
-              "Qinyu Chen",
-              "Qiushi Du",
-              "R. J. Chen",
-              "R. L. Jin",
-              "Ruiqi Ge",
-              "Ruisong Zhang",
-              "Ruizhe Pan",
-              "Runji Wang",
-              "Runxin Xu",
-              "Ruoyu Zhang",
-              "Ruyi Chen",
-              "S. S. Li",
-              "Shanghao Lu",
-              "Shangyan Zhou",
-              "Shanhuang Chen",
-              "Shaoqing Wu",
-              "Shengfeng Ye",
-              "Shengfeng Ye",
-              "Shirong Ma",
-              "Shiyu Wang",
-              "Shuang Zhou",
-              "Shuiping Yu",
-              "Shunfeng Zhou",
-              "Shuting Pan",
-              "T. Wang",
-              "Tao Yun",
-              "Tian Pei",
-              "Tianyu Sun",
-              "W. L. Xiao",
-              "Wangding Zeng",
-              "Wanjia Zhao",
-              "Wei An",
-              "Wen Liu",
-              "Wenfeng Liang",
-              "Wenjun Gao",
-              "Wenqin Yu",
-              "Wentao Zhang",
-              "X. Q. Li",
-              "Xiangyue Jin",
-              "Xianzu Wang",
-              "Xiao Bi",
-              "Xiaodong Liu",
-              "Xiaohan Wang",
-              "Xiaojin Shen",
-              "Xiaokang Chen",
-              "Xiaokang Zhang",
-              "Xiaosha Chen",
-              "Xiaotao Nie",
-              "Xiaowen Sun",
-              "Xiaoxiang Wang",
-              "Xin Cheng",
-              "Xin Liu",
-              "Xin Xie",
-              "Xingchao Liu",
-              "Xingkai Yu",
-              "Xinnan Song",
-              "Xinxia Shan",
-              "Xinyi Zhou",
-              "Xinyu Yang",
-              "Xinyuan Li",
-              "Xuecheng Su",
-              "Xuheng Lin",
-              "Y. K. Li",
-              "Y. Q. Wang",
-              "Y. X. Wei",
-              "Y. X. Zhu",
-              "Yang Zhang",
-              "Yanhong Xu",
-              "Yanhong Xu",
-              "Yanping Huang",
-              "Yao Li",
-              "Yao Zhao",
-              "Yaofeng Sun",
-              "Yaohui Li",
-              "Yaohui Wang",
-              "Yi Yu",
-              "Yi Zheng",
-              "Yichao Zhang",
-              "Yifan Shi",
-              "Yiliang Xiong",
-              "Ying He",
-              "Ying Tang",
-              "Yishi Piao",
-              "Yisong Wang",
-              "Yixuan Tan",
-              "Yiyang Ma",
-              "Yiyuan Liu",
-              "Yongqiang Guo",
-              "Yu Wu",
-              "Yuan Ou",
-              "Yuchen Zhu",
-              "Yuduan Wang",
-              "Yue Gong",
-              "Yuheng Zou",
-              "Yujia He",
-              "Yukun Zha",
-              "Yunfan Xiong",
-              "Yunxian Ma",
-              "Yuting Yan",
-              "Yuxiang Luo",
-              "Yuxiang You",
-              "Yuxuan Liu",
-              "Yuyang Zhou",
-              "Z. F. Wu",
-              "Z. Z. Ren",
-              "Zehui Ren",
-              "Zhangli Sha",
-              "Zhe Fu",
-              "Zhean Xu",
-              "Zhen Huang",
-              "Zhen Zhang",
-              "Zhenda Xie",
-              "Zhengyan Zhang",
-              "Zhewen Hao",
-              "Zhibin Gou",
-              "Zhicheng Ma",
-              "Zhigang Yan",
-              "Zhihong Shao",
-              "Zhipeng Xu",
-              "Zhiyu Wu",
-              "Zhongyu Zhang",
-              "Zhuoshu Li",
-              "Zihui Gu",
-              "Zijia Zhu",
-              "Zijun Liu",
-              "Zilin Li",
-              "Ziwei Xie",
-              "Ziyang Song",
-              "Ziyi Gao",
-              "Zizheng Pan"
+              "Long Ouyang",
+              "Jeff Wu",
+              "Xu Jiang",
+              "Diogo Almeida",
+              "Carroll L. Wainwright",
+              "Pamela Mishkin",
+              "Chong Zhang",
+              "Sandhini Agarwal",
+              "Katarina Slama",
+              "Alex Ray",
+              "John Schulman",
+              "Jacob Hilton",
+              "Fraser Kelton",
+              "Luke Miller",
+              "Maddie Simens",
+              "Amanda Askell",
+              "Peter Welinder",
+              "Paul Christiano",
+              "Jan Leike",
+              "Ryan Lowe"
             ],
             "organization": null,
-            "date": "2024-12-27T04:03:16Z",
-            "url": "https://arxiv.org/abs/2412.19437",
-            "description": "We present DeepSeek-V3, a strong Mixture-of-Experts (MoE) language model with 671B total parameters with 37B activated for each token. To achieve efficient inference and cost-effective training, DeepSeek-V3 adopts Multi-head Latent Attention (MLA) and DeepSeekMoE architectures, which were thoroughly validated in DeepSeek-V2. Furthermore, DeepSeek-V3 pioneers an auxiliary-loss-free strategy for load balancing and sets a multi-token prediction training objective for stronger performance. We pre-train DeepSeek-V3 on 14.8 trillion diverse and high-quality tokens, followed by Supervised Fine-Tuning and Reinforcement Learning stages to fully harness its capabilities. Comprehensive evaluations reveal that DeepSeek-V3 outperforms other open-source models and achieves performance comparable to leading closed-source models. Despite its excellent performance, DeepSeek-V3 requires only 2.788M H800 GPU hours for its full training. In addition, its training process is remarkably stable. Throughout the entire training process, we did not experience any irrecoverable loss spikes or perform any rollbacks. The model checkpoints are available at https://github.com/deepseek-ai/DeepSeek-V3.",
+            "date": "2022-03-04",
+            "url": "https://arxiv.org/abs/2203.02155",
+            "description": "Making language models bigger does not inherently make them better at following a user's intent. For example, large language models can generate outputs that are untruthful, toxic, or simply not helpful to the user. In other words, these models are not aligned with their users. In this paper, we show an avenue for aligning language models with user intent on a wide range of tasks by fine-tuning with human feedback. Starting with a set of labeler-written prompts and prompts submitted through the OpenAI API, we collect a dataset of labeler demonstrations of the desired model behavior, which we use to fine-tune GPT-3 using supervised learning. We then collect a dataset of rankings of model outputs, which we use to further fine-tune this supervised model using reinforcement learning from human feedback. We call the resulting models InstructGPT. In human evaluations on our prompt distribution, outputs from the 1.3B parameter InstructGPT model are preferred to outputs from the 175B GPT-3, despite having 100x fewer parameters. Moreover, InstructGPT models show improvements in truthfulness and reductions in toxic output generation while having minimal performance regressions on public NLP datasets. Even though InstructGPT still makes simple mistakes, our results show that fine-tuning with human feedback is a promising direction for aligning language models with human intent.",
             "notes": null
           },
           "internal_link": null
@@ -3924,33 +3163,7 @@
       "stack": [
         {
           "path": "history.py",
-          "line_number": 17,
-          "function_name": "main",
-          "code": "foundation_models()"
-        },
-        {
-          "path": "history.py",
-          "line_number": 149,
-          "function_name": "foundation_models",
-          "code": "text(\"### Reasoning\")"
-        }
-      ],
-      "env": {},
-      "renderings": [
-        {
-          "type": "markdown",
-          "data": "### Reasoning",
-          "style": {},
-          "external_link": null,
-          "internal_link": null
-        }
-      ]
-    },
-    {
-      "stack": [
-        {
-          "path": "history.py",
-          "line_number": 17,
+          "line_number": 16,
           "function_name": "main",
           "code": "foundation_models()"
         },
@@ -3958,14 +3171,14 @@
           "path": "history.py",
           "line_number": 150,
           "function_name": "foundation_models",
-          "code": "text(\"- Answering hard questions requires thinking\")"
+          "code": "text(\"- Led to ChatGPT (2022)\")"
         }
       ],
       "env": {},
       "renderings": [
         {
           "type": "markdown",
-          "data": "- Answering hard questions requires thinking",
+          "data": "- Led to ChatGPT (2022)",
           "style": {},
           "external_link": null,
           "internal_link": null
@@ -3976,33 +3189,7 @@
       "stack": [
         {
           "path": "history.py",
-          "line_number": 17,
-          "function_name": "main",
-          "code": "foundation_models()"
-        },
-        {
-          "path": "history.py",
-          "line_number": 151,
-          "function_name": "foundation_models",
-          "code": "text(\"- Language models produce \\\"thoughts\\\" before producing a response\")"
-        }
-      ],
-      "env": {},
-      "renderings": [
-        {
-          "type": "markdown",
-          "data": "- Language models produce \"thoughts\" before producing a response",
-          "style": {},
-          "external_link": null,
-          "internal_link": null
-        }
-      ]
-    },
-    {
-      "stack": [
-        {
-          "path": "history.py",
-          "line_number": 17,
+          "line_number": 16,
           "function_name": "main",
           "code": "foundation_models()"
         },
@@ -4010,14 +3197,14 @@
           "path": "history.py",
           "line_number": 152,
           "function_name": "foundation_models",
-          "code": "text(\"- Models: OpenAI's o1-o4, DeepSeek's r1\")"
+          "code": "text(\"Reasoning models (~2023):\")"
         }
       ],
       "env": {},
       "renderings": [
         {
           "type": "markdown",
-          "data": "- Models: OpenAI's o1-o4, DeepSeek's r1",
+          "data": "Reasoning models (~2023):",
           "style": {},
           "external_link": null,
           "internal_link": null
@@ -4028,13 +3215,221 @@
       "stack": [
         {
           "path": "history.py",
-          "line_number": 17,
+          "line_number": 16,
+          "function_name": "main",
+          "code": "foundation_models()"
+        },
+        {
+          "path": "history.py",
+          "line_number": 153,
+          "function_name": "foundation_models",
+          "code": "text(\"- Answering hard questions requires **thinking**\")"
+        }
+      ],
+      "env": {},
+      "renderings": [
+        {
+          "type": "markdown",
+          "data": "- Answering hard questions requires **thinking**",
+          "style": {},
+          "external_link": null,
+          "internal_link": null
+        }
+      ]
+    },
+    {
+      "stack": [
+        {
+          "path": "history.py",
+          "line_number": 16,
           "function_name": "main",
           "code": "foundation_models()"
         },
         {
           "path": "history.py",
           "line_number": 154,
+          "function_name": "foundation_models",
+          "code": "text(\"- Language models produce a sequence of chain-of-thought tokens before producing a response\")"
+        }
+      ],
+      "env": {},
+      "renderings": [
+        {
+          "type": "markdown",
+          "data": "- Language models produce a sequence of chain-of-thought tokens before producing a response",
+          "style": {},
+          "external_link": null,
+          "internal_link": null
+        }
+      ]
+    },
+    {
+      "stack": [
+        {
+          "path": "history.py",
+          "line_number": 16,
+          "function_name": "main",
+          "code": "foundation_models()"
+        },
+        {
+          "path": "history.py",
+          "line_number": 155,
+          "function_name": "foundation_models",
+          "code": "text(\"- OpenAI's o1 and later DeepSeek's r1 paved the way\")"
+        }
+      ],
+      "env": {},
+      "renderings": [
+        {
+          "type": "markdown",
+          "data": "- OpenAI's o1 and later DeepSeek's r1 paved the way",
+          "style": {},
+          "external_link": null,
+          "internal_link": null
+        }
+      ]
+    },
+    {
+      "stack": [
+        {
+          "path": "history.py",
+          "line_number": 16,
+          "function_name": "main",
+          "code": "foundation_models()"
+        },
+        {
+          "path": "history.py",
+          "line_number": 157,
+          "function_name": "foundation_models",
+          "code": "text(\"Agents (~2025):\")"
+        }
+      ],
+      "env": {},
+      "renderings": [
+        {
+          "type": "markdown",
+          "data": "Agents (~2025):",
+          "style": {},
+          "external_link": null,
+          "internal_link": null
+        }
+      ]
+    },
+    {
+      "stack": [
+        {
+          "path": "history.py",
+          "line_number": 16,
+          "function_name": "main",
+          "code": "foundation_models()"
+        },
+        {
+          "path": "history.py",
+          "line_number": 158,
+          "function_name": "foundation_models",
+          "code": "text(\"- Solving tasks requires taking **actions** in the world\")"
+        }
+      ],
+      "env": {},
+      "renderings": [
+        {
+          "type": "markdown",
+          "data": "- Solving tasks requires taking **actions** in the world",
+          "style": {},
+          "external_link": null,
+          "internal_link": null
+        }
+      ]
+    },
+    {
+      "stack": [
+        {
+          "path": "history.py",
+          "line_number": 16,
+          "function_name": "main",
+          "code": "foundation_models()"
+        },
+        {
+          "path": "history.py",
+          "line_number": 159,
+          "function_name": "foundation_models",
+          "code": "text(\"- Examples: web search, calculator, writing code, various APIs\")"
+        }
+      ],
+      "env": {},
+      "renderings": [
+        {
+          "type": "markdown",
+          "data": "- Examples: web search, calculator, writing code, various APIs",
+          "style": {},
+          "external_link": null,
+          "internal_link": null
+        }
+      ]
+    },
+    {
+      "stack": [
+        {
+          "path": "history.py",
+          "line_number": 16,
+          "function_name": "main",
+          "code": "foundation_models()"
+        },
+        {
+          "path": "history.py",
+          "line_number": 160,
+          "function_name": "foundation_models",
+          "code": "text(\"- Led to coding agents, computer use agents, cybersecurity agents, etc.\")"
+        }
+      ],
+      "env": {},
+      "renderings": [
+        {
+          "type": "markdown",
+          "data": "- Led to coding agents, computer use agents, cybersecurity agents, etc.",
+          "style": {},
+          "external_link": null,
+          "internal_link": null
+        }
+      ]
+    },
+    {
+      "stack": [
+        {
+          "path": "history.py",
+          "line_number": 16,
+          "function_name": "main",
+          "code": "foundation_models()"
+        },
+        {
+          "path": "history.py",
+          "line_number": 161,
+          "function_name": "foundation_models",
+          "code": "text(\"- Frontier: multi-agent collaboration\")"
+        }
+      ],
+      "env": {},
+      "renderings": [
+        {
+          "type": "markdown",
+          "data": "- Frontier: multi-agent collaboration",
+          "style": {},
+          "external_link": null,
+          "internal_link": null
+        }
+      ]
+    },
+    {
+      "stack": [
+        {
+          "path": "history.py",
+          "line_number": 16,
+          "function_name": "main",
+          "code": "foundation_models()"
+        },
+        {
+          "path": "history.py",
+          "line_number": 163,
           "function_name": "foundation_models",
           "code": "text(\"### Industrialization of AI\")"
         }
@@ -4054,22 +3449,22 @@
       "stack": [
         {
           "path": "history.py",
-          "line_number": 17,
+          "line_number": 16,
           "function_name": "main",
           "code": "foundation_models()"
         },
         {
           "path": "history.py",
-          "line_number": 155,
+          "line_number": 164,
           "function_name": "foundation_models",
-          "code": "image(\"https://upload.wikimedia.org/wikipedia/commons/thumb/c/cc/Industrialisation.jpg/440px-Industrialisation.jpg\", width=400)"
+          "code": "image(\"images/industrialization.jpg\", width=400)"
         }
       ],
       "env": {},
       "renderings": [
         {
           "type": "image",
-          "data": "var/files/image-23a59a0326a766e0ce9b5e47c6dcad52-https_upload_wikimedia_org_wikipedia_commons_thumb_c_cc_Industrialisation_jpg_440px-Industrialisation_jpg",
+          "data": "images/industrialization.jpg",
           "style": {
             "width": 400
           },
@@ -4082,111 +3477,29 @@
       "stack": [
         {
           "path": "history.py",
-          "line_number": 17,
+          "line_number": 16,
           "function_name": "main",
           "code": "foundation_models()"
         },
         {
           "path": "history.py",
-          "line_number": 157,
+          "line_number": 165,
           "function_name": "foundation_models",
-          "code": "text(\"GPT-4 supposedly has 1.8T parameters. \"), article_link(\"https://www.hpcwire.com/2024/03/19/the-generative-ai-future-is-now-nvidias-huang-says\")"
+          "code": "text(\"- xAI builds cluster with 200,000 H100s to train Grok. \"), article_link(\"https://www.tomshardware.com/pc-components/gpus/elon-musk-is-doubling-the-worlds-largest-ai-gpu-cluster-expanding-colossus-gpu-cluster-to-200-000-soon-has-floated-300-000-in-the-past\")"
         }
       ],
       "env": {},
       "renderings": [
         {
           "type": "markdown",
-          "data": "GPT-4 supposedly has 1.8T parameters. ",
+          "data": "- xAI builds cluster with 200,000 H100s to train Grok. ",
           "style": {},
           "external_link": null,
           "internal_link": null
         },
         {
           "type": "link",
-          "data": null,
-          "style": {},
-          "external_link": {
-            "title": "[article]",
-            "authors": null,
-            "organization": null,
-            "date": null,
-            "url": "https://www.hpcwire.com/2024/03/19/the-generative-ai-future-is-now-nvidias-huang-says",
-            "description": null,
-            "notes": null
-          },
-          "internal_link": null
-        }
-      ]
-    },
-    {
-      "stack": [
-        {
-          "path": "history.py",
-          "line_number": 17,
-          "function_name": "main",
-          "code": "foundation_models()"
-        },
-        {
-          "path": "history.py",
-          "line_number": 158,
-          "function_name": "foundation_models",
-          "code": "text(\"GPT-4 supposedly cost $100M to train. \"), article_link(\"https://www.wired.com/story/openai-ceo-sam-altman-the-age-of-giant-ai-models-is-already-over/\")"
-        }
-      ],
-      "env": {},
-      "renderings": [
-        {
-          "type": "markdown",
-          "data": "GPT-4 supposedly cost $100M to train. ",
-          "style": {},
-          "external_link": null,
-          "internal_link": null
-        },
-        {
-          "type": "link",
-          "data": null,
-          "style": {},
-          "external_link": {
-            "title": "[article]",
-            "authors": null,
-            "organization": null,
-            "date": null,
-            "url": "https://www.wired.com/story/openai-ceo-sam-altman-the-age-of-giant-ai-models-is-already-over/",
-            "description": null,
-            "notes": null
-          },
-          "internal_link": null
-        }
-      ]
-    },
-    {
-      "stack": [
-        {
-          "path": "history.py",
-          "line_number": 17,
-          "function_name": "main",
-          "code": "foundation_models()"
-        },
-        {
-          "path": "history.py",
-          "line_number": 159,
-          "function_name": "foundation_models",
-          "code": "text(\"xAI builds cluster with 200,000 H100s to train Grok. \"), article_link(\"https://www.tomshardware.com/pc-components/gpus/elon-musk-is-doubling-the-worlds-largest-ai-gpu-cluster-expanding-colossus-gpu-cluster-to-200-000-soon-has-floated-300-000-in-the-past\")"
-        }
-      ],
-      "env": {},
-      "renderings": [
-        {
-          "type": "markdown",
-          "data": "xAI builds cluster with 200,000 H100s to train Grok. ",
-          "style": {},
-          "external_link": null,
-          "internal_link": null
-        },
-        {
-          "type": "link",
-          "data": null,
+          "data": "[article]",
           "style": {},
           "external_link": {
             "title": "[article]",
@@ -4205,29 +3518,29 @@
       "stack": [
         {
           "path": "history.py",
-          "line_number": 17,
+          "line_number": 16,
           "function_name": "main",
           "code": "foundation_models()"
         },
         {
           "path": "history.py",
-          "line_number": 160,
+          "line_number": 166,
           "function_name": "foundation_models",
-          "code": "text(\"Stargate (OpenAI, NVIDIA, Oracle) invests $500B over 4 years. \"), article_link(\"https://openai.com/index/announcing-the-stargate-project/\")"
+          "code": "text(\"- Stargate (OpenAI, NVIDIA, Oracle) invests $500B over 4 years. \"), article_link(\"https://openai.com/index/announcing-the-stargate-project/\")"
         }
       ],
       "env": {},
       "renderings": [
         {
           "type": "markdown",
-          "data": "Stargate (OpenAI, NVIDIA, Oracle) invests $500B over 4 years. ",
+          "data": "- Stargate (OpenAI, NVIDIA, Oracle) invests $500B over 4 years. ",
           "style": {},
           "external_link": null,
           "internal_link": null
         },
         {
           "type": "link",
-          "data": null,
+          "data": "[article]",
           "style": {},
           "external_link": {
             "title": "[article]",
@@ -4246,13 +3559,91 @@
       "stack": [
         {
           "path": "history.py",
-          "line_number": 17,
+          "line_number": 16,
           "function_name": "main",
           "code": "foundation_models()"
         },
         {
           "path": "history.py",
-          "line_number": 162,
+          "line_number": 168,
+          "function_name": "foundation_models",
+          "code": "text(\"AI becomes mainstream:\")"
+        }
+      ],
+      "env": {},
+      "renderings": [
+        {
+          "type": "markdown",
+          "data": "AI becomes mainstream:",
+          "style": {},
+          "external_link": null,
+          "internal_link": null
+        }
+      ]
+    },
+    {
+      "stack": [
+        {
+          "path": "history.py",
+          "line_number": 16,
+          "function_name": "main",
+          "code": "foundation_models()"
+        },
+        {
+          "path": "history.py",
+          "line_number": 169,
+          "function_name": "foundation_models",
+          "code": "text(\"- Widespread adoption: ChatGPT (2022) acquired 100M users after 2 months\")"
+        }
+      ],
+      "env": {},
+      "renderings": [
+        {
+          "type": "markdown",
+          "data": "- Widespread adoption: ChatGPT (2022) acquired 100M users after 2 months",
+          "style": {},
+          "external_link": null,
+          "internal_link": null
+        }
+      ]
+    },
+    {
+      "stack": [
+        {
+          "path": "history.py",
+          "line_number": 16,
+          "function_name": "main",
+          "code": "foundation_models()"
+        },
+        {
+          "path": "history.py",
+          "line_number": 170,
+          "function_name": "foundation_models",
+          "code": "text(\"- Policymaking: governments trying to figure out how to regulate AI (safety, national security, competition)\")"
+        }
+      ],
+      "env": {},
+      "renderings": [
+        {
+          "type": "markdown",
+          "data": "- Policymaking: governments trying to figure out how to regulate AI (safety, national security, competition)",
+          "style": {},
+          "external_link": null,
+          "internal_link": null
+        }
+      ]
+    },
+    {
+      "stack": [
+        {
+          "path": "history.py",
+          "line_number": 16,
+          "function_name": "main",
+          "code": "foundation_models()"
+        },
+        {
+          "path": "history.py",
+          "line_number": 172,
           "function_name": "foundation_models",
           "code": "text(\"There are no public details on how frontier models are built.\")"
         }
@@ -4272,13 +3663,13 @@
       "stack": [
         {
           "path": "history.py",
-          "line_number": 17,
+          "line_number": 16,
           "function_name": "main",
           "code": "foundation_models()"
         },
         {
           "path": "history.py",
-          "line_number": 163,
+          "line_number": 173,
           "function_name": "foundation_models",
           "code": "text(\"From the GPT-4 technical report \"), link(\"https://arxiv.org/abs/2303.08774\"), text(\":\")"
         }
@@ -4294,7 +3685,7 @@
         },
         {
           "type": "link",
-          "data": null,
+          "data": "[OpenAI+ 2023]",
           "style": {},
           "external_link": {
             "title": "GPT-4 Technical Report",
@@ -4582,7 +3973,7 @@
               "Barret Zoph"
             ],
             "organization": null,
-            "date": "2023-03-15T17:15:04Z",
+            "date": "2023-03-15",
             "url": "https://arxiv.org/abs/2303.08774",
             "description": "We report the development of GPT-4, a large-scale, multimodal model which can accept image and text inputs and produce text outputs. While less capable than humans in many real-world scenarios, GPT-4 exhibits human-level performance on various professional and academic benchmarks, including passing a simulated bar exam with a score around the top 10% of test takers. GPT-4 is a Transformer-based model pre-trained to predict the next token in a document. The post-training alignment process results in improved performance on measures of factuality and adherence to desired behavior. A core component of this project was developing infrastructure and optimization methods that behave predictably across a wide range of scales. This allowed us to accurately predict some aspects of GPT-4's performance based on models trained with no more than 1/1,000th the compute of GPT-4.",
             "notes": null
@@ -4602,13 +3993,13 @@
       "stack": [
         {
           "path": "history.py",
-          "line_number": 17,
+          "line_number": 16,
           "function_name": "main",
           "code": "foundation_models()"
         },
         {
           "path": "history.py",
-          "line_number": 164,
+          "line_number": 174,
           "function_name": "foundation_models",
           "code": "image(\"images/gpt4-no-details.png\", width=600)"
         }
@@ -4630,59 +4021,7 @@
       "stack": [
         {
           "path": "history.py",
-          "line_number": 17,
-          "function_name": "main",
-          "code": "foundation_models()"
-        },
-        {
-          "path": "history.py",
-          "line_number": 166,
-          "function_name": "foundation_models",
-          "code": "text(\"AI has emerged from research and now is shaping businesses and public policy.\")"
-        }
-      ],
-      "env": {},
-      "renderings": [
-        {
-          "type": "markdown",
-          "data": "AI has emerged from research and now is shaping businesses and public policy.",
-          "style": {},
-          "external_link": null,
-          "internal_link": null
-        }
-      ]
-    },
-    {
-      "stack": [
-        {
-          "path": "history.py",
-          "line_number": 17,
-          "function_name": "main",
-          "code": "foundation_models()"
-        },
-        {
-          "path": "history.py",
-          "line_number": 167,
-          "function_name": "foundation_models",
-          "code": "text(\"The research is still far from done...\")"
-        }
-      ],
-      "env": {},
-      "renderings": [
-        {
-          "type": "markdown",
-          "data": "The research is still far from done...",
-          "style": {},
-          "external_link": null,
-          "internal_link": null
-        }
-      ]
-    },
-    {
-      "stack": [
-        {
-          "path": "history.py",
-          "line_number": 17,
+          "line_number": 16,
           "function_name": "main",
           "code": "foundation_models()"
         }
@@ -4694,7 +4033,7 @@
       "stack": [
         {
           "path": "history.py",
-          "line_number": 18,
+          "line_number": 17,
           "function_name": "main",
           "code": "parting_thoughts()"
         }
@@ -4706,13 +4045,13 @@
       "stack": [
         {
           "path": "history.py",
-          "line_number": 18,
+          "line_number": 17,
           "function_name": "main",
           "code": "parting_thoughts()"
         },
         {
           "path": "history.py",
-          "line_number": 170,
+          "line_number": 177,
           "function_name": "parting_thoughts",
           "code": "def parting_thoughts():"
         }
@@ -4724,22 +4063,22 @@
       "stack": [
         {
           "path": "history.py",
-          "line_number": 18,
+          "line_number": 17,
           "function_name": "main",
           "code": "parting_thoughts()"
         },
         {
           "path": "history.py",
-          "line_number": 171,
+          "line_number": 178,
           "function_name": "parting_thoughts",
-          "code": "text(\"Fierce battles between the traditions\")"
+          "code": "text(\"Fierce battles between the traditions:\")"
         }
       ],
       "env": {},
       "renderings": [
         {
           "type": "markdown",
-          "data": "Fierce battles between the traditions",
+          "data": "Fierce battles between the traditions:",
           "style": {},
           "external_link": null,
           "internal_link": null
@@ -4750,13 +4089,13 @@
       "stack": [
         {
           "path": "history.py",
-          "line_number": 18,
+          "line_number": 17,
           "function_name": "main",
           "code": "parting_thoughts()"
         },
         {
           "path": "history.py",
-          "line_number": 172,
+          "line_number": 179,
           "function_name": "parting_thoughts",
           "code": "text(\"- Minsky/Papert promoted symbolic AI and killed neural networks research\")"
         }
@@ -4776,13 +4115,13 @@
       "stack": [
         {
           "path": "history.py",
-          "line_number": 18,
+          "line_number": 17,
           "function_name": "main",
           "code": "parting_thoughts()"
         },
         {
           "path": "history.py",
-          "line_number": 173,
+          "line_number": 180,
           "function_name": "parting_thoughts",
           "code": "text(\"- Statistical ML in the 2000s thought neural networks were dead\")"
         }
@@ -4802,13 +4141,13 @@
       "stack": [
         {
           "path": "history.py",
-          "line_number": 18,
+          "line_number": 17,
           "function_name": "main",
           "code": "parting_thoughts()"
         },
         {
           "path": "history.py",
-          "line_number": 175,
+          "line_number": 182,
           "function_name": "parting_thoughts",
           "code": "text(\"Deeper connections\")"
         }
@@ -4828,13 +4167,13 @@
       "stack": [
         {
           "path": "history.py",
-          "line_number": 18,
+          "line_number": 17,
           "function_name": "main",
           "code": "parting_thoughts()"
         },
         {
           "path": "history.py",
-          "line_number": 176,
+          "line_number": 183,
           "function_name": "parting_thoughts",
           "code": "text(\"- McCulloch/Pitts introduced artificial neural networks, but paper is about how to implement logical operations\")"
         }
@@ -4854,13 +4193,13 @@
       "stack": [
         {
           "path": "history.py",
-          "line_number": 18,
+          "line_number": 17,
           "function_name": "main",
           "code": "parting_thoughts()"
         },
         {
           "path": "history.py",
-          "line_number": 177,
+          "line_number": 184,
           "function_name": "parting_thoughts",
           "code": "text(\"- Go is defined purely using symbols, but deep neural networks are key to playing the game\")"
         }
@@ -4880,13 +4219,13 @@
       "stack": [
         {
           "path": "history.py",
-          "line_number": 18,
+          "line_number": 17,
           "function_name": "main",
           "code": "parting_thoughts()"
         },
         {
           "path": "history.py",
-          "line_number": 178,
+          "line_number": 185,
           "function_name": "parting_thoughts",
           "code": "text(\"- Deep learning was initially all about perception, but now turn to reasoning (goals of symbolic AI)\")"
         }
@@ -4906,13 +4245,13 @@
       "stack": [
         {
           "path": "history.py",
-          "line_number": 18,
+          "line_number": 17,
           "function_name": "main",
           "code": "parting_thoughts()"
         },
         {
           "path": "history.py",
-          "line_number": 180,
+          "line_number": 187,
           "function_name": "parting_thoughts",
           "code": "text(\"AI is a melting pot:\")"
         }
@@ -4932,22 +4271,22 @@
       "stack": [
         {
           "path": "history.py",
-          "line_number": 18,
+          "line_number": 17,
           "function_name": "main",
           "code": "parting_thoughts()"
         },
         {
           "path": "history.py",
-          "line_number": 181,
+          "line_number": 188,
           "function_name": "parting_thoughts",
-          "code": "text(\"- Symbolic AI: provided the vision and ambition\")"
+          "code": "text(\"- Symbolic AI: provided the vision and ambition, agent scaffolds\")"
         }
       ],
       "env": {},
       "renderings": [
         {
           "type": "markdown",
-          "data": "- Symbolic AI: provided the vision and ambition",
+          "data": "- Symbolic AI: provided the vision and ambition, agent scaffolds",
           "style": {},
           "external_link": null,
           "internal_link": null
@@ -4958,22 +4297,22 @@
       "stack": [
         {
           "path": "history.py",
-          "line_number": 18,
+          "line_number": 17,
           "function_name": "main",
           "code": "parting_thoughts()"
         },
         {
           "path": "history.py",
-          "line_number": 182,
+          "line_number": 189,
           "function_name": "parting_thoughts",
-          "code": "text(\"- Neural AI: provided the model architectures\")"
+          "code": "text(\"- Neural AI: provided the core paradigm (training neural networks)\")"
         }
       ],
       "env": {},
       "renderings": [
         {
           "type": "markdown",
-          "data": "- Neural AI: provided the model architectures",
+          "data": "- Neural AI: provided the core paradigm (training neural networks)",
           "style": {},
           "external_link": null,
           "internal_link": null
@@ -4984,22 +4323,22 @@
       "stack": [
         {
           "path": "history.py",
-          "line_number": 18,
+          "line_number": 17,
           "function_name": "main",
           "code": "parting_thoughts()"
         },
         {
           "path": "history.py",
-          "line_number": 183,
+          "line_number": 190,
           "function_name": "parting_thoughts",
-          "code": "text(\"- Statistical AI: provided the rigor (e.g., optimization, generalization)\")"
+          "code": "text(\"- Statistical AI: provided the rigor (e.g., optimization, variance, generalization)\")"
         }
       ],
       "env": {},
       "renderings": [
         {
           "type": "markdown",
-          "data": "- Statistical AI: provided the rigor (e.g., optimization, generalization)",
+          "data": "- Statistical AI: provided the rigor (e.g., optimization, variance, generalization)",
           "style": {},
           "external_link": null,
           "internal_link": null
@@ -5010,13 +4349,13 @@
       "stack": [
         {
           "path": "history.py",
-          "line_number": 18,
+          "line_number": 17,
           "function_name": "main",
           "code": "parting_thoughts()"
         },
         {
           "path": "history.py",
-          "line_number": 185,
+          "line_number": 192,
           "function_name": "parting_thoughts",
           "code": "text(\"This class: we will see elements of all three traditions\")"
         }
@@ -5036,7 +4375,7 @@
       "stack": [
         {
           "path": "history.py",
-          "line_number": 18,
+          "line_number": 17,
           "function_name": "main",
           "code": "parting_thoughts()"
         }
