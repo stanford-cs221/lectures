@@ -185,7 +185,7 @@ def about_this_course():
     text("Students will be divided **randomly** into two groups:")
     text("- A: no homework check-ins")
     text("- B: homework check-ins")
-    text("Do not ask us to switch us groups (that would bias the RCT).")
+    text("Do not ask us to switch us groups (that would bias the randomized control trial).")
     text("Grading of group A will be done independently of group B.")
     text("At the end of class, measure average-final-exam-score(B) - average-final-exam-score(A)")
     text("If you have questions or concerns, please come talk to us.")

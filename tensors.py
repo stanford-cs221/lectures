@@ -6,6 +6,7 @@ import timeit
 
 
 def main():
+    text("# Tensors")
     image("images/tensor.jpg", width=200), note("This is probably what you think of when you hear the word \"tensor\".")
     text("**Tensors** are the atoms of modern machine learning.")
     text("They are used to represent data, model parameters, gradients, intermediate computations (activations), etc.")
