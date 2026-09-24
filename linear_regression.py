@@ -5,6 +5,7 @@ from altair import Chart, Data
 
 
 def main():
+    text("# Linear regression")
     text("Last unit: tensors, backpropagation")
     text("This unit: the full pipeline of machine learning for **linear regression**.")
 
@@ -16,13 +17,13 @@ def main():
     optimization_algorithm()
 
     text("Summary:")
-    text("- Predictor: input -> output")
+    text("- Predictor: input → output")
     text("- Training data: set of (input, output) pairs")
-    text("- Learning algorithm: training data -> predictor")
+    text("- Learning algorithm: training data → predictor")
     text("- Hypothesis class: set of possible predictors")
-    text("- Loss function: how bad the predictor (parameters) fit the data")
+    text("- Loss function: how badly the predictor (parameters) fits the data")
     text("- Optimization algorithm: find parameters that minimize the loss function")
-    text("- Gradient descent: iteratively updates the parameters in the direction of the negative gradient")
+    text("- Gradient descent: iteratively update the parameters in the direction of the negative gradient")
 
 
 def prediction_task():
@@ -80,7 +81,7 @@ def get_training_data():
 def hypothesis_class():
     text("Which predictors are possible?")
 
-    text("Before we looked at only one predictor:")
+    text("Before, we looked at only one predictor:")
     def fixed_f(x: float) -> float:
         return 2 * x + 1
 
@@ -99,12 +100,12 @@ def hypothesis_class():
 
     text("Let's take an input and apply the predictor:")
     x1 = 1  #  @inspect x1
-    y1 = f(params, x1)  # @inspect y1
+    y1 = f(params, x1)  # @inspect params y1
 
     text("Here's another predictor:")  # @clear params x1 y1
     params = Parameters1D(weight=2, bias=0.2)
     x1 = 1  #  @inspect x1
-    y1 = f(params, x1)  # @inspect y1
+    y1 = f(params, x1)  # @inspect params y1
 
     text("The **hypothesis class** is the set of all predictors you can get by choosing parameters (weight, bias).")
 
@@ -112,8 +113,8 @@ def hypothesis_class():
     text("- Hypothesis class is a **model architecture**")
     text("- Predictor is a **model**")
 
-    text("In general, the parameters is a collection of tensors.")
-    text("For example, here are the parameters of the DeepSeek v3 model "), link("https://arxiv.org/abs/2412.19437")
+    text("In general, the parameters are a collection of tensors.")
+    text("For example, here are the parameters of the DeepSeek-V3 model "), link("https://arxiv.org/abs/2412.19437")
     link("https://huggingface.co/deepseek-ai/DeepSeek-V3?show_file_info=model.safetensors.index.json", title="DeepSeek-V3 on Hugging Face")
 
 
@@ -124,7 +125,7 @@ class Parameters1D:
 
 
 def loss_function():
-    text("The next design decision is how to judge each of the many possible predictors.")
+    text("The next design decision is how to judge each of the (infinitely) many possible predictors.")
 
     text("Let's consider a predictor:")
     params = Parameters1D(weight=2, bias=1)  # @inspect params
@@ -136,16 +137,16 @@ def loss_function():
     training_data = get_training_data()  # @inspect training_data @stepover
 
     text("How well does `params` fit `training_data`?")
-    text("We define a loss function that measures how unhappy one point is based on params.")
+    text("We define a **loss function** that measures how unhappy we are with `params` on a single example.")
     loss = compute_loss(params, training_data[0])  # @inspect loss
 
-    text("The training loss is the average of the per-example losses of the training examples.")  # @clear loss
+    text("The training loss is the average of the per-example losses over the training data.")  # @clear loss
     train_loss = compute_train_loss(params, training_data)  # @inspect train_loss
 
     text("Here's another predictor:")
     params2 = Parameters1D(weight=1, bias=1)  # @inspect params2
     train_loss2 = compute_train_loss(params2, training_data)  # @inspect train_loss2 @stepover
-    text("It has higher training loss so it's worse.")
+    text("It has a higher training loss, so it's worse.")
 
 
 def f(params: Parameters1D, x: float) -> float:  # @inspect params x
@@ -202,7 +203,7 @@ def optimization_algorithm():
     text("Let us compute the gradient.")
     grad = compute_gradient_train_loss(params, training_data)  # @inspect grad
 
-    text("Then we can take a little step in that direction.")
+    text("Then we can take a little step in the opposite direction.")
     learning_rate = 0.01
     params = Parameters1D(  # @inspect params
         weight=params.weight - learning_rate * grad[0],
@@ -217,15 +218,18 @@ def optimization_algorithm():
     gradient_descent()
 
     text("Notes:")
-    text("- Learning rate controls how fast you drive (tradeoff speed versus stability)")
-    text("- Guaranteed to converge for convex functions, not for deep learning")
-    text("- Other algorithms: stochastic gradient descent, Adam")
+    text("- Learning rate controls how fast you drive (trade off speed versus stability)")
+    text("- Guaranteed to converge for convex functions (with a small enough learning rate), but not for deep learning")
+    text("- Each gradient step can be computed on a random batch of examples")
+    text("- Other optimization algorithms: stochastic gradient descent, Adam, Muon")
 
 
 def gradient_descent():
     training_data = get_training_data()  # @stepover
     params = Parameters1D(weight=0, bias=1)  # @inspect params
     learning_rate = 0.01
+
+    losses = []
     for step in range(10):  # @inspect step
         train_loss = compute_train_loss(params, training_data)  # @inspect train_loss @stepover
         grad = compute_gradient_train_loss(params, training_data)  # @inspect grad @stepover
@@ -233,6 +237,10 @@ def gradient_descent():
             weight=params.weight - learning_rate * grad[0],
             bias=params.bias - learning_rate * grad[1],
         )
+        losses.append(float(train_loss))
+
+    # Learning curve
+    plot(Chart(Data(values=[{"step": i, "loss": loss} for i, loss in enumerate(losses)])).mark_line().encode(x="step:Q", y="loss:Q").to_dict())
 
 
 if __name__ == "__main__":

@@ -7,6 +7,7 @@ from graphviz import Digraph
 
 
 def main():
+    text("# Backpropagation")
     text("Last unit: **tensors**")
     text("- Atoms in modern machine learning, used to represent everything (data, parameters, etc.)")
     text("- einops library to make computations more legible")
@@ -29,102 +30,112 @@ def main():
 
 
 def einops_review():
-    text("A tensor has an **order** (also called rank, but clashes with rank of matrix)")
+    text("A tensor has an **order** (also called rank, but that clashes with the rank of a matrix)")
     text("- Order 0 tensors are scalars")
+    x = np.ones(())  # @inspect x
     text("- Order 1 tensors are vectors")
+    x = np.ones((3,))  # @inspect x
     text("- Order 2 tensors are matrices")
+    x = np.ones((2, 3))  # @inspect x
+    text("- Order 3 tensors are order-3 tensors")
+    x = np.ones((2, 3, 4))  # @inspect x
 
-    text("A tensor has an order number of **axes**.")
+    text("Order is the number of **axes** of a tensor.")
     text("For order 2 tensors (matrices):")
+    x = np.ones((2, 3))  # @inspect x
     text("- Axis 0 corresponds to rows")
     text("- Axis 1 corresponds to columns")
 
-    text("In einops, we name the axes of each tensor")
+    text("In einops, we name the axes of each tensor.")
     text("- Choose name based on what that axis represents (just like variable names in code)")
-    text("- Example: for a matrix where rows are data points, axes names: example, feature")
-    text("- einsum is a single function that can do a lot of different things")
+    text("Example: for a matrix where rows are data points")
+    x = np.ones((2, 3))  # @inspect x
+    text("- Axis 0: example")
+    text("- Axis 1: feature")
 
+    text("**einsum** is a single function that is like a Swiss Army knife 🛠️")
     text("Now let's play around with some basic einsum examples.")
 
     text("Start with operations on vectors.")
     x = np.array([0, 1, 10])  # @inspect x
 
-    # Identity: y[i] += x[i] for all i
-    y = einsum(x, "i -> i")  # @inspect y
+    # Identity: for each i: y[i] = x[i]
+    y = einsum(x, "i -> i")  # @inspect x y
 
-    # Sum: y += x[i] for all i
-    y = einsum(x, "i ->")  # @inspect y
+    # Sum: y = Σ_i x[i]
+    y = einsum(x, "i ->")  # @inspect x y
 
-    # Elementwise product: y[i] += x[i] * x[i] for all i
-    y = einsum(x, x, "i, i -> i")  # @inspect y
+    # Elementwise product: for each i: y[i] = x[i] * x[i]
+    y = einsum(x, x, "i, i -> i")  # @inspect x y
 
-    # Dot product: y += x[i] * x[i] for all i
-    y = einsum(x, x, "i, i ->")  # @inspect y
+    # Dot product: y = Σ_i x[i] * x[i]
+    y = einsum(x, x, "i, i ->")  # @inspect x y
 
-    # Outer product: y[i][j] += x[i] * x[j] for all i, j
-    y = einsum(x, x, "i, j -> i j")  # @inspect y
+    # Outer product: for each i, j: y[i][j] = x[i] * x[j]
+    y = einsum(x, x, "i, j -> i j")  # @inspect x y
 
-    # Triple elementwise product: y[i] = x[i] * x[i] * x[i] for all i
-    y = einsum(x, x, x, "i, i, i -> i")  # @inspect y
+    # Triple elementwise product: for each i: y[i] = x[i] * x[i] * x[i]
+    y = einsum(x, x, x, "i, i, i -> i")  # @inspect x y
 
-    # Triple outer product: y[i][j][k] += x[i] * x[j] * x[k] for all i, j, k
-    y = einsum(x, x, x, "i, j, k -> i j k")  # @inspect y
+    # Triple outer product: for each i, j, k: y[i][j][k] = x[i] * x[j] * x[k]
+    y = einsum(x, x, x, "i, j, k -> i j k")  # @inspect x y
 
     text("Now let's try operations on matrices.")  # @clear y
     m = np.array([[0, 1, 2], [1, 10, 0]])  # @inspect m
 
-    # Sum of all entries: y += m[i][j] for all i, j
-    y = einsum(m, "i j ->")  # @inspect y
+    # Sum of all entries: y = Σ_i Σ_j m[i][j]
+    y = einsum(m, "i j ->")  # @inspect m y
 
-    # Row sums: y[i] += m[i][j] for all i, j
-    y = einsum(m, "i j -> i")  # @inspect y
+    # Row sums: for each i: y[i] = Σ_j m[i][j]
+    y = einsum(m, "i j -> i")  # @inspect m y
 
-    # Column sums: y[j] += m[i][j] for all i, j
-    y = einsum(m, "i j -> j")  # @inspect y
+    # Column sums: for each j: y[j] = Σ_i m[i][j]
+    y = einsum(m, "i j -> j")  # @inspect m y
 
-    # Transpose: y[j][i] += m[i][j] for all i, j
-    y = einsum(m, "i j -> j i")  # @inspect y
+    # Transpose: for each i, j: y[j][i] = m[i][j]
+    y = einsum(m, "i j -> j i")  # @inspect m y
 
-    # Matrix vector product: y[i] += m[i][j] * x[j] for all i, j
-    y = einsum(m, x, "i j, j -> i")  # @inspect y
+    # Matrix vector product: for each i: y[i] = Σ_j m[i][j] * x[j]
+    y = einsum(m, x, "i j, j -> i")  # @inspect m x y
 
-    # Matrix-matrix product m m^T: y[i][j] += m[i][k] * m[j][k] for all i, j, k
-    y = einsum(m, m, "i k, j k -> i j")  # @inspect y
+    # Matrix-matrix product m m^T: for each i, j: y[i][j] = Σ_k m[i][k] * m[j][k]
+    y = einsum(m, m, "i k, j k -> i j")  # @inspect m y
 
-    # Matrix-matrix product m^T m: y[i][j] += m[k][i] * m[k][j] for all i, j, k
-    y = einsum(m, m, "k i, k j -> i j")  # @inspect y
+    # Matrix-matrix product m^T m: for each i, j: y[i][j] = Σ_k m[k][i] * m[k][j]
+    y = einsum(m, m, "k i, k j -> i j")  # @inspect m y
 
     text("General setup:")
-    text("- Input: a list of tensors with named input axes (potentially overlapping)")
-    text("- Output: a tensor with a list of named output axes (a subset of the input axes)")
-    text("For each assignment of the input axes (e.g., (i, j, k) = (0, 2, 1)):")
-    text("- Multiply the corresponding element of the tensors (e.g., m[k][i] * m[k][j])")
-    text("- Add this to the corresponding element of the output tensor (e.g., y[i][j])")
+    text(r"- Input: a list of tensors $x_1, \dots, x_k$ with named input axes $i_1, \dots, i_k$")
+    text("- Output: a tensor $y$ with a list of named output axes $o$ (a subset of the input axes)")
+    text(r"- Compute: $y[o] = \sum_{i_1, \dots, i_k \backslash o} \prod_j x_j[i_j]$")
 
     text("It's all just additions and multiplications with bookkeeping!")
 
 
 def motivation():
-    text("Let us start with linear regression example.")
+    text("Let us start with a linear regression example.")
     text("For now, focus on the tensor mechanics and don't worry about the machine learning.")
 
+    text("Suppose we have n examples, each of which is a d-dimensional vector.")
     x = np.array([[1, 2, 0], [0, -1, 1]])  # n x d matrix @inspect x
     y = np.array([0, 3])  # n vector of targets @inspect y
     w = np.array([1, 0, 1])  # d vector of weights @inspect w
 
     text("We can build new tensors by applying various operations:")
-    predictions = x @ w   # multiplication -> n vector of predictions @inspect predictions
-    residuals = predictions - y   # elementwise subtraction -> n vector of residuals @inspect residuals
+    predictions = einsum(x, w, "n d, d -> n")  # matrix-vector product -> n vector of predictions @inspect x w predictions
+    residuals = predictions - y   # elementwise subtraction -> n vector of residuals @inspect y residuals
     losses = residuals ** 2  # elementwise power @inspect losses
-    total_loss = np.sum(losses)  # sum all elements @inspect total_loss
+    loss = np.sum(losses)  # sum all elements @inspect loss
 
-    text("Define an **objective** function that takes an vector input and returns a scalar output.") # @clear predictions residuals losses total_loss w
+    text("So given a weight vector w, I can compute a total loss.")
+    text("Let's wrap it in a function.")
+    text("Define an **objective** function that takes a vector input and returns a scalar output.") # @clear predictions residuals losses loss w
     def objective(w: np.ndarray) -> float:
         loss = np.sum((x @ w - y) ** 2)  # @inspect loss
         return loss
     text("For each value of `w`, we can compute the objective.")
-    loss = objective(np.array([1, 0, 1]))  # @inspect loss @stepover
-    loss = objective(np.array([1, 0, -1]))  # @inspect loss @stepover
+    loss = objective(w=np.array([1, 0, 1]))  # @inspect loss @stepover
+    loss = objective(w=np.array([1, 0, -1]))  # @inspect loss @stepover
 
     text("Ultimate goal is to find `w` that minimizes `objective(w)`.")
     text("For now: given a fixed `w`, how should we tweak `w` to improve `objective(w)`?")
@@ -132,12 +143,12 @@ def motivation():
 
 def gradients():
     text("Recall from your multivariable calculus course:")
-    text("The **gradient** of a function tell us the direction that decreases the function the most.")
+    text("The **gradient** of a function tells us the direction that increases the function the most.")
 
     text("Example use cases:")
     text("- Optimizing the parameters of a deep learning model")
-    text("- Optimizing the input (an image) that maximizes error (adversarial examples)")
-    text("- Optimizing the relative proportions over datasets")
+    text("- Optimizing the input (an image) to maximize error (adversarial examples) "), link("https://arxiv.org/abs/1412.6572")
+    text("- Optimizing the relative proportions of datasets "), link("https://arxiv.org/abs/2407.01492")
 
     example_1d()
     example_2d()
@@ -145,8 +156,8 @@ def gradients():
 
     text("Summary:")
     text("- Consider functions that take an input tensor and output a scalar.")
-    text("- Partial derivative measures how much the function changes when an element of the tensor changes.")
-    text("- Gradient is the full tensor of partial derivatives (same shape as input).")
+    text("- A partial derivative measures how much the function changes when one element of the tensor changes.")
+    text("- The gradient is the full tensor of partial derivatives (same shape as input).")
 
 
 def example_1d():
@@ -159,63 +170,67 @@ def example_1d():
     plot(Chart(Data(values=values)).mark_line().encode(x="x:Q", y="y:Q").to_dict())  # @clear values
 
     text("If we change `x` slightly, how much does `f(x)` change?")
-    dx = 1e-4
     x = 1
     y = f(x)  # @inspect y
+    dx = 1e-4
     new_y = f(x + dx)  # @inspect new_y
     text("For each change dx, we get a change dy.")
     dy = (new_y - y) / dx  # @inspect dy
 
-    text("As dx -> 0, this is the **derivative**, which we can analytically compute:")
+    text("As dx → 0, this is the **derivative** of f at x=1, which we can analytically compute:")
     def df(x: float) -> float:
         return 2 * x  # @inspect df
-    dy = df(x)  # @inspect dy @stepover
+    dy = df(x)  # @inspect x dy @stepover
 
-    text("Graphically, derivative is the slope of the tangent line at `x`.")
+    text("Graphically, the derivative is the slope of the tangent line at `x`.")
 
 
 def example_2d():
     text("Consider a function that takes 2 scalar inputs and outputs a scalar:")
-    def f(x1: float, x2: float) -> float:
-        return (x1 + x2) ** 2   # @inspect f
+    def f(x1: float, x2: float) -> float:  # @inspect x1 x2
+        return (x1 + x2) ** 2
     y = f(1, 2)  # @inspect y
 
-    text("Analytically compute the **partial derivative** for each input:")
-    def df_dx1(x1: float, x2: float) -> float:
+    text("A **partial derivative** is how much f changes when a single input changes.")
+    text("Analytically compute the partial derivative for each input:")
+    def df_dx1(x1: float, x2: float) -> float:  # @inspect x1 x2
         return 2 * (x1 + x2) * 1
-    def df_dx2(x1: float, x2: float) -> float:
+    def df_dx2(x1: float, x2: float) -> float:  # @inspect x1 x2
         return 2 * (x1 + x2) * 1
 
     dy_x1 = df_dx1(1, 2)  # @inspect dy_x1
     dy_x2 = df_dx2(1, 2)  # @inspect dy_x2
 
-    text("From (1, 2), moving in direction of (dy_x1, dy_x2) will increase f the most.")
-    text("From (1, 2), moving in direction of -(dy_x1, dy_x2) will decrease f the most.")
+    text("From (1, 2), moving in the direction of (dy_x1, dy_x2) will increase f the most.")
+    text("From (1, 2), moving in the direction of -(dy_x1, dy_x2) will decrease f the most.")
 
 
 def example_vector():
-    text("Now let's consider a general vector function:")
-    def f(x: np.ndarray):
+    text("Now let's consider a function of a vector:")
+    def f(x: np.ndarray):  # @inspect x
         return np.sum(x) ** 2
 
-    text("Input a 2-dimensional vector, and output a scalar.")
-    y = f(np.array([1, 2]))  # @inspect y @stepover
+    text("Input is a 2-dimensional vector, output is a scalar.")
+    y = f(x=np.array([1, 2]))  # @inspect y @stepover
 
-    text("We have a partial derivative, one for each dimension.")
+    text("We have one partial derivative for each dimension.")
     text("- df/dx[0]: how much does f change if we change x[0]?")
     text("- df/dx[1]: how much does f change if we change x[1]?")
 
     text("The **gradient** is the vector of the partial derivatives:")
     text("- ∇f = (df/dx[0], df/dx[1])")
+    text("- Note that these are functions that depend on the evaluation point.")
 
     text("Let us analytically compute the gradient:")
-    def df(x: np.ndarray) -> np.ndarray:
+    def df(x: np.ndarray) -> np.ndarray:  # @inspect x
         return 2 * np.sum(x) * np.ones_like(x)
-    dy = df(np.array([1, 2]))  # @inspect dy @stepover
+    x = np.array([1, 2])  # @inspect x
+    dy = df(x)  # @inspect dy @stepover
 
     text("These functions work for any number of dimensions:") # @clear y dy
-    y = f(np.array([1, 3, 0, -1]))  # @inspect y @stepover
-    dy = df(np.array([1, 3, 0, -1]))  # @inspect dy @stepover
+    x = np.array([1, 3, 0, -1])  # @inspect x
+    y = f(x)  # @inspect y @stepover
+    dy = df(x)  # @inspect dy @stepover
 
 
 def computation_graphs():
@@ -225,8 +240,8 @@ def computation_graphs():
     text("At the end of the day, even the most complex functions are composed out of basic operations.")
     text("- addition, multiplication, exp, log, etc.")
 
-    text("Autodiff (specifically, reverse mode automatic differentation) "), link("https://gwern.net/doc/ai/nn/1974-werbos.pdf", title="Werbos 1974")
-    text("- Build an explicit computation graph of the function")
+    text("Autodiff (specifically, reverse mode automatic differentiation) "), link("https://gwern.net/doc/ai/nn/1974-werbos.pdf", title="Werbos 1974")
+    text("- Build an explicit computation graph representing the function")
     text("- Compute partial derivatives recursively by traversing the graph")
 
     text("Today, there are many libraries (PyTorch, JAX).")
@@ -250,16 +265,16 @@ def computation_graphs_example():
 
     x1 = Input("x1", np.array(2.0))  # @inspect x1
     x2 = Input("x2", np.array(3.0))  # @inspect x2 @stepover
-    sum = Add("sum", x1, x2)  # @inspect sum  @stepover
-    sum.forward()  # @inspect sum
-    y = Squared("y", sum)  # @inspect y @stepover @clear sum
-    y.forward()  # @inspect y
+    z = Add("z", x1, x2)  # @inspect z
+    y = Squared("y", z)  # @inspect y @stepover @clear z
+    image(y.get_graphviz().render("var/backprop-graph-example-y", format="png"), width=100)  # @stepover
+    text("We compute the function value, but keep track of the provenance of how the value was computed.")
 
     text("Summary so far:")  # @clear y
     text("- Each input (leaf) node represents some fixed value (e.g., `x1`).")
     text("- Each non-input node represents a primitive computation performed on its dependencies.")
     text("- `forward()` computes the `value` of a node.")
-    text("- The result of the computation is at the root node (e.g., `y`)")
+    text("- The result of the computation is the value of the root node (e.g., `y`).")
 
     text("Now we want to compute partial derivatives (e.g., `dy/dx1`).")
 
@@ -268,31 +283,32 @@ def computation_graphs_example():
     link("https://stanford-cs221.github.io/autumn2023/modules/module.html#include=machine-learning%2Fbackpropagation.js&mode=print6pp", title="Reference: Autumn 2023 slides")
 
     text("Let us compute dy/dx1.")
-    y.grad = np.ones_like(y.value)  # @inspect y
-    sum.grad = np.zeros_like(sum.value)  # @inspect y
-    x1.grad = np.zeros_like(x1.value)  # @inspect y
+    y.grad = np.ones_like(y.value)
+    z.grad = np.zeros_like(z.value)
+    x1.grad = np.zeros_like(x1.value)
     x2.grad = np.zeros_like(x2.value)  # @inspect y
     y.backward()  # @inspect y
-    sum.backward()  # @inspect y
+    z.backward()  # @inspect y
 
     text("In general:")
     text("- `node.backward()` updates the partial derivatives of the dependencies of `node`.")
-    text("- Assumes `node.grad` is computed and all `value`s are computed.")
+    text("- Assume `node.grad` and all `value`s are computed.")
 
 
 def computation_graphs_general():
     text("Now let's define the **backpropagation** algorithm in full generality.")
-    text("- Traverse the graph from inputs (leaves) to the root and call `forward`")
+    text("- Traverse the graph from inputs (leaves) to the root and call `forward`.")
     text("- Traverse the graph from root to inputs (leaves) and call `backward`.")
 
     text("Let's redo the same function from before.")
     x1 = Input("x1", np.array(2.0))  # @stepover
     x2 = Input("x2", np.array(3.0))  # @stepover
-    sum = Add("sum", x1, x2)  # @stepover
-    y = Squared("y", sum)  # @inspect y @stepover
+    z = Add("z", x1, x2)  # @stepover
+    y = Squared("y", z)  # @inspect y @stepover
+    image(y.get_graphviz().render("var/backprop-graph-general-y", format="png"), width=100)
     backpropagation(y)  # @inspect y
 
-    text("Let's look at the original motivating example from linear regression.") # @clear x1 x2 sum y
+    text("Let's look at the original motivating example from linear regression.") # @clear x1 x2 z y
     x = Input("x", np.array([[1., 2, 0], [0, -1, 1]]))  # @inspect x @stepover
     y = Input("y", np.array([[0.], [3]]))  # @inspect y @stepover
     w = Input("w", np.array([[1.], [0], [1]]))  # @inspect w @stepover
@@ -301,6 +317,7 @@ def computation_graphs_general():
     losses = Squared("losses", residuals)  # @inspect losses @stepover @clear residuals
     ones = Input("ones", np.ones((1, 2)))  # @inspect ones @stepover
     total_loss = Multiply("total_loss", ones, losses)  # @inspect total_loss @stepover @clear ones losses
+    image(total_loss.get_graphviz().render("var/backprop-graph-general-total_loss", format="png"), width=200)
     backpropagation(total_loss)  # @inspect total_loss
 
 
@@ -313,7 +330,7 @@ class Node:
     - value (computed during the forward pass)
     - grad (computed during the backward pass)
     """
-    def __init__(self, name: str, *dependencies):
+    def __init__(self, name: str, *dependencies):  # @inspect name dependencies
         self.name = name
         self.dependencies = dependencies
         self.value = None
@@ -356,7 +373,7 @@ class Node:
 
 class Input(Node):
     """Represents an input (leaf node) in the computation graph."""
-    def __init__(self, name: str, value: float):
+    def __init__(self, name: str, value: np.ndarray):  # @inspect name value
         super().__init__(name)
         self.value = value
 
@@ -373,65 +390,65 @@ class Add(Node):
     """Add the dependencies."""
     def forward(self):  # @inspect self
         x, y = self.dependencies  # @inspect x.value y.value
-        self.value = x.value + y.value  # @inspect self
+        self.value = x.value + y.value  # @inspect self.value
 
     def backward(self):  # @inspect self
         x, y = self.dependencies
-        x.grad += self.grad  # @inspect self
-        y.grad += self.grad  # @inspect self
+        x.grad += self.grad  # @inspect x.grad
+        y.grad += self.grad  # @inspect y.grad
 
 
 class Subtract(Node):
-    """Add the dependencies."""
+    """Subtract the second dependency from the first."""
     def forward(self):  # @inspect self
         x, y = self.dependencies  # @inspect x.value y.value
         self.value = x.value - y.value  # @inspect self
 
     def backward(self):  # @inspect self
         x, y = self.dependencies
-        x.grad += self.grad  # @inspect self
-        y.grad -= self.grad  # @inspect self
+        x.grad += self.grad  # @inspect x.grad
+        y.grad -= self.grad  # @inspect y.grad
 
 
 class Multiply(Node):
-    """Multiply the two dependencies."""
+    """Matrix-multiply the two dependencies."""
     def forward(self):
         x, y = self.dependencies  # @inspect x.value y.value
         self.value = x.value @ y.value  # @inspect self.value
 
     def backward(self):  # @inspect self
         x, y = self.dependencies
-        x.grad += self.grad @ y.value.T  # @inspect self
-        y.grad += x.value.T @ self.grad  # @inspect self
+        x.grad += self.grad @ y.value.T  # @inspect x.grad
+        y.grad += x.value.T @ self.grad  # @inspect y.grad
 
 
 class DotProduct(Node):
-    """Multiply the two dependencies."""
+    """Take the dot product of the two dependencies."""
     def forward(self):
         x, y = self.dependencies  # @inspect x.value y.value
         self.value = x.value @ y.value  # @inspect self.value
 
     def backward(self):  # @inspect self
         x, y = self.dependencies
-        x.grad += self.grad * y.value  # @inspect self
-        y.grad += x.value * self.grad  # @inspect self
+        x.grad += self.grad * y.value  # @inspect x.grad
+        y.grad += x.value * self.grad  # @inspect y.grad
 
 
 class Squared(Node):
-    """Raise the first dependency to the power of the second dependency."""
+    """Square the dependency (elementwise)."""
     def forward(self):
         x, = self.dependencies  # @inspect x.value
         self.value = x.value ** 2  # @inspect self.value
 
     def backward(self):  # @inspect self
         x, = self.dependencies
-        x.grad += 2 * x.value * self.grad  # @inspect self
+        x.grad += 2 * x.value * self.grad  # @inspect x.value self.grad x.grad
 
 
 def topological_sort(node: Node) -> list[Node]:
     """
-    Return node, the dependencies of node, their dependencies, etc. in topological order.
-    where a node follows its dependencies.
+    Return node, the dependencies of node, their dependencies, etc. in topological order
+    (where a node follows its dependencies).
     """
     visited: set[int] = set()
     result: list[Node] = []
@@ -448,24 +465,22 @@ def topological_sort(node: Node) -> list[Node]:
     return result
 
 
-def backpropagation(root: Node):
+def backpropagation(root: Node):  # @inspect root
     # Gather all the recursive dependencies of root in order for traversal.
     nodes = topological_sort(root)  # @stepover
     order = [node.name for node in nodes]  # @inspect order @stepover
 
-    # Forward pass
-    for node in nodes:  # @inspect node.name
-        node.forward()  # @inspect root
+    # Forward pass: already done when we construct Node
 
     # Initialize all gradients to 0
     for node in nodes:  # @inspect node.name
-        node.grad = np.zeros_like(node.value)  # @inspect root @stepover
-    # ...except root
+        node.grad = np.zeros_like(node.value)  # @stepover
+    # ...except root, which gets 1
     root.grad = np.ones_like(root.value)  # @inspect root
 
     # Backward pass
     for node in reversed(nodes):  # @inspect node.name
-        node.backward()  # @inspect root
+        node.backward()  # @inspect node.grad @stepover
 
 
 if __name__ == "__main__":

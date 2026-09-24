@@ -1,3 +1,5 @@
+# Secrets (e.g., UV_PUBLISH_TOKEN) live in rc.local, which is not checked in
+[ -f rc.local ] && . ./rc.local
 export VITE_EDTRACE_BASE_DIR=/`basename $PWD`
 export VITE_EDTRACE_DIST_DIR=$PWD
 . .venv/bin/activate
