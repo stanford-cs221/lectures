@@ -312,7 +312,7 @@ def computation_graphs_general():
     x2 = Input("x2", np.array(3.0))  # @stepover
     z = Add("z", x1, x2)  # @stepover
     y = Squared("y", z)  # @inspect y @stepover
-    image(y.get_graphviz().render("var/backprop-graph-general-y", format="png"), width=100)
+    image(y.get_graphviz().render("var/backprop-graph-general-y", format="png"), width=100)  # @stepover
     backpropagation(y)  # @inspect y
 
     text("Let's look at the original motivating example from linear regression.") # @clear x1 x2 z y
@@ -324,7 +324,7 @@ def computation_graphs_general():
     losses = Squared("losses", residuals)  # @inspect losses @stepover @clear residuals
     ones = Input("ones", np.ones((1, 2)))  # @inspect ones @stepover
     total_loss = Multiply("total_loss", ones, losses)  # @inspect total_loss @stepover @clear ones losses
-    image(total_loss.get_graphviz().render("var/backprop-graph-general-total_loss", format="png"), width=200)
+    image(total_loss.get_graphviz().render("var/backprop-graph-general-total_loss", format="png"), width=200)  # @stepover
     backpropagation(total_loss)  # @inspect total_loss
 
 
@@ -487,7 +487,7 @@ def backpropagation(root: Node):  # @inspect root
 
     # Backward pass
     for node in reversed(nodes):  # @inspect node.name
-        node.backward()  # @inspect node.grad @stepover
+        node.backward()  # @inspect root @stepover
 
 
 if __name__ == "__main__":
