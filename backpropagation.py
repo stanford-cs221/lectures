@@ -123,7 +123,7 @@ def motivation():
 
     text("We can build new tensors by applying various operations:")
     predictions = einsum(x, w, "n d, d -> n")  # matrix-vector product -> n vector of predictions @inspect x w predictions
-    residuals = predictions - y   # elementwise subtraction -> n vector of residuals @inspect y residuals
+    residuals = predictions - y   # elementwise subtraction -> n vector of residuals @inspect predictions y residuals
     losses = residuals ** 2  # elementwise power @inspect losses
     loss = np.sum(losses)  # sum all elements @inspect loss
 
@@ -131,8 +131,9 @@ def motivation():
     text("Let's wrap it in a function.")
     text("Define an **objective** function that takes a vector input and returns a scalar output.") # @clear predictions residuals losses loss w
     def objective(w: np.ndarray) -> float:
-        loss = np.sum((x @ w - y) ** 2)  # @inspect loss
+        loss = np.sum((einsum(x, w, "n d, d -> n") - y) ** 2)  # @inspect loss
         return loss
+    text(r"In math: $\mathcal{O}(\mathbf w) = \\|\mathbf X \mathbf w - \mathbf y\\|_2^2$")
     text("For each value of `w`, we can compute the objective.")
     loss = objective(w=np.array([1, 0, 1]))  # @inspect loss @stepover
     loss = objective(w=np.array([1, 0, -1]))  # @inspect loss @stepover
@@ -144,11 +145,12 @@ def motivation():
 def gradients():
     text("Recall from your multivariable calculus course:")
     text("The **gradient** of a function tells us the direction that increases the function the most.")
+    image("images/gradient-2d.svg", width=400)
 
     text("Example use cases:")
     text("- Optimizing the parameters of a deep learning model")
     text("- Optimizing the input (an image) to maximize error (adversarial examples) "), link("https://arxiv.org/abs/1412.6572")
-    text("- Optimizing the relative proportions of datasets "), link("https://arxiv.org/abs/2407.01492")
+    text("- Optimizing the relative weighting of datasets "), link("https://arxiv.org/abs/2407.01492")
 
     example_1d()
     example_2d()
@@ -161,7 +163,7 @@ def gradients():
 
 
 def example_1d():
-    text("Consider a simple scalar function:")
+    text("Consider a simple function (squaring a scalar):")
     def f(x: float) -> float:  # @inspect x
         return x ** 2
 
@@ -183,6 +185,10 @@ def example_1d():
     dy = df(x)  # @inspect x dy @stepover
 
     text("Graphically, the derivative is the slope of the tangent line at `x`.")
+    # Tangent line at x: passes through (x, y) with slope dy
+    values = [{"x": t, "y": f(t), "curve": "f"} for t in np.linspace(-2, 2, 30)]  # @stepover
+    values += [{"x": t, "y": y + dy * (t - x), "curve": "tangent at x=1"} for t in np.linspace(0, 2, 30)]  # @stepover
+    plot(Chart(Data(values=values)).mark_line().encode(x="x:Q", y="y:Q", color="curve:N").to_dict())  # @clear values
 
 
 def example_2d():
@@ -268,7 +274,8 @@ def computation_graphs_example():
     z = Add("z", x1, x2)  # @inspect z
     y = Squared("y", z)  # @inspect y @stepover @clear z
     image(y.get_graphviz().render("var/backprop-graph-example-y", format="png"), width=100)  # @stepover
-    text("We compute the function value, but keep track of the provenance of how the value was computed.")
+    text("We compute the function value (forward pass)")
+    text("...but keep track of the provenance of how the value was computed.")
 
     text("Summary so far:")  # @clear y
     text("- Each input (leaf) node represents some fixed value (e.g., `x1`).")
@@ -378,11 +385,11 @@ class Input(Node):
         self.value = value
 
     def forward(self):
-        # Value is already set
+        # self.value is already set
         pass
 
     def backward(self):
-        # No dependencies
+        # No dependencies to compute gradients for
         pass
 
 
@@ -470,7 +477,7 @@ def backpropagation(root: Node):  # @inspect root
     nodes = topological_sort(root)  # @stepover
     order = [node.name for node in nodes]  # @inspect order @stepover
 
-    # Forward pass: already done when we construct Node
+    # Forward pass: already done when we construct `root`
 
     # Initialize all gradients to 0
     for node in nodes:  # @inspect node.name
