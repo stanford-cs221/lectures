@@ -1,6 +1,6 @@
 import numpy as np
 from dataclasses import dataclass
-from edtrace import text, link, plot
+from edtrace import text, link, plot, image
 from altair import Chart, Data
 
 
@@ -142,6 +142,7 @@ def loss_function():
 
     text("The training loss is the average of the per-example losses over the training data.")  # @clear loss
     train_loss = compute_train_loss(params, training_data)  # @inspect train_loss
+    image("images/residuals.svg", width=400)
 
     text("Here's another predictor:")
     params2 = Parameters1D(weight=1, bias=1)  # @inspect params2

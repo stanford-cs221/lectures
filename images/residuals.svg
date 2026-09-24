@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 320" width="420" height="320" font-family="Helvetica, Arial, sans-serif" font-size="14">
+<style>text { paint-order: stroke; stroke: white; stroke-width: 4px; stroke-linejoin: round; }</style>
+<rect width="420" height="320" fill="white"/>
+<line x1="50" y1="280" x2="395" y2="280" stroke="#888"/>
+<line x1="50" y1="280" x2="50" y2="20" stroke="#888"/>
+<line x1="50.0" y1="280" x2="50.0" y2="285" stroke="#888"/><text x="50.0" y="300" fill="#555" text-anchor="middle" font-size="12">0</text>
+<line x1="119.0" y1="280" x2="119.0" y2="285" stroke="#888"/><text x="119.0" y="300" fill="#555" text-anchor="middle" font-size="12">1</text>
+<line x1="188.0" y1="280" x2="188.0" y2="285" stroke="#888"/><text x="188.0" y="300" fill="#555" text-anchor="middle" font-size="12">2</text>
+<line x1="257.0" y1="280" x2="257.0" y2="285" stroke="#888"/><text x="257.0" y="300" fill="#555" text-anchor="middle" font-size="12">3</text>
+<line x1="326.0" y1="280" x2="326.0" y2="285" stroke="#888"/><text x="326.0" y="300" fill="#555" text-anchor="middle" font-size="12">4</text>
+<line x1="395.0" y1="280" x2="395.0" y2="285" stroke="#888"/><text x="395.0" y="300" fill="#555" text-anchor="middle" font-size="12">5</text>
+<line x1="45" y1="280.0" x2="50" y2="280.0" stroke="#888"/><text x="41" y="284.0" fill="#555" text-anchor="end" font-size="12">0</text>
+<line x1="45" y1="232.7" x2="50" y2="232.7" stroke="#888"/><text x="41" y="236.7" fill="#555" text-anchor="end" font-size="12">2</text>
+<line x1="45" y1="185.5" x2="50" y2="185.5" stroke="#888"/><text x="41" y="189.5" fill="#555" text-anchor="end" font-size="12">4</text>
+<line x1="45" y1="138.2" x2="50" y2="138.2" stroke="#888"/><text x="41" y="142.2" fill="#555" text-anchor="end" font-size="12">6</text>
+<line x1="45" y1="90.9" x2="50" y2="90.9" stroke="#888"/><text x="41" y="94.9" fill="#555" text-anchor="end" font-size="12">8</text>
+<line x1="45" y1="43.6" x2="50" y2="43.6" stroke="#888"/><text x="41" y="47.6" fill="#555" text-anchor="end" font-size="12">10</text>
+<text x="395" y="316" fill="#555" text-anchor="end">input (hours studied)</text>
+<text x="12" y="22" fill="#555" transform="rotate(-90 12 22)" text-anchor="end">output (score)</text>
+<line x1="50.0" y1="256.4" x2="395.0" y2="20.0" stroke="#1f77b4" stroke-width="2.5"/>
+<text x="264.2" y="94.7" fill="#1f77b4" text-anchor="end">y = 2x + 1</text>
+<line x1="119.0" y1="185.5" x2="119.0" y2="209.1" stroke="#d62728" stroke-width="2" stroke-dasharray="3,3"/>
+<text x="111.0" y="202.3" fill="#d62728" font-size="13" text-anchor="end">−1</text>
+<line x1="188.0" y1="138.2" x2="188.0" y2="161.8" stroke="#d62728" stroke-width="2" stroke-dasharray="3,3"/>
+<text x="180.0" y="155.0" fill="#d62728" font-size="13" text-anchor="end">−1</text>
+<line x1="326.0" y1="114.5" x2="326.0" y2="67.3" stroke="#d62728" stroke-width="2" stroke-dasharray="3,3"/>
+<text x="334.0" y="95.9" fill="#d62728" font-size="13">+2</text>
+<circle cx="119.0" cy="185.5" r="5" fill="black"/>
+<text x="111.0" y="177.5" text-anchor="end" font-size="12">(1, 4)</text>
+<circle cx="188.0" cy="138.2" r="5" fill="black"/>
+<text x="180.0" y="130.2" text-anchor="end" font-size="12">(2, 6)</text>
+<circle cx="326.0" cy="114.5" r="5" fill="black"/>
+<text x="318.0" y="106.5" text-anchor="end" font-size="12">(4, 7)</text>
+<text x="62" y="32" fill="#d62728" font-size="13">residual = prediction − target</text>
+</svg>

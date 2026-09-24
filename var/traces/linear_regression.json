@@ -1,6 +1,6 @@
 {
   "files": {
-    "linear_regression.py": "import numpy as np\nfrom dataclasses import dataclass\nfrom edtrace import text, link, plot\nfrom altair import Chart, Data\n\n\ndef main():\n    text(\"# Linear regression\")\n    text(\"Last unit: tensors, backpropagation\")\n    text(\"This unit: the full pipeline of machine learning for **linear regression**.\")\n\n    prediction_task()\n    machine_learning_problem()\n\n    hypothesis_class()\n    loss_function()\n    optimization_algorithm()\n\n    text(\"Summary:\")\n    text(\"- Predictor: input \u2192 output\")\n    text(\"- Training data: set of (input, output) pairs\")\n    text(\"- Learning algorithm: training data \u2192 predictor\")\n    text(\"- Hypothesis class: set of possible predictors\")\n    text(\"- Loss function: how badly the predictor (parameters) fits the data\")\n    text(\"- Optimization algorithm: find parameters that minimize the loss function\")\n    text(\"- Gradient descent: iteratively update the parameters in the direction of the negative gradient\")\n\n\ndef prediction_task():\n    text(\"Predict how well you do on an exam given the number of hours you study\")\n    text(\"- **Input**: number of hours you study (e.g., 3)\")\n    text(\"- **Output**: your score on the exam (e.g., 70)\")\n\n    text(\"A **predictor** is a function that takes an input and produces an output.\")\n    text(\"Here's an example predictor:\")\n    def fixed_f(x: float) -> float:  # @inspect x\n        y = 2 * x + 1  # @inspect y\n        return y\n\n    text(\"Given an input `x`, we can get the output `y` by calling the predictor:\")\n    x1 = 1.0  # Input  @inspect x1\n    y1 = fixed_f(x1)  # Output  @inspect y1\n    x2 = 2.0  # Input  @inspect x2  @clear x1 y1\n    y2 = fixed_f(x2)  # Output  @inspect y2\n\n    text(\"We can also plot the predictor by passing in a range of inputs.\") # @clear x2 y2\n    values = [{\"x\": x, \"y\": fixed_f(x)} for x in np.linspace(0.0, 5.0, 30)]  # @stepover @inspect values\n    plot(Chart(Data(values=values)).mark_line().encode(x=\"x:Q\", y=\"y:Q\").to_dict())  # @clear values\n\n    text(\"But how do we get the predictor?\")\n\n\ndef machine_learning_problem():\n    text(\"The machine learning problem starts with training data, which demonstrates the task.\")\n    text(\"The **training data** is a set of examples.\")\n    text(\"Each **example** consists of an (input, output) pair.\")\n    training_data = get_training_data()  # @inspect training_data\n\n    text(\"A **learning algorithm** takes the training data and produces a predictor.\")\n\n    text(\"Key questions:\")\n    text(\"1. Which predictors are possible? **hypothesis class**\")\n    text(\"2. How good is a predictor? **loss function**\")\n    text(\"3. How do we compute the best predictor? **optimization algorithm**\")\n\n\n@dataclass(frozen=True)\nclass Example1D:\n    input: float\n    output: float\n\n\ndef get_training_data():\n    return [\n        Example1D(input=1, output=4),\n        Example1D(input=2, output=6),\n        Example1D(input=4, output=7),\n    ]\n\n\ndef hypothesis_class():\n    text(\"Which predictors are possible?\")\n\n    text(\"Before, we looked at only one predictor:\")\n    def fixed_f(x: float) -> float:\n        return 2 * x + 1\n\n    text(\"But what we'd like to do is to define a set of *possible* predictors\")\n    text(\"...so that the learning algorithm can choose the best one.\")\n    text(\"To define a set of predictors, we first define the notion of **parameters**.\")\n\n    text(\"For linear predictors, each set of parameters has a **weight vector** and a **bias**.\")\n    params = Parameters1D(weight=3, bias=1)\n\n    text(\"Given a set of parameters, we can define a predictor:\")\n    def f(params: Parameters1D, x: float) -> float:  # @inspect params x\n        \"\"\"Applies the linear predictor given by `params` to input `x`.\"\"\"\n        y = params.weight * x + params.bias  # @inspect y\n        return y\n\n    text(\"Let's take an input and apply the predictor:\")\n    x1 = 1  #  @inspect x1\n    y1 = f(params, x1)  # @inspect params y1\n\n    text(\"Here's another predictor:\")  # @clear params x1 y1\n    params = Parameters1D(weight=2, bias=0.2)\n    x1 = 1  #  @inspect x1\n    y1 = f(params, x1)  # @inspect params y1\n\n    text(\"The **hypothesis class** is the set of all predictors you can get by choosing parameters (weight, bias).\")\n\n    text(\"In deep learning:\")\n    text(\"- Hypothesis class is a **model architecture**\")\n    text(\"- Predictor is a **model**\")\n\n    text(\"In general, the parameters are a collection of tensors.\")\n    text(\"For example, here are the parameters of the DeepSeek-V3 model \"), link(\"https://arxiv.org/abs/2412.19437\")\n    link(\"https://huggingface.co/deepseek-ai/DeepSeek-V3?show_file_info=model.safetensors.index.json\", title=\"DeepSeek-V3 on Hugging Face\")\n\n\n@dataclass(frozen=True)\nclass Parameters1D:\n    weight: float\n    bias: float\n\n\ndef loss_function():\n    text(\"The next design decision is how to judge each of the (infinitely) many possible predictors.\")\n\n    text(\"Let's consider a predictor:\")\n    params = Parameters1D(weight=2, bias=1)  # @inspect params\n\n    values = [{\"x\": x, \"y\": f(params, x)} for x in np.linspace(0.0, 5.0, 30)]  # @stepover @inspect values\n    plot(Chart(Data(values=values)).mark_line().encode(x=\"x:Q\", y=\"y:Q\").to_dict())  # @clear values\n\n    text(\"Recall the training data:\")\n    training_data = get_training_data()  # @inspect training_data @stepover\n\n    text(\"How well does `params` fit `training_data`?\")\n    text(\"We define a **loss function** that measures how unhappy we are with `params` on a single example.\")\n    loss = compute_loss(params, training_data[0])  # @inspect loss\n\n    text(\"The training loss is the average of the per-example losses over the training data.\")  # @clear loss\n    train_loss = compute_train_loss(params, training_data)  # @inspect train_loss\n\n    text(\"Here's another predictor:\")\n    params2 = Parameters1D(weight=1, bias=1)  # @inspect params2\n    train_loss2 = compute_train_loss(params2, training_data)  # @inspect train_loss2 @stepover\n    text(\"It has a higher training loss, so it's worse.\")\n\n\ndef f(params: Parameters1D, x: float) -> float:  # @inspect params x\n    \"\"\"Applies the linear predictor given by `params` to input `x`.\"\"\"\n    y = params.weight * x + params.bias  # @inspect y\n    return y\n\n\ndef compute_loss(params: Parameters1D, example: Example1D) -> float:  # @inspect params example\n    \"\"\"Computes the loss of the linear predictor given by `params` on example `example`.\"\"\"\n    residual = f(params, example.input) - example.output  # @inspect residual\n    loss = residual ** 2  # @inspect loss\n    return loss\n\n\ndef compute_grad_loss(params: Parameters1D, example: Example1D) -> np.ndarray:\n    \"\"\"Computes the gradient of the loss of the linear predictor given by `params` on `example`.\"\"\"\n    residual = (params.weight * example.input + params.bias) - example.output  # @inspect residual\n    loss = residual ** 2  # @inspect loss\n    # grad[0] = d loss / d weight\n    # grad[1] = d loss / d bias\n    grad = 2 * residual * np.array([example.input, 1])  # @inspect grad\n    return grad\n\n\ndef compute_train_loss(params: Parameters1D, training_data: list[Example1D]) -> float:  # @inspect params training_data\n    \"\"\"Computes the training loss of the linear predictor given by `params` on the `training_data`.\"\"\"\n    losses = [compute_loss(params, example) for example in training_data]  # @inspect losses @stepover\n    train_loss = np.mean(losses)  # @inspect train_loss\n    return train_loss\n\n\ndef compute_gradient_train_loss(params: Parameters1D, training_data: list[Example1D]) -> np.ndarray:  # @inspect params training_data\n    \"\"\"Computes the gradient of the training loss of the linear predictor given by `params` on the `training_data`.\"\"\"\n    grads = [compute_grad_loss(params, example) for example in training_data]  # @inspect grads  @stepover\n    grad = np.mean(grads, axis=0)  # @inspect grad\n    return grad\n\n\ndef optimization_algorithm():\n    text(\"Recall that for every set of parameters `params`, we can compute the training loss `train_loss`.\")\n\n    params = Parameters1D(weight=0, bias=1)  # @inspect params\n    training_data = get_training_data()  # @inspect training_data @stepover\n    train_loss = compute_train_loss(params, training_data)  # @inspect train_loss\n\n    text(\"We want to find the parameters that yield the lowest training loss.\")\n    text(\"This is an optimization problem.\")\n    text(\"Solving this optimization problem might seem daunting.\")\n\n    text(\"Recall that the gradient provides the direction that increases the function the most.\")\n    text(\"So we just have to go in the opposite direction of the gradient!\")\n\n    text(\"Let us compute the gradient.\")\n    grad = compute_gradient_train_loss(params, training_data)  # @inspect grad\n\n    text(\"Then we can take a little step in the opposite direction.\")\n    learning_rate = 0.01\n    params = Parameters1D(  # @inspect params\n        weight=params.weight - learning_rate * grad[0],\n        bias=params.bias - learning_rate * grad[1],\n    )\n\n    text(\"Let's compute the training loss now:\")\n    new_train_loss = compute_train_loss(params, training_data)  # @inspect new_train_loss @stepover\n    text(\"It's lower than before!\")\n\n    text(\"If we do this repeatedly, that's the gradient descent algorithm.\")\n    gradient_descent()\n\n    text(\"Notes:\")\n    text(\"- Learning rate controls how fast you drive (trade off speed versus stability)\")\n    text(\"- Guaranteed to converge for convex functions (with a small enough learning rate), but not for deep learning\")\n    text(\"- Each gradient step can be computed on a random batch of examples\")\n    text(\"- Other optimization algorithms: stochastic gradient descent, Adam, Muon\")\n\n\ndef gradient_descent():\n    training_data = get_training_data()  # @stepover\n    params = Parameters1D(weight=0, bias=1)  # @inspect params\n    learning_rate = 0.01\n\n    losses = []\n    for step in range(10):  # @inspect step\n        train_loss = compute_train_loss(params, training_data)  # @inspect train_loss @stepover\n        grad = compute_gradient_train_loss(params, training_data)  # @inspect grad @stepover\n        params = Parameters1D(  # @inspect params\n            weight=params.weight - learning_rate * grad[0],\n            bias=params.bias - learning_rate * grad[1],\n        )\n        losses.append(float(train_loss))\n\n    # Learning curve\n    plot(Chart(Data(values=[{\"step\": i, \"loss\": loss} for i, loss in enumerate(losses)])).mark_line().encode(x=\"step:Q\", y=\"loss:Q\").to_dict())\n\n\nif __name__ == \"__main__\":\n    main()\n"
+    "linear_regression.py": "import numpy as np\nfrom dataclasses import dataclass\nfrom edtrace import text, link, plot, image\nfrom altair import Chart, Data\n\n\ndef main():\n    text(\"# Linear regression\")\n    text(\"Last unit: tensors, backpropagation\")\n    text(\"This unit: the full pipeline of machine learning for **linear regression**.\")\n\n    prediction_task()\n    machine_learning_problem()\n\n    hypothesis_class()\n    loss_function()\n    optimization_algorithm()\n\n    text(\"Summary:\")\n    text(\"- Predictor: input \u2192 output\")\n    text(\"- Training data: set of (input, output) pairs\")\n    text(\"- Learning algorithm: training data \u2192 predictor\")\n    text(\"- Hypothesis class: set of possible predictors\")\n    text(\"- Loss function: how badly the predictor (parameters) fits the data\")\n    text(\"- Optimization algorithm: find parameters that minimize the loss function\")\n    text(\"- Gradient descent: iteratively update the parameters in the direction of the negative gradient\")\n\n\ndef prediction_task():\n    text(\"Predict how well you do on an exam given the number of hours you study\")\n    text(\"- **Input**: number of hours you study (e.g., 3)\")\n    text(\"- **Output**: your score on the exam (e.g., 70)\")\n\n    text(\"A **predictor** is a function that takes an input and produces an output.\")\n    text(\"Here's an example predictor:\")\n    def fixed_f(x: float) -> float:  # @inspect x\n        y = 2 * x + 1  # @inspect y\n        return y\n\n    text(\"Given an input `x`, we can get the output `y` by calling the predictor:\")\n    x1 = 1.0  # Input  @inspect x1\n    y1 = fixed_f(x1)  # Output  @inspect y1\n    x2 = 2.0  # Input  @inspect x2  @clear x1 y1\n    y2 = fixed_f(x2)  # Output  @inspect y2\n\n    text(\"We can also plot the predictor by passing in a range of inputs.\") # @clear x2 y2\n    values = [{\"x\": x, \"y\": fixed_f(x)} for x in np.linspace(0.0, 5.0, 30)]  # @stepover @inspect values\n    plot(Chart(Data(values=values)).mark_line().encode(x=\"x:Q\", y=\"y:Q\").to_dict())  # @clear values\n\n    text(\"But how do we get the predictor?\")\n\n\ndef machine_learning_problem():\n    text(\"The machine learning problem starts with training data, which demonstrates the task.\")\n    text(\"The **training data** is a set of examples.\")\n    text(\"Each **example** consists of an (input, output) pair.\")\n    training_data = get_training_data()  # @inspect training_data\n\n    text(\"A **learning algorithm** takes the training data and produces a predictor.\")\n\n    text(\"Key questions:\")\n    text(\"1. Which predictors are possible? **hypothesis class**\")\n    text(\"2. How good is a predictor? **loss function**\")\n    text(\"3. How do we compute the best predictor? **optimization algorithm**\")\n\n\n@dataclass(frozen=True)\nclass Example1D:\n    input: float\n    output: float\n\n\ndef get_training_data():\n    return [\n        Example1D(input=1, output=4),\n        Example1D(input=2, output=6),\n        Example1D(input=4, output=7),\n    ]\n\n\ndef hypothesis_class():\n    text(\"Which predictors are possible?\")\n\n    text(\"Before, we looked at only one predictor:\")\n    def fixed_f(x: float) -> float:\n        return 2 * x + 1\n\n    text(\"But what we'd like to do is to define a set of *possible* predictors\")\n    text(\"...so that the learning algorithm can choose the best one.\")\n    text(\"To define a set of predictors, we first define the notion of **parameters**.\")\n\n    text(\"For linear predictors, each set of parameters has a **weight vector** and a **bias**.\")\n    params = Parameters1D(weight=3, bias=1)\n\n    text(\"Given a set of parameters, we can define a predictor:\")\n    def f(params: Parameters1D, x: float) -> float:  # @inspect params x\n        \"\"\"Applies the linear predictor given by `params` to input `x`.\"\"\"\n        y = params.weight * x + params.bias  # @inspect y\n        return y\n\n    text(\"Let's take an input and apply the predictor:\")\n    x1 = 1  #  @inspect x1\n    y1 = f(params, x1)  # @inspect params y1\n\n    text(\"Here's another predictor:\")  # @clear params x1 y1\n    params = Parameters1D(weight=2, bias=0.2)\n    x1 = 1  #  @inspect x1\n    y1 = f(params, x1)  # @inspect params y1\n\n    text(\"The **hypothesis class** is the set of all predictors you can get by choosing parameters (weight, bias).\")\n\n    text(\"In deep learning:\")\n    text(\"- Hypothesis class is a **model architecture**\")\n    text(\"- Predictor is a **model**\")\n\n    text(\"In general, the parameters are a collection of tensors.\")\n    text(\"For example, here are the parameters of the DeepSeek-V3 model \"), link(\"https://arxiv.org/abs/2412.19437\")\n    link(\"https://huggingface.co/deepseek-ai/DeepSeek-V3?show_file_info=model.safetensors.index.json\", title=\"DeepSeek-V3 on Hugging Face\")\n\n\n@dataclass(frozen=True)\nclass Parameters1D:\n    weight: float\n    bias: float\n\n\ndef loss_function():\n    text(\"The next design decision is how to judge each of the (infinitely) many possible predictors.\")\n\n    text(\"Let's consider a predictor:\")\n    params = Parameters1D(weight=2, bias=1)  # @inspect params\n\n    values = [{\"x\": x, \"y\": f(params, x)} for x in np.linspace(0.0, 5.0, 30)]  # @stepover @inspect values\n    plot(Chart(Data(values=values)).mark_line().encode(x=\"x:Q\", y=\"y:Q\").to_dict())  # @clear values\n\n    text(\"Recall the training data:\")\n    training_data = get_training_data()  # @inspect training_data @stepover\n\n    text(\"How well does `params` fit `training_data`?\")\n    text(\"We define a **loss function** that measures how unhappy we are with `params` on a single example.\")\n    loss = compute_loss(params, training_data[0])  # @inspect loss\n\n    text(\"The training loss is the average of the per-example losses over the training data.\")  # @clear loss\n    train_loss = compute_train_loss(params, training_data)  # @inspect train_loss\n    image(\"images/residuals.svg\", width=400)\n\n    text(\"Here's another predictor:\")\n    params2 = Parameters1D(weight=1, bias=1)  # @inspect params2\n    train_loss2 = compute_train_loss(params2, training_data)  # @inspect train_loss2 @stepover\n    text(\"It has a higher training loss, so it's worse.\")\n\n\ndef f(params: Parameters1D, x: float) -> float:  # @inspect params x\n    \"\"\"Applies the linear predictor given by `params` to input `x`.\"\"\"\n    y = params.weight * x + params.bias  # @inspect y\n    return y\n\n\ndef compute_loss(params: Parameters1D, example: Example1D) -> float:  # @inspect params example\n    \"\"\"Computes the loss of the linear predictor given by `params` on example `example`.\"\"\"\n    residual = f(params, example.input) - example.output  # @inspect residual\n    loss = residual ** 2  # @inspect loss\n    return loss\n\n\ndef compute_grad_loss(params: Parameters1D, example: Example1D) -> np.ndarray:\n    \"\"\"Computes the gradient of the loss of the linear predictor given by `params` on `example`.\"\"\"\n    residual = (params.weight * example.input + params.bias) - example.output  # @inspect residual\n    loss = residual ** 2  # @inspect loss\n    # grad[0] = d loss / d weight\n    # grad[1] = d loss / d bias\n    grad = 2 * residual * np.array([example.input, 1])  # @inspect grad\n    return grad\n\n\ndef compute_train_loss(params: Parameters1D, training_data: list[Example1D]) -> float:  # @inspect params training_data\n    \"\"\"Computes the training loss of the linear predictor given by `params` on the `training_data`.\"\"\"\n    losses = [compute_loss(params, example) for example in training_data]  # @inspect losses @stepover\n    train_loss = np.mean(losses)  # @inspect train_loss\n    return train_loss\n\n\ndef compute_gradient_train_loss(params: Parameters1D, training_data: list[Example1D]) -> np.ndarray:  # @inspect params training_data\n    \"\"\"Computes the gradient of the training loss of the linear predictor given by `params` on the `training_data`.\"\"\"\n    grads = [compute_grad_loss(params, example) for example in training_data]  # @inspect grads  @stepover\n    grad = np.mean(grads, axis=0)  # @inspect grad\n    return grad\n\n\ndef optimization_algorithm():\n    text(\"Recall that for every set of parameters `params`, we can compute the training loss `train_loss`.\")\n\n    params = Parameters1D(weight=0, bias=1)  # @inspect params\n    training_data = get_training_data()  # @inspect training_data @stepover\n    train_loss = compute_train_loss(params, training_data)  # @inspect train_loss\n\n    text(\"We want to find the parameters that yield the lowest training loss.\")\n    text(\"This is an optimization problem.\")\n    text(\"Solving this optimization problem might seem daunting.\")\n\n    text(\"Recall that the gradient provides the direction that increases the function the most.\")\n    text(\"So we just have to go in the opposite direction of the gradient!\")\n\n    text(\"Let us compute the gradient.\")\n    grad = compute_gradient_train_loss(params, training_data)  # @inspect grad\n\n    text(\"Then we can take a little step in the opposite direction.\")\n    learning_rate = 0.01\n    params = Parameters1D(  # @inspect params\n        weight=params.weight - learning_rate * grad[0],\n        bias=params.bias - learning_rate * grad[1],\n    )\n\n    text(\"Let's compute the training loss now:\")\n    new_train_loss = compute_train_loss(params, training_data)  # @inspect new_train_loss @stepover\n    text(\"It's lower than before!\")\n\n    text(\"If we do this repeatedly, that's the gradient descent algorithm.\")\n    gradient_descent()\n\n    text(\"Notes:\")\n    text(\"- Learning rate controls how fast you drive (trade off speed versus stability)\")\n    text(\"- Guaranteed to converge for convex functions (with a small enough learning rate), but not for deep learning\")\n    text(\"- Each gradient step can be computed on a random batch of examples\")\n    text(\"- Other optimization algorithms: stochastic gradient descent, Adam, Muon\")\n\n\ndef gradient_descent():\n    training_data = get_training_data()  # @stepover\n    params = Parameters1D(weight=0, bias=1)  # @inspect params\n    learning_rate = 0.01\n\n    losses = []\n    for step in range(10):  # @inspect step\n        train_loss = compute_train_loss(params, training_data)  # @inspect train_loss @stepover\n        grad = compute_gradient_train_loss(params, training_data)  # @inspect grad @stepover\n        params = Parameters1D(  # @inspect params\n            weight=params.weight - learning_rate * grad[0],\n            bias=params.bias - learning_rate * grad[1],\n        )\n        losses.append(float(train_loss))\n\n    # Learning curve\n    plot(Chart(Data(values=[{\"step\": i, \"loss\": loss} for i, loss in enumerate(losses)])).mark_line().encode(x=\"step:Q\", y=\"loss:Q\").to_dict())\n\n\nif __name__ == \"__main__\":\n    main()\n"
   },
   "hidden_line_numbers": {
     "linear_regression.py": []
@@ -4145,7 +4145,7 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 158,
+          "line_number": 159,
           "function_name": "compute_loss",
           "code": "def compute_loss(params: Parameters1D, example: Example1D) -> float:  # @inspect params example"
         }
@@ -4208,7 +4208,7 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 160,
+          "line_number": 161,
           "function_name": "compute_loss",
           "code": "residual = f(params, example.input) - example.output  # @inspect residual"
         }
@@ -4232,13 +4232,13 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 160,
+          "line_number": 161,
           "function_name": "compute_loss",
           "code": "residual = f(params, example.input) - example.output  # @inspect residual"
         },
         {
           "path": "linear_regression.py",
-          "line_number": 152,
+          "line_number": 153,
           "function_name": "f",
           "code": "def f(params: Parameters1D, x: float) -> float:  # @inspect params x"
         }
@@ -4288,13 +4288,13 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 160,
+          "line_number": 161,
           "function_name": "compute_loss",
           "code": "residual = f(params, example.input) - example.output  # @inspect residual"
         },
         {
           "path": "linear_regression.py",
-          "line_number": 154,
+          "line_number": 155,
           "function_name": "f",
           "code": "y = params.weight * x + params.bias  # @inspect y"
         }
@@ -4325,13 +4325,13 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 160,
+          "line_number": 161,
           "function_name": "compute_loss",
           "code": "residual = f(params, example.input) - example.output  # @inspect residual"
         },
         {
           "path": "linear_regression.py",
-          "line_number": 155,
+          "line_number": 156,
           "function_name": "f",
           "code": "return y"
         }
@@ -4355,7 +4355,7 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 160,
+          "line_number": 161,
           "function_name": "compute_loss",
           "code": "residual = f(params, example.input) - example.output  # @inspect residual"
         }
@@ -4386,7 +4386,7 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 161,
+          "line_number": 162,
           "function_name": "compute_loss",
           "code": "loss = residual ** 2  # @inspect loss"
         }
@@ -4417,7 +4417,7 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 162,
+          "line_number": 163,
           "function_name": "compute_loss",
           "code": "return loss"
         }
@@ -4512,7 +4512,7 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 175,
+          "line_number": 176,
           "function_name": "compute_train_loss",
           "code": "def compute_train_loss(params: Parameters1D, training_data: list[Example1D]) -> float:  # @inspect params training_data"
         }
@@ -4620,7 +4620,7 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 177,
+          "line_number": 178,
           "function_name": "compute_train_loss",
           "code": "losses = [compute_loss(params, example) for example in training_data]  # @inspect losses @stepover"
         }
@@ -4670,7 +4670,7 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 178,
+          "line_number": 179,
           "function_name": "compute_train_loss",
           "code": "train_loss = np.mean(losses)  # @inspect train_loss"
         }
@@ -4701,7 +4701,7 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 179,
+          "line_number": 180,
           "function_name": "compute_train_loss",
           "code": "return train_loss"
         }
@@ -4744,7 +4744,35 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 146,
+          "line_number": 145,
+          "function_name": "loss_function",
+          "code": "image(\"images/residuals.svg\", width=400)"
+        }
+      ],
+      "env": {},
+      "renderings": [
+        {
+          "type": "image",
+          "data": "images/residuals.svg",
+          "style": {
+            "width": 400
+          },
+          "external_link": null,
+          "internal_link": null
+        }
+      ]
+    },
+    {
+      "stack": [
+        {
+          "path": "linear_regression.py",
+          "line_number": 16,
+          "function_name": "main",
+          "code": "loss_function()"
+        },
+        {
+          "path": "linear_regression.py",
+          "line_number": 147,
           "function_name": "loss_function",
           "code": "text(\"Here's another predictor:\")"
         }
@@ -4770,7 +4798,7 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 147,
+          "line_number": 148,
           "function_name": "loss_function",
           "code": "params2 = Parameters1D(weight=1, bias=1)  # @inspect params2"
         }
@@ -4808,7 +4836,7 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 148,
+          "line_number": 149,
           "function_name": "loss_function",
           "code": "train_loss2 = compute_train_loss(params2, training_data)  # @inspect train_loss2 @stepover"
         }
@@ -4833,7 +4861,7 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 149,
+          "line_number": 150,
           "function_name": "loss_function",
           "code": "text(\"It has a higher training loss, so it's worse.\")"
         }
@@ -4883,7 +4911,7 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 189,
+          "line_number": 190,
           "function_name": "optimization_algorithm",
           "code": "def optimization_algorithm():"
         }
@@ -4901,7 +4929,7 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 190,
+          "line_number": 191,
           "function_name": "optimization_algorithm",
           "code": "text(\"Recall that for every set of parameters `params`, we can compute the training loss `train_loss`.\")"
         }
@@ -4927,7 +4955,7 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 192,
+          "line_number": 193,
           "function_name": "optimization_algorithm",
           "code": "params = Parameters1D(weight=0, bias=1)  # @inspect params"
         }
@@ -4965,7 +4993,7 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 193,
+          "line_number": 194,
           "function_name": "optimization_algorithm",
           "code": "training_data = get_training_data()  # @inspect training_data @stepover"
         }
@@ -5048,7 +5076,7 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 194,
+          "line_number": 195,
           "function_name": "optimization_algorithm",
           "code": "train_loss = compute_train_loss(params, training_data)  # @inspect train_loss"
         }
@@ -5066,13 +5094,13 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 194,
+          "line_number": 195,
           "function_name": "optimization_algorithm",
           "code": "train_loss = compute_train_loss(params, training_data)  # @inspect train_loss"
         },
         {
           "path": "linear_regression.py",
-          "line_number": 175,
+          "line_number": 176,
           "function_name": "compute_train_loss",
           "code": "def compute_train_loss(params: Parameters1D, training_data: list[Example1D]) -> float:  # @inspect params training_data"
         }
@@ -5174,13 +5202,13 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 194,
+          "line_number": 195,
           "function_name": "optimization_algorithm",
           "code": "train_loss = compute_train_loss(params, training_data)  # @inspect train_loss"
         },
         {
           "path": "linear_regression.py",
-          "line_number": 177,
+          "line_number": 178,
           "function_name": "compute_train_loss",
           "code": "losses = [compute_loss(params, example) for example in training_data]  # @inspect losses @stepover"
         }
@@ -5224,13 +5252,13 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 194,
+          "line_number": 195,
           "function_name": "optimization_algorithm",
           "code": "train_loss = compute_train_loss(params, training_data)  # @inspect train_loss"
         },
         {
           "path": "linear_regression.py",
-          "line_number": 178,
+          "line_number": 179,
           "function_name": "compute_train_loss",
           "code": "train_loss = np.mean(losses)  # @inspect train_loss"
         }
@@ -5255,13 +5283,13 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 194,
+          "line_number": 195,
           "function_name": "optimization_algorithm",
           "code": "train_loss = compute_train_loss(params, training_data)  # @inspect train_loss"
         },
         {
           "path": "linear_regression.py",
-          "line_number": 179,
+          "line_number": 180,
           "function_name": "compute_train_loss",
           "code": "return train_loss"
         }
@@ -5279,7 +5307,7 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 194,
+          "line_number": 195,
           "function_name": "optimization_algorithm",
           "code": "train_loss = compute_train_loss(params, training_data)  # @inspect train_loss"
         }
@@ -5304,7 +5332,7 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 196,
+          "line_number": 197,
           "function_name": "optimization_algorithm",
           "code": "text(\"We want to find the parameters that yield the lowest training loss.\")"
         }
@@ -5330,7 +5358,7 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 197,
+          "line_number": 198,
           "function_name": "optimization_algorithm",
           "code": "text(\"This is an optimization problem.\")"
         }
@@ -5356,7 +5384,7 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 198,
+          "line_number": 199,
           "function_name": "optimization_algorithm",
           "code": "text(\"Solving this optimization problem might seem daunting.\")"
         }
@@ -5382,7 +5410,7 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 200,
+          "line_number": 201,
           "function_name": "optimization_algorithm",
           "code": "text(\"Recall that the gradient provides the direction that increases the function the most.\")"
         }
@@ -5408,7 +5436,7 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 201,
+          "line_number": 202,
           "function_name": "optimization_algorithm",
           "code": "text(\"So we just have to go in the opposite direction of the gradient!\")"
         }
@@ -5434,7 +5462,7 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 203,
+          "line_number": 204,
           "function_name": "optimization_algorithm",
           "code": "text(\"Let us compute the gradient.\")"
         }
@@ -5460,7 +5488,7 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 204,
+          "line_number": 205,
           "function_name": "optimization_algorithm",
           "code": "grad = compute_gradient_train_loss(params, training_data)  # @inspect grad"
         }
@@ -5478,13 +5506,13 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 204,
+          "line_number": 205,
           "function_name": "optimization_algorithm",
           "code": "grad = compute_gradient_train_loss(params, training_data)  # @inspect grad"
         },
         {
           "path": "linear_regression.py",
-          "line_number": 182,
+          "line_number": 183,
           "function_name": "compute_gradient_train_loss",
           "code": "def compute_gradient_train_loss(params: Parameters1D, training_data: list[Example1D]) -> np.ndarray:  # @inspect params training_data"
         }
@@ -5586,13 +5614,13 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 204,
+          "line_number": 205,
           "function_name": "optimization_algorithm",
           "code": "grad = compute_gradient_train_loss(params, training_data)  # @inspect grad"
         },
         {
           "path": "linear_regression.py",
-          "line_number": 184,
+          "line_number": 185,
           "function_name": "compute_gradient_train_loss",
           "code": "grads = [compute_grad_loss(params, example) for example in training_data]  # @inspect grads  @stepover"
         }
@@ -5651,13 +5679,13 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 204,
+          "line_number": 205,
           "function_name": "optimization_algorithm",
           "code": "grad = compute_gradient_train_loss(params, training_data)  # @inspect grad"
         },
         {
           "path": "linear_regression.py",
-          "line_number": 185,
+          "line_number": 186,
           "function_name": "compute_gradient_train_loss",
           "code": "grad = np.mean(grads, axis=0)  # @inspect grad"
         }
@@ -5687,13 +5715,13 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 204,
+          "line_number": 205,
           "function_name": "optimization_algorithm",
           "code": "grad = compute_gradient_train_loss(params, training_data)  # @inspect grad"
         },
         {
           "path": "linear_regression.py",
-          "line_number": 186,
+          "line_number": 187,
           "function_name": "compute_gradient_train_loss",
           "code": "return grad"
         }
@@ -5711,7 +5739,7 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 204,
+          "line_number": 205,
           "function_name": "optimization_algorithm",
           "code": "grad = compute_gradient_train_loss(params, training_data)  # @inspect grad"
         }
@@ -5741,7 +5769,7 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 206,
+          "line_number": 207,
           "function_name": "optimization_algorithm",
           "code": "text(\"Then we can take a little step in the opposite direction.\")"
         }
@@ -5767,7 +5795,7 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 207,
+          "line_number": 208,
           "function_name": "optimization_algorithm",
           "code": "learning_rate = 0.01"
         }
@@ -5785,7 +5813,7 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 208,
+          "line_number": 209,
           "function_name": "optimization_algorithm",
           "code": "params = Parameters1D(  # @inspect params"
         }
@@ -5823,7 +5851,7 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 209,
+          "line_number": 210,
           "function_name": "optimization_algorithm",
           "code": "weight=params.weight - learning_rate * grad[0],"
         }
@@ -5841,7 +5869,7 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 210,
+          "line_number": 211,
           "function_name": "optimization_algorithm",
           "code": "bias=params.bias - learning_rate * grad[1],"
         }
@@ -5859,7 +5887,7 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 208,
+          "line_number": 209,
           "function_name": "optimization_algorithm",
           "code": "params = Parameters1D(  # @inspect params"
         }
@@ -5897,7 +5925,7 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 213,
+          "line_number": 214,
           "function_name": "optimization_algorithm",
           "code": "text(\"Let's compute the training loss now:\")"
         }
@@ -5923,7 +5951,7 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 214,
+          "line_number": 215,
           "function_name": "optimization_algorithm",
           "code": "new_train_loss = compute_train_loss(params, training_data)  # @inspect new_train_loss @stepover"
         }
@@ -5948,7 +5976,7 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 215,
+          "line_number": 216,
           "function_name": "optimization_algorithm",
           "code": "text(\"It's lower than before!\")"
         }
@@ -5974,7 +6002,7 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 217,
+          "line_number": 218,
           "function_name": "optimization_algorithm",
           "code": "text(\"If we do this repeatedly, that's the gradient descent algorithm.\")"
         }
@@ -6000,7 +6028,7 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 218,
+          "line_number": 219,
           "function_name": "optimization_algorithm",
           "code": "gradient_descent()"
         }
@@ -6018,13 +6046,13 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 218,
+          "line_number": 219,
           "function_name": "optimization_algorithm",
           "code": "gradient_descent()"
         },
         {
           "path": "linear_regression.py",
-          "line_number": 227,
+          "line_number": 228,
           "function_name": "gradient_descent",
           "code": "def gradient_descent():"
         }
@@ -6042,13 +6070,13 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 218,
+          "line_number": 219,
           "function_name": "optimization_algorithm",
           "code": "gradient_descent()"
         },
         {
           "path": "linear_regression.py",
-          "line_number": 228,
+          "line_number": 229,
           "function_name": "gradient_descent",
           "code": "training_data = get_training_data()  # @stepover"
         }
@@ -6066,13 +6094,13 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 218,
+          "line_number": 219,
           "function_name": "optimization_algorithm",
           "code": "gradient_descent()"
         },
         {
           "path": "linear_regression.py",
-          "line_number": 229,
+          "line_number": 230,
           "function_name": "gradient_descent",
           "code": "params = Parameters1D(weight=0, bias=1)  # @inspect params"
         }
@@ -6110,13 +6138,13 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 218,
+          "line_number": 219,
           "function_name": "optimization_algorithm",
           "code": "gradient_descent()"
         },
         {
           "path": "linear_regression.py",
-          "line_number": 230,
+          "line_number": 231,
           "function_name": "gradient_descent",
           "code": "learning_rate = 0.01"
         }
@@ -6134,13 +6162,13 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 218,
+          "line_number": 219,
           "function_name": "optimization_algorithm",
           "code": "gradient_descent()"
         },
         {
           "path": "linear_regression.py",
-          "line_number": 232,
+          "line_number": 233,
           "function_name": "gradient_descent",
           "code": "losses = []"
         }
@@ -6158,13 +6186,13 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 218,
+          "line_number": 219,
           "function_name": "optimization_algorithm",
           "code": "gradient_descent()"
         },
         {
           "path": "linear_regression.py",
-          "line_number": 233,
+          "line_number": 234,
           "function_name": "gradient_descent",
           "code": "for step in range(10):  # @inspect step"
         }
@@ -6189,13 +6217,13 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 218,
+          "line_number": 219,
           "function_name": "optimization_algorithm",
           "code": "gradient_descent()"
         },
         {
           "path": "linear_regression.py",
-          "line_number": 234,
+          "line_number": 235,
           "function_name": "gradient_descent",
           "code": "train_loss = compute_train_loss(params, training_data)  # @inspect train_loss @stepover"
         }
@@ -6220,13 +6248,13 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 218,
+          "line_number": 219,
           "function_name": "optimization_algorithm",
           "code": "gradient_descent()"
         },
         {
           "path": "linear_regression.py",
-          "line_number": 235,
+          "line_number": 236,
           "function_name": "gradient_descent",
           "code": "grad = compute_gradient_train_loss(params, training_data)  # @inspect grad @stepover"
         }
@@ -6256,13 +6284,13 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 218,
+          "line_number": 219,
           "function_name": "optimization_algorithm",
           "code": "gradient_descent()"
         },
         {
           "path": "linear_regression.py",
-          "line_number": 236,
+          "line_number": 237,
           "function_name": "gradient_descent",
           "code": "params = Parameters1D(  # @inspect params"
         }
@@ -6300,13 +6328,13 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 218,
+          "line_number": 219,
           "function_name": "optimization_algorithm",
           "code": "gradient_descent()"
         },
         {
           "path": "linear_regression.py",
-          "line_number": 237,
+          "line_number": 238,
           "function_name": "gradient_descent",
           "code": "weight=params.weight - learning_rate * grad[0],"
         }
@@ -6324,13 +6352,13 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 218,
+          "line_number": 219,
           "function_name": "optimization_algorithm",
           "code": "gradient_descent()"
         },
         {
           "path": "linear_regression.py",
-          "line_number": 238,
+          "line_number": 239,
           "function_name": "gradient_descent",
           "code": "bias=params.bias - learning_rate * grad[1],"
         }
@@ -6348,13 +6376,13 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 218,
+          "line_number": 219,
           "function_name": "optimization_algorithm",
           "code": "gradient_descent()"
         },
         {
           "path": "linear_regression.py",
-          "line_number": 236,
+          "line_number": 237,
           "function_name": "gradient_descent",
           "code": "params = Parameters1D(  # @inspect params"
         }
@@ -6392,13 +6420,13 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 218,
+          "line_number": 219,
           "function_name": "optimization_algorithm",
           "code": "gradient_descent()"
         },
         {
           "path": "linear_regression.py",
-          "line_number": 240,
+          "line_number": 241,
           "function_name": "gradient_descent",
           "code": "losses.append(float(train_loss))"
         }
@@ -6416,13 +6444,13 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 218,
+          "line_number": 219,
           "function_name": "optimization_algorithm",
           "code": "gradient_descent()"
         },
         {
           "path": "linear_regression.py",
-          "line_number": 233,
+          "line_number": 234,
           "function_name": "gradient_descent",
           "code": "for step in range(10):  # @inspect step"
         }
@@ -6447,13 +6475,13 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 218,
+          "line_number": 219,
           "function_name": "optimization_algorithm",
           "code": "gradient_descent()"
         },
         {
           "path": "linear_regression.py",
-          "line_number": 234,
+          "line_number": 235,
           "function_name": "gradient_descent",
           "code": "train_loss = compute_train_loss(params, training_data)  # @inspect train_loss @stepover"
         }
@@ -6478,13 +6506,13 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 218,
+          "line_number": 219,
           "function_name": "optimization_algorithm",
           "code": "gradient_descent()"
         },
         {
           "path": "linear_regression.py",
-          "line_number": 235,
+          "line_number": 236,
           "function_name": "gradient_descent",
           "code": "grad = compute_gradient_train_loss(params, training_data)  # @inspect grad @stepover"
         }
@@ -6514,13 +6542,13 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 218,
+          "line_number": 219,
           "function_name": "optimization_algorithm",
           "code": "gradient_descent()"
         },
         {
           "path": "linear_regression.py",
-          "line_number": 236,
+          "line_number": 237,
           "function_name": "gradient_descent",
           "code": "params = Parameters1D(  # @inspect params"
         }
@@ -6558,13 +6586,13 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 218,
+          "line_number": 219,
           "function_name": "optimization_algorithm",
           "code": "gradient_descent()"
         },
         {
           "path": "linear_regression.py",
-          "line_number": 237,
+          "line_number": 238,
           "function_name": "gradient_descent",
           "code": "weight=params.weight - learning_rate * grad[0],"
         }
@@ -6582,13 +6610,13 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 218,
+          "line_number": 219,
           "function_name": "optimization_algorithm",
           "code": "gradient_descent()"
         },
         {
           "path": "linear_regression.py",
-          "line_number": 238,
+          "line_number": 239,
           "function_name": "gradient_descent",
           "code": "bias=params.bias - learning_rate * grad[1],"
         }
@@ -6606,13 +6634,13 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 218,
+          "line_number": 219,
           "function_name": "optimization_algorithm",
           "code": "gradient_descent()"
         },
         {
           "path": "linear_regression.py",
-          "line_number": 236,
+          "line_number": 237,
           "function_name": "gradient_descent",
           "code": "params = Parameters1D(  # @inspect params"
         }
@@ -6650,13 +6678,13 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 218,
+          "line_number": 219,
           "function_name": "optimization_algorithm",
           "code": "gradient_descent()"
         },
         {
           "path": "linear_regression.py",
-          "line_number": 240,
+          "line_number": 241,
           "function_name": "gradient_descent",
           "code": "losses.append(float(train_loss))"
         }
@@ -6674,13 +6702,13 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 218,
+          "line_number": 219,
           "function_name": "optimization_algorithm",
           "code": "gradient_descent()"
         },
         {
           "path": "linear_regression.py",
-          "line_number": 233,
+          "line_number": 234,
           "function_name": "gradient_descent",
           "code": "for step in range(10):  # @inspect step"
         }
@@ -6705,13 +6733,13 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 218,
+          "line_number": 219,
           "function_name": "optimization_algorithm",
           "code": "gradient_descent()"
         },
         {
           "path": "linear_regression.py",
-          "line_number": 234,
+          "line_number": 235,
           "function_name": "gradient_descent",
           "code": "train_loss = compute_train_loss(params, training_data)  # @inspect train_loss @stepover"
         }
@@ -6736,13 +6764,13 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 218,
+          "line_number": 219,
           "function_name": "optimization_algorithm",
           "code": "gradient_descent()"
         },
         {
           "path": "linear_regression.py",
-          "line_number": 235,
+          "line_number": 236,
           "function_name": "gradient_descent",
           "code": "grad = compute_gradient_train_loss(params, training_data)  # @inspect grad @stepover"
         }
@@ -6772,13 +6800,13 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 218,
+          "line_number": 219,
           "function_name": "optimization_algorithm",
           "code": "gradient_descent()"
         },
         {
           "path": "linear_regression.py",
-          "line_number": 236,
+          "line_number": 237,
           "function_name": "gradient_descent",
           "code": "params = Parameters1D(  # @inspect params"
         }
@@ -6816,13 +6844,13 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 218,
+          "line_number": 219,
           "function_name": "optimization_algorithm",
           "code": "gradient_descent()"
         },
         {
           "path": "linear_regression.py",
-          "line_number": 237,
+          "line_number": 238,
           "function_name": "gradient_descent",
           "code": "weight=params.weight - learning_rate * grad[0],"
         }
@@ -6840,13 +6868,13 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 218,
+          "line_number": 219,
           "function_name": "optimization_algorithm",
           "code": "gradient_descent()"
         },
         {
           "path": "linear_regression.py",
-          "line_number": 238,
+          "line_number": 239,
           "function_name": "gradient_descent",
           "code": "bias=params.bias - learning_rate * grad[1],"
         }
@@ -6864,13 +6892,13 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 218,
+          "line_number": 219,
           "function_name": "optimization_algorithm",
           "code": "gradient_descent()"
         },
         {
           "path": "linear_regression.py",
-          "line_number": 236,
+          "line_number": 237,
           "function_name": "gradient_descent",
           "code": "params = Parameters1D(  # @inspect params"
         }
@@ -6908,13 +6936,13 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 218,
+          "line_number": 219,
           "function_name": "optimization_algorithm",
           "code": "gradient_descent()"
         },
         {
           "path": "linear_regression.py",
-          "line_number": 240,
+          "line_number": 241,
           "function_name": "gradient_descent",
           "code": "losses.append(float(train_loss))"
         }
@@ -6932,13 +6960,13 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 218,
+          "line_number": 219,
           "function_name": "optimization_algorithm",
           "code": "gradient_descent()"
         },
         {
           "path": "linear_regression.py",
-          "line_number": 233,
+          "line_number": 234,
           "function_name": "gradient_descent",
           "code": "for step in range(10):  # @inspect step"
         }
@@ -6963,13 +6991,13 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 218,
+          "line_number": 219,
           "function_name": "optimization_algorithm",
           "code": "gradient_descent()"
         },
         {
           "path": "linear_regression.py",
-          "line_number": 234,
+          "line_number": 235,
           "function_name": "gradient_descent",
           "code": "train_loss = compute_train_loss(params, training_data)  # @inspect train_loss @stepover"
         }
@@ -6994,13 +7022,13 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 218,
+          "line_number": 219,
           "function_name": "optimization_algorithm",
           "code": "gradient_descent()"
         },
         {
           "path": "linear_regression.py",
-          "line_number": 235,
+          "line_number": 236,
           "function_name": "gradient_descent",
           "code": "grad = compute_gradient_train_loss(params, training_data)  # @inspect grad @stepover"
         }
@@ -7030,13 +7058,13 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 218,
+          "line_number": 219,
           "function_name": "optimization_algorithm",
           "code": "gradient_descent()"
         },
         {
           "path": "linear_regression.py",
-          "line_number": 236,
+          "line_number": 237,
           "function_name": "gradient_descent",
           "code": "params = Parameters1D(  # @inspect params"
         }
@@ -7074,13 +7102,13 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 218,
+          "line_number": 219,
           "function_name": "optimization_algorithm",
           "code": "gradient_descent()"
         },
         {
           "path": "linear_regression.py",
-          "line_number": 237,
+          "line_number": 238,
           "function_name": "gradient_descent",
           "code": "weight=params.weight - learning_rate * grad[0],"
         }
@@ -7098,13 +7126,13 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 218,
+          "line_number": 219,
           "function_name": "optimization_algorithm",
           "code": "gradient_descent()"
         },
         {
           "path": "linear_regression.py",
-          "line_number": 238,
+          "line_number": 239,
           "function_name": "gradient_descent",
           "code": "bias=params.bias - learning_rate * grad[1],"
         }
@@ -7122,13 +7150,13 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 218,
+          "line_number": 219,
           "function_name": "optimization_algorithm",
           "code": "gradient_descent()"
         },
         {
           "path": "linear_regression.py",
-          "line_number": 236,
+          "line_number": 237,
           "function_name": "gradient_descent",
           "code": "params = Parameters1D(  # @inspect params"
         }
@@ -7166,13 +7194,13 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 218,
+          "line_number": 219,
           "function_name": "optimization_algorithm",
           "code": "gradient_descent()"
         },
         {
           "path": "linear_regression.py",
-          "line_number": 240,
+          "line_number": 241,
           "function_name": "gradient_descent",
           "code": "losses.append(float(train_loss))"
         }
@@ -7190,13 +7218,13 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 218,
+          "line_number": 219,
           "function_name": "optimization_algorithm",
           "code": "gradient_descent()"
         },
         {
           "path": "linear_regression.py",
-          "line_number": 233,
+          "line_number": 234,
           "function_name": "gradient_descent",
           "code": "for step in range(10):  # @inspect step"
         }
@@ -7221,13 +7249,13 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 218,
+          "line_number": 219,
           "function_name": "optimization_algorithm",
           "code": "gradient_descent()"
         },
         {
           "path": "linear_regression.py",
-          "line_number": 234,
+          "line_number": 235,
           "function_name": "gradient_descent",
           "code": "train_loss = compute_train_loss(params, training_data)  # @inspect train_loss @stepover"
         }
@@ -7252,13 +7280,13 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 218,
+          "line_number": 219,
           "function_name": "optimization_algorithm",
           "code": "gradient_descent()"
         },
         {
           "path": "linear_regression.py",
-          "line_number": 235,
+          "line_number": 236,
           "function_name": "gradient_descent",
           "code": "grad = compute_gradient_train_loss(params, training_data)  # @inspect grad @stepover"
         }
@@ -7288,13 +7316,13 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 218,
+          "line_number": 219,
           "function_name": "optimization_algorithm",
           "code": "gradient_descent()"
         },
         {
           "path": "linear_regression.py",
-          "line_number": 236,
+          "line_number": 237,
           "function_name": "gradient_descent",
           "code": "params = Parameters1D(  # @inspect params"
         }
@@ -7332,13 +7360,13 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 218,
+          "line_number": 219,
           "function_name": "optimization_algorithm",
           "code": "gradient_descent()"
         },
         {
           "path": "linear_regression.py",
-          "line_number": 237,
+          "line_number": 238,
           "function_name": "gradient_descent",
           "code": "weight=params.weight - learning_rate * grad[0],"
         }
@@ -7356,13 +7384,13 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 218,
+          "line_number": 219,
           "function_name": "optimization_algorithm",
           "code": "gradient_descent()"
         },
         {
           "path": "linear_regression.py",
-          "line_number": 238,
+          "line_number": 239,
           "function_name": "gradient_descent",
           "code": "bias=params.bias - learning_rate * grad[1],"
         }
@@ -7380,13 +7408,13 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 218,
+          "line_number": 219,
           "function_name": "optimization_algorithm",
           "code": "gradient_descent()"
         },
         {
           "path": "linear_regression.py",
-          "line_number": 236,
+          "line_number": 237,
           "function_name": "gradient_descent",
           "code": "params = Parameters1D(  # @inspect params"
         }
@@ -7424,13 +7452,13 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 218,
+          "line_number": 219,
           "function_name": "optimization_algorithm",
           "code": "gradient_descent()"
         },
         {
           "path": "linear_regression.py",
-          "line_number": 240,
+          "line_number": 241,
           "function_name": "gradient_descent",
           "code": "losses.append(float(train_loss))"
         }
@@ -7448,13 +7476,13 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 218,
+          "line_number": 219,
           "function_name": "optimization_algorithm",
           "code": "gradient_descent()"
         },
         {
           "path": "linear_regression.py",
-          "line_number": 233,
+          "line_number": 234,
           "function_name": "gradient_descent",
           "code": "for step in range(10):  # @inspect step"
         }
@@ -7479,13 +7507,13 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 218,
+          "line_number": 219,
           "function_name": "optimization_algorithm",
           "code": "gradient_descent()"
         },
         {
           "path": "linear_regression.py",
-          "line_number": 234,
+          "line_number": 235,
           "function_name": "gradient_descent",
           "code": "train_loss = compute_train_loss(params, training_data)  # @inspect train_loss @stepover"
         }
@@ -7510,13 +7538,13 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 218,
+          "line_number": 219,
           "function_name": "optimization_algorithm",
           "code": "gradient_descent()"
         },
         {
           "path": "linear_regression.py",
-          "line_number": 235,
+          "line_number": 236,
           "function_name": "gradient_descent",
           "code": "grad = compute_gradient_train_loss(params, training_data)  # @inspect grad @stepover"
         }
@@ -7546,13 +7574,13 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 218,
+          "line_number": 219,
           "function_name": "optimization_algorithm",
           "code": "gradient_descent()"
         },
         {
           "path": "linear_regression.py",
-          "line_number": 236,
+          "line_number": 237,
           "function_name": "gradient_descent",
           "code": "params = Parameters1D(  # @inspect params"
         }
@@ -7590,13 +7618,13 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 218,
+          "line_number": 219,
           "function_name": "optimization_algorithm",
           "code": "gradient_descent()"
         },
         {
           "path": "linear_regression.py",
-          "line_number": 237,
+          "line_number": 238,
           "function_name": "gradient_descent",
           "code": "weight=params.weight - learning_rate * grad[0],"
         }
@@ -7614,13 +7642,13 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 218,
+          "line_number": 219,
           "function_name": "optimization_algorithm",
           "code": "gradient_descent()"
         },
         {
           "path": "linear_regression.py",
-          "line_number": 238,
+          "line_number": 239,
           "function_name": "gradient_descent",
           "code": "bias=params.bias - learning_rate * grad[1],"
         }
@@ -7638,13 +7666,13 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 218,
+          "line_number": 219,
           "function_name": "optimization_algorithm",
           "code": "gradient_descent()"
         },
         {
           "path": "linear_regression.py",
-          "line_number": 236,
+          "line_number": 237,
           "function_name": "gradient_descent",
           "code": "params = Parameters1D(  # @inspect params"
         }
@@ -7682,13 +7710,13 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 218,
+          "line_number": 219,
           "function_name": "optimization_algorithm",
           "code": "gradient_descent()"
         },
         {
           "path": "linear_regression.py",
-          "line_number": 240,
+          "line_number": 241,
           "function_name": "gradient_descent",
           "code": "losses.append(float(train_loss))"
         }
@@ -7706,13 +7734,13 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 218,
+          "line_number": 219,
           "function_name": "optimization_algorithm",
           "code": "gradient_descent()"
         },
         {
           "path": "linear_regression.py",
-          "line_number": 233,
+          "line_number": 234,
           "function_name": "gradient_descent",
           "code": "for step in range(10):  # @inspect step"
         }
@@ -7737,13 +7765,13 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 218,
+          "line_number": 219,
           "function_name": "optimization_algorithm",
           "code": "gradient_descent()"
         },
         {
           "path": "linear_regression.py",
-          "line_number": 234,
+          "line_number": 235,
           "function_name": "gradient_descent",
           "code": "train_loss = compute_train_loss(params, training_data)  # @inspect train_loss @stepover"
         }
@@ -7768,13 +7796,13 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 218,
+          "line_number": 219,
           "function_name": "optimization_algorithm",
           "code": "gradient_descent()"
         },
         {
           "path": "linear_regression.py",
-          "line_number": 235,
+          "line_number": 236,
           "function_name": "gradient_descent",
           "code": "grad = compute_gradient_train_loss(params, training_data)  # @inspect grad @stepover"
         }
@@ -7804,13 +7832,13 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 218,
+          "line_number": 219,
           "function_name": "optimization_algorithm",
           "code": "gradient_descent()"
         },
         {
           "path": "linear_regression.py",
-          "line_number": 236,
+          "line_number": 237,
           "function_name": "gradient_descent",
           "code": "params = Parameters1D(  # @inspect params"
         }
@@ -7848,13 +7876,13 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 218,
+          "line_number": 219,
           "function_name": "optimization_algorithm",
           "code": "gradient_descent()"
         },
         {
           "path": "linear_regression.py",
-          "line_number": 237,
+          "line_number": 238,
           "function_name": "gradient_descent",
           "code": "weight=params.weight - learning_rate * grad[0],"
         }
@@ -7872,13 +7900,13 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 218,
+          "line_number": 219,
           "function_name": "optimization_algorithm",
           "code": "gradient_descent()"
         },
         {
           "path": "linear_regression.py",
-          "line_number": 238,
+          "line_number": 239,
           "function_name": "gradient_descent",
           "code": "bias=params.bias - learning_rate * grad[1],"
         }
@@ -7896,13 +7924,13 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 218,
+          "line_number": 219,
           "function_name": "optimization_algorithm",
           "code": "gradient_descent()"
         },
         {
           "path": "linear_regression.py",
-          "line_number": 236,
+          "line_number": 237,
           "function_name": "gradient_descent",
           "code": "params = Parameters1D(  # @inspect params"
         }
@@ -7940,13 +7968,13 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 218,
+          "line_number": 219,
           "function_name": "optimization_algorithm",
           "code": "gradient_descent()"
         },
         {
           "path": "linear_regression.py",
-          "line_number": 240,
+          "line_number": 241,
           "function_name": "gradient_descent",
           "code": "losses.append(float(train_loss))"
         }
@@ -7964,13 +7992,13 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 218,
+          "line_number": 219,
           "function_name": "optimization_algorithm",
           "code": "gradient_descent()"
         },
         {
           "path": "linear_regression.py",
-          "line_number": 233,
+          "line_number": 234,
           "function_name": "gradient_descent",
           "code": "for step in range(10):  # @inspect step"
         }
@@ -7995,13 +8023,13 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 218,
+          "line_number": 219,
           "function_name": "optimization_algorithm",
           "code": "gradient_descent()"
         },
         {
           "path": "linear_regression.py",
-          "line_number": 234,
+          "line_number": 235,
           "function_name": "gradient_descent",
           "code": "train_loss = compute_train_loss(params, training_data)  # @inspect train_loss @stepover"
         }
@@ -8026,13 +8054,13 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 218,
+          "line_number": 219,
           "function_name": "optimization_algorithm",
           "code": "gradient_descent()"
         },
         {
           "path": "linear_regression.py",
-          "line_number": 235,
+          "line_number": 236,
           "function_name": "gradient_descent",
           "code": "grad = compute_gradient_train_loss(params, training_data)  # @inspect grad @stepover"
         }
@@ -8062,13 +8090,13 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 218,
+          "line_number": 219,
           "function_name": "optimization_algorithm",
           "code": "gradient_descent()"
         },
         {
           "path": "linear_regression.py",
-          "line_number": 236,
+          "line_number": 237,
           "function_name": "gradient_descent",
           "code": "params = Parameters1D(  # @inspect params"
         }
@@ -8106,13 +8134,13 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 218,
+          "line_number": 219,
           "function_name": "optimization_algorithm",
           "code": "gradient_descent()"
         },
         {
           "path": "linear_regression.py",
-          "line_number": 237,
+          "line_number": 238,
           "function_name": "gradient_descent",
           "code": "weight=params.weight - learning_rate * grad[0],"
         }
@@ -8130,13 +8158,13 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 218,
+          "line_number": 219,
           "function_name": "optimization_algorithm",
           "code": "gradient_descent()"
         },
         {
           "path": "linear_regression.py",
-          "line_number": 238,
+          "line_number": 239,
           "function_name": "gradient_descent",
           "code": "bias=params.bias - learning_rate * grad[1],"
         }
@@ -8154,13 +8182,13 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 218,
+          "line_number": 219,
           "function_name": "optimization_algorithm",
           "code": "gradient_descent()"
         },
         {
           "path": "linear_regression.py",
-          "line_number": 236,
+          "line_number": 237,
           "function_name": "gradient_descent",
           "code": "params = Parameters1D(  # @inspect params"
         }
@@ -8198,13 +8226,13 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 218,
+          "line_number": 219,
           "function_name": "optimization_algorithm",
           "code": "gradient_descent()"
         },
         {
           "path": "linear_regression.py",
-          "line_number": 240,
+          "line_number": 241,
           "function_name": "gradient_descent",
           "code": "losses.append(float(train_loss))"
         }
@@ -8222,13 +8250,13 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 218,
+          "line_number": 219,
           "function_name": "optimization_algorithm",
           "code": "gradient_descent()"
         },
         {
           "path": "linear_regression.py",
-          "line_number": 233,
+          "line_number": 234,
           "function_name": "gradient_descent",
           "code": "for step in range(10):  # @inspect step"
         }
@@ -8253,13 +8281,13 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 218,
+          "line_number": 219,
           "function_name": "optimization_algorithm",
           "code": "gradient_descent()"
         },
         {
           "path": "linear_regression.py",
-          "line_number": 234,
+          "line_number": 235,
           "function_name": "gradient_descent",
           "code": "train_loss = compute_train_loss(params, training_data)  # @inspect train_loss @stepover"
         }
@@ -8284,13 +8312,13 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 218,
+          "line_number": 219,
           "function_name": "optimization_algorithm",
           "code": "gradient_descent()"
         },
         {
           "path": "linear_regression.py",
-          "line_number": 235,
+          "line_number": 236,
           "function_name": "gradient_descent",
           "code": "grad = compute_gradient_train_loss(params, training_data)  # @inspect grad @stepover"
         }
@@ -8320,13 +8348,13 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 218,
+          "line_number": 219,
           "function_name": "optimization_algorithm",
           "code": "gradient_descent()"
         },
         {
           "path": "linear_regression.py",
-          "line_number": 236,
+          "line_number": 237,
           "function_name": "gradient_descent",
           "code": "params = Parameters1D(  # @inspect params"
         }
@@ -8364,13 +8392,13 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 218,
+          "line_number": 219,
           "function_name": "optimization_algorithm",
           "code": "gradient_descent()"
         },
         {
           "path": "linear_regression.py",
-          "line_number": 237,
+          "line_number": 238,
           "function_name": "gradient_descent",
           "code": "weight=params.weight - learning_rate * grad[0],"
         }
@@ -8388,13 +8416,13 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 218,
+          "line_number": 219,
           "function_name": "optimization_algorithm",
           "code": "gradient_descent()"
         },
         {
           "path": "linear_regression.py",
-          "line_number": 238,
+          "line_number": 239,
           "function_name": "gradient_descent",
           "code": "bias=params.bias - learning_rate * grad[1],"
         }
@@ -8412,13 +8440,13 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 218,
+          "line_number": 219,
           "function_name": "optimization_algorithm",
           "code": "gradient_descent()"
         },
         {
           "path": "linear_regression.py",
-          "line_number": 236,
+          "line_number": 237,
           "function_name": "gradient_descent",
           "code": "params = Parameters1D(  # @inspect params"
         }
@@ -8456,13 +8484,13 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 218,
+          "line_number": 219,
           "function_name": "optimization_algorithm",
           "code": "gradient_descent()"
         },
         {
           "path": "linear_regression.py",
-          "line_number": 240,
+          "line_number": 241,
           "function_name": "gradient_descent",
           "code": "losses.append(float(train_loss))"
         }
@@ -8480,13 +8508,13 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 218,
+          "line_number": 219,
           "function_name": "optimization_algorithm",
           "code": "gradient_descent()"
         },
         {
           "path": "linear_regression.py",
-          "line_number": 233,
+          "line_number": 234,
           "function_name": "gradient_descent",
           "code": "for step in range(10):  # @inspect step"
         }
@@ -8511,13 +8539,13 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 218,
+          "line_number": 219,
           "function_name": "optimization_algorithm",
           "code": "gradient_descent()"
         },
         {
           "path": "linear_regression.py",
-          "line_number": 234,
+          "line_number": 235,
           "function_name": "gradient_descent",
           "code": "train_loss = compute_train_loss(params, training_data)  # @inspect train_loss @stepover"
         }
@@ -8542,13 +8570,13 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 218,
+          "line_number": 219,
           "function_name": "optimization_algorithm",
           "code": "gradient_descent()"
         },
         {
           "path": "linear_regression.py",
-          "line_number": 235,
+          "line_number": 236,
           "function_name": "gradient_descent",
           "code": "grad = compute_gradient_train_loss(params, training_data)  # @inspect grad @stepover"
         }
@@ -8578,13 +8606,13 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 218,
+          "line_number": 219,
           "function_name": "optimization_algorithm",
           "code": "gradient_descent()"
         },
         {
           "path": "linear_regression.py",
-          "line_number": 236,
+          "line_number": 237,
           "function_name": "gradient_descent",
           "code": "params = Parameters1D(  # @inspect params"
         }
@@ -8622,13 +8650,13 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 218,
+          "line_number": 219,
           "function_name": "optimization_algorithm",
           "code": "gradient_descent()"
         },
         {
           "path": "linear_regression.py",
-          "line_number": 237,
+          "line_number": 238,
           "function_name": "gradient_descent",
           "code": "weight=params.weight - learning_rate * grad[0],"
         }
@@ -8646,13 +8674,13 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 218,
+          "line_number": 219,
           "function_name": "optimization_algorithm",
           "code": "gradient_descent()"
         },
         {
           "path": "linear_regression.py",
-          "line_number": 238,
+          "line_number": 239,
           "function_name": "gradient_descent",
           "code": "bias=params.bias - learning_rate * grad[1],"
         }
@@ -8670,13 +8698,13 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 218,
+          "line_number": 219,
           "function_name": "optimization_algorithm",
           "code": "gradient_descent()"
         },
         {
           "path": "linear_regression.py",
-          "line_number": 236,
+          "line_number": 237,
           "function_name": "gradient_descent",
           "code": "params = Parameters1D(  # @inspect params"
         }
@@ -8714,13 +8742,13 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 218,
+          "line_number": 219,
           "function_name": "optimization_algorithm",
           "code": "gradient_descent()"
         },
         {
           "path": "linear_regression.py",
-          "line_number": 240,
+          "line_number": 241,
           "function_name": "gradient_descent",
           "code": "losses.append(float(train_loss))"
         }
@@ -8738,13 +8766,13 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 218,
+          "line_number": 219,
           "function_name": "optimization_algorithm",
           "code": "gradient_descent()"
         },
         {
           "path": "linear_regression.py",
-          "line_number": 233,
+          "line_number": 234,
           "function_name": "gradient_descent",
           "code": "for step in range(10):  # @inspect step"
         }
@@ -8769,13 +8797,13 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 218,
+          "line_number": 219,
           "function_name": "optimization_algorithm",
           "code": "gradient_descent()"
         },
         {
           "path": "linear_regression.py",
-          "line_number": 243,
+          "line_number": 244,
           "function_name": "gradient_descent",
           "code": "plot(Chart(Data(values=[{\"step\": i, \"loss\": loss} for i, loss in enumerate(losses)])).mark_line().encode(x=\"step:Q\", y=\"loss:Q\").to_dict())"
         }
@@ -8866,7 +8894,7 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 218,
+          "line_number": 219,
           "function_name": "optimization_algorithm",
           "code": "gradient_descent()"
         }
@@ -8884,7 +8912,7 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 220,
+          "line_number": 221,
           "function_name": "optimization_algorithm",
           "code": "text(\"Notes:\")"
         }
@@ -8910,7 +8938,7 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 221,
+          "line_number": 222,
           "function_name": "optimization_algorithm",
           "code": "text(\"- Learning rate controls how fast you drive (trade off speed versus stability)\")"
         }
@@ -8936,7 +8964,7 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 222,
+          "line_number": 223,
           "function_name": "optimization_algorithm",
           "code": "text(\"- Guaranteed to converge for convex functions (with a small enough learning rate), but not for deep learning\")"
         }
@@ -8962,7 +8990,7 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 223,
+          "line_number": 224,
           "function_name": "optimization_algorithm",
           "code": "text(\"- Each gradient step can be computed on a random batch of examples\")"
         }
@@ -8988,7 +9016,7 @@
         },
         {
           "path": "linear_regression.py",
-          "line_number": 224,
+          "line_number": 225,
           "function_name": "optimization_algorithm",
           "code": "text(\"- Other optimization algorithms: stochastic gradient descent, Adam, Muon\")"
         }
