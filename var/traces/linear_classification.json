@@ -38,7 +38,8 @@
           "data": "# Linear classification",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -58,7 +59,8 @@
           "data": "Last unit: linear regression",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -78,7 +80,8 @@
           "data": "- Prediction task (regression): [input: vector] \u2192 [output: number]",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -98,7 +101,8 @@
           "data": "- Hypothesis class: linear functions",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -118,7 +122,8 @@
           "data": "This unit: linear classification",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -138,7 +143,8 @@
           "data": "- Prediction task: [input: vector] \u2192 [output (a.k.a. class, label): one of K discrete choices]",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -158,7 +164,8 @@
           "data": "- Hypothesis class: (thresholded) linear functions",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -178,7 +185,8 @@
           "data": "Let's walk through the same steps as for linear regression and see what changes...",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -234,7 +242,8 @@
           "data": "Example task: image classification",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -260,7 +269,8 @@
           "data": "- **Input** $x$: an image; e.g.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -288,7 +298,8 @@
             "width": 200
           },
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -314,7 +325,8 @@
           "data": "- **Output** $y$: what kind of object it is (e.g., cat)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -340,7 +352,8 @@
           "data": "Example task: sentiment classification",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -366,7 +379,8 @@
           "data": "- **Input** $x$: a document",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -392,7 +406,8 @@
           "data": "- **Output** $y$: the sentiment of the document (e.g., positive)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -418,7 +433,8 @@
           "data": "What's the type of the **input**?",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -444,7 +460,8 @@
           "data": "- Image: $x \\in \\mathbb R^{W \\times H \\times 3}$ is a width \u00d7 height \u00d7 3 (RGB) tensor",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -470,7 +487,8 @@
           "data": "- Text: $x \\in \\text{Strings}$ is a string (hmm, not a tensor...we'll come back to this later)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -496,7 +514,8 @@
           "data": "What's the type of the **output**?",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -522,7 +541,8 @@
           "data": "- Binary classification (two choices): usually $y \\in \\\\{-1, +1\\\\}$",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -548,7 +568,8 @@
           "data": "- Multiclass classification ($K$ choices): usually $y \\in \\\\{0, 1, \\dots, K-1\\\\}$",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -574,7 +595,8 @@
           "data": "A **predictor** is a function that takes an input and produces a predicted output.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -600,7 +622,8 @@
           "data": "In math: predictor $f : \\mathcal X \\to \\mathcal Y$ maps an input $x \\in \\mathcal X$ to a predicted output $f(x) \\in \\mathcal Y$",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -626,7 +649,8 @@
           "data": "Here's an example predictor for binary classification ($x \\in \\mathbb R^d$, $y \\in \\\\{-1, +1\\\\}$):",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -670,7 +694,8 @@
           "data": "Given an input, call the predictor on it:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1189,7 +1214,8 @@
           "data": "Predictor returns +1 (positive) or -1 (negative) depending on the sign of the logit.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1215,7 +1241,8 @@
           "data": "Note: when logit = 0, we break ties arbitrarily (return -1).",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1241,7 +1268,8 @@
           "data": "A predictor divides the input space into two regions:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1267,7 +1295,8 @@
           "data": "- Positive inputs (logit > 0)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1293,7 +1322,8 @@
           "data": "- Negative inputs (logit < 0)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1319,7 +1349,8 @@
           "data": "...separated by the **decision boundary** (logit = 0).",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1961,7 +1992,8 @@
           },
           "style": null,
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1987,7 +2019,8 @@
           "data": "But how do we get the predictor?",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2055,7 +2088,8 @@
           "data": "The **training data** $\\mathcal D$ is a set of examples that demonstrate the task.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2081,7 +2115,8 @@
           "data": "Each **example** $(x, y)$ consists of an input $x \\in \\mathbb R^d$ and a target output $y \\in \\\\{-1, +1\\\\}$.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2284,7 +2319,8 @@
           },
           "style": null,
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2310,7 +2346,8 @@
           "data": "A **learning algorithm** takes the training data and produces a predictor.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2336,7 +2373,8 @@
           "data": "Key questions:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2362,7 +2400,8 @@
           "data": "1. Which predictors are possible? **hypothesis class**",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2388,7 +2427,8 @@
           "data": "2. How good is a predictor? **loss function**",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2414,7 +2454,8 @@
           "data": "3. How do we compute the best predictor? **optimization algorithm**",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2482,7 +2523,8 @@
           "data": "Which predictors (classifiers) are possible?",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2508,7 +2550,8 @@
           "data": "As before, we will parameterize our predictors.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2534,7 +2577,8 @@
           "data": "For linear classifiers, each set of parameters $\\theta = (\\mathbf w, b)$ has:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2560,7 +2604,8 @@
           "data": "- a **weight vector** $\\mathbf w \\in \\mathbb R^d$ (`params.weight`), and",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2586,7 +2631,8 @@
           "data": "- a **bias** $b \\in \\mathbb R$ (`params.bias`).",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2630,7 +2676,8 @@
           "data": "Suppose we have an input $x \\in \\mathbb R^d$.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2686,7 +2733,8 @@
           "data": "We make a prediction by first computing the **logit**: $\\mathbf w \\cdot x + b$",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2712,7 +2760,8 @@
           "data": "Then the classifier is defined by the sign of the logit:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2738,7 +2787,8 @@
           "data": "**Linear classifier**: $f_\\theta(x) = \\text{sign}(\\mathbf w \\cdot x + b) = \\begin{cases} +1 & \\text{if } \\mathbf w \\cdot x + b > 0 \\\\\\\\ -1 & \\text{if } \\mathbf w \\cdot x + b \\le 0 \\end{cases}$",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3584,7 +3634,8 @@
           },
           "style": null,
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3614,7 +3665,8 @@
           "data": "Here's another predictor:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -4508,7 +4560,8 @@
           },
           "style": null,
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -4534,7 +4587,8 @@
           "data": "The **hypothesis class** $\\mathcal F = \\\\{ f_\\theta \\\\}$ is the set of all predictors you can get by choosing parameters.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -4560,7 +4614,8 @@
           "data": "For linear classification: $\\mathcal F = \\\\{f_\\theta : \\mathbf w \\in \\mathbb R^d, b \\in \\mathbb R\\\\}$",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -4586,7 +4641,8 @@
           "data": "**Decision boundary** of $f_\\theta$ is the set of points that are infinitesimally close to more than one label.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -4612,7 +4668,8 @@
           "data": "For linear classification, decision boundary of $f_\\theta$ is $\\\\{x : \\mathbf w \\cdot x + b = 0\\\\}$.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -4638,7 +4695,8 @@
           "data": "This is a \"straight cut\" but the boundary could be curved or disconnected in general.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -4706,7 +4764,8 @@
           "data": "The next design decision is how to judge each of the infinitely many possible predictors.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -4732,7 +4791,8 @@
           "data": "Let's consider a predictor $f_\\theta$:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -4801,7 +4861,8 @@
           "data": "Recall the training data $\\mathcal D$:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -5559,7 +5620,8 @@
           },
           "style": null,
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -5585,7 +5647,8 @@
           "data": "How well does `params` ($\\theta$) fit `training_data` ($\\mathcal D$)?",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -5611,7 +5674,8 @@
           "data": "We define a loss function that measures how unhappy we are with `params` on a single example.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -5637,7 +5701,8 @@
           "data": "Recall that for regression, we used the squared loss.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -5663,7 +5728,8 @@
           "data": "Intuition: how far away the prediction is from the target.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -5689,7 +5755,8 @@
           "data": "In math: $\\text{Loss}(x, y, \\theta) = (\\mathbf w \\cdot x + b - y)^2$",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -6138,7 +6205,8 @@
           },
           "style": null,
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -6164,7 +6232,8 @@
           "data": "This loss is consistent (in the sense that it is 0 when predicted = target).",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -6190,7 +6259,8 @@
           "data": "But we're classifying, so we don't need precise values like in regression...",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -6218,7 +6288,8 @@
           "data": "For binary classification, we use the **zero-one loss**.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -6244,7 +6315,8 @@
           "data": "Intuition: whether the prediction has the same sign as the target.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -6270,7 +6342,8 @@
           "data": "In math: $\\text{Loss}\\_{0\\text{-}1}(x, y, \\theta) = \\mathbf 1[f\\_\\theta(x) \\neq y]$",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -7148,7 +7221,8 @@
           "data": "We can rewrite the zero-one loss in terms of the **margin**.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -7174,7 +7248,8 @@
           "data": "**Margin**: $y (\\mathbf w \\cdot x + b)$ (positive iff the prediction is correct)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -7200,7 +7275,8 @@
           "data": "In math: $\\text{Loss}_{0\\text{-}1}(x, y, \\theta) = \\mathbf 1[y (\\mathbf w \\cdot x + b) \\le 0]$",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -7459,7 +7535,8 @@
           "data": "Examples:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -7488,7 +7565,8 @@
             "whiteSpace": "pre"
           },
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -7517,7 +7595,8 @@
             "whiteSpace": "pre"
           },
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -7546,7 +7625,8 @@
             "whiteSpace": "pre"
           },
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -7575,7 +7655,8 @@
             "whiteSpace": "pre"
           },
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -11632,7 +11713,8 @@
           },
           "style": null,
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -11660,7 +11742,8 @@
           "data": "The training loss is the average of the per-example losses over the training data.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -11686,7 +11769,8 @@
           "data": "In math: $\\displaystyle \\text{TrainLoss}(\\theta) = \\frac{1}{|\\mathcal D|} \\sum_{(x, y) \\in \\mathcal D} \\text{Loss}(x, y, \\theta)$",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -12091,7 +12175,8 @@
           "data": "Summary:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -12117,7 +12202,8 @@
           "data": "- Logit: the raw score from the linear model (sign is prediction, magnitude is confidence)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -12143,7 +12229,8 @@
           "data": "- Margin (logit * target): sign is whether the prediction is correct or not",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -12169,7 +12256,8 @@
           "data": "- Zero-one loss: 1 if wrong, 0 if right",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -12195,7 +12283,8 @@
           "data": "- Train loss: average over training examples (error rate)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -12263,7 +12352,8 @@
           "data": "Recall that for every set of parameters `params` ($\\theta$), we can compute the training loss `train_loss` ($\\text{TrainLoss}(\\theta)$).",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -12289,7 +12379,8 @@
           "data": "Recall in linear regression we optimized the parameters using gradient descent.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -12315,7 +12406,8 @@
           "data": "So let's do the same thing here.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -12758,7 +12850,8 @@
           "data": "We want to find the parameters that yield the lowest training loss.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -12784,7 +12877,8 @@
           "data": "This is an optimization problem.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -12810,7 +12904,8 @@
           "data": "Let's take the gradient of the training loss.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -13056,7 +13151,8 @@
           "data": "We have a problem: the gradient is zero almost everywhere!",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -13082,7 +13178,8 @@
           "data": "In math: $\\nabla_\\theta \\text{TrainLoss}_{0\\text{-}1}(\\theta) = \\mathbf 0$ (except where margin = 0, where it is undefined)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -17139,7 +17236,8 @@
           },
           "style": null,
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -17165,7 +17263,8 @@
           "data": "So gradient descent won't update the parameters at all! \ud83e\udee0",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -17191,7 +17290,8 @@
           "data": "Intuition: if an example is wrong, moving the parameters a tiny bit won't make it right, so give up.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -17217,7 +17317,8 @@
           "data": "So what do we do?",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -17285,7 +17386,8 @@
           "data": "To solve the zero gradient problem, we have to rethink the loss function.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -17311,7 +17413,8 @@
           "data": "...and actually, even what our classifier outputs.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -17337,7 +17440,8 @@
           "data": "Let's take a set of parameters and an example.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -17449,7 +17553,8 @@
           "data": "So far, our predictor turns a logit into a single prediction.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -17500,7 +17605,8 @@
           "data": "Thresholding is a very discrete operation...",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -17526,7 +17632,8 @@
           "data": "Instead, let us make things continuous by having a classifier output",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -17552,7 +17659,8 @@
           "data": "...a probability distribution (continuous) over labels.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -17578,7 +17686,8 @@
           "data": "$[1, 2] \\mapsto \\\\{ +1: 0.88, -1: 0.12 \\\\}$",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -17604,7 +17713,8 @@
           "data": "The key to doing this will be the **logistic** function.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -17630,7 +17740,8 @@
           "data": "The logistic function was used in statistics in **logistic regression** [Berkson, 1944].",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -17704,7 +17815,8 @@
           "data": "A logit is a number between -\u221e and +\u221e.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -17736,7 +17848,8 @@
           "data": "We want to convert a logit $z$ into a probability $p$ (must be between 0 and 1).",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -17768,7 +17881,8 @@
           "data": "There are many functions that do this, but the **logistic function** is a standard choice.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -17800,7 +17914,8 @@
           "data": "In math: $\\sigma(z) = \\frac{1}{1 + e^{-z}}$",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -17979,7 +18094,8 @@
           },
           "style": null,
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -18452,7 +18568,8 @@
           "data": "Another interpretation: log odds",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -18484,7 +18601,8 @@
           "data": "Map from probability to logit:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -18609,7 +18727,8 @@
           "data": "Roundtrip:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -18701,7 +18820,8 @@
           "data": "In math: if $p = \\sigma(z) = \\frac{1}{1 + e^{-z}}$, then $z = \\log \\frac{p}{1 - p}$",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -18733,7 +18853,8 @@
           "data": "Properties:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -18765,7 +18886,8 @@
           "data": "- As logit \u2192 -\u221e, prob \u2192 0",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -18797,7 +18919,8 @@
           "data": "- As logit \u2192 +\u221e, prob \u2192 1",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -18829,7 +18952,8 @@
           "data": "- As logit \u2192 0, prob \u2192 0.5",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -18861,7 +18985,8 @@
           "data": "- Symmetry: $\\sigma(z) + \\sigma(-z) = 1$",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -18979,7 +19104,8 @@
           "data": "The derivative of the logistic function is simple and elegant.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -19200,7 +19326,8 @@
           "data": "In math: $\\sigma'(z) = \\sigma(z) (1 - \\sigma(z))$",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -19232,7 +19359,8 @@
           "data": "As $|z| \\to \\infty$, we have $\\sigma'(z) \\to 0$",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -23295,7 +23423,8 @@
           },
           "style": null,
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -23339,7 +23468,8 @@
           "data": "Now we can compute the probability of y = 1 or -1 given x:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -23440,7 +23570,8 @@
           "data": "In math:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -23466,7 +23597,8 @@
           "data": "- $p(y = +1 \\mid x) = \\sigma(\\mathbf w \\cdot x + b)$",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -23492,7 +23624,8 @@
           "data": "- $p(y = -1 \\mid x) = \\sigma(-(\\mathbf w \\cdot x + b))$",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -23518,7 +23651,8 @@
           "data": "We can express both cases succinctly in terms of the margin:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -23594,7 +23728,8 @@
           "data": "In math: $p(y \\mid x) = \\sigma(y (\\mathbf w \\cdot x + b))$",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -23620,7 +23755,8 @@
           "data": "**Maximum likelihood** principle: maximize the log probability of the training targets.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -23646,7 +23782,8 @@
           "data": "If we have multiple examples, we'd multiply the probabilities: $p(y_1 \\mid x_1) \\cdot p(y_2 \\mid x_2)$",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -23672,7 +23809,8 @@
           "data": "Equivalent to summing the log probabilities: $\\log p(y_1 \\mid x_1) + \\log p(y_2 \\mid x_2)$",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -23698,7 +23836,8 @@
           "data": "For the full dataset:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -23724,7 +23863,8 @@
           "data": "- Maximize $\\displaystyle \\prod_{(x, y) \\in \\mathcal D} p(y \\mid x)$",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -23750,7 +23890,8 @@
           "data": "- Equivalently: maximize $\\displaystyle \\sum_{(x, y) \\in \\mathcal D} \\log p(y \\mid x)$",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -23801,7 +23942,8 @@
           "data": "To turn this into a loss, just negate it (maximize likelihood = minimize loss).",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -23852,7 +23994,8 @@
           "data": "$\\displaystyle \\text{Loss}(x, y, \\theta) = -\\log \\sigma(y (\\mathbf w \\cdot x + b))$",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -23885,7 +24028,8 @@
           "data": "Let's package it up into a function:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -24175,7 +24319,8 @@
           "data": "Recall the zero-one loss, which has a sharp cliff at 0.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -28232,7 +28377,8 @@
           },
           "style": null,
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -28258,7 +28404,8 @@
           "data": "The logistic loss is smooth, and goes to 0 as the margin grows.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -28431,7 +28578,8 @@
           },
           "style": null,
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -28457,7 +28605,8 @@
           "data": "As before, the training loss is the average of the per-example losses.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -28902,7 +29051,8 @@
           "data": "Now we are ready to optimize the logistic loss.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -28928,7 +29078,8 @@
           "data": "Let's compute the gradient of the loss for one example:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -29040,7 +29191,8 @@
           "data": "- $\\frac{\\partial}{\\partial \\mathbf w} \\text{Loss}(x, y, \\theta) = -\\sigma(-y (\\mathbf w \\cdot x + b)) \\cdot y x$",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -29066,7 +29218,8 @@
           "data": "- $\\frac{\\partial}{\\partial b} \\text{Loss}(x, y, \\theta) = -\\sigma(-y (\\mathbf w \\cdot x + b)) \\cdot y$",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -29441,7 +29594,8 @@
           "data": "Now the gradient of the training loss is the average of the gradients of the examples.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -29951,7 +30105,8 @@
           "data": "Now we can do gradient descent.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -30025,7 +30180,8 @@
           "data": "Goal: minimize $\\text{TrainLoss}(\\theta)$",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -30057,7 +30213,8 @@
           "data": "Let $\\eta$ be the learning rate.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -30089,7 +30246,8 @@
           "data": "Repeatedly update the parameters $\\theta$ in the direction of the negative gradient:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -30121,7 +30279,8 @@
           "data": "- $\\displaystyle \\theta \\leftarrow \\theta - \\eta \\nabla \\text{TrainLoss}(\\theta)$",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -35925,7 +36084,8 @@
           "data": "Learning curve:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -36062,7 +36222,8 @@
           },
           "style": null,
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -36094,7 +36255,8 @@
           "data": "Plot the decision boundary:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -36767,7 +36929,8 @@
           },
           "style": null,
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -36799,7 +36962,8 @@
           "data": "The training logistic loss is not zero (probability of correct answer not 1).",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -36831,7 +36995,8 @@
           "data": "However, the training zero-one loss is 0 (only care about the sign).",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -36917,7 +37082,8 @@
           "data": "Binary classification (output $y \\in \\\\{-1, +1\\\\}$)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -36943,7 +37109,8 @@
           "data": "Multiclass classification (output $y \\in \\\\{0, 1, \\dots, K-1\\\\}$)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -36969,7 +37136,8 @@
           "data": "For binary classification, we compute a single logit for each input.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -36995,7 +37163,8 @@
           "data": "Sign of logit is the predicted class.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -37175,7 +37344,8 @@
           "data": "For multiclass classification:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -37201,7 +37371,8 @@
           "data": "- Define a weight vector for each class",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -37227,7 +37398,8 @@
           "data": "- Compute a logit for each class",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -37253,7 +37425,8 @@
           "data": "- Predict a distribution over classes",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -37400,7 +37573,8 @@
           "data": "In math:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -37426,7 +37600,8 @@
           "data": "- weight vectors $\\mathbf w_0, \\dots, \\mathbf w_{K-1}$",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -37452,7 +37627,8 @@
           "data": "- biases $b_0, \\dots, b_{K-1}$",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -37478,7 +37654,8 @@
           "data": "- logit of class $k$ is $\\mathbf w_k \\cdot x + b_k$",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -37504,7 +37681,8 @@
           "data": "How do we turn logits into probabilities?",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -37578,7 +37756,8 @@
           "data": "Recall: the logistic function maps (-\u221e, +\u221e) to (0, 1)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -37610,7 +37789,8 @@
           "data": "The softmax function generalizes this to multiple classes.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -37642,7 +37822,8 @@
           "data": "Let $\\mathbf z = (z_0, \\dots, z_{K-1})$ be the logits for the $K$ classes.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -37674,7 +37855,8 @@
           "data": "Define $\\displaystyle \\text{softmax}(\\mathbf z)\\_k = \\frac{e^{z\\_k}}{\\sum\\_{j=0}^{K-1} e^{z\\_j}}$",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -37963,7 +38145,8 @@
           "data": "Note that shifting all logits by a constant doesn't change the probabilities.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -38363,7 +38546,8 @@
           "data": "Now let us define the cross entropy loss.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -38437,7 +38621,8 @@
           "data": "Cross entropy: measures the difference between a target distribution and a predicted distribution.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -38469,7 +38654,8 @@
           "data": "In math: $H(p, q) = -\\sum_k p(k) \\log q(k)$ for target $p$ and predicted $q$",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -38575,7 +38761,8 @@
           "data": "Penalized when target puts high probability on outcome, and predicted puts low probability on it.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -38675,7 +38862,8 @@
           "data": "For a fixed target, cross entropy is minimized when predicted = target.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -38707,7 +38895,8 @@
           "data": "...and then the cross entropy is the entropy of the target.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -38744,7 +38933,8 @@
           "data": "Special case: target is a single label (represented as a one-hot vector)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -38918,7 +39108,8 @@
           "data": "This is the same as the negative log probability of the target class.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -38950,7 +39141,8 @@
           "data": "In math: if $p$ puts all its mass on class $y$, then $H(p, q) = -\\log q(y)$",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -38994,7 +39186,8 @@
           "data": "Now we can compute the cross entropy loss for an example:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -39020,7 +39213,8 @@
           "data": "In math: $\\text{Loss}(x, y, \\theta) = -\\log \\text{softmax}(\\mathbf W x + \\mathbf b)_y$",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -39591,7 +39785,8 @@
           "data": "Given this loss, we can perform gradient descent to optimize the parameters.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -39617,7 +39812,8 @@
           "data": "Summary:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -39643,7 +39839,8 @@
           "data": "- Softmax: turn logits into probabilities",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -39669,7 +39866,8 @@
           "data": "- Cross entropy: measures difference between target distribution and predicted distribution",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -39695,7 +39893,8 @@
           "data": "- Cross entropy loss: generalizes logistic loss, predicted probability of target class",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -39763,7 +39962,8 @@
           "data": "Prediction tasks involve text (strings), but machine learning operates on tensors.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -39789,7 +39989,8 @@
           "data": "How do we represent a string as a tensor?",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -39815,7 +40016,8 @@
           "data": "1. Tokenization: convert a string into a sequence of integers.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -39841,7 +40043,8 @@
           "data": "2. Represent each integer as a one-hot vector.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -39939,7 +40142,8 @@
           "data": "Split a string by space into words and convert them into integers.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -40322,7 +40526,8 @@
           "data": "Language models use more sophisticated tokenizers (Byte-Pair Encoding) ",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         },
         {
           "type": "link",
@@ -40341,7 +40546,8 @@
             "description": "Neural machine translation (NMT) models typically operate with a fixed vocabulary, but translation is an open-vocabulary problem. Previous work addresses the translation of out-of-vocabulary words by backing off to a dictionary. In this paper, we introduce a simpler and more effective approach, making the NMT model capable of open-vocabulary translation by encoding rare and unknown words as sequences of subword units. This is based on the intuition that various word classes are translatable via smaller units than words, for instance names (via character copying or transliteration), compounds (via compositional translation), and cognates and loanwords (via phonological and morphological transformations). We discuss the suitability of different word segmentation techniques, including simple character n-gram models and a segmentation based on the byte pair encoding compression algorithm, and empirically show that subword models improve over a back-off dictionary baseline for the WMT 15 translation tasks English-German and English-Russian by 1.1 and 1.3 BLEU, respectively.",
             "notes": null
           },
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -40373,7 +40579,8 @@
           "data": "To get a feel for how tokenizers work, play with this ",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         },
         {
           "type": "link",
@@ -40388,7 +40595,8 @@
             "description": null,
             "notes": null
           },
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -40580,7 +40788,8 @@
           "data": "### Interpretation",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -40606,7 +40815,8 @@
           "data": "Represent each index as a one-hot vector.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -40632,7 +40842,8 @@
           "data": "In math: index $i$ is represented by $\\mathbf e_i \\in \\\\{0, 1\\\\}^V$ (1 in position $i$, 0 elsewhere), where $V$ is the vocabulary size.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -40715,7 +40926,8 @@
           "data": "So the string is represented as a sequence of vectors, or a matrix:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -40802,7 +41014,8 @@
           "data": "### Operations",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -40828,7 +41041,8 @@
           "data": "In practice, we store the indices and not the one-hot vectors to save memory.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -40854,7 +41068,8 @@
           "data": "We can operate directly using the indices.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -40880,7 +41095,8 @@
           "data": "Suppose we want to take the dot product of each position with `w`.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -41022,7 +41238,8 @@
           "data": "### Bag of words representation",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -41048,7 +41265,8 @@
           "data": "Represent each token as a (one-hot) vector.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -41074,7 +41292,8 @@
           "data": "Represent each text as the average of the token vectors.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -41100,7 +41319,8 @@
           "data": "In math: for token indices $t_1, \\dots, t_L$, the representation is $\\frac{1}{L} \\sum_{i=1}^L \\mathbf e_{t_i}$",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -41158,7 +41378,8 @@
           "data": "Then we can operate on this fixed-dimensional vector.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -41209,7 +41430,8 @@
           "data": "Equivalently, we can operate directly on the indices:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -41260,7 +41482,8 @@
           "data": "Bag of words:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -41286,7 +41509,8 @@
           "data": "- Pro: doesn't depend on the length of the text",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -41312,7 +41536,8 @@
           "data": "- Con: doesn't pay attention to word order (*dog bites man* = *man bites dog*)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -41338,7 +41563,8 @@
           "data": "Summary:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -41364,7 +41590,8 @@
           "data": "- Problem: convert strings to tensors for machine learning",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -41390,7 +41617,8 @@
           "data": "- Solution: tokenization + one-hot encoding",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -41416,7 +41644,8 @@
           "data": "- Tokenization: split strings into words and build up a vocabulary (string \u2194 index)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -41442,7 +41671,8 @@
           "data": "- Mathematically work with one-hot vectors; in code, work with indices",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -41474,7 +41704,8 @@
           "data": "Summary:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -41494,7 +41725,8 @@
           "data": "- Linear classification: linear function \u2192 one of $K$ choices",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -41514,7 +41746,8 @@
           "data": "- Zero-one loss: leads to zero gradients almost everywhere",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -41534,7 +41767,8 @@
           "data": "- Logistic loss: classifier outputs probabilities, leads to non-zero gradients",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -41554,7 +41788,8 @@
           "data": "- Multiclass classification: one logit per class, convert to probabilities with softmax",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -41574,7 +41809,8 @@
           "data": "- Representing text as tensors: tokenize + convert tokens to indices (one-hot vectors)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     }

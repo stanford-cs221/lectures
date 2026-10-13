@@ -39,7 +39,8 @@
           "data": "# Deep learning",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -59,7 +60,8 @@
           "data": "Last unit: linear regression/classification",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -79,7 +81,8 @@
           "data": "This unit: non-linear regression/classification",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -135,7 +138,8 @@
           "data": "So far, we've:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -161,7 +165,8 @@
           "data": "- used NumPy",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -187,7 +192,8 @@
           "data": "- built our own computation graph library",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -213,7 +219,8 @@
           "data": "...to really understand what's going on under the hood.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -243,7 +250,8 @@
           "data": "In practice, you want to use PyTorch (or JAX), which is:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -269,7 +277,8 @@
           "data": "- much more efficient, industrial grade, and",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -295,7 +304,8 @@
           "data": "- already implements many common operations.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -369,7 +379,8 @@
           "data": "Here's a simple computation graph using NumPy + our own library:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -636,7 +647,8 @@
             "width": 100
           },
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -668,7 +680,8 @@
           "data": "As we build up the graph, values get computed (forward).",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -700,7 +713,8 @@
           "data": "In the backward pass, we compute the gradient of the root `z` with respect to each node.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -867,7 +881,8 @@
           "data": "The same computation graph using PyTorch:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1053,7 +1068,8 @@
           "data": "In PyTorch:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1085,7 +1101,8 @@
           "data": "- `torch.tensor` represents an actual node in the computation graph (pointers to dependencies)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1117,7 +1134,8 @@
           "data": "- Use nice syntax (`@`) parallel to NumPy to construct nodes",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1149,7 +1167,8 @@
           "data": "- `torch.tensor` and `np.array` use the same operations, but the former is a node and the latter is a value",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1181,7 +1200,8 @@
           "data": "- `.backward()` backpropagates gradients (`.grad`) recursively like `backpropagation`",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1213,7 +1233,8 @@
           "data": "- `requires_grad=True` specifies whether to compute gradients for a node (parameters)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1305,7 +1326,8 @@
           "data": "Let's make sure we understand the difference between a node and a value.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1337,7 +1359,8 @@
           "data": "There are two ways to use a node:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1369,7 +1392,8 @@
           "data": "- Use the node directly: backprop will go through the node",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1401,7 +1425,8 @@
           "data": "- Use the node's value: backprop will **not** go through the node",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1791,7 +1816,8 @@
             "width": 50
           },
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         },
         {
           "type": "image",
@@ -1800,7 +1826,8 @@
             "width": 100
           },
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2028,7 +2055,8 @@
           "data": "Note that `u.grad` is computed, but `x.grad` is not.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2060,7 +2088,8 @@
           "data": "This is because `x` is not upstream of `z2`.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2096,7 +2125,8 @@
           "data": "In PyTorch, we use tensors (nodes) directly as values (don't do `x.value`).",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2128,7 +2158,8 @@
           "data": "By default, PyTorch references by node.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2160,7 +2191,8 @@
           "data": "To reference by value, call `detach()`.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2353,7 +2385,8 @@
           "data": "Note that `u.grad` is computed, but `x.grad` is not, as before.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2385,7 +2418,8 @@
           "data": "Sometimes you want to just compute values and don't need gradients.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2417,7 +2451,8 @@
           "data": "Common use case: prediction at test-time (inference).",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2449,7 +2484,8 @@
           "data": "We freeze the parameters, and thus don't need gradients.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2591,7 +2627,8 @@
           "data": "Now, you can't backpropagate through `z`.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2702,7 +2739,8 @@
           "data": "RuntimeError: element 0 of tensors does not require grad and does not have a grad_fn",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2795,7 +2833,8 @@
           "data": "PyTorch has built-in:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2821,7 +2860,8 @@
           "data": "- models (e.g., `nn.Linear`)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2847,7 +2887,8 @@
           "data": "- loss functions (e.g., `nn.CrossEntropyLoss`)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2873,7 +2914,8 @@
           "data": "- optimizers (e.g., `torch.optim.SGD`)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2899,7 +2941,8 @@
           "data": "...and much more.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2925,7 +2968,8 @@
           "data": "Data: 2-dimensional input",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3014,7 +3058,8 @@
             "width": 420
           },
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3309,7 +3354,8 @@
           "data": "### Training a classifier",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3335,7 +3381,8 @@
           "data": "Recall the training data from linear classification:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3563,7 +3610,8 @@
           },
           "style": null,
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -27788,7 +27836,8 @@
           },
           "style": null,
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -29845,7 +29894,8 @@
           },
           "style": null,
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -29871,7 +29921,8 @@
           "data": "Summary:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -29897,7 +29948,8 @@
           "data": "- Define a model (e.g., linear): inputs to logits",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -29923,7 +29975,8 @@
           "data": "- Define a loss (e.g., cross entropy): logits, targets to loss",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -29949,7 +30002,8 @@
           "data": "- Define an optimizer (e.g., SGD): updates parameters using gradients",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -30017,7 +30071,8 @@
           "data": "Decision boundaries of linear classifiers: straight cuts of input space",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -30606,7 +30661,8 @@
           },
           "style": null,
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -30632,7 +30688,8 @@
           "data": "Or in linear regression:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -30805,7 +30862,8 @@
           },
           "style": null,
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -30831,7 +30889,8 @@
           "data": "But data sometimes might look like this (regression):",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -31039,7 +31098,8 @@
           },
           "style": null,
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -31065,7 +31125,8 @@
           "data": "Or this (classification):",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -31197,7 +31258,8 @@
           },
           "style": null,
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -31223,7 +31285,8 @@
           "data": "What happens when we train a linear classifier on this data?",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -31994,7 +32057,8 @@
           },
           "style": null,
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -32020,7 +32084,8 @@
           "data": "The trained linear classifier has high loss.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -32046,7 +32111,8 @@
           "data": "It can't really separate the blue points from the red points.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -32072,7 +32138,8 @@
           "data": "In other words, the training data is not linearly separable.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -33787,7 +33854,8 @@
           },
           "style": null,
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -33813,7 +33881,8 @@
           "data": "What should we use?",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -33881,7 +33950,8 @@
           "data": "We need predictors that create non-linear decision boundaries.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -33907,7 +33977,8 @@
           "data": "There are a lot of options here:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -33933,7 +34004,8 @@
           "data": "- decision trees",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -33959,7 +34031,8 @@
           "data": "- nearest neighbors",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -33985,7 +34058,8 @@
           "data": "- neural networks",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -34011,7 +34085,8 @@
           "data": "- linear models",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -34037,7 +34112,8 @@
           "data": "Wait, what? Linear models? \ud83d\ude2e",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -34063,7 +34139,8 @@
           "data": "We're going to start with a non-linear classifier",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -34089,7 +34166,8 @@
           "data": "...and show that it can be expressed as a linear classifier (with non-linear features).",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -34115,7 +34193,8 @@
           "data": "Suppose we wanted to define a quadratic (non-linear) classifier:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -38468,7 +38547,8 @@
           },
           "style": null,
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -38494,7 +38574,8 @@
           "data": "$f(x) = \\text{sign}((x_0 - 1)^2 + (x_1 - 1)^2 - 2)$",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -38916,7 +38997,8 @@
           "data": "The decision boundary is a circle...definitely non-linear.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -38942,7 +39024,8 @@
           "data": "But let us define a fixed non-linear feature map:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -38968,7 +39051,8 @@
           "data": "$\\phi(x) = [x_0, x_1, x_0^2 + x_1^2]$",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -39012,7 +39096,8 @@
           "data": "Then we define a linear predictor:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -39038,7 +39123,8 @@
           "data": "$\\displaystyle f(x) = \\text{sign}(-2 x_0 - 2 x_1 + (x_0^2 + x_1^2))$",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -39064,7 +39150,8 @@
           "data": "$\\displaystyle f(x) = \\text{sign}(-2 \\phi(x)_0 - 2 \\phi(x)_1 + \\phi(x)_2)$",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -39090,7 +39177,8 @@
           "data": "$\\displaystyle f(x) = \\text{sign}(\\phi(x) \\cdot [-2, -2, 1])$",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -39754,7 +39842,8 @@
           "data": "A linear classifier in a higher-dimensional space",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -39780,7 +39869,8 @@
           "data": "...leads to a non-linear classifier in the original space.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -39808,7 +39898,8 @@
             "width": 400
           },
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -39834,7 +39925,8 @@
           "data": "Here's a simple algorithm:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -39860,7 +39952,8 @@
           "data": "1. Preprocess our data by applying `feature_map` ($\\phi$).",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -39886,7 +39979,8 @@
           "data": "2. Learn a linear predictor on the processed data.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -39912,7 +40006,8 @@
           "data": "Let's train a linear classifier on $\\phi(x)$ instead of $x$:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -41084,7 +41179,8 @@
           },
           "style": null,
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -42842,7 +42938,8 @@
           },
           "style": null,
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -42868,7 +42965,8 @@
           "data": "We now have a non-linear decision boundary that classifies the training data correctly",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -42894,7 +42992,8 @@
           "data": "...using the machinery of linear classifiers! \ud83e\udd2f",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -42920,7 +43019,8 @@
           "data": "Drawback: $\\phi$ is handcrafted...can we learn it as well?",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -42988,7 +43088,8 @@
           "data": "Let's try to make the function more expressive by defining two layers.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -43014,7 +43115,8 @@
           "data": "- The first layer is a feature map.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -43040,7 +43142,8 @@
           "data": "- The second layer is the linear predictor.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -43068,7 +43171,8 @@
             "width": 640
           },
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -43721,13 +43825,13 @@
           "code": "logits = model(training_data[0].x)  # @inspect logits"
         },
         {
-          "path": "../../../../.cache/uv/archive-v0/h00zlPRyMvxrHqZisJ-dq/lib/python3.11/site-packages/torch/nn/modules/module.py",
+          "path": "../../../../.cache/uv/archive-v0/T-iDfRnKOj7dp4WVh-j1C/lib/python3.11/site-packages/torch/nn/modules/module.py",
           "line_number": 1775,
           "function_name": "_wrapped_call_impl",
           "code": "return self._call_impl(*args, **kwargs)"
         },
         {
-          "path": "../../../../.cache/uv/archive-v0/h00zlPRyMvxrHqZisJ-dq/lib/python3.11/site-packages/torch/nn/modules/module.py",
+          "path": "../../../../.cache/uv/archive-v0/T-iDfRnKOj7dp4WVh-j1C/lib/python3.11/site-packages/torch/nn/modules/module.py",
           "line_number": 1786,
           "function_name": "_call_impl",
           "code": "return forward_call(*args, **kwargs)"
@@ -43769,13 +43873,13 @@
           "code": "logits = model(training_data[0].x)  # @inspect logits"
         },
         {
-          "path": "../../../../.cache/uv/archive-v0/h00zlPRyMvxrHqZisJ-dq/lib/python3.11/site-packages/torch/nn/modules/module.py",
+          "path": "../../../../.cache/uv/archive-v0/T-iDfRnKOj7dp4WVh-j1C/lib/python3.11/site-packages/torch/nn/modules/module.py",
           "line_number": 1775,
           "function_name": "_wrapped_call_impl",
           "code": "return self._call_impl(*args, **kwargs)"
         },
         {
-          "path": "../../../../.cache/uv/archive-v0/h00zlPRyMvxrHqZisJ-dq/lib/python3.11/site-packages/torch/nn/modules/module.py",
+          "path": "../../../../.cache/uv/archive-v0/T-iDfRnKOj7dp4WVh-j1C/lib/python3.11/site-packages/torch/nn/modules/module.py",
           "line_number": 1786,
           "function_name": "_call_impl",
           "code": "return forward_call(*args, **kwargs)"
@@ -43820,13 +43924,13 @@
           "code": "logits = model(training_data[0].x)  # @inspect logits"
         },
         {
-          "path": "../../../../.cache/uv/archive-v0/h00zlPRyMvxrHqZisJ-dq/lib/python3.11/site-packages/torch/nn/modules/module.py",
+          "path": "../../../../.cache/uv/archive-v0/T-iDfRnKOj7dp4WVh-j1C/lib/python3.11/site-packages/torch/nn/modules/module.py",
           "line_number": 1775,
           "function_name": "_wrapped_call_impl",
           "code": "return self._call_impl(*args, **kwargs)"
         },
         {
-          "path": "../../../../.cache/uv/archive-v0/h00zlPRyMvxrHqZisJ-dq/lib/python3.11/site-packages/torch/nn/modules/module.py",
+          "path": "../../../../.cache/uv/archive-v0/T-iDfRnKOj7dp4WVh-j1C/lib/python3.11/site-packages/torch/nn/modules/module.py",
           "line_number": 1786,
           "function_name": "_call_impl",
           "code": "return forward_call(*args, **kwargs)"
@@ -43868,13 +43972,13 @@
           "code": "logits = model(training_data[0].x)  # @inspect logits"
         },
         {
-          "path": "../../../../.cache/uv/archive-v0/h00zlPRyMvxrHqZisJ-dq/lib/python3.11/site-packages/torch/nn/modules/module.py",
+          "path": "../../../../.cache/uv/archive-v0/T-iDfRnKOj7dp4WVh-j1C/lib/python3.11/site-packages/torch/nn/modules/module.py",
           "line_number": 1775,
           "function_name": "_wrapped_call_impl",
           "code": "return self._call_impl(*args, **kwargs)"
         },
         {
-          "path": "../../../../.cache/uv/archive-v0/h00zlPRyMvxrHqZisJ-dq/lib/python3.11/site-packages/torch/nn/modules/module.py",
+          "path": "../../../../.cache/uv/archive-v0/T-iDfRnKOj7dp4WVh-j1C/lib/python3.11/site-packages/torch/nn/modules/module.py",
           "line_number": 1786,
           "function_name": "_call_impl",
           "code": "return forward_call(*args, **kwargs)"
@@ -45194,7 +45298,8 @@
           },
           "style": null,
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -46958,7 +47063,8 @@
           },
           "style": null,
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -46984,7 +47090,8 @@
           "data": "This didn't work at all!",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -47010,7 +47117,8 @@
           "data": "In fact, it seemed like it just learned a linear classifier.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -47036,7 +47144,8 @@
           "data": "Wait a minute...",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -47062,7 +47171,8 @@
           "data": "In general, linear MLPs define the **same hypothesis class** of predictors as linear models.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -47088,7 +47198,8 @@
           "data": "Even though the parameters are different.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -47114,7 +47225,8 @@
           "data": "This is because matrix multiplication is associative:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -47298,7 +47410,8 @@
           "data": "Equivalently:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -47363,7 +47476,8 @@
           "data": "Collapse `w1` and `w2` into a single matrix `w`:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -47472,7 +47586,8 @@
           "data": "And that looks like a linear model.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -47498,7 +47613,8 @@
           "data": "Ok, so how do we actually go beyond linear classifiers?",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -47566,7 +47682,8 @@
           "data": "Problem: linear networks aren't more expressive",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -47592,7 +47709,8 @@
           "data": "(though they are useful for studying training dynamics theoretically).",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -47618,7 +47736,8 @@
           "data": "We can make things more expressive if we add a non-linear **activation function**.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -47644,7 +47763,8 @@
           "data": "There are many choices for activation functions (sigmoid, tanh, ReLU, GELU, Swish, etc.).",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -50732,7 +50852,8 @@
           },
           "style": null,
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -50758,7 +50879,8 @@
           "data": "The important thing is that they are not linear.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -50784,7 +50906,8 @@
           "data": "Tension between:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -50810,7 +50933,8 @@
           "data": "1. Want the function to be as linear as possible (gradients are far from zero)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -50836,7 +50960,8 @@
           "data": "2. Want the function to be non-linear for expressivity",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -50862,7 +50987,8 @@
           "data": "Let's go with the rectified linear unit (ReLU) for simplicity:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -51016,7 +51142,8 @@
           "data": "Caution: ReLU has zero gradient when $x \\le 0$; can result in \"dead neurons\".",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -51042,7 +51169,8 @@
           "data": "Where does the name **multi-layer perceptron** come from?",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -51068,7 +51196,8 @@
           "data": "Perceptrons came from Frank Rosenblatt's 1958 paper (linear classifier).",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -51094,7 +51223,8 @@
           "data": "1970s: multi-layer perceptrons (neural networks).",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -51120,7 +51250,8 @@
           "data": "Terminology: activations = hidden units = neurons",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -51442,7 +51573,8 @@
             "width": 640
           },
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -51787,13 +51919,13 @@
           "code": "logits = model(training_data[0].x)  # @inspect logits"
         },
         {
-          "path": "../../../../.cache/uv/archive-v0/h00zlPRyMvxrHqZisJ-dq/lib/python3.11/site-packages/torch/nn/modules/module.py",
+          "path": "../../../../.cache/uv/archive-v0/T-iDfRnKOj7dp4WVh-j1C/lib/python3.11/site-packages/torch/nn/modules/module.py",
           "line_number": 1775,
           "function_name": "_wrapped_call_impl",
           "code": "return self._call_impl(*args, **kwargs)"
         },
         {
-          "path": "../../../../.cache/uv/archive-v0/h00zlPRyMvxrHqZisJ-dq/lib/python3.11/site-packages/torch/nn/modules/module.py",
+          "path": "../../../../.cache/uv/archive-v0/T-iDfRnKOj7dp4WVh-j1C/lib/python3.11/site-packages/torch/nn/modules/module.py",
           "line_number": 1786,
           "function_name": "_call_impl",
           "code": "return forward_call(*args, **kwargs)"
@@ -51835,13 +51967,13 @@
           "code": "logits = model(training_data[0].x)  # @inspect logits"
         },
         {
-          "path": "../../../../.cache/uv/archive-v0/h00zlPRyMvxrHqZisJ-dq/lib/python3.11/site-packages/torch/nn/modules/module.py",
+          "path": "../../../../.cache/uv/archive-v0/T-iDfRnKOj7dp4WVh-j1C/lib/python3.11/site-packages/torch/nn/modules/module.py",
           "line_number": 1775,
           "function_name": "_wrapped_call_impl",
           "code": "return self._call_impl(*args, **kwargs)"
         },
         {
-          "path": "../../../../.cache/uv/archive-v0/h00zlPRyMvxrHqZisJ-dq/lib/python3.11/site-packages/torch/nn/modules/module.py",
+          "path": "../../../../.cache/uv/archive-v0/T-iDfRnKOj7dp4WVh-j1C/lib/python3.11/site-packages/torch/nn/modules/module.py",
           "line_number": 1786,
           "function_name": "_call_impl",
           "code": "return forward_call(*args, **kwargs)"
@@ -51886,13 +52018,13 @@
           "code": "logits = model(training_data[0].x)  # @inspect logits"
         },
         {
-          "path": "../../../../.cache/uv/archive-v0/h00zlPRyMvxrHqZisJ-dq/lib/python3.11/site-packages/torch/nn/modules/module.py",
+          "path": "../../../../.cache/uv/archive-v0/T-iDfRnKOj7dp4WVh-j1C/lib/python3.11/site-packages/torch/nn/modules/module.py",
           "line_number": 1775,
           "function_name": "_wrapped_call_impl",
           "code": "return self._call_impl(*args, **kwargs)"
         },
         {
-          "path": "../../../../.cache/uv/archive-v0/h00zlPRyMvxrHqZisJ-dq/lib/python3.11/site-packages/torch/nn/modules/module.py",
+          "path": "../../../../.cache/uv/archive-v0/T-iDfRnKOj7dp4WVh-j1C/lib/python3.11/site-packages/torch/nn/modules/module.py",
           "line_number": 1786,
           "function_name": "_call_impl",
           "code": "return forward_call(*args, **kwargs)"
@@ -51937,13 +52069,13 @@
           "code": "logits = model(training_data[0].x)  # @inspect logits"
         },
         {
-          "path": "../../../../.cache/uv/archive-v0/h00zlPRyMvxrHqZisJ-dq/lib/python3.11/site-packages/torch/nn/modules/module.py",
+          "path": "../../../../.cache/uv/archive-v0/T-iDfRnKOj7dp4WVh-j1C/lib/python3.11/site-packages/torch/nn/modules/module.py",
           "line_number": 1775,
           "function_name": "_wrapped_call_impl",
           "code": "return self._call_impl(*args, **kwargs)"
         },
         {
-          "path": "../../../../.cache/uv/archive-v0/h00zlPRyMvxrHqZisJ-dq/lib/python3.11/site-packages/torch/nn/modules/module.py",
+          "path": "../../../../.cache/uv/archive-v0/T-iDfRnKOj7dp4WVh-j1C/lib/python3.11/site-packages/torch/nn/modules/module.py",
           "line_number": 1786,
           "function_name": "_call_impl",
           "code": "return forward_call(*args, **kwargs)"
@@ -51985,13 +52117,13 @@
           "code": "logits = model(training_data[0].x)  # @inspect logits"
         },
         {
-          "path": "../../../../.cache/uv/archive-v0/h00zlPRyMvxrHqZisJ-dq/lib/python3.11/site-packages/torch/nn/modules/module.py",
+          "path": "../../../../.cache/uv/archive-v0/T-iDfRnKOj7dp4WVh-j1C/lib/python3.11/site-packages/torch/nn/modules/module.py",
           "line_number": 1775,
           "function_name": "_wrapped_call_impl",
           "code": "return self._call_impl(*args, **kwargs)"
         },
         {
-          "path": "../../../../.cache/uv/archive-v0/h00zlPRyMvxrHqZisJ-dq/lib/python3.11/site-packages/torch/nn/modules/module.py",
+          "path": "../../../../.cache/uv/archive-v0/T-iDfRnKOj7dp4WVh-j1C/lib/python3.11/site-packages/torch/nn/modules/module.py",
           "line_number": 1786,
           "function_name": "_call_impl",
           "code": "return forward_call(*args, **kwargs)"
@@ -53712,7 +53844,8 @@
           },
           "style": null,
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -56663,7 +56796,8 @@
           },
           "style": null,
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -56689,7 +56823,8 @@
           "data": "Not bad, but the loss is still not as good as linear with non-linear features.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -56757,7 +56892,8 @@
           "data": "Problem: a single MLP layer might not be expressive enough.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -56783,7 +56919,8 @@
           "data": "Solution: stack multiple MLP layers.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -56811,7 +56948,8 @@
             "width": 400
           },
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -56837,7 +56975,8 @@
           "data": "Intuition: each layer learns more abstract features of the input.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -56865,7 +57004,8 @@
             "width": 430
           },
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -56891,7 +57031,8 @@
           "data": "Formally: compose multiple MLP layers.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -57213,7 +57354,8 @@
             "width": 680
           },
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -58008,13 +58150,13 @@
           "code": "logits = model(training_data[0].x)  # @inspect logits"
         },
         {
-          "path": "../../../../.cache/uv/archive-v0/h00zlPRyMvxrHqZisJ-dq/lib/python3.11/site-packages/torch/nn/modules/module.py",
+          "path": "../../../../.cache/uv/archive-v0/T-iDfRnKOj7dp4WVh-j1C/lib/python3.11/site-packages/torch/nn/modules/module.py",
           "line_number": 1775,
           "function_name": "_wrapped_call_impl",
           "code": "return self._call_impl(*args, **kwargs)"
         },
         {
-          "path": "../../../../.cache/uv/archive-v0/h00zlPRyMvxrHqZisJ-dq/lib/python3.11/site-packages/torch/nn/modules/module.py",
+          "path": "../../../../.cache/uv/archive-v0/T-iDfRnKOj7dp4WVh-j1C/lib/python3.11/site-packages/torch/nn/modules/module.py",
           "line_number": 1786,
           "function_name": "_call_impl",
           "code": "return forward_call(*args, **kwargs)"
@@ -58056,13 +58198,13 @@
           "code": "logits = model(training_data[0].x)  # @inspect logits"
         },
         {
-          "path": "../../../../.cache/uv/archive-v0/h00zlPRyMvxrHqZisJ-dq/lib/python3.11/site-packages/torch/nn/modules/module.py",
+          "path": "../../../../.cache/uv/archive-v0/T-iDfRnKOj7dp4WVh-j1C/lib/python3.11/site-packages/torch/nn/modules/module.py",
           "line_number": 1775,
           "function_name": "_wrapped_call_impl",
           "code": "return self._call_impl(*args, **kwargs)"
         },
         {
-          "path": "../../../../.cache/uv/archive-v0/h00zlPRyMvxrHqZisJ-dq/lib/python3.11/site-packages/torch/nn/modules/module.py",
+          "path": "../../../../.cache/uv/archive-v0/T-iDfRnKOj7dp4WVh-j1C/lib/python3.11/site-packages/torch/nn/modules/module.py",
           "line_number": 1786,
           "function_name": "_call_impl",
           "code": "return forward_call(*args, **kwargs)"
@@ -58092,13 +58234,13 @@
           "code": "logits = model(training_data[0].x)  # @inspect logits"
         },
         {
-          "path": "../../../../.cache/uv/archive-v0/h00zlPRyMvxrHqZisJ-dq/lib/python3.11/site-packages/torch/nn/modules/module.py",
+          "path": "../../../../.cache/uv/archive-v0/T-iDfRnKOj7dp4WVh-j1C/lib/python3.11/site-packages/torch/nn/modules/module.py",
           "line_number": 1775,
           "function_name": "_wrapped_call_impl",
           "code": "return self._call_impl(*args, **kwargs)"
         },
         {
-          "path": "../../../../.cache/uv/archive-v0/h00zlPRyMvxrHqZisJ-dq/lib/python3.11/site-packages/torch/nn/modules/module.py",
+          "path": "../../../../.cache/uv/archive-v0/T-iDfRnKOj7dp4WVh-j1C/lib/python3.11/site-packages/torch/nn/modules/module.py",
           "line_number": 1786,
           "function_name": "_call_impl",
           "code": "return forward_call(*args, **kwargs)"
@@ -58128,13 +58270,13 @@
           "code": "logits = model(training_data[0].x)  # @inspect logits"
         },
         {
-          "path": "../../../../.cache/uv/archive-v0/h00zlPRyMvxrHqZisJ-dq/lib/python3.11/site-packages/torch/nn/modules/module.py",
+          "path": "../../../../.cache/uv/archive-v0/T-iDfRnKOj7dp4WVh-j1C/lib/python3.11/site-packages/torch/nn/modules/module.py",
           "line_number": 1775,
           "function_name": "_wrapped_call_impl",
           "code": "return self._call_impl(*args, **kwargs)"
         },
         {
-          "path": "../../../../.cache/uv/archive-v0/h00zlPRyMvxrHqZisJ-dq/lib/python3.11/site-packages/torch/nn/modules/module.py",
+          "path": "../../../../.cache/uv/archive-v0/T-iDfRnKOj7dp4WVh-j1C/lib/python3.11/site-packages/torch/nn/modules/module.py",
           "line_number": 1786,
           "function_name": "_call_impl",
           "code": "return forward_call(*args, **kwargs)"
@@ -58164,13 +58306,13 @@
           "code": "logits = model(training_data[0].x)  # @inspect logits"
         },
         {
-          "path": "../../../../.cache/uv/archive-v0/h00zlPRyMvxrHqZisJ-dq/lib/python3.11/site-packages/torch/nn/modules/module.py",
+          "path": "../../../../.cache/uv/archive-v0/T-iDfRnKOj7dp4WVh-j1C/lib/python3.11/site-packages/torch/nn/modules/module.py",
           "line_number": 1775,
           "function_name": "_wrapped_call_impl",
           "code": "return self._call_impl(*args, **kwargs)"
         },
         {
-          "path": "../../../../.cache/uv/archive-v0/h00zlPRyMvxrHqZisJ-dq/lib/python3.11/site-packages/torch/nn/modules/module.py",
+          "path": "../../../../.cache/uv/archive-v0/T-iDfRnKOj7dp4WVh-j1C/lib/python3.11/site-packages/torch/nn/modules/module.py",
           "line_number": 1786,
           "function_name": "_call_impl",
           "code": "return forward_call(*args, **kwargs)"
@@ -60294,7 +60436,8 @@
           },
           "style": null,
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -62212,7 +62355,8 @@
           },
           "style": null,
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -62238,7 +62382,8 @@
           "data": "Lower loss, but still not great...",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -62315,7 +62460,8 @@
           "data": "Historically, it has been extremely hard to train deep neural networks",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -62347,7 +62493,8 @@
           "data": "...due to the vanishing/exploding gradient problem. ",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         },
         {
           "type": "link",
@@ -62362,7 +62509,8 @@
             "description": null,
             "notes": null
           },
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -62394,7 +62542,8 @@
           "data": "Vanishing gradient problem:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -63790,7 +63939,8 @@
           "data": "Exploding gradient problem:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -65186,7 +65336,8 @@
           "data": "So ideally, you want $w$ close to 1 for stability.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -65218,7 +65369,8 @@
           "data": "The problem occurs for matrices too (want singular values of $w$ to be close to 1).",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -65304,7 +65456,8 @@
           "data": "Training deep neural networks is challenging because of vanishing gradients.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -65330,7 +65483,8 @@
           "data": "Solution: residual connections (skip connections; cf. highway networks).",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -65356,7 +65510,8 @@
           "data": "Idea appears in many places:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -65382,7 +65537,8 @@
           "data": "- LSTMs for sequence modeling (1997) ",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         },
         {
           "type": "link",
@@ -65397,7 +65553,8 @@
             "description": null,
             "notes": null
           },
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -65423,7 +65580,8 @@
           "data": "- Residual networks for computer vision (2015) ",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         },
         {
           "type": "link",
@@ -65443,7 +65601,8 @@
             "description": "Deeper neural networks are more difficult to train. We present a residual learning framework to ease the training of networks that are substantially deeper than those used previously. We explicitly reformulate the layers as learning residual functions with reference to the layer inputs, instead of learning unreferenced functions. We provide comprehensive empirical evidence showing that these residual networks are easier to optimize, and can gain accuracy from considerably increased depth. On the ImageNet dataset we evaluate residual nets with a depth of up to 152 layers---8x deeper than VGG nets but still having lower complexity. An ensemble of these residual nets achieves 3.57% error on the ImageNet test set. This result won the 1st place on the ILSVRC 2015 classification task. We also present analysis on CIFAR-10 with 100 and 1000 layers. The depth of representations is of central importance for many visual recognition tasks. Solely due to our extremely deep representations, we obtain a 28% relative improvement on the COCO object detection dataset. Deep residual nets are foundations of our submissions to ILSVRC & COCO 2015 competitions, where we also won the 1st places on the tasks of ImageNet detection, ImageNet localization, COCO detection, and COCO segmentation.",
             "notes": null
           },
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -65469,7 +65628,8 @@
           "data": "No residual connections, each layer computes: $x \\mapsto f(x)$",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -65495,7 +65655,8 @@
           "data": "With residual connections, each layer computes: $x \\mapsto x + f(x)$",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -65521,7 +65682,8 @@
           "data": "For $f(x) = w x$,",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -65547,7 +65709,8 @@
           "data": "each layer computes: $x \\mapsto (1 + w) x$",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -65573,7 +65736,8 @@
           "data": "which keeps the multiplier away from zero (still can explode if $w$ is large).",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -65655,7 +65819,8 @@
             "width": 680
           },
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -66450,13 +66615,13 @@
           "code": "logits = model(training_data[0].x)  # @inspect logits"
         },
         {
-          "path": "../../../../.cache/uv/archive-v0/h00zlPRyMvxrHqZisJ-dq/lib/python3.11/site-packages/torch/nn/modules/module.py",
+          "path": "../../../../.cache/uv/archive-v0/T-iDfRnKOj7dp4WVh-j1C/lib/python3.11/site-packages/torch/nn/modules/module.py",
           "line_number": 1775,
           "function_name": "_wrapped_call_impl",
           "code": "return self._call_impl(*args, **kwargs)"
         },
         {
-          "path": "../../../../.cache/uv/archive-v0/h00zlPRyMvxrHqZisJ-dq/lib/python3.11/site-packages/torch/nn/modules/module.py",
+          "path": "../../../../.cache/uv/archive-v0/T-iDfRnKOj7dp4WVh-j1C/lib/python3.11/site-packages/torch/nn/modules/module.py",
           "line_number": 1786,
           "function_name": "_call_impl",
           "code": "return forward_call(*args, **kwargs)"
@@ -66498,13 +66663,13 @@
           "code": "logits = model(training_data[0].x)  # @inspect logits"
         },
         {
-          "path": "../../../../.cache/uv/archive-v0/h00zlPRyMvxrHqZisJ-dq/lib/python3.11/site-packages/torch/nn/modules/module.py",
+          "path": "../../../../.cache/uv/archive-v0/T-iDfRnKOj7dp4WVh-j1C/lib/python3.11/site-packages/torch/nn/modules/module.py",
           "line_number": 1775,
           "function_name": "_wrapped_call_impl",
           "code": "return self._call_impl(*args, **kwargs)"
         },
         {
-          "path": "../../../../.cache/uv/archive-v0/h00zlPRyMvxrHqZisJ-dq/lib/python3.11/site-packages/torch/nn/modules/module.py",
+          "path": "../../../../.cache/uv/archive-v0/T-iDfRnKOj7dp4WVh-j1C/lib/python3.11/site-packages/torch/nn/modules/module.py",
           "line_number": 1786,
           "function_name": "_call_impl",
           "code": "return forward_call(*args, **kwargs)"
@@ -66560,13 +66725,13 @@
           "code": "logits = model(training_data[0].x)  # @inspect logits"
         },
         {
-          "path": "../../../../.cache/uv/archive-v0/h00zlPRyMvxrHqZisJ-dq/lib/python3.11/site-packages/torch/nn/modules/module.py",
+          "path": "../../../../.cache/uv/archive-v0/T-iDfRnKOj7dp4WVh-j1C/lib/python3.11/site-packages/torch/nn/modules/module.py",
           "line_number": 1775,
           "function_name": "_wrapped_call_impl",
           "code": "return self._call_impl(*args, **kwargs)"
         },
         {
-          "path": "../../../../.cache/uv/archive-v0/h00zlPRyMvxrHqZisJ-dq/lib/python3.11/site-packages/torch/nn/modules/module.py",
+          "path": "../../../../.cache/uv/archive-v0/T-iDfRnKOj7dp4WVh-j1C/lib/python3.11/site-packages/torch/nn/modules/module.py",
           "line_number": 1786,
           "function_name": "_call_impl",
           "code": "return forward_call(*args, **kwargs)"
@@ -66622,13 +66787,13 @@
           "code": "logits = model(training_data[0].x)  # @inspect logits"
         },
         {
-          "path": "../../../../.cache/uv/archive-v0/h00zlPRyMvxrHqZisJ-dq/lib/python3.11/site-packages/torch/nn/modules/module.py",
+          "path": "../../../../.cache/uv/archive-v0/T-iDfRnKOj7dp4WVh-j1C/lib/python3.11/site-packages/torch/nn/modules/module.py",
           "line_number": 1775,
           "function_name": "_wrapped_call_impl",
           "code": "return self._call_impl(*args, **kwargs)"
         },
         {
-          "path": "../../../../.cache/uv/archive-v0/h00zlPRyMvxrHqZisJ-dq/lib/python3.11/site-packages/torch/nn/modules/module.py",
+          "path": "../../../../.cache/uv/archive-v0/T-iDfRnKOj7dp4WVh-j1C/lib/python3.11/site-packages/torch/nn/modules/module.py",
           "line_number": 1786,
           "function_name": "_call_impl",
           "code": "return forward_call(*args, **kwargs)"
@@ -66670,13 +66835,13 @@
           "code": "logits = model(training_data[0].x)  # @inspect logits"
         },
         {
-          "path": "../../../../.cache/uv/archive-v0/h00zlPRyMvxrHqZisJ-dq/lib/python3.11/site-packages/torch/nn/modules/module.py",
+          "path": "../../../../.cache/uv/archive-v0/T-iDfRnKOj7dp4WVh-j1C/lib/python3.11/site-packages/torch/nn/modules/module.py",
           "line_number": 1775,
           "function_name": "_wrapped_call_impl",
           "code": "return self._call_impl(*args, **kwargs)"
         },
         {
-          "path": "../../../../.cache/uv/archive-v0/h00zlPRyMvxrHqZisJ-dq/lib/python3.11/site-packages/torch/nn/modules/module.py",
+          "path": "../../../../.cache/uv/archive-v0/T-iDfRnKOj7dp4WVh-j1C/lib/python3.11/site-packages/torch/nn/modules/module.py",
           "line_number": 1786,
           "function_name": "_call_impl",
           "code": "return forward_call(*args, **kwargs)"
@@ -69199,7 +69364,8 @@
           },
           "style": null,
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -71071,7 +71237,8 @@
           },
           "style": null,
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -71097,7 +71264,8 @@
           "data": "The training is faster and yields lower loss!",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -71165,7 +71333,8 @@
           "data": "Motivation: don't want the magnitude of activations to grow too big or small.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -71191,7 +71360,8 @@
           "data": "Solution: **layer normalization** (also see batch normalization) ",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         },
         {
           "type": "link",
@@ -71210,7 +71380,8 @@
             "description": "Training state-of-the-art, deep neural networks is computationally expensive. One way to reduce the training time is to normalize the activities of the neurons. A recently introduced technique called batch normalization uses the distribution of the summed input to a neuron over a mini-batch of training cases to compute a mean and variance which are then used to normalize the summed input to that neuron on each training case. This significantly reduces the training time in feed-forward neural networks. However, the effect of batch normalization is dependent on the mini-batch size and it is not obvious how to apply it to recurrent neural networks. In this paper, we transpose batch normalization into layer normalization by computing the mean and variance used for normalization from all of the summed inputs to the neurons in a layer on a single training case. Like batch normalization, we also give each neuron its own adaptive bias and gain which are applied after the normalization but before the non-linearity. Unlike batch normalization, layer normalization performs exactly the same computation at training and test times. It is also straightforward to apply to recurrent neural networks by computing the normalization statistics separately at each time step. Layer normalization is very effective at stabilizing the hidden state dynamics in recurrent networks. Empirically, we show that layer normalization can substantially reduce the training time compared with previously published techniques.",
             "notes": null
           },
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -71236,7 +71407,8 @@
           "data": "Here's the basic idea:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -71735,7 +71907,8 @@
           "data": "The real LayerNorm adds three bells and whistles:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -72396,7 +72569,8 @@
           "data": "So each layernorm has $2d$ parameters ($\\gamma$ and $\\beta$), where $d$ is the dimension.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -72422,7 +72596,8 @@
           "data": "In PyTorch:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -72672,7 +72847,8 @@
           "data": "Summary: layer normalization keeps the magnitude of activations away from zero and infinity.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -72740,7 +72916,8 @@
           "data": "We have seen that the magnitude of activations can grow too big or small.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -72766,7 +72943,8 @@
           "data": "Once this happens, everything is ruined.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -72792,7 +72970,8 @@
           "data": "And this can happen really quickly unless we initialize the parameters carefully.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -72950,7 +73129,8 @@
           "data": "Note that each element of `y` scales as $\\sqrt{\\text{input\\_dim}}$.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -72976,7 +73156,8 @@
           "data": "Large values can cause gradients to blow up and cause training to be unstable.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -73002,7 +73183,8 @@
           "data": "We want an initialization that is invariant to `input_dim`,",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -73028,7 +73210,8 @@
           "data": "so we don't have to worry every time we change `input_dim`.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -73054,7 +73237,8 @@
           "data": "To do that, we simply rescale the initialization by $1/\\sqrt{\\text{input\\_dim}}$.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -73158,7 +73342,8 @@
           "data": "Now each element of `y` doesn't grow with `input_dim`.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -73184,7 +73369,8 @@
           "data": "Up to a constant, this is Xavier initialization. ",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         },
         {
           "type": "link",
@@ -73199,7 +73385,8 @@
             "description": null,
             "notes": null
           },
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -73225,7 +73412,8 @@
           "data": "Common practice: truncate the normal to $[-3\\sigma, 3\\sigma]$ to rule out rare large weights.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -73354,7 +73542,8 @@
           "data": "So far, we've used gradient descent (GD).",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -73380,7 +73569,8 @@
           "data": "Each gradient requires summing over all training examples.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -73406,7 +73596,8 @@
           "data": "For large datasets, this is too much work to make just one update.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -73432,7 +73623,8 @@
           "data": "Instead, we can use a stochastic optimizer.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -73458,7 +73650,8 @@
           "data": "Each step, choose a random subset of the training examples.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -73484,7 +73677,8 @@
           "data": "This is an unbiased estimate of the gradient.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -73722,7 +73916,8 @@
           "data": "In practice, we permute the training examples each epoch and take consecutive chunks.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -73895,7 +74090,8 @@
           "data": "You can use fancier optimizers beyond SGD (Adam, Muon, etc.).",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -73927,7 +74123,8 @@
           "data": "Summary:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -73947,7 +74144,8 @@
           "data": "- PyTorch: NumPy + automatic differentiation + pre-defined modules",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -73967,7 +74165,8 @@
           "data": "- Can get non-linear decision boundaries with linear machinery",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -73987,7 +74186,8 @@
           "data": "- Need non-linear activation functions to get non-linear expressivity",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -74007,7 +74207,8 @@
           "data": "- More (non-linear) layers = more expressivity",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -74027,7 +74228,8 @@
           "data": "- Don't vanish/explode: choose activation functions to avoid dead neurons",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -74047,7 +74249,8 @@
           "data": "- Don't vanish/explode: use residual connections",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -74067,7 +74270,8 @@
           "data": "- Don't vanish/explode: use layer normalization",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -74087,7 +74291,8 @@
           "data": "- Don't vanish/explode: use proper initialization",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -74107,7 +74312,8 @@
           "data": "- Don't vanish/explode: use better optimizers (Adam)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     }

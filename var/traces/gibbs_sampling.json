@@ -1,6 +1,6 @@
 {
   "files": {
-    "gibbs_sampling.py": "from edtrace import text, image\nfrom typing import Callable\nfrom collections import defaultdict\nfrom random import random\nfrom bayes import ProbTable, Bernoulli\nfrom util import sample_dict, normalize_dict, set_random_seed\nfrom einops import einsum\n\ndef main():\n    text(\"### Lecture 13: Gibbs sampling\")\n\n    text(\"Last time: Bayesian networks, rejection sampling\")\n    text(\"This time: faster probabilistic inference methods (Gibbs sampling) + conditional independence\")\n\n    review_bayesian_networks()\n    introduce_gibbs_sampling()\n    introduce_conditional_independence()\n\n    text(\"Summary:\")\n    text(\"- Exact probabilistic inference: form the joint distribution and marginalize/condition (einops)\")\n    text(\"- Approximate probabilistic inference: rejection sampling, Gibbs sampling\")\n    text(\"- Conditional independence: determine whether two variables are independent given evidence?\")\n\n    text(\"Next time: learning parameters of Bayesian networks\")\n\n\ndef review_bayesian_networks():\n    text(\"**Joint distribution**: like a database that specifies how the world works\")\n    text(\"1. Define a set of random variables: X = (X_1, ..., X_n)\")\n    text(\"Example: B(urglary), E(arthquake), A(larm)\")\n\n    text(\"2. Define a directed acyclic graph (DAG) over the variables\")\n    text(\"Example: B \u2192 A, E \u2192 A\")\n    image(\"images/alarm-bayes.png\", width=200)\n\n    text(\"3. For each node, define a local conditional distribution: p(x_i | parents(x_i)).\")\n    text(\"Example: p(b), p(e), p(a | b, e)\")\n    p_b = ProbTable(\"B\", [0.95, 0.05]) # p(b) @inspect p_b @stepover\n    p_e = ProbTable(\"E\", [0.95, 0.05]) # p(e) @inspect p_e @stepover\n    p_a_given_be = ProbTable(\"A | B E\", lambda b, e, a: a == (b or e), shape=(2, 2, 2)) # p(a | b, e) @inspect p_a_given_be @stepover\n\n    text(\"4. Define the joint distribution: P(X_1, ..., X_n) = \u03a0_i p(x_i | parents(x_i))\")\n    text(\"Example: P(B, E, A) = p(b) p(e) p(a | b, e)\")\n    P_BEA = ProbTable(\"B E A\", einsum(p_b.p, p_e.p, p_a_given_be.p, \"b, e, b e a -> b e a\"))  # P(B, E, A) @inspect P_BEA @stepover\n\n    text(\"**Probabilistic inference**: answer questions (like SQL) on the joint distribution\")  # @clear p_b p_e p_a_given_be\n    text(\"Example: P(B | A = 1)\")\n    P_BEA1 = ProbTable(\"B E A=1\", P_BEA.p[:, :, 1])  # Condition on evidence: P(B, E, A = 1) @inspect P_BEA1 @stepover\n    P_BA1 = ProbTable(\"B A=1\", einsum(P_BEA1.p, \"b e -> b\"))  # Marginalize out other variables: P(B, A = 1) @inspect P_BA1 @stepover\n    P_A1 = ProbTable(\"A=1\", einsum(P_BA1.p, \"b ->\"))  # Probability of evidence: P(A = 1) @inspect P_A1 @stepover\n    P_B_given_A1 = ProbTable(\"B | A=1\", P_BA1.p / P_A1.p)  # Normalize to get conditional: P(B | A = 1) @inspect P_B_given_A1 @stepover\n\n    text(\"Forming the joint distribution can be exponentially slow...\")\n\n    text(\"**Probabilistic program**\")  # @clear P_BEA P_BEA1 P_BA1 P_A1 P_B_given_A1\n    text(\"A probabilistic program returns a sample from the joint distribution\")\n    text(\"...thereby defining it.\")\n    def alarm():\n        B = Bernoulli(0.05)  # @inspect B\n        E = Bernoulli(0.05)  # @inspect E\n        A = B or E  # @inspect A\n        return {\"B\": B, \"E\": E, \"A\": A}\n    sample = alarm()  # @inspect sample\n\n    text(\"**Rejection sampling**\")  # @clear sample\n    query = lambda sample: sample[\"B\"]\n    evidence = lambda sample: sample[\"A\"] == 1\n    result = rejection_sampling(alarm, query, evidence, num_samples=1)  # @inspect result\n    result = rejection_sampling(alarm, query, evidence, num_samples=300)  # @inspect result P_B_given_A1 @stepover\n\n    text(\"But rejection sampling can also be quite slow if the evidence is rare.\")\n    text(\"How can we perform probabilistic inference faster?\")\n\n\ndef rejection_sampling(program: Callable, query: Callable, evidence: Callable, num_samples: int) -> float:\n    \"\"\"Perform rejection sampling given:\n    - program: defines the Bayesian network, returns a sample\n    - query: sample -> value of interest\n    - evidence: sample -> whether to keep the sample\n    - num_samples: number of samples to draw\n    \"\"\"\n    counts = defaultdict(int)  # Record how many of each query value we got  @inspect counts\n\n    for _ in range(num_samples):\n        sample = program()  # @inspect sample @stepover\n        if evidence(sample):  # @stepover\n            counts[query(sample)] += 1  # @stepover @inspect counts\n    \n    # Normalize counts to obtain probabilities\n    total_count = sum(counts.values())  # @inspect total_count\n    probs = {q: counts[q] / total_count for q in counts}  # @inspect probs\n\n    return probs\n\n\ndef introduce_gibbs_sampling():\n    text(\"**Rejection sampling**\")\n    text(\"sample ~~sample~~ sample ~~sample~~ ~~sample~~ sample\")\n    text(\"- Pro: each sample is independent\")\n    text(\"- Con: we have to start from scratch for every sample\")\n    text(\"- Con: not using evidence while generating sample, leading to rejection\")\n    \n    text(\"**Gibbs sampling**: start with the previous sample (which always satisfies the evidence)\")\n    text(\"Basic idea:\")\n    text(\"- Start with an arbitrary sample\")\n    text(\"- Iteratively change one variable at a time conditioned on the other variables\")\n\n    text(\"Gibbs sampling is a special case of Markov chain Monte Carlo (MCMC)\")\n    text(\"sample \u2192 sample \u2192 sample \u2192 sample\")\n    text(\"- Pro: Start with samples that satisfy the evidence, so don't have to reject anything\")\n    text(\"- Con: samples are not independent, so require more samples\")\n\n    gibbs_telephone()              # Gibbs sampling on a telephone example\n    markov_blanket()               # Introduce the Markov blanket to speed things up\n    gibbs_alarm()                  # Gibbs sampling on the alarm Bayesian network\n    compare_gibbs_and_rejection()  # When does it work versus rejection sampling?\n\n    text(\"Further reading:\")\n    text(\"- Gibbs sampling is an example of a Markov chain Monte Carlo (MCMC) algorithm.\")\n    text(\"- A more general MCMC algorithm is Metropolis-Hastings (uses a proposal distribution).\")\n    text(\"- Theory: use mixing times to study effective running time (how correlated samples are)?\")\n    text(\"- Practice: simple and effective, but can be slow\")\n    \n\ndef gibbs_telephone():\n    text(\"**Example**: telephone\")\n    text(\"Bayesian network: A \u2192 B \u2192 C\")\n    text(\"Intuition: A sends a bit to B, B sends a bit to C, where at each step message might be corrupted\")\n\n    text(\"Here's the definition of the Bayesian network:\")\n    p_a = ProbTable(\"A\", [0.5, 0.5]) # p(a) @inspect p_a @stepover\n    p_b_given_a = ProbTable(\"B | A\", lambda a, b: 0.8 if b == a else 0.2, shape=(2, 2)) # p(b | a) @inspect p_b_given_a @stepover\n    p_c_given_b = ProbTable(\"C | B\", lambda b, c: 0.8 if c == b else 0.2, shape=(2, 2)) # p(c | b) @inspect p_c_given_b @stepover\n\n    text(\"Probabilistic inference goal: P(A | C = 1)\")\n    text(\"Intuition: C=1 encourages A=1, but weakly through two steps of corruption\")\n\n    text(\"Let's first run rejection sampling:\")  # @clear p_a p_b_given_a p_c_given_b\n    set_random_seed(3)\n    def telephone():\n        A = Bernoulli(0.5)  # @inspect A\n        B = Bernoulli(0.8 if A == 1 else 0.2)  # @inspect B\n        C = Bernoulli(0.8 if B == 1 else 0.2)  # @inspect C\n        return {\"A\": A, \"B\": B, \"C\": C}\n\n    sample = telephone()  # @inspect sample\n\n    query = lambda sample: sample[\"A\"]\n    evidence = lambda sample: sample[\"C\"] == 1\n    rejection_probs = rejection_sampling(telephone, query, evidence, num_samples=100)  # @inspect rejection_probs @stepover\n\n    set_random_seed(3)\n    text(\"Let's now run Gibbs sampling:\")  # @clear sample rejection_probs\n    text(\"Start with an initialization (full assignment)\")\n    text(\"For each variable X_i, change it based on all other variables\")\n    text(\"- Compute the conditional distribution of X_i given all other variables\")\n    text(\"- Sample X_i from this conditional distribution\")\n    \n    text(\"Initialize with an arbitrary sample that satisfies the evidence (D = 1):\")\n    x = {\"A\": 1, \"B\": 0, \"C\": 1}  # @inspect x\n\n    text(\"**Conditional distribution**\")\n    text(\"Suppose the goal is to sample B given A = a and C = c.\")\n\n    text(\"Express conditional probability in terms of joint probability:\")\n    text(\"P(B = b | A = a, C = c) = P(A = a, B = b, C = c) / P(A = a, C = c)\")\n\n    text(\"...with a normalizer which is probability of all other variables we're not sampling\")\n    text(\"P(A = a, C = c) = \u03a3_b P(A = a, B = b, C = c)\")\n\n    text(\"The joint probability is the product of the local conditional probabilities:\")\n    text(\"P(A = a, B = b, C = c) = p(a) p(b | a) p(c | b)\")\n    text(\"Note: we don't have to instantiate the entire joint distribution (could be exponentially large).\")\n\n    def joint_prob(x, var, value):  # @inspect x var value\n        # x is an assignment (e.g., {A: 0, B: 0, C: 1})#\n        # var: value is a change to the assignment (e.g., \"B\": 1)\n        # Let y be the updated assignment (e.g., {A: 0, B: 1, C: 1})\n        y = x | {var: value}  # @inspect y\n        # Compute joint probability with updated assignment: P(y)\n        return p_a.p[y[\"A\"]] * p_b_given_a.p[y[\"A\"], y[\"B\"]] * p_c_given_b.p[y[\"B\"], y[\"C\"]]\n\n    text(\"Note we don't instantiate the joint distribution here.\")\n    text(\"But we do have to touch every variable (we'll come back to this later).\")\n\n    text(\"Let's say we were sampling B \u2208 {0, 1}:\")\n    p_ab0c = joint_prob(x, \"B\", 0)  # P(A = 1, B = 0, C = 1) @inspect p_ab0c\n    p_ab1c = joint_prob(x, \"B\", 1)  # P(A = 1, B = 1, C = 1) @inspect p_ab1c\n    p_ac = p_ab0c + p_ab1c  # P(A = 1, C = 1) @inspect p_ac\n    p_b0_given_ac = p_ab0c / p_ac  # P(B = 0 | A = 1, C = 1) @inspect p_b0_given_ac\n    p_b1_given_ac = p_ab1c / p_ac  # P(B = 1 | A = 1, C = 1) @inspect p_b1_given_ac\n    x[\"B\"] = sample_dict({0: p_b0_given_ac, 1: p_b1_given_ac})  # @inspect x\n    text(\"Note that B gets pulled to 1 because of A=1 and C=1.\")\n\n    text(\"Let's define Gibbs sampling in greater generality:\")  # @clear p_ab0c p_ab1c p_ac p_b0_given_ac p_b1_given_ac x\n    gibbs_probs = gibbs_sampling(x, vars=[\"A\", \"B\"], query=query, joint_prob=joint_prob, num_iterations=1)  # @inspect gibbs_probs\n\n    text(\"Run Gibbs sampling for multiple iterations:\")\n    gibbs_probs = gibbs_sampling(x, vars=[\"A\", \"B\"], query=query, joint_prob=joint_prob, num_iterations=100)  # @inspect gibbs_probs @stepover\n\n    text(\"Comparing with rejection sampling, both are in the ballpark.\") # @inspect rejection_probs\n\n    text(\"Running time: O(#iterations * #variables * |domain| * #variables)\")\n\n    text(\"Summary:\")\n    text(\"- Update one variable at a time using its conditional distribution given all other variables\")\n    text(\"- Compute the conditional distribution using the joint distribution\")\n    text(\"- Only have to sum over domain of the variable we're sampling\")\n\n    text(\"Can we be even more efficient and not touch variables we're not sampling?\")\n\n\ndef markov_blanket():\n    text(\"Joint probability: p(a) p(b | a) p(c | b) p(d | c) p(e | d)\")\n    text(\"Can we avoid having to compute the full joint probability every time we sample a variable?\")\n    text(\"Intuitively, only one variable changes...\")\n\n    text(\"Recall the telephone Bayesian network: A \u2192 B \u2192 C\")\n    p_a = ProbTable(\"A\", [0.5, 0.5]) # p(a) @inspect p_a @stepover\n    p_b_given_a = ProbTable(\"B | A\", lambda a, b: 0.8 if b == a else 0.2, shape=(2, 2))  # p(b | a) @inspect p_b_given_a @stepover\n    p_c_given_b = ProbTable(\"C | B\", lambda b, c: 0.8 if c == b else 0.2, shape=(2, 2))  # p(c | b) @inspect p_c_given_b @stepover\n\n    text(\"Suppose we're sampling P(A | B = b, C = c)\")\n    text(\"Let's look at the joint distribution:\")\n    text(\"P(A = 0, B = b, C = c) = p(a = 0) p(b | a = 0) p(c | b)\")\n    text(\"P(A = 1, B = b, C = c) = p(a = 1) p(b | a = 1) p(c | b)\")\n    text(\"P(B = b, C = c) = \u03a3_a p(a) p(b | a) p(c | b)\")\n    text(\"Notice that p(c | b) shows up in both cases, and does not impact P(A | B = b, C = c).\")\n    text(\"So we can just ignore it!\")\n\n    text(\"In general, we need to only include local conditional probabilities that involve the variable we're sampling.\")\n    text(\"Evaluating these local conditional probabilities requires knowing all involved variables.\")\n    text(\"This set of variables is called the **Markov blanket**.\")\n    text(\"The Markov blanket of a variable is all its children and parents.\")\n    text(\"MarkovBlanket(A) = {B}\")\n    text(\"MarkovBlanket(B) = {A, C}\")\n    text(\"MarkovBlanket(C) = {B}\")\n\n    text(\"Instead of computing the joint probability\")\n    text(\"...let us just include the variables in the Markov blanket.\")\n    def markov_prob(x, var, value):\n        y = x | {var: value}\n        if var == \"A\":\n            return p_a.p[y[\"A\"]] * p_b_given_a.p[y[\"A\"], y[\"B\"]]  # no p(c | b)\n        elif var == \"B\":\n            return p_b_given_a.p[y[\"A\"], y[\"B\"]] * p_c_given_b.p[y[\"B\"], y[\"C\"]]  # no p(a)\n        else:\n            raise ValueError(f\"Unknown variable: {var}\")\n\n    text(\"Now we can run Gibbs sampling with the Markov blanket:\")\n    x = {\"A\": 0, \"B\": 0, \"C\": 1}\n    query = lambda sample: sample[\"A\"]\n    probs = gibbs_sampling(x, vars=[\"A\", \"B\"], query=query, joint_prob=markov_prob, num_iterations=100)  # @inspect probs @stepover\n\n    text(\"Running time with joint_prob: O(#iterations * #variables * |domain| * #variables)\")\n    text(\"Running time with markov_prob: O(#iterations * #variables * |domain| * **|markov_blanket|**)\")\n\n    text(\"Summary:\")\n    text(\"- Markov blanket of a node: all its children and parents\")\n    text(\"- Gibbs sampling requires local conditional probabilities of node and its Markov blanket\")\n    text(\"- Much more efficient if Markov blankets are small\")\n\n\ndef gibbs_alarm():\n    text(\"Let's now run Gibbs sampling on the alarm Bayesian network.\")\n\n    image(\"images/alarm-bayes.png\", width=200)\n    p_b = ProbTable(\"B\", [0.95, 0.05]) # p(b) @inspect p_b @stepover\n    p_e = ProbTable(\"E\", [0.95, 0.05]) # p(e) @inspect p_e @stepover\n    p_a_given_be = ProbTable(\"A | B E\", lambda b, e, a: a == (b or e), shape=(2, 2, 2)) # p(a | b, e) @inspect p_a_given_be @stepover\n\n    # Initialize with an arbitrary sample that satisfies the evidence\n    x = {\"B\": 1, \"E\": 1, \"A\": 1}  # @inspect x\n    \n    # Iterate over each variable (that's not evidence)\n    def compute_prob(x, var, value):\n        y = x | {var: value}\n        return p_b.p[y[\"B\"]] * p_e.p[y[\"E\"]] * p_a_given_be.p[y[\"B\"], y[\"E\"], y[\"A\"]]\n\n    # We're interesting in P(B | ...)\n    query = lambda sample: sample[\"B\"]\n\n    # Run Gibbs sampling\n    probs = gibbs_sampling(x, vars=[\"B\", \"E\"], query=query, joint_prob=compute_prob, num_iterations=100)  # @inspect probs @stepover\n    probs = gibbs_sampling(x, vars=[\"B\", \"E\"], query=query, joint_prob=compute_prob, num_iterations=200)  # @inspect probs @stepover\n\n    text(\"Note that the estimates aren't quite accurate...\")\n\n\ndef compare_gibbs_and_rejection():\n    text(\"What examples are hard for rejection sampling?\")\n    text(\"Answer: when evidence has low probability.\")\n    text(\"A \u2192 B\")\n    p_a = ProbTable(\"A\", [0.5, 0.5]) # p(a) @inspect p_a @stepover\n    p_b_given_a = ProbTable(\"B | A\", [[0.9999, 0.0001], [0.9998, 0.0002]])  # p(b | a) @inspect p_b_given_a @stepover\n    text(\"Compute P(A | B = 1)\")\n    text(\"Reason: need to reject all samples that don't match the evidence.\")\n    text(\"Gibbs sample conditions on B = 1, so will work fine.\")\n\n    text(\"What examples are hard for Gibbs sampling?\")  # @clear p_a p_b_given_a\n    text(\"Answer: when variables are highly correlated.\")\n    text(\"A \u2192 B\")\n    p_a = ProbTable(\"A\", [0.5, 0.5]) # p(a) @inspect p_a @stepover\n    p_b_given_a = ProbTable(\"B | A\", lambda a, b: a == b, shape=(2, 2))  # p(b | a) @inspect p_b_given_a @stepover\n    text(\"Probabilistic inference: P(A) [no evidence]\")\n    x = {\"A\": 0, \"B\": 0}\n    text(\"Rejection sampling generates from scratch every time, so works perfectly (no rejection).\")\n    text(\"Gibbs sampling gets stuck and will not explore A = 1.\")\n    query = lambda sample: sample[\"A\"]\n    def joint_prob(x, var, value):\n        y = x | {var: value}\n        return p_a.p[y[\"A\"]] * p_b_given_a.p[y[\"A\"], y[\"B\"]]\n    gibbs_probs = gibbs_sampling(x, vars=[\"A\", \"B\"], query=query, joint_prob=joint_prob, num_iterations=50)  # @inspect gibbs_probs @stepover\n\n    text(\"Summary:\")\n    text(\"- Rare events are hard for rejection sampling\")\n    text(\"- Highly correlated variables are hard for Gibbs sampling\")\n\n\ndef gibbs_sampling(init_x: dict, vars: list[str], query: Callable, joint_prob: Callable, num_iterations: int) -> dict:\n    \"\"\"\n    Run Gibbs sampling from the initial assignment `init_x`.\n    Cycle `num_iterations` over `vars` (excludes evidence variables).\n    Return the estimated distribution over query.\n    \"\"\"\n    # Initialize the assignment\n    x = dict(init_x)  # Make a copy (good hygiene) @inspect x\n\n    # Track counts of query values\n    counts = defaultdict(int)\n\n    # Keep iterating over all the variables\n    for _ in range(num_iterations):\n        for var in vars:  # @inspect var\n            # Compute probabilities for each assignment of {var: value}\n            probs = {value: joint_prob(x, var, value) for value in [0, 1]}  # value -> P(..., var=value) @inspect probs @stepover\n\n            # Normalize probabilities\n            probs = normalize_dict(probs)  # @inspect probs\n\n            # Sample the variable\n            x[var] = sample_dict(probs)  # @inspect x\n\n            # Record the query value\n            counts[query(x)] += 1  # @inspect counts\n\n    # Normalize to get the estimated distribution over query\n    probs = normalize_dict(counts)  # @inspect probs\n\n    return probs\n\n\ndef introduce_conditional_independence():\n    text(\"So far: can do probabilistic inference on Bayesian networks\")\n    text(\"They have been fairly agnostic to the structure of the Bayesian network.\")\n    text(\"Now: let's explore some properties of the Bayesian network.\")\n    text(\"We will connect graph properties to probabilistic properties (in particularly independence).\")\n\n    text(\"**Independence**\")\n    text(\"Two variables A and B are independent iff:\")\n    text(\"P(A = a, B = b) = P(A = a) P(B = b) for all a, b\")\n\n    text(\"Example 1 (A B):\")\n    text(\"P(A = a, B = b) = p(a) p(b)\")\n    text(\"A and B are independent\")\n\n    text(\"Example 2 (A \u2192 B):\")\n    text(\"P(A = a, B = b) = p(a) p(b | a)\")\n    text(\"A and B are not independent\")\n\n    text(\"Example 3 (A, B \u2192 C):\")\n    text(\"P(A = a, B = b, C = c) = p(a) p(b | a) p(c | b, a)\")\n    text(\"P(A = a, B = b) = \u03a3_c P(A = a, B = b, C = c) = \u03a3_c p(a) p(b) p(c | b, a) = p(a) p(b)\")\n    text(\"A and B are independent (even if they are connected)!\")\n\n    text(\"Example 4 (C \u2192 A, B):\")\n    text(\"P(A = a, B = b, C = c) = p(c) p(a | c) p(b | c)\")\n    text(\"P(A = a, B = b) = \u03a3_c P(A = a, B = b, C = c) = \u03a3_c p(c) p(a | c) p(b | c)\")\n    text(\"A and B are not independent!\")\n\n    text(\"**Conditional independence**\")\n    text(\"Two variables A and B are conditionally independent given C = c iff:\")\n    text(\"P(A = a, B = b | C = c) = P(A = a | C = c) P(B = b | C = c) for all a, b\")\n    \n    text(\"Example 4 again (C \u2192 A, B):\")\n    text(\"P(A = a, B = b | C = c) = p(c) p(a | c) p(b | c) / p(c) = p(a | c) p(b | c)\")\n    text(\"A and B are conditionally independent given C = c\")\n\n    text(\"Example 3 again (A, B \u2192 C):\")\n    text(\"P(A = a, B = b | C = c) = p(a) p(b) p(c | a, b)\")\n    text(\"A and B are not conditionally independent given C = c\")\n\n    text(\"**Alarm example**\")\n    text(\"Variables: Burglary B, Earthquake E, Alarm A\")\n    image(\"images/alarm-bayes.png\", width=200)\n    text(\"B and E are independent\")\n    text(\"B and E are not conditionally independent given A = 1\")\n\n    text(\"**General algorithm**\")\n    text(\"Question: are A and B independent given C?\")\n    text(\"1. Shade in the variables C\")\n    text(\"2. Recursively remove any non-shaded leaves\")\n    text(\"3. Connect parents to each other (marriage)\")\n    text(\"3. Return whether there is a path from A to B that doesn't go through any shaded nodes\")\n    \n    text(\"**Medical diagnosis example**\")\n    text(\"Variables: Cold C, Allergies A, Cough H, Itchy eyes I\")\n    image(\"images/medical-bayes.png\", width=200)\n    text(\"C and A are independent\")\n    text(\"C and I are independent\")\n    text(\"C and I are independent given A\")\n    text(\"C and I are independent given A, H\")\n    \n\nif __name__ == \"__main__\":\n    main()"
+    "gibbs_sampling.py": "from edtrace import text, image\nfrom typing import Callable\nfrom collections import defaultdict\nfrom random import random\nfrom bayes import ProbTable, Bernoulli\nfrom util import sample_dict, normalize_dict, set_random_seed\nfrom einops import einsum\n\ndef main():\n    text(\"### Lecture 13: Gibbs sampling\")\n\n    text(\"Last time: Bayesian networks, rejection sampling\")\n    text(\"This time: faster probabilistic inference methods (Gibbs sampling) + conditional independence\")\n\n    review_bayesian_networks()\n    introduce_gibbs_sampling()\n    introduce_conditional_independence()\n\n    text(\"Summary:\")\n    text(\"- Exact probabilistic inference: form the joint distribution and marginalize/condition (einops)\")\n    text(\"- Approximate probabilistic inference: rejection sampling, Gibbs sampling\")\n    text(\"- Conditional independence: determine whether two variables are independent given evidence?\")\n\n    text(\"Next time: learning parameters of Bayesian networks\")\n\n\ndef review_bayesian_networks():\n    text(\"**Joint distribution**: like a database that specifies how the world works\")\n    text(\"1. Define a set of random variables: X = (X_1, ..., X_n)\")\n    text(\"Example: B(urglary), E(arthquake), A(larm)\")\n\n    text(\"2. Define a directed acyclic graph (DAG) over the variables\")\n    text(\"Example: B \u2192 A, E \u2192 A\")\n    image(\"images/alarm-bayes.png\", width=200)\n\n    text(\"3. For each node, define a local conditional distribution: p(x_i | parents(x_i)).\")\n    text(\"Example: p(b), p(e), p(a | b, e)\")\n    p_b = ProbTable(\"B\", [0.95, 0.05]) # p(b) @inspect p_b @stepover\n    p_e = ProbTable(\"E\", [0.95, 0.05]) # p(e) @inspect p_e @stepover\n    p_a_given_be = ProbTable(\"A | B E\", lambda b, e, a: a == (b or e), shape=(2, 2, 2)) # p(a | b, e) @inspect p_a_given_be @stepover\n\n    text(\"4. Define the joint distribution: P(X_1, ..., X_n) = \u03a0_i p(x_i | parents(x_i))\")\n    text(\"Example: P(B, E, A) = p(b) p(e) p(a | b, e)\")\n    P_BEA = ProbTable(\"B E A\", einsum(p_b.p, p_e.p, p_a_given_be.p, \"b, e, b e a -> b e a\"))  # P(B, E, A) @inspect P_BEA @stepover\n\n    text(\"**Probabilistic inference**: answer questions (like SQL) on the joint distribution\")  # @clear p_b p_e p_a_given_be\n    text(\"Example: P(B | A = 1)\")\n    P_BEA1 = ProbTable(\"B E A=1\", P_BEA.p[:, :, 1])  # Condition on evidence: P(B, E, A = 1) @inspect P_BEA1 @stepover\n    P_BA1 = ProbTable(\"B A=1\", einsum(P_BEA1.p, \"b e -> b\"))  # Marginalize out other variables: P(B, A = 1) @inspect P_BA1 @stepover\n    P_A1 = ProbTable(\"A=1\", einsum(P_BA1.p, \"b ->\"))  # Probability of evidence: P(A = 1) @inspect P_A1 @stepover\n    P_B_given_A1 = ProbTable(\"B | A=1\", P_BA1.p / P_A1.p)  # Normalize to get conditional: P(B | A = 1) @inspect P_B_given_A1 @stepover\n\n    text(\"Forming the joint distribution can be exponentially slow...\")\n\n    text(\"**Probabilistic program**\")  # @clear P_BEA P_BEA1 P_BA1 P_A1 P_B_given_A1\n    text(\"A probabilistic program returns a sample from the joint distribution\")\n    text(\"...thereby defining it.\")\n    def alarm():\n        B = Bernoulli(0.05)  # @inspect B\n        E = Bernoulli(0.05)  # @inspect E\n        A = B or E  # @inspect A\n        return {\"B\": B, \"E\": E, \"A\": A}\n    sample = alarm()  # @inspect sample\n\n    text(\"**Rejection sampling**\")  # @clear sample\n    query = lambda sample: sample[\"B\"]\n    evidence = lambda sample: sample[\"A\"] == 1\n    result = rejection_sampling(alarm, query, evidence, num_samples=1)  # @inspect result\n    result = rejection_sampling(alarm, query, evidence, num_samples=300)  # @inspect result P_B_given_A1 @stepover\n\n    text(\"But rejection sampling can also be quite slow if the evidence is rare.\")\n    text(\"How can we perform probabilistic inference faster?\")\n\n\ndef rejection_sampling(program: Callable, query: Callable, evidence: Callable, num_samples: int) -> float:\n    \"\"\"Perform rejection sampling given:\n    - program: defines the Bayesian network, returns a sample\n    - query: sample -> value of interest\n    - evidence: sample -> whether to keep the sample\n    - num_samples: number of samples to draw\n    \"\"\"\n    counts = defaultdict(int)  # Record how many of each query value we got  @inspect counts\n\n    for _ in range(num_samples):\n        sample = program()  # @inspect sample @stepover\n        if evidence(sample):  # @stepover\n            counts[query(sample)] += 1  # @stepover @inspect counts\n\n    # Normalize counts to obtain probabilities\n    total_count = sum(counts.values())  # @inspect total_count\n    probs = {q: counts[q] / total_count for q in counts}  # @inspect probs\n\n    return probs\n\n\ndef introduce_gibbs_sampling():\n    text(\"**Rejection sampling**\")\n    text(\"sample ~~sample~~ sample ~~sample~~ ~~sample~~ sample\")\n    text(\"- Pro: each sample is independent\")\n    text(\"- Con: we have to start from scratch for every sample\")\n    text(\"- Con: not using evidence while generating sample, leading to rejection\")\n\n    text(\"**Gibbs sampling**: start with the previous sample (which always satisfies the evidence)\")\n    text(\"Basic idea:\")\n    text(\"- Start with an arbitrary sample\")\n    text(\"- Iteratively change one variable at a time conditioned on the other variables\")\n\n    text(\"Gibbs sampling is a special case of Markov chain Monte Carlo (MCMC)\")\n    text(\"sample \u2192 sample \u2192 sample \u2192 sample\")\n    text(\"- Pro: Start with samples that satisfy the evidence, so don't have to reject anything\")\n    text(\"- Con: samples are not independent, so require more samples\")\n\n    gibbs_telephone()              # Gibbs sampling on a telephone example\n    markov_blanket()               # Introduce the Markov blanket to speed things up\n    gibbs_alarm()                  # Gibbs sampling on the alarm Bayesian network\n    compare_gibbs_and_rejection()  # When does it work versus rejection sampling?\n\n    text(\"Further reading:\")\n    text(\"- Gibbs sampling is an example of a Markov chain Monte Carlo (MCMC) algorithm.\")\n    text(\"- A more general MCMC algorithm is Metropolis-Hastings (uses a proposal distribution).\")\n    text(\"- Theory: use mixing times to study effective running time (how correlated samples are)?\")\n    text(\"- Practice: simple and effective, but can be slow\")\n\n\ndef gibbs_telephone():\n    text(\"**Example**: telephone\")\n    text(\"Bayesian network: A \u2192 B \u2192 C\")\n    text(\"Intuition: A sends a bit to B, B sends a bit to C, where at each step message might be corrupted\")\n\n    text(\"Here's the definition of the Bayesian network:\")\n    p_a = ProbTable(\"A\", [0.5, 0.5]) # p(a) @inspect p_a @stepover\n    p_b_given_a = ProbTable(\"B | A\", lambda a, b: 0.8 if b == a else 0.2, shape=(2, 2)) # p(b | a) @inspect p_b_given_a @stepover\n    p_c_given_b = ProbTable(\"C | B\", lambda b, c: 0.8 if c == b else 0.2, shape=(2, 2)) # p(c | b) @inspect p_c_given_b @stepover\n\n    text(\"Probabilistic inference goal: P(A | C = 1)\")\n    text(\"Intuition: C=1 encourages A=1, but weakly through two steps of corruption\")\n\n    text(\"Let's first run rejection sampling:\")  # @clear p_a p_b_given_a p_c_given_b\n    set_random_seed(3)\n    def telephone():\n        A = Bernoulli(0.5)  # @inspect A\n        B = Bernoulli(0.8 if A == 1 else 0.2)  # @inspect B\n        C = Bernoulli(0.8 if B == 1 else 0.2)  # @inspect C\n        return {\"A\": A, \"B\": B, \"C\": C}\n\n    sample = telephone()  # @inspect sample\n\n    query = lambda sample: sample[\"A\"]\n    evidence = lambda sample: sample[\"C\"] == 1\n    rejection_probs = rejection_sampling(telephone, query, evidence, num_samples=100)  # @inspect rejection_probs @stepover\n\n    set_random_seed(3)\n    text(\"Let's now run Gibbs sampling:\")  # @clear sample rejection_probs\n    text(\"Start with an initialization (full assignment)\")\n    text(\"For each variable X_i, change it based on all other variables\")\n    text(\"- Compute the conditional distribution of X_i given all other variables\")\n    text(\"- Sample X_i from this conditional distribution\")\n\n    text(\"Initialize with an arbitrary sample that satisfies the evidence (D = 1):\")\n    x = {\"A\": 1, \"B\": 0, \"C\": 1}  # @inspect x\n\n    text(\"**Conditional distribution**\")\n    text(\"Suppose the goal is to sample B given A = a and C = c.\")\n\n    text(\"Express conditional probability in terms of joint probability:\")\n    text(\"P(B = b | A = a, C = c) = P(A = a, B = b, C = c) / P(A = a, C = c)\")\n\n    text(\"...with a normalizer which is probability of all other variables we're not sampling\")\n    text(\"P(A = a, C = c) = \u03a3_b P(A = a, B = b, C = c)\")\n\n    text(\"The joint probability is the product of the local conditional probabilities:\")\n    text(\"P(A = a, B = b, C = c) = p(a) p(b | a) p(c | b)\")\n    text(\"Note: we don't have to instantiate the entire joint distribution (could be exponentially large).\")\n\n    def joint_prob(x, var, value):  # @inspect x var value\n        # x is an assignment (e.g., {A: 0, B: 0, C: 1})#\n        # var: value is a change to the assignment (e.g., \"B\": 1)\n        # Let y be the updated assignment (e.g., {A: 0, B: 1, C: 1})\n        y = x | {var: value}  # @inspect y\n        # Compute joint probability with updated assignment: P(y)\n        return p_a.p[y[\"A\"]] * p_b_given_a.p[y[\"A\"], y[\"B\"]] * p_c_given_b.p[y[\"B\"], y[\"C\"]]\n\n    text(\"Note we don't instantiate the joint distribution here.\")\n    text(\"But we do have to touch every variable (we'll come back to this later).\")\n\n    text(\"Let's say we were sampling B \u2208 {0, 1}:\")\n    p_ab0c = joint_prob(x, \"B\", 0)  # P(A = 1, B = 0, C = 1) @inspect p_ab0c\n    p_ab1c = joint_prob(x, \"B\", 1)  # P(A = 1, B = 1, C = 1) @inspect p_ab1c\n    p_ac = p_ab0c + p_ab1c  # P(A = 1, C = 1) @inspect p_ac\n    p_b0_given_ac = p_ab0c / p_ac  # P(B = 0 | A = 1, C = 1) @inspect p_b0_given_ac\n    p_b1_given_ac = p_ab1c / p_ac  # P(B = 1 | A = 1, C = 1) @inspect p_b1_given_ac\n    x[\"B\"] = sample_dict({0: p_b0_given_ac, 1: p_b1_given_ac})  # @inspect x\n    text(\"Note that B gets pulled to 1 because of A=1 and C=1.\")\n\n    text(\"Let's define Gibbs sampling in greater generality:\")  # @clear p_ab0c p_ab1c p_ac p_b0_given_ac p_b1_given_ac x\n    gibbs_probs = gibbs_sampling(x, vars=[\"A\", \"B\"], query=query, joint_prob=joint_prob, num_iterations=1)  # @inspect gibbs_probs\n\n    text(\"Run Gibbs sampling for multiple iterations:\")\n    gibbs_probs = gibbs_sampling(x, vars=[\"A\", \"B\"], query=query, joint_prob=joint_prob, num_iterations=100)  # @inspect gibbs_probs @stepover\n\n    text(\"Comparing with rejection sampling, both are in the ballpark.\") # @inspect rejection_probs\n\n    text(\"Running time: O(#iterations * #variables * |domain| * #variables)\")\n\n    text(\"Summary:\")\n    text(\"- Update one variable at a time using its conditional distribution given all other variables\")\n    text(\"- Compute the conditional distribution using the joint distribution\")\n    text(\"- Only have to sum over domain of the variable we're sampling\")\n\n    text(\"Can we be even more efficient and not touch variables we're not sampling?\")\n\n\ndef markov_blanket():\n    text(\"Joint probability: p(a) p(b | a) p(c | b) p(d | c) p(e | d)\")\n    text(\"Can we avoid having to compute the full joint probability every time we sample a variable?\")\n    text(\"Intuitively, only one variable changes...\")\n\n    text(\"Recall the telephone Bayesian network: A \u2192 B \u2192 C\")\n    p_a = ProbTable(\"A\", [0.5, 0.5]) # p(a) @inspect p_a @stepover\n    p_b_given_a = ProbTable(\"B | A\", lambda a, b: 0.8 if b == a else 0.2, shape=(2, 2))  # p(b | a) @inspect p_b_given_a @stepover\n    p_c_given_b = ProbTable(\"C | B\", lambda b, c: 0.8 if c == b else 0.2, shape=(2, 2))  # p(c | b) @inspect p_c_given_b @stepover\n\n    text(\"Suppose we're sampling P(A | B = b, C = c)\")\n    text(\"Let's look at the joint distribution:\")\n    text(\"P(A = 0, B = b, C = c) = p(a = 0) p(b | a = 0) p(c | b)\")\n    text(\"P(A = 1, B = b, C = c) = p(a = 1) p(b | a = 1) p(c | b)\")\n    text(\"P(B = b, C = c) = \u03a3_a p(a) p(b | a) p(c | b)\")\n    text(\"Notice that p(c | b) shows up in both cases, and does not impact P(A | B = b, C = c).\")\n    text(\"So we can just ignore it!\")\n\n    text(\"In general, we need to only include local conditional probabilities that involve the variable we're sampling.\")\n    text(\"Evaluating these local conditional probabilities requires knowing all involved variables.\")\n    text(\"This set of variables is called the **Markov blanket**.\")\n    text(\"The Markov blanket of a variable is all its children and parents.\")\n    text(\"MarkovBlanket(A) = {B}\")\n    text(\"MarkovBlanket(B) = {A, C}\")\n    text(\"MarkovBlanket(C) = {B}\")\n\n    text(\"Instead of computing the joint probability\")\n    text(\"...let us just include the variables in the Markov blanket.\")\n    def markov_prob(x, var, value):\n        y = x | {var: value}\n        if var == \"A\":\n            return p_a.p[y[\"A\"]] * p_b_given_a.p[y[\"A\"], y[\"B\"]]  # no p(c | b)\n        elif var == \"B\":\n            return p_b_given_a.p[y[\"A\"], y[\"B\"]] * p_c_given_b.p[y[\"B\"], y[\"C\"]]  # no p(a)\n        else:\n            raise ValueError(f\"Unknown variable: {var}\")\n\n    text(\"Now we can run Gibbs sampling with the Markov blanket:\")\n    x = {\"A\": 0, \"B\": 0, \"C\": 1}\n    query = lambda sample: sample[\"A\"]\n    probs = gibbs_sampling(x, vars=[\"A\", \"B\"], query=query, joint_prob=markov_prob, num_iterations=100)  # @inspect probs @stepover\n\n    text(\"Running time with joint_prob: O(#iterations * #variables * |domain| * #variables)\")\n    text(\"Running time with markov_prob: O(#iterations * #variables * |domain| * **|markov_blanket|**)\")\n\n    text(\"Summary:\")\n    text(\"- Markov blanket of a node: all its children and parents\")\n    text(\"- Gibbs sampling requires local conditional probabilities of node and its Markov blanket\")\n    text(\"- Much more efficient if Markov blankets are small\")\n\n\ndef gibbs_alarm():\n    text(\"Let's now run Gibbs sampling on the alarm Bayesian network.\")\n\n    image(\"images/alarm-bayes.png\", width=200)\n    p_b = ProbTable(\"B\", [0.95, 0.05]) # p(b) @inspect p_b @stepover\n    p_e = ProbTable(\"E\", [0.95, 0.05]) # p(e) @inspect p_e @stepover\n    p_a_given_be = ProbTable(\"A | B E\", lambda b, e, a: a == (b or e), shape=(2, 2, 2)) # p(a | b, e) @inspect p_a_given_be @stepover\n\n    # Initialize with an arbitrary sample that satisfies the evidence\n    x = {\"B\": 1, \"E\": 1, \"A\": 1}  # @inspect x\n\n    # Iterate over each variable (that's not evidence)\n    def compute_prob(x, var, value):\n        y = x | {var: value}\n        return p_b.p[y[\"B\"]] * p_e.p[y[\"E\"]] * p_a_given_be.p[y[\"B\"], y[\"E\"], y[\"A\"]]\n\n    # We're interesting in P(B | ...)\n    query = lambda sample: sample[\"B\"]\n\n    # Run Gibbs sampling\n    probs = gibbs_sampling(x, vars=[\"B\", \"E\"], query=query, joint_prob=compute_prob, num_iterations=100)  # @inspect probs @stepover\n    probs = gibbs_sampling(x, vars=[\"B\", \"E\"], query=query, joint_prob=compute_prob, num_iterations=200)  # @inspect probs @stepover\n\n    text(\"Note that the estimates aren't quite accurate...\")\n\n\ndef compare_gibbs_and_rejection():\n    text(\"What examples are hard for rejection sampling?\")\n    text(\"Answer: when evidence has low probability.\")\n    text(\"A \u2192 B\")\n    p_a = ProbTable(\"A\", [0.5, 0.5]) # p(a) @inspect p_a @stepover\n    p_b_given_a = ProbTable(\"B | A\", [[0.9999, 0.0001], [0.9998, 0.0002]])  # p(b | a) @inspect p_b_given_a @stepover\n    text(\"Compute P(A | B = 1)\")\n    text(\"Reason: need to reject all samples that don't match the evidence.\")\n    text(\"Gibbs sample conditions on B = 1, so will work fine.\")\n\n    text(\"What examples are hard for Gibbs sampling?\")  # @clear p_a p_b_given_a\n    text(\"Answer: when variables are highly correlated.\")\n    text(\"A \u2192 B\")\n    p_a = ProbTable(\"A\", [0.5, 0.5]) # p(a) @inspect p_a @stepover\n    p_b_given_a = ProbTable(\"B | A\", lambda a, b: a == b, shape=(2, 2))  # p(b | a) @inspect p_b_given_a @stepover\n    text(\"Probabilistic inference: P(A) [no evidence]\")\n    x = {\"A\": 0, \"B\": 0}\n    text(\"Rejection sampling generates from scratch every time, so works perfectly (no rejection).\")\n    text(\"Gibbs sampling gets stuck and will not explore A = 1.\")\n    query = lambda sample: sample[\"A\"]\n    def joint_prob(x, var, value):\n        y = x | {var: value}\n        return p_a.p[y[\"A\"]] * p_b_given_a.p[y[\"A\"], y[\"B\"]]\n    gibbs_probs = gibbs_sampling(x, vars=[\"A\", \"B\"], query=query, joint_prob=joint_prob, num_iterations=50)  # @inspect gibbs_probs @stepover\n\n    text(\"Summary:\")\n    text(\"- Rare events are hard for rejection sampling\")\n    text(\"- Highly correlated variables are hard for Gibbs sampling\")\n\n\ndef gibbs_sampling(init_x: dict, vars: list[str], query: Callable, joint_prob: Callable, num_iterations: int) -> dict:\n    \"\"\"\n    Run Gibbs sampling from the initial assignment `init_x`.\n    Cycle `num_iterations` over `vars` (excludes evidence variables).\n    Return the estimated distribution over query.\n    \"\"\"\n    # Initialize the assignment\n    x = dict(init_x)  # Make a copy (good hygiene) @inspect x\n\n    # Track counts of query values\n    counts = defaultdict(int)\n\n    # Keep iterating over all the variables\n    for _ in range(num_iterations):\n        for var in vars:  # @inspect var\n            # Compute probabilities for each assignment of {var: value}\n            probs = {value: joint_prob(x, var, value) for value in [0, 1]}  # value -> P(..., var=value) @inspect probs @stepover\n\n            # Normalize probabilities\n            probs = normalize_dict(probs)  # @inspect probs\n\n            # Sample the variable\n            x[var] = sample_dict(probs)  # @inspect x\n\n            # Record the query value\n            counts[query(x)] += 1  # @inspect counts\n\n    # Normalize to get the estimated distribution over query\n    probs = normalize_dict(counts)  # @inspect probs\n\n    return probs\n\n\ndef introduce_conditional_independence():\n    text(\"So far: can do probabilistic inference on Bayesian networks\")\n    text(\"They have been fairly agnostic to the structure of the Bayesian network.\")\n    text(\"Now: let's explore some properties of the Bayesian network.\")\n    text(\"We will connect graph properties to probabilistic properties (in particularly independence).\")\n\n    text(\"**Independence**\")\n    text(\"Two variables A and B are independent iff:\")\n    text(\"P(A = a, B = b) = P(A = a) P(B = b) for all a, b\")\n\n    text(\"Example 1 (A B):\")\n    text(\"P(A = a, B = b) = p(a) p(b)\")\n    text(\"A and B are independent\")\n\n    text(\"Example 2 (A \u2192 B):\")\n    text(\"P(A = a, B = b) = p(a) p(b | a)\")\n    text(\"A and B are not independent\")\n\n    text(\"Example 3 (A, B \u2192 C):\")\n    text(\"P(A = a, B = b, C = c) = p(a) p(b | a) p(c | b, a)\")\n    text(\"P(A = a, B = b) = \u03a3_c P(A = a, B = b, C = c) = \u03a3_c p(a) p(b) p(c | b, a) = p(a) p(b)\")\n    text(\"A and B are independent (even if they are connected)!\")\n\n    text(\"Example 4 (C \u2192 A, B):\")\n    text(\"P(A = a, B = b, C = c) = p(c) p(a | c) p(b | c)\")\n    text(\"P(A = a, B = b) = \u03a3_c P(A = a, B = b, C = c) = \u03a3_c p(c) p(a | c) p(b | c)\")\n    text(\"A and B are not independent!\")\n\n    text(\"**Conditional independence**\")\n    text(\"Two variables A and B are conditionally independent given C = c iff:\")\n    text(\"P(A = a, B = b | C = c) = P(A = a | C = c) P(B = b | C = c) for all a, b\")\n\n    text(\"Example 4 again (C \u2192 A, B):\")\n    text(\"P(A = a, B = b | C = c) = p(c) p(a | c) p(b | c) / p(c) = p(a | c) p(b | c)\")\n    text(\"A and B are conditionally independent given C = c\")\n\n    text(\"Example 3 again (A, B \u2192 C):\")\n    text(\"P(A = a, B = b | C = c) = p(a) p(b) p(c | a, b)\")\n    text(\"A and B are not conditionally independent given C = c\")\n\n    text(\"**Alarm example**\")\n    text(\"Variables: Burglary B, Earthquake E, Alarm A\")\n    image(\"images/alarm-bayes.png\", width=200)\n    text(\"B and E are independent\")\n    text(\"B and E are not conditionally independent given A = 1\")\n\n    text(\"**General algorithm**\")\n    text(\"Question: are A and B independent given C?\")\n    text(\"1. Shade in the variables C\")\n    text(\"2. Recursively remove any non-shaded leaves\")\n    text(\"3. Connect parents to each other (marriage)\")\n    text(\"3. Return whether there is a path from A to B that doesn't go through any shaded nodes\")\n\n    text(\"**Medical diagnosis example**\")\n    text(\"Variables: Cold C, Allergies A, Cough H, Itchy eyes I\")\n    image(\"images/medical-bayes.png\", width=200)\n    text(\"C and A are independent\")\n    text(\"C and I are independent\")\n    text(\"C and I are independent given A\")\n    text(\"C and I are independent given A, H\")\n\n\nif __name__ == \"__main__\":\n    main()"
   },
   "hidden_line_numbers": {
     "gibbs_sampling.py": []
@@ -34,7 +34,8 @@
           "data": "### Lecture 13: Gibbs sampling",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -54,7 +55,8 @@
           "data": "Last time: Bayesian networks, rejection sampling",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -74,7 +76,8 @@
           "data": "This time: faster probabilistic inference methods (Gibbs sampling) + conditional independence",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -130,7 +133,8 @@
           "data": "**Joint distribution**: like a database that specifies how the world works",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -156,7 +160,8 @@
           "data": "1. Define a set of random variables: X = (X_1, ..., X_n)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -182,7 +187,8 @@
           "data": "Example: B(urglary), E(arthquake), A(larm)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -208,7 +214,8 @@
           "data": "2. Define a directed acyclic graph (DAG) over the variables",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -234,7 +241,8 @@
           "data": "Example: B \u2192 A, E \u2192 A",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -262,7 +270,8 @@
             "width": 200
           },
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -288,7 +297,8 @@
           "data": "3. For each node, define a local conditional distribution: p(x_i | parents(x_i)).",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -314,7 +324,8 @@
           "data": "Example: p(b), p(e), p(a | b, e)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -505,7 +516,8 @@
           "data": "4. Define the joint distribution: P(X_1, ..., X_n) = \u03a0_i p(x_i | parents(x_i))",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -531,7 +543,8 @@
           "data": "Example: P(B, E, A) = p(b) p(e) p(a | b, e)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -644,7 +657,8 @@
           "data": "**Probabilistic inference**: answer questions (like SQL) on the joint distribution",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -670,7 +684,8 @@
           "data": "Example: P(B | A = 1)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -867,7 +882,8 @@
           "data": "Forming the joint distribution can be exponentially slow...",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -899,7 +915,8 @@
           "data": "**Probabilistic program**",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -925,7 +942,8 @@
           "data": "A probabilistic program returns a sample from the joint distribution",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -951,7 +969,8 @@
           "data": "...thereby defining it.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1200,7 +1219,8 @@
           "data": "**Rejection sampling**",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1619,15 +1639,15 @@
         "result": {
           "type": "dict",
           "contents": {
-            "0": {
+            "1": {
               "type": "float",
-              "contents": 0.44,
+              "contents": 0.5625,
               "dtype": null,
               "shape": null
             },
-            "1": {
+            "0": {
               "type": "float",
-              "contents": 0.56,
+              "contents": 0.4375,
               "dtype": null,
               "shape": null
             }
@@ -1682,7 +1702,8 @@
           "data": "But rejection sampling can also be quite slow if the evidence is rare.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1708,7 +1729,8 @@
           "data": "How can we perform probabilistic inference faster?",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1776,7 +1798,8 @@
           "data": "**Rejection sampling**",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1802,7 +1825,8 @@
           "data": "sample ~~sample~~ sample ~~sample~~ ~~sample~~ sample",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1828,7 +1852,8 @@
           "data": "- Pro: each sample is independent",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1854,7 +1879,8 @@
           "data": "- Con: we have to start from scratch for every sample",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1880,7 +1906,8 @@
           "data": "- Con: not using evidence while generating sample, leading to rejection",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1906,7 +1933,8 @@
           "data": "**Gibbs sampling**: start with the previous sample (which always satisfies the evidence)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1932,7 +1960,8 @@
           "data": "Basic idea:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1958,7 +1987,8 @@
           "data": "- Start with an arbitrary sample",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1984,7 +2014,8 @@
           "data": "- Iteratively change one variable at a time conditioned on the other variables",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2010,7 +2041,8 @@
           "data": "Gibbs sampling is a special case of Markov chain Monte Carlo (MCMC)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2036,7 +2068,8 @@
           "data": "sample \u2192 sample \u2192 sample \u2192 sample",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2062,7 +2095,8 @@
           "data": "- Pro: Start with samples that satisfy the evidence, so don't have to reject anything",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2088,7 +2122,8 @@
           "data": "- Con: samples are not independent, so require more samples",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2162,7 +2197,8 @@
           "data": "**Example**: telephone",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2194,7 +2230,8 @@
           "data": "Bayesian network: A \u2192 B \u2192 C",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2226,7 +2263,8 @@
           "data": "Intuition: A sends a bit to B, B sends a bit to C, where at each step message might be corrupted",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2258,7 +2296,8 @@
           "data": "Here's the definition of the Bayesian network:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2457,7 +2496,8 @@
           "data": "Probabilistic inference goal: P(A | C = 1)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2489,7 +2529,8 @@
           "data": "Intuition: C=1 encourages A=1, but weakly through two steps of corruption",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2525,7 +2566,8 @@
           "data": "Let's first run rejection sampling:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2969,7 +3011,8 @@
           "data": "Let's now run Gibbs sampling:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3001,7 +3044,8 @@
           "data": "Start with an initialization (full assignment)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3033,7 +3077,8 @@
           "data": "For each variable X_i, change it based on all other variables",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3065,7 +3110,8 @@
           "data": "- Compute the conditional distribution of X_i given all other variables",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3097,7 +3143,8 @@
           "data": "- Sample X_i from this conditional distribution",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3129,7 +3176,8 @@
           "data": "Initialize with an arbitrary sample that satisfies the evidence (D = 1):",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3211,7 +3259,8 @@
           "data": "**Conditional distribution**",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3243,7 +3292,8 @@
           "data": "Suppose the goal is to sample B given A = a and C = c.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3275,7 +3325,8 @@
           "data": "Express conditional probability in terms of joint probability:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3307,7 +3358,8 @@
           "data": "P(B = b | A = a, C = c) = P(A = a, B = b, C = c) / P(A = a, C = c)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3339,7 +3391,8 @@
           "data": "...with a normalizer which is probability of all other variables we're not sampling",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3371,7 +3424,8 @@
           "data": "P(A = a, C = c) = \u03a3_b P(A = a, B = b, C = c)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3403,7 +3457,8 @@
           "data": "The joint probability is the product of the local conditional probabilities:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3435,7 +3490,8 @@
           "data": "P(A = a, B = b, C = c) = p(a) p(b | a) p(c | b)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3467,7 +3523,8 @@
           "data": "Note: we don't have to instantiate the entire joint distribution (could be exponentially large).",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3549,7 +3606,8 @@
           "data": "Note we don't instantiate the joint distribution here.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3581,7 +3639,8 @@
           "data": "But we do have to touch every variable (we'll come back to this later).",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3613,7 +3672,8 @@
           "data": "Let's say we were sampling B \u2208 {0, 1}:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -4206,7 +4266,8 @@
           "data": "Note that B gets pulled to 1 because of A=1 and C=1.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -4245,7 +4306,8 @@
           "data": "Let's define Gibbs sampling in greater generality:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -4483,298 +4545,6 @@
           "code": "probs = {value: joint_prob(x, var, value) for value in [0, 1]}  # value -> P(..., var=value) @inspect probs @stepover"
         }
       ],
-      "env": {},
-      "renderings": []
-    },
-    {
-      "stack": [
-        {
-          "path": "gibbs_sampling.py",
-          "line_number": 16,
-          "function_name": "main",
-          "code": "introduce_gibbs_sampling()"
-        },
-        {
-          "path": "gibbs_sampling.py",
-          "line_number": 113,
-          "function_name": "introduce_gibbs_sampling",
-          "code": "gibbs_telephone()              # Gibbs sampling on a telephone example"
-        },
-        {
-          "path": "gibbs_sampling.py",
-          "line_number": 196,
-          "function_name": "gibbs_telephone",
-          "code": "gibbs_probs = gibbs_sampling(x, vars=[\"A\", \"B\"], query=query, joint_prob=joint_prob, num_iterations=1)  # @inspect gibbs_probs"
-        },
-        {
-          "path": "gibbs_sampling.py",
-          "line_number": 336,
-          "function_name": "gibbs_sampling",
-          "code": "probs = {value: joint_prob(x, var, value) for value in [0, 1]}  # value -> P(..., var=value) @inspect probs @stepover"
-        },
-        {
-          "path": "gibbs_sampling.py",
-          "line_number": 336,
-          "function_name": "<dictcomp>",
-          "code": "probs = {value: joint_prob(x, var, value) for value in [0, 1]}  # value -> P(..., var=value) @inspect probs @stepover"
-        }
-      ],
-      "env": {},
-      "renderings": []
-    },
-    {
-      "stack": [
-        {
-          "path": "gibbs_sampling.py",
-          "line_number": 16,
-          "function_name": "main",
-          "code": "introduce_gibbs_sampling()"
-        },
-        {
-          "path": "gibbs_sampling.py",
-          "line_number": 113,
-          "function_name": "introduce_gibbs_sampling",
-          "code": "gibbs_telephone()              # Gibbs sampling on a telephone example"
-        },
-        {
-          "path": "gibbs_sampling.py",
-          "line_number": 196,
-          "function_name": "gibbs_telephone",
-          "code": "gibbs_probs = gibbs_sampling(x, vars=[\"A\", \"B\"], query=query, joint_prob=joint_prob, num_iterations=1)  # @inspect gibbs_probs"
-        },
-        {
-          "path": "gibbs_sampling.py",
-          "line_number": 336,
-          "function_name": "gibbs_sampling",
-          "code": "probs = {value: joint_prob(x, var, value) for value in [0, 1]}  # value -> P(..., var=value) @inspect probs @stepover"
-        },
-        {
-          "path": "gibbs_sampling.py",
-          "line_number": 336,
-          "function_name": "<dictcomp>",
-          "code": "probs = {value: joint_prob(x, var, value) for value in [0, 1]}  # value -> P(..., var=value) @inspect probs @stepover"
-        },
-        {
-          "path": "gibbs_sampling.py",
-          "line_number": 175,
-          "function_name": "joint_prob",
-          "code": "def joint_prob(x, var, value):  # @inspect x var value"
-        }
-      ],
-      "env": {
-        "x": {
-          "type": "dict",
-          "contents": {
-            "A": {
-              "type": "int",
-              "contents": 1,
-              "dtype": null,
-              "shape": null
-            },
-            "B": {
-              "type": "numpy.int64",
-              "contents": 1,
-              "dtype": null,
-              "shape": null
-            },
-            "C": {
-              "type": "int",
-              "contents": 1,
-              "dtype": null,
-              "shape": null
-            }
-          },
-          "dtype": null,
-          "shape": null
-        },
-        "var": {
-          "type": "str",
-          "contents": "A",
-          "dtype": null,
-          "shape": null
-        },
-        "value": {
-          "type": "int",
-          "contents": 1,
-          "dtype": null,
-          "shape": null
-        }
-      },
-      "renderings": []
-    },
-    {
-      "stack": [
-        {
-          "path": "gibbs_sampling.py",
-          "line_number": 16,
-          "function_name": "main",
-          "code": "introduce_gibbs_sampling()"
-        },
-        {
-          "path": "gibbs_sampling.py",
-          "line_number": 113,
-          "function_name": "introduce_gibbs_sampling",
-          "code": "gibbs_telephone()              # Gibbs sampling on a telephone example"
-        },
-        {
-          "path": "gibbs_sampling.py",
-          "line_number": 196,
-          "function_name": "gibbs_telephone",
-          "code": "gibbs_probs = gibbs_sampling(x, vars=[\"A\", \"B\"], query=query, joint_prob=joint_prob, num_iterations=1)  # @inspect gibbs_probs"
-        },
-        {
-          "path": "gibbs_sampling.py",
-          "line_number": 336,
-          "function_name": "gibbs_sampling",
-          "code": "probs = {value: joint_prob(x, var, value) for value in [0, 1]}  # value -> P(..., var=value) @inspect probs @stepover"
-        },
-        {
-          "path": "gibbs_sampling.py",
-          "line_number": 336,
-          "function_name": "<dictcomp>",
-          "code": "probs = {value: joint_prob(x, var, value) for value in [0, 1]}  # value -> P(..., var=value) @inspect probs @stepover"
-        },
-        {
-          "path": "gibbs_sampling.py",
-          "line_number": 179,
-          "function_name": "joint_prob",
-          "code": "y = x | {var: value}  # @inspect y"
-        }
-      ],
-      "env": {
-        "y": {
-          "type": "dict",
-          "contents": {
-            "A": {
-              "type": "int",
-              "contents": 1,
-              "dtype": null,
-              "shape": null
-            },
-            "B": {
-              "type": "numpy.int64",
-              "contents": 1,
-              "dtype": null,
-              "shape": null
-            },
-            "C": {
-              "type": "int",
-              "contents": 1,
-              "dtype": null,
-              "shape": null
-            }
-          },
-          "dtype": null,
-          "shape": null
-        }
-      },
-      "renderings": []
-    },
-    {
-      "stack": [
-        {
-          "path": "gibbs_sampling.py",
-          "line_number": 16,
-          "function_name": "main",
-          "code": "introduce_gibbs_sampling()"
-        },
-        {
-          "path": "gibbs_sampling.py",
-          "line_number": 113,
-          "function_name": "introduce_gibbs_sampling",
-          "code": "gibbs_telephone()              # Gibbs sampling on a telephone example"
-        },
-        {
-          "path": "gibbs_sampling.py",
-          "line_number": 196,
-          "function_name": "gibbs_telephone",
-          "code": "gibbs_probs = gibbs_sampling(x, vars=[\"A\", \"B\"], query=query, joint_prob=joint_prob, num_iterations=1)  # @inspect gibbs_probs"
-        },
-        {
-          "path": "gibbs_sampling.py",
-          "line_number": 336,
-          "function_name": "gibbs_sampling",
-          "code": "probs = {value: joint_prob(x, var, value) for value in [0, 1]}  # value -> P(..., var=value) @inspect probs @stepover"
-        },
-        {
-          "path": "gibbs_sampling.py",
-          "line_number": 336,
-          "function_name": "<dictcomp>",
-          "code": "probs = {value: joint_prob(x, var, value) for value in [0, 1]}  # value -> P(..., var=value) @inspect probs @stepover"
-        },
-        {
-          "path": "gibbs_sampling.py",
-          "line_number": 181,
-          "function_name": "joint_prob",
-          "code": "return p_a.p[y[\"A\"]] * p_b_given_a.p[y[\"A\"], y[\"B\"]] * p_c_given_b.p[y[\"B\"], y[\"C\"]]"
-        }
-      ],
-      "env": {},
-      "renderings": []
-    },
-    {
-      "stack": [
-        {
-          "path": "gibbs_sampling.py",
-          "line_number": 16,
-          "function_name": "main",
-          "code": "introduce_gibbs_sampling()"
-        },
-        {
-          "path": "gibbs_sampling.py",
-          "line_number": 113,
-          "function_name": "introduce_gibbs_sampling",
-          "code": "gibbs_telephone()              # Gibbs sampling on a telephone example"
-        },
-        {
-          "path": "gibbs_sampling.py",
-          "line_number": 196,
-          "function_name": "gibbs_telephone",
-          "code": "gibbs_probs = gibbs_sampling(x, vars=[\"A\", \"B\"], query=query, joint_prob=joint_prob, num_iterations=1)  # @inspect gibbs_probs"
-        },
-        {
-          "path": "gibbs_sampling.py",
-          "line_number": 336,
-          "function_name": "gibbs_sampling",
-          "code": "probs = {value: joint_prob(x, var, value) for value in [0, 1]}  # value -> P(..., var=value) @inspect probs @stepover"
-        },
-        {
-          "path": "gibbs_sampling.py",
-          "line_number": 336,
-          "function_name": "<dictcomp>",
-          "code": "probs = {value: joint_prob(x, var, value) for value in [0, 1]}  # value -> P(..., var=value) @inspect probs @stepover"
-        }
-      ],
-      "env": {},
-      "renderings": []
-    },
-    {
-      "stack": [
-        {
-          "path": "gibbs_sampling.py",
-          "line_number": 16,
-          "function_name": "main",
-          "code": "introduce_gibbs_sampling()"
-        },
-        {
-          "path": "gibbs_sampling.py",
-          "line_number": 113,
-          "function_name": "introduce_gibbs_sampling",
-          "code": "gibbs_telephone()              # Gibbs sampling on a telephone example"
-        },
-        {
-          "path": "gibbs_sampling.py",
-          "line_number": 196,
-          "function_name": "gibbs_telephone",
-          "code": "gibbs_probs = gibbs_sampling(x, vars=[\"A\", \"B\"], query=query, joint_prob=joint_prob, num_iterations=1)  # @inspect gibbs_probs"
-        },
-        {
-          "path": "gibbs_sampling.py",
-          "line_number": 336,
-          "function_name": "gibbs_sampling",
-          "code": "probs = {value: joint_prob(x, var, value) for value in [0, 1]}  # value -> P(..., var=value) @inspect probs @stepover"
-        }
-      ],
       "env": {
         "probs": {
           "type": "dict",
@@ -4983,298 +4753,6 @@
           "shape": null
         }
       },
-      "renderings": []
-    },
-    {
-      "stack": [
-        {
-          "path": "gibbs_sampling.py",
-          "line_number": 16,
-          "function_name": "main",
-          "code": "introduce_gibbs_sampling()"
-        },
-        {
-          "path": "gibbs_sampling.py",
-          "line_number": 113,
-          "function_name": "introduce_gibbs_sampling",
-          "code": "gibbs_telephone()              # Gibbs sampling on a telephone example"
-        },
-        {
-          "path": "gibbs_sampling.py",
-          "line_number": 196,
-          "function_name": "gibbs_telephone",
-          "code": "gibbs_probs = gibbs_sampling(x, vars=[\"A\", \"B\"], query=query, joint_prob=joint_prob, num_iterations=1)  # @inspect gibbs_probs"
-        },
-        {
-          "path": "gibbs_sampling.py",
-          "line_number": 336,
-          "function_name": "gibbs_sampling",
-          "code": "probs = {value: joint_prob(x, var, value) for value in [0, 1]}  # value -> P(..., var=value) @inspect probs @stepover"
-        }
-      ],
-      "env": {},
-      "renderings": []
-    },
-    {
-      "stack": [
-        {
-          "path": "gibbs_sampling.py",
-          "line_number": 16,
-          "function_name": "main",
-          "code": "introduce_gibbs_sampling()"
-        },
-        {
-          "path": "gibbs_sampling.py",
-          "line_number": 113,
-          "function_name": "introduce_gibbs_sampling",
-          "code": "gibbs_telephone()              # Gibbs sampling on a telephone example"
-        },
-        {
-          "path": "gibbs_sampling.py",
-          "line_number": 196,
-          "function_name": "gibbs_telephone",
-          "code": "gibbs_probs = gibbs_sampling(x, vars=[\"A\", \"B\"], query=query, joint_prob=joint_prob, num_iterations=1)  # @inspect gibbs_probs"
-        },
-        {
-          "path": "gibbs_sampling.py",
-          "line_number": 336,
-          "function_name": "gibbs_sampling",
-          "code": "probs = {value: joint_prob(x, var, value) for value in [0, 1]}  # value -> P(..., var=value) @inspect probs @stepover"
-        },
-        {
-          "path": "gibbs_sampling.py",
-          "line_number": 336,
-          "function_name": "<dictcomp>",
-          "code": "probs = {value: joint_prob(x, var, value) for value in [0, 1]}  # value -> P(..., var=value) @inspect probs @stepover"
-        }
-      ],
-      "env": {},
-      "renderings": []
-    },
-    {
-      "stack": [
-        {
-          "path": "gibbs_sampling.py",
-          "line_number": 16,
-          "function_name": "main",
-          "code": "introduce_gibbs_sampling()"
-        },
-        {
-          "path": "gibbs_sampling.py",
-          "line_number": 113,
-          "function_name": "introduce_gibbs_sampling",
-          "code": "gibbs_telephone()              # Gibbs sampling on a telephone example"
-        },
-        {
-          "path": "gibbs_sampling.py",
-          "line_number": 196,
-          "function_name": "gibbs_telephone",
-          "code": "gibbs_probs = gibbs_sampling(x, vars=[\"A\", \"B\"], query=query, joint_prob=joint_prob, num_iterations=1)  # @inspect gibbs_probs"
-        },
-        {
-          "path": "gibbs_sampling.py",
-          "line_number": 336,
-          "function_name": "gibbs_sampling",
-          "code": "probs = {value: joint_prob(x, var, value) for value in [0, 1]}  # value -> P(..., var=value) @inspect probs @stepover"
-        },
-        {
-          "path": "gibbs_sampling.py",
-          "line_number": 336,
-          "function_name": "<dictcomp>",
-          "code": "probs = {value: joint_prob(x, var, value) for value in [0, 1]}  # value -> P(..., var=value) @inspect probs @stepover"
-        },
-        {
-          "path": "gibbs_sampling.py",
-          "line_number": 175,
-          "function_name": "joint_prob",
-          "code": "def joint_prob(x, var, value):  # @inspect x var value"
-        }
-      ],
-      "env": {
-        "x": {
-          "type": "dict",
-          "contents": {
-            "A": {
-              "type": "numpy.int64",
-              "contents": 1,
-              "dtype": null,
-              "shape": null
-            },
-            "B": {
-              "type": "numpy.int64",
-              "contents": 1,
-              "dtype": null,
-              "shape": null
-            },
-            "C": {
-              "type": "int",
-              "contents": 1,
-              "dtype": null,
-              "shape": null
-            }
-          },
-          "dtype": null,
-          "shape": null
-        },
-        "var": {
-          "type": "str",
-          "contents": "B",
-          "dtype": null,
-          "shape": null
-        },
-        "value": {
-          "type": "int",
-          "contents": 0,
-          "dtype": null,
-          "shape": null
-        }
-      },
-      "renderings": []
-    },
-    {
-      "stack": [
-        {
-          "path": "gibbs_sampling.py",
-          "line_number": 16,
-          "function_name": "main",
-          "code": "introduce_gibbs_sampling()"
-        },
-        {
-          "path": "gibbs_sampling.py",
-          "line_number": 113,
-          "function_name": "introduce_gibbs_sampling",
-          "code": "gibbs_telephone()              # Gibbs sampling on a telephone example"
-        },
-        {
-          "path": "gibbs_sampling.py",
-          "line_number": 196,
-          "function_name": "gibbs_telephone",
-          "code": "gibbs_probs = gibbs_sampling(x, vars=[\"A\", \"B\"], query=query, joint_prob=joint_prob, num_iterations=1)  # @inspect gibbs_probs"
-        },
-        {
-          "path": "gibbs_sampling.py",
-          "line_number": 336,
-          "function_name": "gibbs_sampling",
-          "code": "probs = {value: joint_prob(x, var, value) for value in [0, 1]}  # value -> P(..., var=value) @inspect probs @stepover"
-        },
-        {
-          "path": "gibbs_sampling.py",
-          "line_number": 336,
-          "function_name": "<dictcomp>",
-          "code": "probs = {value: joint_prob(x, var, value) for value in [0, 1]}  # value -> P(..., var=value) @inspect probs @stepover"
-        },
-        {
-          "path": "gibbs_sampling.py",
-          "line_number": 179,
-          "function_name": "joint_prob",
-          "code": "y = x | {var: value}  # @inspect y"
-        }
-      ],
-      "env": {
-        "y": {
-          "type": "dict",
-          "contents": {
-            "A": {
-              "type": "numpy.int64",
-              "contents": 1,
-              "dtype": null,
-              "shape": null
-            },
-            "B": {
-              "type": "int",
-              "contents": 0,
-              "dtype": null,
-              "shape": null
-            },
-            "C": {
-              "type": "int",
-              "contents": 1,
-              "dtype": null,
-              "shape": null
-            }
-          },
-          "dtype": null,
-          "shape": null
-        }
-      },
-      "renderings": []
-    },
-    {
-      "stack": [
-        {
-          "path": "gibbs_sampling.py",
-          "line_number": 16,
-          "function_name": "main",
-          "code": "introduce_gibbs_sampling()"
-        },
-        {
-          "path": "gibbs_sampling.py",
-          "line_number": 113,
-          "function_name": "introduce_gibbs_sampling",
-          "code": "gibbs_telephone()              # Gibbs sampling on a telephone example"
-        },
-        {
-          "path": "gibbs_sampling.py",
-          "line_number": 196,
-          "function_name": "gibbs_telephone",
-          "code": "gibbs_probs = gibbs_sampling(x, vars=[\"A\", \"B\"], query=query, joint_prob=joint_prob, num_iterations=1)  # @inspect gibbs_probs"
-        },
-        {
-          "path": "gibbs_sampling.py",
-          "line_number": 336,
-          "function_name": "gibbs_sampling",
-          "code": "probs = {value: joint_prob(x, var, value) for value in [0, 1]}  # value -> P(..., var=value) @inspect probs @stepover"
-        },
-        {
-          "path": "gibbs_sampling.py",
-          "line_number": 336,
-          "function_name": "<dictcomp>",
-          "code": "probs = {value: joint_prob(x, var, value) for value in [0, 1]}  # value -> P(..., var=value) @inspect probs @stepover"
-        },
-        {
-          "path": "gibbs_sampling.py",
-          "line_number": 181,
-          "function_name": "joint_prob",
-          "code": "return p_a.p[y[\"A\"]] * p_b_given_a.p[y[\"A\"], y[\"B\"]] * p_c_given_b.p[y[\"B\"], y[\"C\"]]"
-        }
-      ],
-      "env": {},
-      "renderings": []
-    },
-    {
-      "stack": [
-        {
-          "path": "gibbs_sampling.py",
-          "line_number": 16,
-          "function_name": "main",
-          "code": "introduce_gibbs_sampling()"
-        },
-        {
-          "path": "gibbs_sampling.py",
-          "line_number": 113,
-          "function_name": "introduce_gibbs_sampling",
-          "code": "gibbs_telephone()              # Gibbs sampling on a telephone example"
-        },
-        {
-          "path": "gibbs_sampling.py",
-          "line_number": 196,
-          "function_name": "gibbs_telephone",
-          "code": "gibbs_probs = gibbs_sampling(x, vars=[\"A\", \"B\"], query=query, joint_prob=joint_prob, num_iterations=1)  # @inspect gibbs_probs"
-        },
-        {
-          "path": "gibbs_sampling.py",
-          "line_number": 336,
-          "function_name": "gibbs_sampling",
-          "code": "probs = {value: joint_prob(x, var, value) for value in [0, 1]}  # value -> P(..., var=value) @inspect probs @stepover"
-        },
-        {
-          "path": "gibbs_sampling.py",
-          "line_number": 336,
-          "function_name": "<dictcomp>",
-          "code": "probs = {value: joint_prob(x, var, value) for value in [0, 1]}  # value -> P(..., var=value) @inspect probs @stepover"
-        }
-      ],
-      "env": {},
       "renderings": []
     },
     {
@@ -5684,7 +5162,8 @@
           "data": "Run Gibbs sampling for multiple iterations:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -5780,7 +5259,8 @@
           "data": "Comparing with rejection sampling, both are in the ballpark.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -5812,7 +5292,8 @@
           "data": "Running time: O(#iterations * #variables * |domain| * #variables)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -5844,7 +5325,8 @@
           "data": "Summary:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -5876,7 +5358,8 @@
           "data": "- Update one variable at a time using its conditional distribution given all other variables",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -5908,7 +5391,8 @@
           "data": "- Compute the conditional distribution using the joint distribution",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -5940,7 +5424,8 @@
           "data": "- Only have to sum over domain of the variable we're sampling",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -5972,7 +5457,8 @@
           "data": "Can we be even more efficient and not touch variables we're not sampling?",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -6064,7 +5550,8 @@
           "data": "Joint probability: p(a) p(b | a) p(c | b) p(d | c) p(e | d)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -6096,7 +5583,8 @@
           "data": "Can we avoid having to compute the full joint probability every time we sample a variable?",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -6128,7 +5616,8 @@
           "data": "Intuitively, only one variable changes...",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -6160,7 +5649,8 @@
           "data": "Recall the telephone Bayesian network: A \u2192 B \u2192 C",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -6359,7 +5849,8 @@
           "data": "Suppose we're sampling P(A | B = b, C = c)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -6391,7 +5882,8 @@
           "data": "Let's look at the joint distribution:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -6423,7 +5915,8 @@
           "data": "P(A = 0, B = b, C = c) = p(a = 0) p(b | a = 0) p(c | b)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -6455,7 +5948,8 @@
           "data": "P(A = 1, B = b, C = c) = p(a = 1) p(b | a = 1) p(c | b)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -6487,7 +5981,8 @@
           "data": "P(B = b, C = c) = \u03a3_a p(a) p(b | a) p(c | b)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -6519,7 +6014,8 @@
           "data": "Notice that p(c | b) shows up in both cases, and does not impact P(A | B = b, C = c).",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -6551,7 +6047,8 @@
           "data": "So we can just ignore it!",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -6583,7 +6080,8 @@
           "data": "In general, we need to only include local conditional probabilities that involve the variable we're sampling.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -6615,7 +6113,8 @@
           "data": "Evaluating these local conditional probabilities requires knowing all involved variables.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -6647,7 +6146,8 @@
           "data": "This set of variables is called the **Markov blanket**.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -6679,7 +6179,8 @@
           "data": "The Markov blanket of a variable is all its children and parents.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -6711,7 +6212,8 @@
           "data": "MarkovBlanket(A) = {B}",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -6743,7 +6245,8 @@
           "data": "MarkovBlanket(B) = {A, C}",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -6775,7 +6278,8 @@
           "data": "MarkovBlanket(C) = {B}",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -6807,7 +6311,8 @@
           "data": "Instead of computing the joint probability",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -6839,7 +6344,8 @@
           "data": "...let us just include the variables in the Markov blanket.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -6895,7 +6401,8 @@
           "data": "Now we can run Gibbs sampling with the Markov blanket:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -7019,7 +6526,8 @@
           "data": "Running time with joint_prob: O(#iterations * #variables * |domain| * #variables)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -7051,7 +6559,8 @@
           "data": "Running time with markov_prob: O(#iterations * #variables * |domain| * **|markov_blanket|**)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -7083,7 +6592,8 @@
           "data": "Summary:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -7115,7 +6625,8 @@
           "data": "- Markov blanket of a node: all its children and parents",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -7147,7 +6658,8 @@
           "data": "- Gibbs sampling requires local conditional probabilities of node and its Markov blanket",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -7179,7 +6691,8 @@
           "data": "- Much more efficient if Markov blankets are small",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -7271,7 +6784,8 @@
           "data": "Let's now run Gibbs sampling on the alarm Bayesian network.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -7305,7 +6819,8 @@
             "width": 200
           },
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -7706,7 +7221,8 @@
           "data": "Note that the estimates aren't quite accurate...",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -7798,7 +7314,8 @@
           "data": "What examples are hard for rejection sampling?",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -7830,7 +7347,8 @@
           "data": "Answer: when evidence has low probability.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -7862,7 +7380,8 @@
           "data": "A \u2192 B",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -8001,7 +7520,8 @@
           "data": "Compute P(A | B = 1)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -8033,7 +7553,8 @@
           "data": "Reason: need to reject all samples that don't match the evidence.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -8065,7 +7586,8 @@
           "data": "Gibbs sample conditions on B = 1, so will work fine.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -8100,7 +7622,8 @@
           "data": "What examples are hard for Gibbs sampling?",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -8132,7 +7655,8 @@
           "data": "Answer: when variables are highly correlated.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -8164,7 +7688,8 @@
           "data": "A \u2192 B",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -8303,7 +7828,8 @@
           "data": "Probabilistic inference: P(A) [no evidence]",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -8359,7 +7885,8 @@
           "data": "Rejection sampling generates from scratch every time, so works perfectly (no rejection).",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -8391,7 +7918,8 @@
           "data": "Gibbs sampling gets stuck and will not explore A = 1.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -8509,7 +8037,8 @@
           "data": "Summary:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -8541,7 +8070,8 @@
           "data": "- Rare events are hard for rejection sampling",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -8573,7 +8103,8 @@
           "data": "- Highly correlated variables are hard for Gibbs sampling",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -8617,7 +8148,8 @@
           "data": "Further reading:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -8643,7 +8175,8 @@
           "data": "- Gibbs sampling is an example of a Markov chain Monte Carlo (MCMC) algorithm.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -8669,7 +8202,8 @@
           "data": "- A more general MCMC algorithm is Metropolis-Hastings (uses a proposal distribution).",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -8695,7 +8229,8 @@
           "data": "- Theory: use mixing times to study effective running time (how correlated samples are)?",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -8721,7 +8256,8 @@
           "data": "- Practice: simple and effective, but can be slow",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -8789,7 +8325,8 @@
           "data": "So far: can do probabilistic inference on Bayesian networks",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -8815,7 +8352,8 @@
           "data": "They have been fairly agnostic to the structure of the Bayesian network.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -8841,7 +8379,8 @@
           "data": "Now: let's explore some properties of the Bayesian network.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -8867,7 +8406,8 @@
           "data": "We will connect graph properties to probabilistic properties (in particularly independence).",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -8893,7 +8433,8 @@
           "data": "**Independence**",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -8919,7 +8460,8 @@
           "data": "Two variables A and B are independent iff:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -8945,7 +8487,8 @@
           "data": "P(A = a, B = b) = P(A = a) P(B = b) for all a, b",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -8971,7 +8514,8 @@
           "data": "Example 1 (A B):",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -8997,7 +8541,8 @@
           "data": "P(A = a, B = b) = p(a) p(b)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -9023,7 +8568,8 @@
           "data": "A and B are independent",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -9049,7 +8595,8 @@
           "data": "Example 2 (A \u2192 B):",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -9075,7 +8622,8 @@
           "data": "P(A = a, B = b) = p(a) p(b | a)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -9101,7 +8649,8 @@
           "data": "A and B are not independent",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -9127,7 +8676,8 @@
           "data": "Example 3 (A, B \u2192 C):",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -9153,7 +8703,8 @@
           "data": "P(A = a, B = b, C = c) = p(a) p(b | a) p(c | b, a)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -9179,7 +8730,8 @@
           "data": "P(A = a, B = b) = \u03a3_c P(A = a, B = b, C = c) = \u03a3_c p(a) p(b) p(c | b, a) = p(a) p(b)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -9205,7 +8757,8 @@
           "data": "A and B are independent (even if they are connected)!",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -9231,7 +8784,8 @@
           "data": "Example 4 (C \u2192 A, B):",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -9257,7 +8811,8 @@
           "data": "P(A = a, B = b, C = c) = p(c) p(a | c) p(b | c)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -9283,7 +8838,8 @@
           "data": "P(A = a, B = b) = \u03a3_c P(A = a, B = b, C = c) = \u03a3_c p(c) p(a | c) p(b | c)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -9309,7 +8865,8 @@
           "data": "A and B are not independent!",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -9335,7 +8892,8 @@
           "data": "**Conditional independence**",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -9361,7 +8919,8 @@
           "data": "Two variables A and B are conditionally independent given C = c iff:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -9387,7 +8946,8 @@
           "data": "P(A = a, B = b | C = c) = P(A = a | C = c) P(B = b | C = c) for all a, b",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -9413,7 +8973,8 @@
           "data": "Example 4 again (C \u2192 A, B):",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -9439,7 +9000,8 @@
           "data": "P(A = a, B = b | C = c) = p(c) p(a | c) p(b | c) / p(c) = p(a | c) p(b | c)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -9465,7 +9027,8 @@
           "data": "A and B are conditionally independent given C = c",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -9491,7 +9054,8 @@
           "data": "Example 3 again (A, B \u2192 C):",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -9517,7 +9081,8 @@
           "data": "P(A = a, B = b | C = c) = p(a) p(b) p(c | a, b)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -9543,7 +9108,8 @@
           "data": "A and B are not conditionally independent given C = c",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -9569,7 +9135,8 @@
           "data": "**Alarm example**",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -9595,7 +9162,8 @@
           "data": "Variables: Burglary B, Earthquake E, Alarm A",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -9623,7 +9191,8 @@
             "width": 200
           },
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -9649,7 +9218,8 @@
           "data": "B and E are independent",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -9675,7 +9245,8 @@
           "data": "B and E are not conditionally independent given A = 1",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -9701,7 +9272,8 @@
           "data": "**General algorithm**",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -9727,7 +9299,8 @@
           "data": "Question: are A and B independent given C?",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -9753,7 +9326,8 @@
           "data": "1. Shade in the variables C",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -9779,7 +9353,8 @@
           "data": "2. Recursively remove any non-shaded leaves",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -9805,7 +9380,8 @@
           "data": "3. Connect parents to each other (marriage)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -9831,7 +9407,8 @@
           "data": "3. Return whether there is a path from A to B that doesn't go through any shaded nodes",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -9857,7 +9434,8 @@
           "data": "**Medical diagnosis example**",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -9883,7 +9461,8 @@
           "data": "Variables: Cold C, Allergies A, Cough H, Itchy eyes I",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -9911,7 +9490,8 @@
             "width": 200
           },
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -9937,7 +9517,8 @@
           "data": "C and A are independent",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -9963,7 +9544,8 @@
           "data": "C and I are independent",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -9989,7 +9571,8 @@
           "data": "C and I are independent given A",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -10015,7 +9598,8 @@
           "data": "C and I are independent given A, H",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -10047,7 +9631,8 @@
           "data": "Summary:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -10067,7 +9652,8 @@
           "data": "- Exact probabilistic inference: form the joint distribution and marginalize/condition (einops)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -10087,7 +9673,8 @@
           "data": "- Approximate probabilistic inference: rejection sampling, Gibbs sampling",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -10107,7 +9694,8 @@
           "data": "- Conditional independence: determine whether two variables are independent given evidence?",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -10127,7 +9715,8 @@
           "data": "Next time: learning parameters of Bayesian networks",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     }

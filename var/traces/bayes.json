@@ -1,6 +1,6 @@
 {
   "files": {
-    "bayes.py": "from typing import Callable\nfrom edtrace import text, image, link\nfrom einops import einsum\nfrom collections import defaultdict\nimport numpy as np\nfrom util import set_random_seed\nfrom transformers import AutoModelForCausalLM\n\ndef main():\n    text(\"### Lecture 12: Bayesian networks\")\n    link(\"https://stanford-cs221.github.io/autumn2023/modules/module.html#include=bayesian-networks%2Fdefinitions.js&mode=print6pp\", title=\"[Autumn 2023 lecture]\")\n\n    model_based_motivation()\n    review_probability()\n    introduce_probabilistic_inference()\n    introduce_alarm()\n    introduce_medical_diagnosis()\n    introduce_bayesian_networks()\n    language_models()\n    introduce_rejection_sampling()\n    discussion()\n\n    text(\"Summary\")\n    text(\"- Probability: joint distributions, marginalization, conditioning\")\n    text(\"- Probability tables are tensors, can use einsum to express computations\")\n    text(\"- Bayesian networks: directed acyclic graphs of random variables\")\n    text(\"- Probabilistic inference: ask questions P(query | evidence)\")\n    text(\"- Probabilistic programming: programs as representations of joint distributions\")\n    text(\"- Rejection sampling: approximate inference by drawing samples\")\n\n    text(\"Next time: better probabilistic inference!\")\n\n\ndef model_based_motivation():\n    text(\"Recall the ingredients of intelligence:\")\n    image(\"images/perceive-reason-act-learn.png\", width=600)\n\n    text(\"Where we started:\")\n    text(\"- Machine learning: percepts \u2192 actions (predictor)\")\n\n    text(\"Last few weeks: state-based models for reasoning\")\n    text(\"- Search problems: actions have deterministic outcomes\")\n    text(\"- MDPs: actions have stochastic outcomes\")\n    text(\"- Games: exists adversary (or unknown opponent strategy)\")\n\n    text(\"Model-free methods\")\n    text(\"- We just know what actions to take and how much utility it will produce\")\n    text(\"- Examples: classification, regression, SARSA, Q-learning, TD learning\")\n\n    text(\"Model-based methods\")\n    text(\"- We understand how the world works\")\n    text(\"- Examples: search, value iteration (MDPs), minimax (games)\")\n    image(\"images/game-tree.png\", width=400)\n\n    text(\"Model-free methods are more direct and cheaper\")\n    text(\"...but model-based methods are more flexible\")\n    text(\"(can change the reward function without changing the transitions).\")\n\n    text(\"How should we represent the state of the world?\")\n\n\ndef review_probability():\n    text(\"Represent the state of the world by a set of variables.\")\n\n    text(\"**Random variables** (representing attributes of the world):\")\n    text(\"- sunshine S \u2208 {0, 1}\")\n    text(\"- rain R \u2208 {0, 1}\")\n\n    text(\"Possible states of the world (**assignments** to random variables):\")\n    text(\"- {S = 0, R = 0}: no sunshine and no rain\")\n    text(\"- {S = 0, R = 1}: no sunshine and rain\")\n    text(\"- {S = 1, R = 0}: sunshine and no rain\")\n    text(\"- {S = 1, R = 1}: sunshine and rain\")\n\n    text(\"**Joint distribution** (probability of each assignment):\")\n    text(\"- P(S = 0, R = 0) = 0.20\")\n    text(\"- P(S = 0, R = 1) = 0.08\")\n    text(\"- P(S = 1, R = 0) = 0.70\")\n    text(\"- P(S = 1, R = 1) = 0.02\")\n    P_SR = ProbTable(\"S R\", [[0.20, 0.08], [0.70, 0.02]])  # @inspect P_SR @stepover\n\n    text(\"**Marginalization**:\")\n    text(\"- Marginalizing out a variable R means collapsing assignments that only differ in R\")\n    text(\"- P(S = 0) = P(S = 0, R = 0) + P(S = 0, R = 1) = 0.20 + 0.08 = 0.28\")\n    text(\"- P(S = 1) = P(S = 1, R = 0) + P(S = 1, R = 1) = 0.70 + 0.02 = 0.72\")\n\n    text(\"Probability tables are just tensors.\")\n    text(\"Thus can use einops to express computations!\")\n    text(\"Recall einsum: for all s, P(S = s) = \u03a3_r P(S = s, R = r)\")\n    P_S = ProbTable(\"S\", einsum(P_SR.p, \"s r -> s\"))  # @inspect P_S @stepover\n\n    text(\"**Conditioning**:\")  # @clear p_s p_s_table\n    text(\"- Conditioning on R = 1 means selecting only assignments that satisfy the condition:\")\n    text(\"- P(S = 0, R = 1) = 0.08\")\n    text(\"- P(S = 1, R = 1) = 0.02\")\n    text(\"- We then compute the probability of the evidence:\")\n    text(\"- P(R = 1) = P(S = 0, R = 1) + P(S = 1, R = 1) = 0.08 + 0.02 = 0.1\")\n    text(\"- Then divide by this probability:\")\n    text(\"- P(S = 0 | R = 1) = P(S = 0, R = 1) / P(R = 1) = 0.08 / 0.1 = 0.8\")\n    text(\"- P(S = 1 | R = 1) = P(S = 1, R = 1) / P(R = 1) = 0.02 / 0.1 = 0.2\")\n    \n    text(\"We can also use einops to compute the conditional distribution,\")\n    text(\"...but there are a few steps.\")\n    R1 = np.array([0, 1])  # Evidence [R = 1]\n    P_SR1 = ProbTable(\"S R=1\", einsum(P_SR.p, R1, \"s r, r -> s\"))  # Filter to r = 1 @inspect P_SR1 @stepover\n    P_R1 = ProbTable(\"R=1\", einsum(P_SR1.p, \"s ->\"))  # @inspect P_R1 @stepover\n    P_S_given_R1 = ProbTable(\"S | R=1\", P_SR1.p / P_R1.p)  # @inspect P_S_given_R1 @stepover\n\n    text(\"Summary:\")\n    text(\"- Joint distribution: source of truth\")\n    text(\"- Marginalization: collapse assignments that differ only in marginalized variables\")\n    text(\"- Conditioning: select via evidence, compute probability of evidence, then divide\")\n    text(\"- Probability tables are tensors, so we can use einops to express computations!\")\n\n\ndef introduce_probabilistic_inference():\n    text(\"Random variables:\")\n    text(\"- S \u2208 {0, 1} (sunshine)\")\n    text(\"- R \u2208 {0, 1} (rain)\")\n    text(\"- T \u2208 {0, 1} (traffic)\")\n    text(\"- A \u2208 {0, 1} (autumn)\")\n\n    text(\"Joint distribution (source of truth):\")\n    text(\"- P(S, R, T, A)\")\n\n    text(\"What is the probability of rain given that there's traffic and its autumn?\")\n\n    text(\"**Probabilistic inference**: answer questions on the joint distribution\")\n    text(\"Analogy: executing SQL queries on a database\")\n\n    text(\"A question includes:\")\n    text(\"- **Condition** on evidence: [T = 1, A = 1] (traffic and autumn)\")\n    text(\"- Interested in **query**: R (rain?)\")\n\n    text(\"In probability notation:\")\n    text(\"- P(R | T = 1, A = 1)\")\n\n    text(\"Note: all variables not in evidence/query are marginalized out (S)\")\n\n\nclass ProbTable:\n    \"\"\"\n    Represents an arbitrary probability table: could be a local conditional\n    distribution, a marginal distribution, or a conditional distribution.\n\n    description:\n\n      A         B=1          | C          D=1\n      gen-vars  gen-vals       cond-vars  cond-vals\n\n    data could be:\n    - tensor corresponding to the probabilities (axes are cond-vars + gen-vars)\n    - function mapping cond-vars + gen-vars assignments to probabilities\n\n    shape: only needed if data is a function, to determine the shape of the tensor\n    \"\"\"\n    def __init__(self, description: str, data: np.ndarray | Callable, shape: tuple[int] | None = None):\n        if isinstance(data, Callable):\n            # Build up the probabilities\n            self.probs = np.empty(shape)\n            def recurse(assignment: list[int]):\n                if len(assignment) == len(shape):\n                    self.probs[tuple(assignment)] = data(*assignment)\n                else:\n                    for i in range(shape[len(assignment)]):\n                        recurse(assignment + [i])\n            recurse([])\n        else:\n            self.probs = np.array(data)\n\n        # Parse the description into variables and values for both the generation and conditioning side\n        self.cond_vars = []\n        self.gen_vars = []\n        self.cond_vals = []\n        self.gen_vals = []\n\n        items = description.split(\" \")\n        on_conditioning_side = False\n        for item in items:\n            if item == \"|\":\n                on_conditioning_side = True\n            elif on_conditioning_side:\n                if \"=\" in item:\n                    self.cond_vals.append(item)\n                else:\n                    self.cond_vars.append(item)\n            else:\n                if \"=\" in item:\n                    self.gen_vals.append(item)\n                else:\n                    self.gen_vars.append(item)\n\n        assert len(self.cond_vars) + len(self.gen_vars) == len(self.probs.shape), [self.cond_vars, self.gen_vars, self.probs.shape]\n\n    @property\n    def p(self):\n        return self.probs\n\n    def asdict(self):\n        \"\"\"\n        Returns a nice matrix representation of the probability table.\n        a  b  P(A = a, B = b)\n        0  0  0.1\n        0  1  0.2\n        1  0  0.3\n        1  1  0.4\n        \"\"\"\n        vars = self.cond_vars + self.gen_vars\n\n        # Description string (e.g., \"P(A = a, B = b)\")\n        output = []\n        output.append(\", \".join([f\"{var}={var.lower()}\" for var in self.gen_vars] + self.gen_vals))\n        if len(self.cond_vars) > 0 or len(self.cond_vals) > 0:\n            output.append(\"|\")\n            output.append(\", \".join([f\"{var}={var.lower()}\" for var in self.cond_vars] + self.cond_vals))\n        prob_str = \"P(\" + \" \".join(output) + \")\"\n\n        rows = []\n        rows.append([var.lower() for var in vars] + [prob_str])\n        def recurse(assignment: list):\n            if len(assignment) == len(vars):\n                rows.append(assignment + [self.probs[tuple(assignment)]])\n            else:\n                for value in range(self.probs.shape[len(assignment)]):\n                    recurse(assignment + [value])\n        recurse([])\n        return np.array(rows)\n\n\ndef introduce_alarm():\n    text(\"\ud83d\udea8 Problem: earthquakes, burglaries, and alarms\")\n    text(\"- Earthquakes and burglaries are independent events (probability \u03b5 = 0.05)\")\n    text(\"- Either will cause an alarm to go off.\")\n    text(\"- Suppose you get an alarm.\")\n    text(\"- How does hearing that there's an earthquake change the probability of a burglary?\")\n\n    text(\"Joint distribution: P(E, B, A)\")\n    text(\"Which is larger?\")\n    text(\"- P(B = 1 | A = 1): burglary given alarm only\")\n    text(\"- P(B = 1 | A = 1, E = 1): burglary given alarm and earthquake\")\n\n    text(\"To solve this problem, let's use Bayesian networks.\")\n    text(\"We need to do two things:\")\n    text(\"- Construct a joint distribution\")\n    text(\"- Perform probabilistic inference\")\n\n    text(\"### Constructing the joint distribution\")\n    text(\"Let's start by constructing the joint distribution.\")\n    text(\"We could write down a huge table directly,\")\n    text(\"...but let's do it in a more intuitive way.\")\n\n    text(\"There are 4 steps:\")\n    text(\"1. Define the variables (B, E, A)\")\n    text(\"2. Connect the variables with directed edges (B \u2192 A, E \u2192 A)\")\n    text(\"3. Write down local conditional probabilities for each variable (e.g., p(e | b, a))\")\n    text(\"4. Define the joint distribution as the product of the local conditional probabilities\")\n\n    text(\"**Step 1**: Define the variables (B, E, A)\")\n\n    text(\"**Step 2**: Connect the variables with directed edges suggesting direct influence (B \u2192 A, E \u2192 A)\")\n    image(\"images/alarm-bayes.png\", width=300)\n\n    text(\"**Step 3**: Write down local conditional probabilities for each variable (e.g., p(e | b, a))\")\n    epsilon = 0.05  # Probability of rare event\n    p_b = ProbTable(\"B\", [1 - epsilon, epsilon]) # p(b) @inspect p_b @stepover\n    p_e = ProbTable(\"E\", [1 - epsilon, epsilon]) # p(e) @inspect p_e @stepover\n    p_a_given_be = ProbTable(\"A | B E\", lambda b, e, a: a == (b or e), shape=(2, 2, 2))  # p(a | b, e) @inspect p_a_given_be @stepover\n\n    text(\"**Step 4**: Define the joint distribution as the product of the local conditional probabilities\")\n\n    text(\"For all b, e, a: P(B = b, E = e, A = a) = p(b) p(e) p(a | b, e)\")\n    P_BEA = ProbTable(\"B E A\", einsum(p_b.p, p_e.p, p_a_given_be.p, \"b, e, b e a -> b e a\"))  # P(B, E, A) @inspect P_BEA @stepover\n\n    text(\"### Probabilistic inference\")\n    text(\"Now given the joint distribution, we can answer any query we want.\")\n\n    text(\"**P(B = 1)**: burglary given no information\")\n\n    P_B = ProbTable(\"B\", einsum(P_BEA.p, \"b e a -> b\"))  # P(B) @inspect P_B @stepover\n    text(\"Note: marginal P(B = b) matches the local conditional p(b) (low chance of burglary).\")\n\n    text(\"**P(B = 1 | A = 1)**: burglary given alarm only\")\n\n    text(\"First select based on the evidence (A = 1):\")\n    a1 = np.array([0, 1]) # Evidence [A = 1]\n    P_BA1 = ProbTable(\"B A=1\", einsum(P_BEA.p, a1, \"b e a, a -> b\"))  # P(B | A = 1) @inspect P_BA1 @stepover\n\n    text(\"Compute probability of evidence (A = 1):\")\n    P_A1 = ProbTable(\"A=1\", einsum(P_BA1.p, \"b ->\"))  # P(A = 1) @inspect P_A1 @stepover\n\n    text(\"Divide by probability of evidence to get the conditional distribution:\")\n    P_B_given_A1 = ProbTable(\"B | A=1\", P_BA1.p / P_A1.p)  # P(B | A = 1) @inspect P_B_given_A1 @stepover\n\n    text(\"Note: burglary is much more likely!\")\n\n    text(\"**P(B = 1 | A = 1, E = 1)**: burglary given alarm and earthquake\")\n\n    text(\"Select based on the evidence:\")\n    a1 = np.array([0, 1]) # Evidence [A = 1]\n    e1 = np.array([0, 1]) # Evidence [E = 1]\n    P_BA1E1 = ProbTable(\"B A=1 E=1\", einsum(P_BEA.p, a1, e1, \"b e a, a, e -> b\"))  # P(B, A = 1, E = 1) @inspect P_BA1E1 @stepover\n\n    text(\"Compute probability of evidence (A = 1, E = 1):\")\n    P_A1E1 = ProbTable(\"A=1 E=1\", einsum(P_BA1E1.p, \"b ->\"))  # P(A = 1, E = 1) @inspect P_A1E1 @stepover\n\n    text(\"Divide by probability of evidence to get the conditional distribution:\")\n    P_B_given_A1E1 = ProbTable(\"B | A=1 E=1\", P_BA1E1.p / P_A1E1.p)  # P(B | A = 1, E = 1) @inspect P_B_given_A1E1 @stepover\n\n    text(\"Note: burglary is again unlikely.\")\n    text(\"Intuition: why did the alarm sound?  Earthquake explains away the alarm.\")\n\n    text(\"Key idea: **explaining away**\")\n    image(\"images/alarm-bayes.png\", width=300)\n    text(\"- Suppose you have two causes (B, E) positively influencing an effect (A).\")\n    text(\"- Condition on the effect (A = 1).\")\n    text(\"- Further conditioning on one cause (E = 1) reduces the probability of the other cause (B = 1).\")\n    text(\"- In symbols: P(B = 1 | A = 1, E = 1) < P(B = 1 | A = 1).\")\n    text(\"- Important: even if causes are independent!\")\n\n    text(\"Reminder about notation:\")\n    text(\"- Lowercase names (e): particular values\")\n    text(\"- Uppercase names (E): random variable\")\n    text(\"- Lowercase p(e): local conditional probabilities (by definition)\")\n    text(\"- Uppercase P(E): marginals/conditionals derived from the joint distribution (by laws of probability)\")\n    text(\"- Uppercase P(E = e): probability (number) from a marginal/conditional distribution\")\n\n    text(\"Summary:\")\n    text(\"- Define joint distribution: 4 steps (variables, edges, local conditional probabilities, joint distribution)\")\n    text(\"- Perform probabilistic inference: select based on evidence, compute probability of evidence, then divide\")\n    text(\"- Explaining away: qualitative reasoning pattern that follows from the math\")\n\n\ndef introduce_medical_diagnosis():\n    text(\"\ud83e\ude7a Problem: medical diagnosis\")\n    text(\"- You are coughing and have itchy eyes.\")\n    text(\"- Do you have a cold?\")\n\n    text(\"Let's model this problem using a Bayesian network.\")\n\n    text(\"**Step 1**: Define the random variables\")\n    text(\"- Cold C \u2208 {0, 1}\")\n    text(\"- Allergies A \u2208 {0, 1}\")\n    text(\"- Cough H \u2208 {0, 1}\")\n    text(\"- Itchy eyes I \u2208 {0, 1}\")\n\n    text(\"**Step 2**: Connect the variables with directed edges\")\n    image(\"images/medical-bayes.png\", width=300)\n\n    text(\"**Step 3**: Write down local conditional probabilities for each variable\")\n    p_c = ProbTable(\"C\", [0.9, 0.1]) # p(c) @inspect p_c @stepover\n    p_a = ProbTable(\"A\", [0.8, 0.2]) # p(a) @inspect p_a @stepover\n    p_h_given_ca = ProbTable(\"H | C A\", lambda c, a, h: 0.9 if h == (c or a) else 0.1, shape=(2, 2, 2)) # p(h | c, a) @inspect p_h_given_ca @stepover\n    p_i_given_a = ProbTable(\"I | A\", lambda a, i: 0.9 if i == a else 0.1, shape=(2, 2)) # p(i | a) @inspect p_i_given_a @stepover\n\n    text(\"**Step 4**: Define the joint distribution as the product of the local conditional probabilities\")\n    P_CAHI = ProbTable(\"C A H I\", einsum(p_c.p, p_a.p, p_h_given_ca.p, p_i_given_a.p, \"c, a, c a h, a i -> c a h i\"))  # P(C, A, H, I) @inspect P_CAHI @stepover\n\n    text(\"Now we can answer any question we want.\")  # @clear p_c p_a p_h_given_ca p_i_given_a\n\n    text(\"**P(C = 1 | H = 1)**: cold given cough?\")\n    \n    text(\"Select based on the evidence, marginalizing out non-query/evidence:\")\n    h1 = np.array([0, 1]) # Evidence [H = 1]\n    P_CH1 = ProbTable(\"C H=1\", einsum(P_CAHI.p, h1, \"c a h i, h -> c\"))  # P(C | H = 1) @inspect P_CH1 @clear P_CAHI @stepover\n\n    text(\"Compute probability of evidence (H = 1):\")\n    P_H1 = ProbTable(\"H=1\", einsum(P_CH1.p, \"c ->\"))  # P(H = 1) @inspect P_H1 @stepover\n\n    text(\"Divide by probability of evidence to get the conditional distribution:\")\n    P_C_given_H1 = ProbTable(\"C | H=1\", P_CH1.p / P_H1.p)  # P(C | H = 1) @inspect P_C_given_H1 @stepover\n\n    text(\"**P(C = 1 | H = 1, I = 1)**: cold given cough and itchy eyes?\")  # @clear P_CH1 P_H1 P_C_given_H1 @inspect P_CAHI\n\n    text(\"Select based on the evidence, marginalizing out non-query/evidence:\")\n    h1 = np.array([0, 1]) # Evidence [H = 1]\n    i1 = np.array([0, 1]) # Evidence [I = 1]\n    P_CH1I1 = ProbTable(\"C H=1 I=1\", einsum(P_CAHI.p, h1, i1, \"c a h i, h, i -> c\"))  # P(C, H = 1, I = 1) @inspect P_CH1I1 @clear P_CAHI @stepover\n\n    text(\"Compute probability of evidence (H = 1, I = 1):\")\n    P_H1I1 = ProbTable(\"H=1 I=1\", einsum(P_CH1I1.p, \"c ->\"))  # P(H = 1, I = 1) @inspect P_H1I1 @stepover\n\n    text(\"Divide by probability of evidence to get the conditional distribution:\")\n    P_C_given_H1I1 = ProbTable(\"C | H=1 I=1\", P_CH1I1.p / P_H1I1.p)  # P(C | H = 1, I = 1) @inspect P_C_given_H1I1 @stepover\n\n    text(\"Note: the probability of cold is lower if you add itchy eyes!\")\n    assert P_C_given_H1I1.p[1] < P_C_given_H1.p[1]  # @stepover @clear P_CH1I1 P_H1I1 @inspect P_C_given_H1\n\n    text(\"This is another more subtle example of explaining away!\")\n    image(\"images/medical-bayes.png\", width=200)\n    text(\"- Effect (H) has two causes (C, A).\")\n    text(\"- Itchy eyes (I) is not a cause of the effect (H)...\")\n    text(\"- But observing itchy eyes (I = 1) increases the probability of A, which is a cause!\")\n\n    text(\"Summary:\")\n    text(\"- Same recipe (joint distribution + probabilistic inference)\")\n    text(\"- Explaining away shows up in more complex ways\")\n    text(\"- In general, observing evidence increases/decreases the probability of other nodes, propagating through the network.\")\n\n\ndef introduce_bayesian_networks():\n    text(\"We have seen two examples of Bayesian networks:\")\n    text(\"Alarm\")\n    image(\"images/alarm-bayes.png\", width=100)\n    text(\"Medical diagnosis\")\n    image(\"images/medical-bayes.png\", width=100)\n\n    text(\"Now let's introduce the general case.\")\n    text(\"1. Define a set of random variables X = (X_1, ..., X_n).\")\n    text(\"2. Define any directed acyclic graph (DAG) over the variables.\")\n    text(\"3. For each node X_i, define a local conditional distribution p(x_i | parents(x_i)).\")\n    text(\"4. Define the joint distribution: P(X_1, ..., X_n) = \u03a0_i p(x_i | parents(x_i))\")\n\n    text(\"Reminders:\")\n    text(\"- One local conditional distribution per node (not edge!)\")\n    text(\"- Local conditional distribution depends on *all* parents at once\")\n    text(\"- Difference between p and P\")\n\n    text(\"**Probabilistic inference**\")\n    text(\"Given:\")\n    text(\"- Bayesian network P(X_1, ..., X_n)\")\n    text(\"- Evidence E = e where E \u2286 X (e.g., E = (X_3, X_7), e = (0, 1))\")\n    text(\"- Query Q \u2286 X (e.g., Q = (X_2, X_4)\")\n    text(\"Output:\")\n    text(\"- P(Q | E = e)\")\n\n\ndef language_models():\n    text(\"Lots of things are secretely Bayesian networks.\")\n    text(\"For example, autoregressive language models.\")\n\n    text(\"1. Random variables: tokens X_1, ..., X_T\")\n    text(\"2. Edges from all previous tokens to current token (X_1, ... X_{t-1} to X_t)\")\n    text(\"3. Local conditional distribution (Transformer): p(x_t | x_1, ..., x_{t-1})\")\n    text(\"4. Joint distribution: P(X_1, ..., X_T) = \u03a0_t p(x_t | x_1, ..., x_{t-1})\")\n\n    text(\"Typically, you just sample forward using a language model (prompt \u2192 response)\")\n    text(\"X_1, X_2, X_3 \u2192 X_4, X_5, X_6\")\n\n    text(\"What would doing probabilistic inference mean?\")\n    text(\"X_4, X_5, X_6 \u2192 X_1, X_2, X_3\")\n    text(\"Application: jailbreaking language models \"), link(\"https://arxiv.org/abs/2502.01236\")\n    text(\"Given a particular response (e.g., \\\"Sure, here's how you make a bomb\\\")\")\n    text(\"...find prompts that likely generated it.\")\n    \n\ndef Bernoulli(prob: float) -> int:\n    \"\"\"Return 1 with probability `prob` and 0 with probability `1 - prob`.\"\"\"\n    return np.random.choice([0, 1], p=[1 - prob, prob])\n\n\ndef introduce_rejection_sampling():\n    text(\"So far: we have defined Bayesian networks via writing down local conditional distributions.\")\n    text(\"Now: we will define them via **probabilistic programs**.\")\n    set_random_seed(3)\n\n    text(\"Let's revisit our old alarm example.\")\n    sample = alarm()  # @inspect sample\n    sample = alarm()  # @inspect sample @stepover\n    sample = alarm()  # @inspect sample @stepover\n    sample = alarm()  # @inspect sample @stepover\n    sample = alarm()  # @inspect sample @stepover\n    sample = alarm()  # @inspect sample @stepover\n    sample = alarm()  # @inspect sample @stepover\n    sample = alarm()  # @inspect sample @stepover\n    sample = alarm()  # @inspect sample @stepover\n    sample = alarm()  # @inspect sample @stepover\n\n    text(\"Now let's do probabilistic inference.\")\n    text(\"Example: P(B | A = 1)\")\n\n    text(\"Writing down a distribution in a program\")\n    text(\"...gives us a natural way to approximately do probabilistic inference\")\n    text(\"...**rejection sampling**!\")\n\n    text(\"Key idea:\")\n    text(\"- Draw a ton of samples\")\n    text(\"- Select the samples that match the evidence\")\n    text(\"- Record the query\")\n\n    text(\"Note: we generalize evidence (e.g., A = 1) and query (B) to \")\n    query = lambda sample: sample[\"B\"]\n    evidence = lambda sample: sample[\"A\"] == 1\n    result = rejection_sampling(alarm, query, evidence, num_samples=10)  # @inspect result\n    result = rejection_sampling(alarm, query, evidence, num_samples=1000)  # @inspect result @stepover\n\n    text(\"Downside: if evidence is rare, this is very inefficient\")\n    text(\"But as number of samples increases to infinity, this converges to the true probability!\")\n\n    text(\"**Medical diagnosis**\")\n    text(\"Example: cold given cough? P(C | H = 1)\")\n    sample = medical_diagnosis()  # @inspect sample\n    query = lambda sample: sample[\"C\"]\n    evidence = lambda sample: sample[\"H\"] == 1\n    result = rejection_sampling(medical_diagnosis, query, evidence, num_samples=200)  # @inspect result @stepover\n\n    text(\"**Hidden Markov models for object tracking**\")\n    image(\"images/hmm.png\", width=400)\n    text(\"Example: where is object at time 3 given sensor reading at time 5? P(H_3 | E_5 = 2)\")\n    sample = hidden_markov_model()\n    query = lambda sample: sample[\"H\"][2]\n    evidence = lambda sample: sample[\"E\"][4] == 2\n    result = rejection_sampling(hidden_markov_model, query, evidence, num_samples=200)  # @inspect result @stepover\n\n    text(\"Summary:\")\n    text(\"- Probabilistic programming: programs as representations of joint distributions\")\n    text(\"- Rejection sampling: approximate inference by drawing samples (very flexible and very slow)\")\n\n\ndef alarm():\n    B = Bernoulli(0.05)  # Burglary @stepover @inspect B\n    E = Bernoulli(0.05)  # Earthquake @stepover @inspect E\n    A = B or E           # Alarm @inspect A\n    return {\"B\": B, \"E\": E, \"A\": A}\n\n\ndef medical_diagnosis():\n    C = Bernoulli(0.1)                      # Cold @stepover @inspect C\n    A = Bernoulli(0.2)                      # Allergies @stepover @inspect A\n    H = Bernoulli(0.9 if C or A else 0.1)   # Cough @stepover @inspect H\n    I = Bernoulli(0.9 if A else 0.1)        # Itchy eyes @stepover @inspect I\n    return {\"C\": C, \"A\": A, \"H\": H, \"I\": I}\n\n\ndef hidden_markov_model():\n    \"\"\"\n    This is a simple hidden Markov model.\n    The hidden variables are the positions of the objects (H_1, ..., H_T).\n    The observed variables are the sensor readings (O_1, ..., O_T).\n    \"\"\"\n    num_steps = 5\n    H = [None] * num_steps  # Positions @inspect H\n    E = [None] * num_steps  # Sensor readings @inspect E\n\n    for t in range(num_steps):\n        H[t] = (H[t - 1] if t > 0 else 0) + Bernoulli(0.5)  # @stepover @inspect H\n        E[t] = H[t] + Bernoulli(0.5)  # @stepover @inspect E\n\n    return {\"H\": H, \"E\": E}\n\n\ndef rejection_sampling(program: Callable, query: Callable, evidence: Callable, num_samples: int) -> float:\n    \"\"\"Perform rejection sampling given:\n    - program: defines the Bayesian network, returns a sample\n    - query: sample -> value of interest\n    - evidence: sample -> whether to keep the sample\n    - num_samples: number of samples to draw\n    \"\"\"\n    counts = defaultdict(int)  # Record how many of each query value we got  @inspect counts\n\n    for _ in range(num_samples):\n        sample = program()  # @inspect sample @stepover\n        if evidence(sample):  # @stepover\n            counts[query(sample)] += 1  # @stepover @inspect counts\n    \n    # Normalize counts to obtain probabilities\n    total_count = sum(counts.values())  # @inspect total_count\n    probs = {q: counts[q] / total_count for q in counts}  # @inspect probs\n\n    return probs\n\n\ndef discussion():\n    text(\"If you're used to thinking about classifiers, using Bayesian networks requires a shift in mindset.\")\n    image(\"images/medical-bayes.png\", width=200)\n    text(\"Example: predict cold given cough?\")\n    text(\"- Traditional machine learning: input \u2192 output\")\n    text(\"- Bayesian networks: output, hidden \u2192 input\")\n\n    text(\"Advantages of Bayesian networks:\")\n    text(\"- Handle **heterogenously** missing information, both at training and test time\")\n    text(\"- Incorporate **prior knowledge** (e.g., Mendelian inheritance, laws of physics)\")\n    text(\"- Can **interpret** all the intermediate variables\")\n    text(\"- Precursor to **causal** models (can do interventions and counterfactuals)\")\n\n\nif __name__ == \"__main__\":\n    main()"
+    "bayes.py": "from typing import Callable\nfrom edtrace import text, image, link\nfrom einops import einsum\nfrom collections import defaultdict\nimport numpy as np\nfrom util import set_random_seed\nfrom transformers import AutoModelForCausalLM\n\ndef main():\n    text(\"### Lecture 12: Bayesian networks\")\n    link(\"https://stanford-cs221.github.io/autumn2023/modules/module.html#include=bayesian-networks%2Fdefinitions.js&mode=print6pp\", title=\"[Autumn 2023 lecture]\")\n\n    model_based_motivation()\n    review_probability()\n    introduce_probabilistic_inference()\n    introduce_alarm()\n    introduce_medical_diagnosis()\n    introduce_bayesian_networks()\n    language_models()\n    introduce_rejection_sampling()\n    discussion()\n\n    text(\"Summary\")\n    text(\"- Probability: joint distributions, marginalization, conditioning\")\n    text(\"- Probability tables are tensors, can use einsum to express computations\")\n    text(\"- Bayesian networks: directed acyclic graphs of random variables\")\n    text(\"- Probabilistic inference: ask questions P(query | evidence)\")\n    text(\"- Probabilistic programming: programs as representations of joint distributions\")\n    text(\"- Rejection sampling: approximate inference by drawing samples\")\n\n    text(\"Next time: better probabilistic inference!\")\n\n\ndef model_based_motivation():\n    text(\"Recall the ingredients of intelligence:\")\n    image(\"images/perceive-reason-act-learn.png\", width=600)\n\n    text(\"Where we started:\")\n    text(\"- Machine learning: percepts \u2192 actions (predictor)\")\n\n    text(\"Last few weeks: state-based models for reasoning\")\n    text(\"- Search problems: actions have deterministic outcomes\")\n    text(\"- MDPs: actions have stochastic outcomes\")\n    text(\"- Games: exists adversary (or unknown opponent strategy)\")\n\n    text(\"Model-free methods\")\n    text(\"- We just know what actions to take and how much utility it will produce\")\n    text(\"- Examples: classification, regression, SARSA, Q-learning, TD learning\")\n\n    text(\"Model-based methods\")\n    text(\"- We understand how the world works\")\n    text(\"- Examples: search, value iteration (MDPs), minimax (games)\")\n    image(\"images/game-tree.png\", width=400)\n\n    text(\"Model-free methods are more direct and cheaper\")\n    text(\"...but model-based methods are more flexible\")\n    text(\"(can change the reward function without changing the transitions).\")\n\n    text(\"How should we represent the state of the world?\")\n\n\ndef review_probability():\n    text(\"Represent the state of the world by a set of variables.\")\n\n    text(\"**Random variables** (representing attributes of the world):\")\n    text(\"- sunshine S \u2208 {0, 1}\")\n    text(\"- rain R \u2208 {0, 1}\")\n\n    text(\"Possible states of the world (**assignments** to random variables):\")\n    text(\"- {S = 0, R = 0}: no sunshine and no rain\")\n    text(\"- {S = 0, R = 1}: no sunshine and rain\")\n    text(\"- {S = 1, R = 0}: sunshine and no rain\")\n    text(\"- {S = 1, R = 1}: sunshine and rain\")\n\n    text(\"**Joint distribution** (probability of each assignment):\")\n    text(\"- P(S = 0, R = 0) = 0.20\")\n    text(\"- P(S = 0, R = 1) = 0.08\")\n    text(\"- P(S = 1, R = 0) = 0.70\")\n    text(\"- P(S = 1, R = 1) = 0.02\")\n    P_SR = ProbTable(\"S R\", [[0.20, 0.08], [0.70, 0.02]])  # @inspect P_SR @stepover\n\n    text(\"**Marginalization**:\")\n    text(\"- Marginalizing out a variable R means collapsing assignments that only differ in R\")\n    text(\"- P(S = 0) = P(S = 0, R = 0) + P(S = 0, R = 1) = 0.20 + 0.08 = 0.28\")\n    text(\"- P(S = 1) = P(S = 1, R = 0) + P(S = 1, R = 1) = 0.70 + 0.02 = 0.72\")\n\n    text(\"Probability tables are just tensors.\")\n    text(\"Thus can use einops to express computations!\")\n    text(\"Recall einsum: for all s, P(S = s) = \u03a3_r P(S = s, R = r)\")\n    P_S = ProbTable(\"S\", einsum(P_SR.p, \"s r -> s\"))  # @inspect P_S @stepover\n\n    text(\"**Conditioning**:\")  # @clear p_s p_s_table\n    text(\"- Conditioning on R = 1 means selecting only assignments that satisfy the condition:\")\n    text(\"- P(S = 0, R = 1) = 0.08\")\n    text(\"- P(S = 1, R = 1) = 0.02\")\n    text(\"- We then compute the probability of the evidence:\")\n    text(\"- P(R = 1) = P(S = 0, R = 1) + P(S = 1, R = 1) = 0.08 + 0.02 = 0.1\")\n    text(\"- Then divide by this probability:\")\n    text(\"- P(S = 0 | R = 1) = P(S = 0, R = 1) / P(R = 1) = 0.08 / 0.1 = 0.8\")\n    text(\"- P(S = 1 | R = 1) = P(S = 1, R = 1) / P(R = 1) = 0.02 / 0.1 = 0.2\")\n\n    text(\"We can also use einops to compute the conditional distribution,\")\n    text(\"...but there are a few steps.\")\n    R1 = np.array([0, 1])  # Evidence [R = 1]\n    P_SR1 = ProbTable(\"S R=1\", einsum(P_SR.p, R1, \"s r, r -> s\"))  # Filter to r = 1 @inspect P_SR1 @stepover\n    P_R1 = ProbTable(\"R=1\", einsum(P_SR1.p, \"s ->\"))  # @inspect P_R1 @stepover\n    P_S_given_R1 = ProbTable(\"S | R=1\", P_SR1.p / P_R1.p)  # @inspect P_S_given_R1 @stepover\n\n    text(\"Summary:\")\n    text(\"- Joint distribution: source of truth\")\n    text(\"- Marginalization: collapse assignments that differ only in marginalized variables\")\n    text(\"- Conditioning: select via evidence, compute probability of evidence, then divide\")\n    text(\"- Probability tables are tensors, so we can use einops to express computations!\")\n\n\ndef introduce_probabilistic_inference():\n    text(\"Random variables:\")\n    text(\"- S \u2208 {0, 1} (sunshine)\")\n    text(\"- R \u2208 {0, 1} (rain)\")\n    text(\"- T \u2208 {0, 1} (traffic)\")\n    text(\"- A \u2208 {0, 1} (autumn)\")\n\n    text(\"Joint distribution (source of truth):\")\n    text(\"- P(S, R, T, A)\")\n\n    text(\"What is the probability of rain given that there's traffic and its autumn?\")\n\n    text(\"**Probabilistic inference**: answer questions on the joint distribution\")\n    text(\"Analogy: executing SQL queries on a database\")\n\n    text(\"A question includes:\")\n    text(\"- **Condition** on evidence: [T = 1, A = 1] (traffic and autumn)\")\n    text(\"- Interested in **query**: R (rain?)\")\n\n    text(\"In probability notation:\")\n    text(\"- P(R | T = 1, A = 1)\")\n\n    text(\"Note: all variables not in evidence/query are marginalized out (S)\")\n\n\nclass ProbTable:\n    \"\"\"\n    Represents an arbitrary probability table: could be a local conditional\n    distribution, a marginal distribution, or a conditional distribution.\n\n    description:\n\n      A         B=1          | C          D=1\n      gen-vars  gen-vals       cond-vars  cond-vals\n\n    data could be:\n    - tensor corresponding to the probabilities (axes are cond-vars + gen-vars)\n    - function mapping cond-vars + gen-vars assignments to probabilities\n\n    shape: only needed if data is a function, to determine the shape of the tensor\n    \"\"\"\n    def __init__(self, description: str, data: np.ndarray | Callable, shape: tuple[int] | None = None):\n        if isinstance(data, Callable):\n            # Build up the probabilities\n            self.probs = np.empty(shape)\n            def recurse(assignment: list[int]):\n                if len(assignment) == len(shape):\n                    self.probs[tuple(assignment)] = data(*assignment)\n                else:\n                    for i in range(shape[len(assignment)]):\n                        recurse(assignment + [i])\n            recurse([])\n        else:\n            self.probs = np.array(data)\n\n        # Parse the description into variables and values for both the generation and conditioning side\n        self.cond_vars = []\n        self.gen_vars = []\n        self.cond_vals = []\n        self.gen_vals = []\n\n        items = description.split(\" \")\n        on_conditioning_side = False\n        for item in items:\n            if item == \"|\":\n                on_conditioning_side = True\n            elif on_conditioning_side:\n                if \"=\" in item:\n                    self.cond_vals.append(item)\n                else:\n                    self.cond_vars.append(item)\n            else:\n                if \"=\" in item:\n                    self.gen_vals.append(item)\n                else:\n                    self.gen_vars.append(item)\n\n        assert len(self.cond_vars) + len(self.gen_vars) == len(self.probs.shape), [self.cond_vars, self.gen_vars, self.probs.shape]\n\n    @property\n    def p(self):\n        return self.probs\n\n    def asdict(self):\n        \"\"\"\n        Returns a nice matrix representation of the probability table.\n        a  b  P(A = a, B = b)\n        0  0  0.1\n        0  1  0.2\n        1  0  0.3\n        1  1  0.4\n        \"\"\"\n        vars = self.cond_vars + self.gen_vars\n\n        # Description string (e.g., \"P(A = a, B = b)\")\n        output = []\n        output.append(\", \".join([f\"{var}={var.lower()}\" for var in self.gen_vars] + self.gen_vals))\n        if len(self.cond_vars) > 0 or len(self.cond_vals) > 0:\n            output.append(\"|\")\n            output.append(\", \".join([f\"{var}={var.lower()}\" for var in self.cond_vars] + self.cond_vals))\n        prob_str = \"P(\" + \" \".join(output) + \")\"\n\n        rows = []\n        rows.append([var.lower() for var in vars] + [prob_str])\n        def recurse(assignment: list):\n            if len(assignment) == len(vars):\n                rows.append(assignment + [self.probs[tuple(assignment)]])\n            else:\n                for value in range(self.probs.shape[len(assignment)]):\n                    recurse(assignment + [value])\n        recurse([])\n        return np.array(rows)\n\n\ndef introduce_alarm():\n    text(\"\ud83d\udea8 Problem: earthquakes, burglaries, and alarms\")\n    text(\"- Earthquakes and burglaries are independent events (probability \u03b5 = 0.05)\")\n    text(\"- Either will cause an alarm to go off.\")\n    text(\"- Suppose you get an alarm.\")\n    text(\"- How does hearing that there's an earthquake change the probability of a burglary?\")\n\n    text(\"Joint distribution: P(E, B, A)\")\n    text(\"Which is larger?\")\n    text(\"- P(B = 1 | A = 1): burglary given alarm only\")\n    text(\"- P(B = 1 | A = 1, E = 1): burglary given alarm and earthquake\")\n\n    text(\"To solve this problem, let's use Bayesian networks.\")\n    text(\"We need to do two things:\")\n    text(\"- Construct a joint distribution\")\n    text(\"- Perform probabilistic inference\")\n\n    text(\"### Constructing the joint distribution\")\n    text(\"Let's start by constructing the joint distribution.\")\n    text(\"We could write down a huge table directly,\")\n    text(\"...but let's do it in a more intuitive way.\")\n\n    text(\"There are 4 steps:\")\n    text(\"1. Define the variables (B, E, A)\")\n    text(\"2. Connect the variables with directed edges (B \u2192 A, E \u2192 A)\")\n    text(\"3. Write down local conditional probabilities for each variable (e.g., p(e | b, a))\")\n    text(\"4. Define the joint distribution as the product of the local conditional probabilities\")\n\n    text(\"**Step 1**: Define the variables (B, E, A)\")\n\n    text(\"**Step 2**: Connect the variables with directed edges suggesting direct influence (B \u2192 A, E \u2192 A)\")\n    image(\"images/alarm-bayes.png\", width=300)\n\n    text(\"**Step 3**: Write down local conditional probabilities for each variable (e.g., p(e | b, a))\")\n    epsilon = 0.05  # Probability of rare event\n    p_b = ProbTable(\"B\", [1 - epsilon, epsilon]) # p(b) @inspect p_b @stepover\n    p_e = ProbTable(\"E\", [1 - epsilon, epsilon]) # p(e) @inspect p_e @stepover\n    p_a_given_be = ProbTable(\"A | B E\", lambda b, e, a: a == (b or e), shape=(2, 2, 2))  # p(a | b, e) @inspect p_a_given_be @stepover\n\n    text(\"**Step 4**: Define the joint distribution as the product of the local conditional probabilities\")\n\n    text(\"For all b, e, a: P(B = b, E = e, A = a) = p(b) p(e) p(a | b, e)\")\n    P_BEA = ProbTable(\"B E A\", einsum(p_b.p, p_e.p, p_a_given_be.p, \"b, e, b e a -> b e a\"))  # P(B, E, A) @inspect P_BEA @stepover\n\n    text(\"### Probabilistic inference\")\n    text(\"Now given the joint distribution, we can answer any query we want.\")\n\n    text(\"**P(B = 1)**: burglary given no information\")\n\n    P_B = ProbTable(\"B\", einsum(P_BEA.p, \"b e a -> b\"))  # P(B) @inspect P_B @stepover\n    text(\"Note: marginal P(B = b) matches the local conditional p(b) (low chance of burglary).\")\n\n    text(\"**P(B = 1 | A = 1)**: burglary given alarm only\")\n\n    text(\"First select based on the evidence (A = 1):\")\n    a1 = np.array([0, 1]) # Evidence [A = 1]\n    P_BA1 = ProbTable(\"B A=1\", einsum(P_BEA.p, a1, \"b e a, a -> b\"))  # P(B | A = 1) @inspect P_BA1 @stepover\n\n    text(\"Compute probability of evidence (A = 1):\")\n    P_A1 = ProbTable(\"A=1\", einsum(P_BA1.p, \"b ->\"))  # P(A = 1) @inspect P_A1 @stepover\n\n    text(\"Divide by probability of evidence to get the conditional distribution:\")\n    P_B_given_A1 = ProbTable(\"B | A=1\", P_BA1.p / P_A1.p)  # P(B | A = 1) @inspect P_B_given_A1 @stepover\n\n    text(\"Note: burglary is much more likely!\")\n\n    text(\"**P(B = 1 | A = 1, E = 1)**: burglary given alarm and earthquake\")\n\n    text(\"Select based on the evidence:\")\n    a1 = np.array([0, 1]) # Evidence [A = 1]\n    e1 = np.array([0, 1]) # Evidence [E = 1]\n    P_BA1E1 = ProbTable(\"B A=1 E=1\", einsum(P_BEA.p, a1, e1, \"b e a, a, e -> b\"))  # P(B, A = 1, E = 1) @inspect P_BA1E1 @stepover\n\n    text(\"Compute probability of evidence (A = 1, E = 1):\")\n    P_A1E1 = ProbTable(\"A=1 E=1\", einsum(P_BA1E1.p, \"b ->\"))  # P(A = 1, E = 1) @inspect P_A1E1 @stepover\n\n    text(\"Divide by probability of evidence to get the conditional distribution:\")\n    P_B_given_A1E1 = ProbTable(\"B | A=1 E=1\", P_BA1E1.p / P_A1E1.p)  # P(B | A = 1, E = 1) @inspect P_B_given_A1E1 @stepover\n\n    text(\"Note: burglary is again unlikely.\")\n    text(\"Intuition: why did the alarm sound?  Earthquake explains away the alarm.\")\n\n    text(\"Key idea: **explaining away**\")\n    image(\"images/alarm-bayes.png\", width=300)\n    text(\"- Suppose you have two causes (B, E) positively influencing an effect (A).\")\n    text(\"- Condition on the effect (A = 1).\")\n    text(\"- Further conditioning on one cause (E = 1) reduces the probability of the other cause (B = 1).\")\n    text(\"- In symbols: P(B = 1 | A = 1, E = 1) < P(B = 1 | A = 1).\")\n    text(\"- Important: even if causes are independent!\")\n\n    text(\"Reminder about notation:\")\n    text(\"- Lowercase names (e): particular values\")\n    text(\"- Uppercase names (E): random variable\")\n    text(\"- Lowercase p(e): local conditional probabilities (by definition)\")\n    text(\"- Uppercase P(E): marginals/conditionals derived from the joint distribution (by laws of probability)\")\n    text(\"- Uppercase P(E = e): probability (number) from a marginal/conditional distribution\")\n\n    text(\"Summary:\")\n    text(\"- Define joint distribution: 4 steps (variables, edges, local conditional probabilities, joint distribution)\")\n    text(\"- Perform probabilistic inference: select based on evidence, compute probability of evidence, then divide\")\n    text(\"- Explaining away: qualitative reasoning pattern that follows from the math\")\n\n\ndef introduce_medical_diagnosis():\n    text(\"\ud83e\ude7a Problem: medical diagnosis\")\n    text(\"- You are coughing and have itchy eyes.\")\n    text(\"- Do you have a cold?\")\n\n    text(\"Let's model this problem using a Bayesian network.\")\n\n    text(\"**Step 1**: Define the random variables\")\n    text(\"- Cold C \u2208 {0, 1}\")\n    text(\"- Allergies A \u2208 {0, 1}\")\n    text(\"- Cough H \u2208 {0, 1}\")\n    text(\"- Itchy eyes I \u2208 {0, 1}\")\n\n    text(\"**Step 2**: Connect the variables with directed edges\")\n    image(\"images/medical-bayes.png\", width=300)\n\n    text(\"**Step 3**: Write down local conditional probabilities for each variable\")\n    p_c = ProbTable(\"C\", [0.9, 0.1]) # p(c) @inspect p_c @stepover\n    p_a = ProbTable(\"A\", [0.8, 0.2]) # p(a) @inspect p_a @stepover\n    p_h_given_ca = ProbTable(\"H | C A\", lambda c, a, h: 0.9 if h == (c or a) else 0.1, shape=(2, 2, 2)) # p(h | c, a) @inspect p_h_given_ca @stepover\n    p_i_given_a = ProbTable(\"I | A\", lambda a, i: 0.9 if i == a else 0.1, shape=(2, 2)) # p(i | a) @inspect p_i_given_a @stepover\n\n    text(\"**Step 4**: Define the joint distribution as the product of the local conditional probabilities\")\n    P_CAHI = ProbTable(\"C A H I\", einsum(p_c.p, p_a.p, p_h_given_ca.p, p_i_given_a.p, \"c, a, c a h, a i -> c a h i\"))  # P(C, A, H, I) @inspect P_CAHI @stepover\n\n    text(\"Now we can answer any question we want.\")  # @clear p_c p_a p_h_given_ca p_i_given_a\n\n    text(\"**P(C = 1 | H = 1)**: cold given cough?\")\n\n    text(\"Select based on the evidence, marginalizing out non-query/evidence:\")\n    h1 = np.array([0, 1]) # Evidence [H = 1]\n    P_CH1 = ProbTable(\"C H=1\", einsum(P_CAHI.p, h1, \"c a h i, h -> c\"))  # P(C | H = 1) @inspect P_CH1 @clear P_CAHI @stepover\n\n    text(\"Compute probability of evidence (H = 1):\")\n    P_H1 = ProbTable(\"H=1\", einsum(P_CH1.p, \"c ->\"))  # P(H = 1) @inspect P_H1 @stepover\n\n    text(\"Divide by probability of evidence to get the conditional distribution:\")\n    P_C_given_H1 = ProbTable(\"C | H=1\", P_CH1.p / P_H1.p)  # P(C | H = 1) @inspect P_C_given_H1 @stepover\n\n    text(\"**P(C = 1 | H = 1, I = 1)**: cold given cough and itchy eyes?\")  # @clear P_CH1 P_H1 P_C_given_H1 @inspect P_CAHI\n\n    text(\"Select based on the evidence, marginalizing out non-query/evidence:\")\n    h1 = np.array([0, 1]) # Evidence [H = 1]\n    i1 = np.array([0, 1]) # Evidence [I = 1]\n    P_CH1I1 = ProbTable(\"C H=1 I=1\", einsum(P_CAHI.p, h1, i1, \"c a h i, h, i -> c\"))  # P(C, H = 1, I = 1) @inspect P_CH1I1 @clear P_CAHI @stepover\n\n    text(\"Compute probability of evidence (H = 1, I = 1):\")\n    P_H1I1 = ProbTable(\"H=1 I=1\", einsum(P_CH1I1.p, \"c ->\"))  # P(H = 1, I = 1) @inspect P_H1I1 @stepover\n\n    text(\"Divide by probability of evidence to get the conditional distribution:\")\n    P_C_given_H1I1 = ProbTable(\"C | H=1 I=1\", P_CH1I1.p / P_H1I1.p)  # P(C | H = 1, I = 1) @inspect P_C_given_H1I1 @stepover\n\n    text(\"Note: the probability of cold is lower if you add itchy eyes!\")\n    assert P_C_given_H1I1.p[1] < P_C_given_H1.p[1]  # @stepover @clear P_CH1I1 P_H1I1 @inspect P_C_given_H1\n\n    text(\"This is another more subtle example of explaining away!\")\n    image(\"images/medical-bayes.png\", width=200)\n    text(\"- Effect (H) has two causes (C, A).\")\n    text(\"- Itchy eyes (I) is not a cause of the effect (H)...\")\n    text(\"- But observing itchy eyes (I = 1) increases the probability of A, which is a cause!\")\n\n    text(\"Summary:\")\n    text(\"- Same recipe (joint distribution + probabilistic inference)\")\n    text(\"- Explaining away shows up in more complex ways\")\n    text(\"- In general, observing evidence increases/decreases the probability of other nodes, propagating through the network.\")\n\n\ndef introduce_bayesian_networks():\n    text(\"We have seen two examples of Bayesian networks:\")\n    text(\"Alarm\")\n    image(\"images/alarm-bayes.png\", width=100)\n    text(\"Medical diagnosis\")\n    image(\"images/medical-bayes.png\", width=100)\n\n    text(\"Now let's introduce the general case.\")\n    text(\"1. Define a set of random variables X = (X_1, ..., X_n).\")\n    text(\"2. Define any directed acyclic graph (DAG) over the variables.\")\n    text(\"3. For each node X_i, define a local conditional distribution p(x_i | parents(x_i)).\")\n    text(\"4. Define the joint distribution: P(X_1, ..., X_n) = \u03a0_i p(x_i | parents(x_i))\")\n\n    text(\"Reminders:\")\n    text(\"- One local conditional distribution per node (not edge!)\")\n    text(\"- Local conditional distribution depends on *all* parents at once\")\n    text(\"- Difference between p and P\")\n\n    text(\"**Probabilistic inference**\")\n    text(\"Given:\")\n    text(\"- Bayesian network P(X_1, ..., X_n)\")\n    text(\"- Evidence E = e where E \u2286 X (e.g., E = (X_3, X_7), e = (0, 1))\")\n    text(\"- Query Q \u2286 X (e.g., Q = (X_2, X_4)\")\n    text(\"Output:\")\n    text(\"- P(Q | E = e)\")\n\n\ndef language_models():\n    text(\"Lots of things are secretely Bayesian networks.\")\n    text(\"For example, autoregressive language models.\")\n\n    text(\"1. Random variables: tokens X_1, ..., X_T\")\n    text(\"2. Edges from all previous tokens to current token (X_1, ... X_{t-1} to X_t)\")\n    text(\"3. Local conditional distribution (Transformer): p(x_t | x_1, ..., x_{t-1})\")\n    text(\"4. Joint distribution: P(X_1, ..., X_T) = \u03a0_t p(x_t | x_1, ..., x_{t-1})\")\n\n    text(\"Typically, you just sample forward using a language model (prompt \u2192 response)\")\n    text(\"X_1, X_2, X_3 \u2192 X_4, X_5, X_6\")\n\n    text(\"What would doing probabilistic inference mean?\")\n    text(\"X_4, X_5, X_6 \u2192 X_1, X_2, X_3\")\n    text(\"Application: jailbreaking language models \"), link(\"https://arxiv.org/abs/2502.01236\")\n    text(\"Given a particular response (e.g., \\\"Sure, here's how you make a bomb\\\")\")\n    text(\"...find prompts that likely generated it.\")\n\n\ndef Bernoulli(prob: float) -> int:\n    \"\"\"Return 1 with probability `prob` and 0 with probability `1 - prob`.\"\"\"\n    return np.random.choice([0, 1], p=[1 - prob, prob])\n\n\ndef introduce_rejection_sampling():\n    text(\"So far: we have defined Bayesian networks via writing down local conditional distributions.\")\n    text(\"Now: we will define them via **probabilistic programs**.\")\n    set_random_seed(3)\n\n    text(\"Let's revisit our old alarm example.\")\n    sample = alarm()  # @inspect sample\n    sample = alarm()  # @inspect sample @stepover\n    sample = alarm()  # @inspect sample @stepover\n    sample = alarm()  # @inspect sample @stepover\n    sample = alarm()  # @inspect sample @stepover\n    sample = alarm()  # @inspect sample @stepover\n    sample = alarm()  # @inspect sample @stepover\n    sample = alarm()  # @inspect sample @stepover\n    sample = alarm()  # @inspect sample @stepover\n    sample = alarm()  # @inspect sample @stepover\n\n    text(\"Now let's do probabilistic inference.\")\n    text(\"Example: P(B | A = 1)\")\n\n    text(\"Writing down a distribution in a program\")\n    text(\"...gives us a natural way to approximately do probabilistic inference\")\n    text(\"...**rejection sampling**!\")\n\n    text(\"Key idea:\")\n    text(\"- Draw a ton of samples\")\n    text(\"- Select the samples that match the evidence\")\n    text(\"- Record the query\")\n\n    text(\"Note: we generalize evidence (e.g., A = 1) and query (B) to \")\n    query = lambda sample: sample[\"B\"]\n    evidence = lambda sample: sample[\"A\"] == 1\n    result = rejection_sampling(alarm, query, evidence, num_samples=10)  # @inspect result\n    result = rejection_sampling(alarm, query, evidence, num_samples=1000)  # @inspect result @stepover\n\n    text(\"Downside: if evidence is rare, this is very inefficient\")\n    text(\"But as number of samples increases to infinity, this converges to the true probability!\")\n\n    text(\"**Medical diagnosis**\")\n    text(\"Example: cold given cough? P(C | H = 1)\")\n    sample = medical_diagnosis()  # @inspect sample\n    query = lambda sample: sample[\"C\"]\n    evidence = lambda sample: sample[\"H\"] == 1\n    result = rejection_sampling(medical_diagnosis, query, evidence, num_samples=200)  # @inspect result @stepover\n\n    text(\"**Hidden Markov models for object tracking**\")\n    image(\"images/hmm.png\", width=400)\n    text(\"Example: where is object at time 3 given sensor reading at time 5? P(H_3 | E_5 = 2)\")\n    sample = hidden_markov_model()\n    query = lambda sample: sample[\"H\"][2]\n    evidence = lambda sample: sample[\"E\"][4] == 2\n    result = rejection_sampling(hidden_markov_model, query, evidence, num_samples=200)  # @inspect result @stepover\n\n    text(\"Summary:\")\n    text(\"- Probabilistic programming: programs as representations of joint distributions\")\n    text(\"- Rejection sampling: approximate inference by drawing samples (very flexible and very slow)\")\n\n\ndef alarm():\n    B = Bernoulli(0.05)  # Burglary @stepover @inspect B\n    E = Bernoulli(0.05)  # Earthquake @stepover @inspect E\n    A = B or E           # Alarm @inspect A\n    return {\"B\": B, \"E\": E, \"A\": A}\n\n\ndef medical_diagnosis():\n    C = Bernoulli(0.1)                      # Cold @stepover @inspect C\n    A = Bernoulli(0.2)                      # Allergies @stepover @inspect A\n    H = Bernoulli(0.9 if C or A else 0.1)   # Cough @stepover @inspect H\n    I = Bernoulli(0.9 if A else 0.1)        # Itchy eyes @stepover @inspect I\n    return {\"C\": C, \"A\": A, \"H\": H, \"I\": I}\n\n\ndef hidden_markov_model():\n    \"\"\"\n    This is a simple hidden Markov model.\n    The hidden variables are the positions of the objects (H_1, ..., H_T).\n    The observed variables are the sensor readings (O_1, ..., O_T).\n    \"\"\"\n    num_steps = 5\n    H = [None] * num_steps  # Positions @inspect H\n    E = [None] * num_steps  # Sensor readings @inspect E\n\n    for t in range(num_steps):\n        H[t] = (H[t - 1] if t > 0 else 0) + Bernoulli(0.5)  # @stepover @inspect H\n        E[t] = H[t] + Bernoulli(0.5)  # @stepover @inspect E\n\n    return {\"H\": H, \"E\": E}\n\n\ndef rejection_sampling(program: Callable, query: Callable, evidence: Callable, num_samples: int) -> float:\n    \"\"\"Perform rejection sampling given:\n    - program: defines the Bayesian network, returns a sample\n    - query: sample -> value of interest\n    - evidence: sample -> whether to keep the sample\n    - num_samples: number of samples to draw\n    \"\"\"\n    counts = defaultdict(int)  # Record how many of each query value we got  @inspect counts\n\n    for _ in range(num_samples):\n        sample = program()  # @inspect sample @stepover\n        if evidence(sample):  # @stepover\n            counts[query(sample)] += 1  # @stepover @inspect counts\n\n    # Normalize counts to obtain probabilities\n    total_count = sum(counts.values())  # @inspect total_count\n    probs = {q: counts[q] / total_count for q in counts}  # @inspect probs\n\n    return probs\n\n\ndef discussion():\n    text(\"If you're used to thinking about classifiers, using Bayesian networks requires a shift in mindset.\")\n    image(\"images/medical-bayes.png\", width=200)\n    text(\"Example: predict cold given cough?\")\n    text(\"- Traditional machine learning: input \u2192 output\")\n    text(\"- Bayesian networks: output, hidden \u2192 input\")\n\n    text(\"Advantages of Bayesian networks:\")\n    text(\"- Handle **heterogenously** missing information, both at training and test time\")\n    text(\"- Incorporate **prior knowledge** (e.g., Mendelian inheritance, laws of physics)\")\n    text(\"- Can **interpret** all the intermediate variables\")\n    text(\"- Precursor to **causal** models (can do interventions and counterfactuals)\")\n\n\nif __name__ == \"__main__\":\n    main()"
   },
   "hidden_line_numbers": {
     "bayes.py": []
@@ -34,7 +34,8 @@
           "data": "### Lecture 12: Bayesian networks",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -51,7 +52,7 @@
       "renderings": [
         {
           "type": "link",
-          "data": null,
+          "data": "[[Autumn 2023 lecture]]",
           "style": {},
           "external_link": {
             "title": "[Autumn 2023 lecture]",
@@ -62,7 +63,8 @@
             "description": null,
             "notes": null
           },
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -118,7 +120,8 @@
           "data": "Recall the ingredients of intelligence:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -146,7 +149,8 @@
             "width": 600
           },
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -172,7 +176,8 @@
           "data": "Where we started:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -198,7 +203,8 @@
           "data": "- Machine learning: percepts \u2192 actions (predictor)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -224,7 +230,8 @@
           "data": "Last few weeks: state-based models for reasoning",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -250,7 +257,8 @@
           "data": "- Search problems: actions have deterministic outcomes",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -276,7 +284,8 @@
           "data": "- MDPs: actions have stochastic outcomes",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -302,7 +311,8 @@
           "data": "- Games: exists adversary (or unknown opponent strategy)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -328,7 +338,8 @@
           "data": "Model-free methods",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -354,7 +365,8 @@
           "data": "- We just know what actions to take and how much utility it will produce",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -380,7 +392,8 @@
           "data": "- Examples: classification, regression, SARSA, Q-learning, TD learning",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -406,7 +419,8 @@
           "data": "Model-based methods",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -432,7 +446,8 @@
           "data": "- We understand how the world works",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -458,7 +473,8 @@
           "data": "- Examples: search, value iteration (MDPs), minimax (games)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -486,7 +502,8 @@
             "width": 400
           },
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -512,7 +529,8 @@
           "data": "Model-free methods are more direct and cheaper",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -538,7 +556,8 @@
           "data": "...but model-based methods are more flexible",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -564,7 +583,8 @@
           "data": "(can change the reward function without changing the transitions).",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -590,7 +610,8 @@
           "data": "How should we represent the state of the world?",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -658,7 +679,8 @@
           "data": "Represent the state of the world by a set of variables.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -684,7 +706,8 @@
           "data": "**Random variables** (representing attributes of the world):",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -710,7 +733,8 @@
           "data": "- sunshine S \u2208 {0, 1}",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -736,7 +760,8 @@
           "data": "- rain R \u2208 {0, 1}",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -762,7 +787,8 @@
           "data": "Possible states of the world (**assignments** to random variables):",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -788,7 +814,8 @@
           "data": "- {S = 0, R = 0}: no sunshine and no rain",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -814,7 +841,8 @@
           "data": "- {S = 0, R = 1}: no sunshine and rain",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -840,7 +868,8 @@
           "data": "- {S = 1, R = 0}: sunshine and no rain",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -866,7 +895,8 @@
           "data": "- {S = 1, R = 1}: sunshine and rain",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -892,7 +922,8 @@
           "data": "**Joint distribution** (probability of each assignment):",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -918,7 +949,8 @@
           "data": "- P(S = 0, R = 0) = 0.20",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -944,7 +976,8 @@
           "data": "- P(S = 0, R = 1) = 0.08",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -970,7 +1003,8 @@
           "data": "- P(S = 1, R = 0) = 0.70",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -996,7 +1030,8 @@
           "data": "- P(S = 1, R = 1) = 0.02",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1076,7 +1111,8 @@
           "data": "**Marginalization**:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1102,7 +1138,8 @@
           "data": "- Marginalizing out a variable R means collapsing assignments that only differ in R",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1128,7 +1165,8 @@
           "data": "- P(S = 0) = P(S = 0, R = 0) + P(S = 0, R = 1) = 0.20 + 0.08 = 0.28",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1154,7 +1192,8 @@
           "data": "- P(S = 1) = P(S = 1, R = 0) + P(S = 1, R = 1) = 0.70 + 0.02 = 0.72",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1180,7 +1219,8 @@
           "data": "Probability tables are just tensors.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1206,7 +1246,8 @@
           "data": "Thus can use einops to express computations!",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1232,7 +1273,8 @@
           "data": "Recall einsum: for all s, P(S = s) = \u03a3_r P(S = s, R = r)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1302,7 +1344,8 @@
           "data": "**Conditioning**:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1328,7 +1371,8 @@
           "data": "- Conditioning on R = 1 means selecting only assignments that satisfy the condition:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1354,7 +1398,8 @@
           "data": "- P(S = 0, R = 1) = 0.08",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1380,7 +1425,8 @@
           "data": "- P(S = 1, R = 1) = 0.02",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1406,7 +1452,8 @@
           "data": "- We then compute the probability of the evidence:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1432,7 +1479,8 @@
           "data": "- P(R = 1) = P(S = 0, R = 1) + P(S = 1, R = 1) = 0.08 + 0.02 = 0.1",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1458,7 +1506,8 @@
           "data": "- Then divide by this probability:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1484,7 +1533,8 @@
           "data": "- P(S = 0 | R = 1) = P(S = 0, R = 1) / P(R = 1) = 0.08 / 0.1 = 0.8",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1510,7 +1560,8 @@
           "data": "- P(S = 1 | R = 1) = P(S = 1, R = 1) / P(R = 1) = 0.02 / 0.1 = 0.2",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1536,7 +1587,8 @@
           "data": "We can also use einops to compute the conditional distribution,",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1562,7 +1614,8 @@
           "data": "...but there are a few steps.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1723,7 +1776,8 @@
           "data": "Summary:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1749,7 +1803,8 @@
           "data": "- Joint distribution: source of truth",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1775,7 +1830,8 @@
           "data": "- Marginalization: collapse assignments that differ only in marginalized variables",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1801,7 +1857,8 @@
           "data": "- Conditioning: select via evidence, compute probability of evidence, then divide",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1827,7 +1884,8 @@
           "data": "- Probability tables are tensors, so we can use einops to express computations!",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1895,7 +1953,8 @@
           "data": "Random variables:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1921,7 +1980,8 @@
           "data": "- S \u2208 {0, 1} (sunshine)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1947,7 +2007,8 @@
           "data": "- R \u2208 {0, 1} (rain)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1973,7 +2034,8 @@
           "data": "- T \u2208 {0, 1} (traffic)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1999,7 +2061,8 @@
           "data": "- A \u2208 {0, 1} (autumn)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2025,7 +2088,8 @@
           "data": "Joint distribution (source of truth):",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2051,7 +2115,8 @@
           "data": "- P(S, R, T, A)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2077,7 +2142,8 @@
           "data": "What is the probability of rain given that there's traffic and its autumn?",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2103,7 +2169,8 @@
           "data": "**Probabilistic inference**: answer questions on the joint distribution",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2129,7 +2196,8 @@
           "data": "Analogy: executing SQL queries on a database",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2155,7 +2223,8 @@
           "data": "A question includes:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2181,7 +2250,8 @@
           "data": "- **Condition** on evidence: [T = 1, A = 1] (traffic and autumn)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2207,7 +2277,8 @@
           "data": "- Interested in **query**: R (rain?)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2233,7 +2304,8 @@
           "data": "In probability notation:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2259,7 +2331,8 @@
           "data": "- P(R | T = 1, A = 1)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2285,7 +2358,8 @@
           "data": "Note: all variables not in evidence/query are marginalized out (S)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2353,7 +2427,8 @@
           "data": "\ud83d\udea8 Problem: earthquakes, burglaries, and alarms",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2379,7 +2454,8 @@
           "data": "- Earthquakes and burglaries are independent events (probability \u03b5 = 0.05)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2405,7 +2481,8 @@
           "data": "- Either will cause an alarm to go off.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2431,7 +2508,8 @@
           "data": "- Suppose you get an alarm.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2457,7 +2535,8 @@
           "data": "- How does hearing that there's an earthquake change the probability of a burglary?",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2483,7 +2562,8 @@
           "data": "Joint distribution: P(E, B, A)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2509,7 +2589,8 @@
           "data": "Which is larger?",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2535,7 +2616,8 @@
           "data": "- P(B = 1 | A = 1): burglary given alarm only",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2561,7 +2643,8 @@
           "data": "- P(B = 1 | A = 1, E = 1): burglary given alarm and earthquake",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2587,7 +2670,8 @@
           "data": "To solve this problem, let's use Bayesian networks.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2613,7 +2697,8 @@
           "data": "We need to do two things:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2639,7 +2724,8 @@
           "data": "- Construct a joint distribution",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2665,7 +2751,8 @@
           "data": "- Perform probabilistic inference",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2691,7 +2778,8 @@
           "data": "### Constructing the joint distribution",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2717,7 +2805,8 @@
           "data": "Let's start by constructing the joint distribution.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2743,7 +2832,8 @@
           "data": "We could write down a huge table directly,",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2769,7 +2859,8 @@
           "data": "...but let's do it in a more intuitive way.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2795,7 +2886,8 @@
           "data": "There are 4 steps:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2821,7 +2913,8 @@
           "data": "1. Define the variables (B, E, A)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2847,7 +2940,8 @@
           "data": "2. Connect the variables with directed edges (B \u2192 A, E \u2192 A)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2873,7 +2967,8 @@
           "data": "3. Write down local conditional probabilities for each variable (e.g., p(e | b, a))",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2899,7 +2994,8 @@
           "data": "4. Define the joint distribution as the product of the local conditional probabilities",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2925,7 +3021,8 @@
           "data": "**Step 1**: Define the variables (B, E, A)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2951,7 +3048,8 @@
           "data": "**Step 2**: Connect the variables with directed edges suggesting direct influence (B \u2192 A, E \u2192 A)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2979,7 +3077,8 @@
             "width": 300
           },
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3005,7 +3104,8 @@
           "data": "**Step 3**: Write down local conditional probabilities for each variable (e.g., p(e | b, a))",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3214,7 +3314,8 @@
           "data": "**Step 4**: Define the joint distribution as the product of the local conditional probabilities",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3240,7 +3341,8 @@
           "data": "For all b, e, a: P(B = b, E = e, A = a) = p(b) p(e) p(a | b, e)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3349,7 +3451,8 @@
           "data": "### Probabilistic inference",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3375,7 +3478,8 @@
           "data": "Now given the joint distribution, we can answer any query we want.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3401,7 +3505,8 @@
           "data": "**P(B = 1)**: burglary given no information",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3468,7 +3573,8 @@
           "data": "Note: marginal P(B = b) matches the local conditional p(b) (low chance of burglary).",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3494,7 +3600,8 @@
           "data": "**P(B = 1 | A = 1)**: burglary given alarm only",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3520,7 +3627,8 @@
           "data": "First select based on the evidence (A = 1):",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3605,7 +3713,8 @@
           "data": "Compute probability of evidence (A = 1):",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3666,7 +3775,8 @@
           "data": "Divide by probability of evidence to get the conditional distribution:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3733,7 +3843,8 @@
           "data": "Note: burglary is much more likely!",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3759,7 +3870,8 @@
           "data": "**P(B = 1 | A = 1, E = 1)**: burglary given alarm and earthquake",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3785,7 +3897,8 @@
           "data": "Select based on the evidence:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3888,7 +4001,8 @@
           "data": "Compute probability of evidence (A = 1, E = 1):",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3949,7 +4063,8 @@
           "data": "Divide by probability of evidence to get the conditional distribution:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -4016,7 +4131,8 @@
           "data": "Note: burglary is again unlikely.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -4042,7 +4158,8 @@
           "data": "Intuition: why did the alarm sound?  Earthquake explains away the alarm.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -4068,7 +4185,8 @@
           "data": "Key idea: **explaining away**",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -4096,7 +4214,8 @@
             "width": 300
           },
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -4122,7 +4241,8 @@
           "data": "- Suppose you have two causes (B, E) positively influencing an effect (A).",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -4148,7 +4268,8 @@
           "data": "- Condition on the effect (A = 1).",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -4174,7 +4295,8 @@
           "data": "- Further conditioning on one cause (E = 1) reduces the probability of the other cause (B = 1).",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -4200,7 +4322,8 @@
           "data": "- In symbols: P(B = 1 | A = 1, E = 1) < P(B = 1 | A = 1).",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -4226,7 +4349,8 @@
           "data": "- Important: even if causes are independent!",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -4252,7 +4376,8 @@
           "data": "Reminder about notation:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -4278,7 +4403,8 @@
           "data": "- Lowercase names (e): particular values",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -4304,7 +4430,8 @@
           "data": "- Uppercase names (E): random variable",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -4330,7 +4457,8 @@
           "data": "- Lowercase p(e): local conditional probabilities (by definition)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -4356,7 +4484,8 @@
           "data": "- Uppercase P(E): marginals/conditionals derived from the joint distribution (by laws of probability)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -4382,7 +4511,8 @@
           "data": "- Uppercase P(E = e): probability (number) from a marginal/conditional distribution",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -4408,7 +4538,8 @@
           "data": "Summary:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -4434,7 +4565,8 @@
           "data": "- Define joint distribution: 4 steps (variables, edges, local conditional probabilities, joint distribution)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -4460,7 +4592,8 @@
           "data": "- Perform probabilistic inference: select based on evidence, compute probability of evidence, then divide",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -4486,7 +4619,8 @@
           "data": "- Explaining away: qualitative reasoning pattern that follows from the math",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -4554,7 +4688,8 @@
           "data": "\ud83e\ude7a Problem: medical diagnosis",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -4580,7 +4715,8 @@
           "data": "- You are coughing and have itchy eyes.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -4606,7 +4742,8 @@
           "data": "- Do you have a cold?",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -4632,7 +4769,8 @@
           "data": "Let's model this problem using a Bayesian network.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -4658,7 +4796,8 @@
           "data": "**Step 1**: Define the random variables",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -4684,7 +4823,8 @@
           "data": "- Cold C \u2208 {0, 1}",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -4710,7 +4850,8 @@
           "data": "- Allergies A \u2208 {0, 1}",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -4736,7 +4877,8 @@
           "data": "- Cough H \u2208 {0, 1}",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -4762,7 +4904,8 @@
           "data": "- Itchy eyes I \u2208 {0, 1}",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -4788,7 +4931,8 @@
           "data": "**Step 2**: Connect the variables with directed edges",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -4816,7 +4960,8 @@
             "width": 300
           },
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -4842,7 +4987,8 @@
           "data": "**Step 3**: Write down local conditional probabilities for each variable",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -5087,7 +5233,8 @@
           "data": "**Step 4**: Define the joint distribution as the product of the local conditional probabilities",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -5266,7 +5413,8 @@
           "data": "Now we can answer any question we want.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -5292,7 +5440,8 @@
           "data": "**P(C = 1 | H = 1)**: cold given cough?",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -5318,7 +5467,8 @@
           "data": "Select based on the evidence, marginalizing out non-query/evidence:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -5404,7 +5554,8 @@
           "data": "Compute probability of evidence (H = 1):",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -5465,7 +5616,8 @@
           "data": "Divide by probability of evidence to get the conditional distribution:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -5665,7 +5817,8 @@
           "data": "**P(C = 1 | H = 1, I = 1)**: cold given cough and itchy eyes?",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -5691,7 +5844,8 @@
           "data": "Select based on the evidence, marginalizing out non-query/evidence:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -5795,7 +5949,8 @@
           "data": "Compute probability of evidence (H = 1, I = 1):",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -5856,7 +6011,8 @@
           "data": "Divide by probability of evidence to get the conditional distribution:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -5923,7 +6079,8 @@
           "data": "Note: the probability of cold is lower if you add itchy eyes!",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -5992,7 +6149,8 @@
           "data": "This is another more subtle example of explaining away!",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -6020,7 +6178,8 @@
             "width": 200
           },
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -6046,7 +6205,8 @@
           "data": "- Effect (H) has two causes (C, A).",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -6072,7 +6232,8 @@
           "data": "- Itchy eyes (I) is not a cause of the effect (H)...",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -6098,7 +6259,8 @@
           "data": "- But observing itchy eyes (I = 1) increases the probability of A, which is a cause!",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -6124,7 +6286,8 @@
           "data": "Summary:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -6150,7 +6313,8 @@
           "data": "- Same recipe (joint distribution + probabilistic inference)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -6176,7 +6340,8 @@
           "data": "- Explaining away shows up in more complex ways",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -6202,7 +6367,8 @@
           "data": "- In general, observing evidence increases/decreases the probability of other nodes, propagating through the network.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -6270,7 +6436,8 @@
           "data": "We have seen two examples of Bayesian networks:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -6296,7 +6463,8 @@
           "data": "Alarm",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -6324,7 +6492,8 @@
             "width": 100
           },
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -6350,7 +6519,8 @@
           "data": "Medical diagnosis",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -6378,7 +6548,8 @@
             "width": 100
           },
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -6404,7 +6575,8 @@
           "data": "Now let's introduce the general case.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -6430,7 +6602,8 @@
           "data": "1. Define a set of random variables X = (X_1, ..., X_n).",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -6456,7 +6629,8 @@
           "data": "2. Define any directed acyclic graph (DAG) over the variables.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -6482,7 +6656,8 @@
           "data": "3. For each node X_i, define a local conditional distribution p(x_i | parents(x_i)).",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -6508,7 +6683,8 @@
           "data": "4. Define the joint distribution: P(X_1, ..., X_n) = \u03a0_i p(x_i | parents(x_i))",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -6534,7 +6710,8 @@
           "data": "Reminders:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -6560,7 +6737,8 @@
           "data": "- One local conditional distribution per node (not edge!)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -6586,7 +6764,8 @@
           "data": "- Local conditional distribution depends on *all* parents at once",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -6612,7 +6791,8 @@
           "data": "- Difference between p and P",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -6638,7 +6818,8 @@
           "data": "**Probabilistic inference**",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -6664,7 +6845,8 @@
           "data": "Given:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -6690,7 +6872,8 @@
           "data": "- Bayesian network P(X_1, ..., X_n)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -6716,7 +6899,8 @@
           "data": "- Evidence E = e where E \u2286 X (e.g., E = (X_3, X_7), e = (0, 1))",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -6742,7 +6926,8 @@
           "data": "- Query Q \u2286 X (e.g., Q = (X_2, X_4)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -6768,7 +6953,8 @@
           "data": "Output:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -6794,7 +6980,8 @@
           "data": "- P(Q | E = e)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -6862,7 +7049,8 @@
           "data": "Lots of things are secretely Bayesian networks.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -6888,7 +7076,8 @@
           "data": "For example, autoregressive language models.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -6914,7 +7103,8 @@
           "data": "1. Random variables: tokens X_1, ..., X_T",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -6940,7 +7130,8 @@
           "data": "2. Edges from all previous tokens to current token (X_1, ... X_{t-1} to X_t)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -6966,7 +7157,8 @@
           "data": "3. Local conditional distribution (Transformer): p(x_t | x_1, ..., x_{t-1})",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -6992,7 +7184,8 @@
           "data": "4. Joint distribution: P(X_1, ..., X_T) = \u03a0_t p(x_t | x_1, ..., x_{t-1})",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -7018,7 +7211,8 @@
           "data": "Typically, you just sample forward using a language model (prompt \u2192 response)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -7044,7 +7238,8 @@
           "data": "X_1, X_2, X_3 \u2192 X_4, X_5, X_6",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -7070,7 +7265,8 @@
           "data": "What would doing probabilistic inference mean?",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -7096,7 +7292,8 @@
           "data": "X_4, X_5, X_6 \u2192 X_1, X_2, X_3",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -7122,11 +7319,12 @@
           "data": "Application: jailbreaking language models ",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         },
         {
           "type": "link",
-          "data": null,
+          "data": "[Li+ 2025]",
           "style": {},
           "external_link": {
             "title": "Eliciting Language Model Behaviors with Investigator Agents",
@@ -7140,12 +7338,13 @@
               "Jacob Steinhardt"
             ],
             "organization": null,
-            "date": "2025-02-03T10:52:44Z",
+            "date": "2025-02-03",
             "url": "https://arxiv.org/abs/2502.01236",
             "description": "Language models exhibit complex, diverse behaviors when prompted with free-form text, making it difficult to characterize the space of possible outputs. We study the problem of behavior elicitation, where the goal is to search for prompts that induce specific target behaviors (e.g., hallucinations or harmful responses) from a target language model. To navigate the exponentially large space of possible prompts, we train investigator models to map randomly-chosen target behaviors to a diverse distribution of outputs that elicit them, similar to amortized Bayesian inference. We do this through supervised fine-tuning, reinforcement learning via DPO, and a novel Frank-Wolfe training objective to iteratively discover diverse prompting strategies. Our investigator models surface a variety of effective and human-interpretable prompts leading to jailbreaks, hallucinations, and open-ended aberrant behaviors, obtaining a 100% attack success rate on a subset of AdvBench (Harmful Behaviors) and an 85% hallucination rate.",
             "notes": null
           },
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -7171,7 +7370,8 @@
           "data": "Given a particular response (e.g., \"Sure, here's how you make a bomb\")",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -7197,7 +7397,8 @@
           "data": "...find prompts that likely generated it.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -7265,7 +7466,8 @@
           "data": "So far: we have defined Bayesian networks via writing down local conditional distributions.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -7291,7 +7493,8 @@
           "data": "Now: we will define them via **probabilistic programs**.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -7335,7 +7538,8 @@
           "data": "Let's revisit our old alarm example.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -7960,7 +8164,8 @@
           "data": "Now let's do probabilistic inference.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -7986,7 +8191,8 @@
           "data": "Example: P(B | A = 1)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -8012,7 +8218,8 @@
           "data": "Writing down a distribution in a program",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -8038,7 +8245,8 @@
           "data": "...gives us a natural way to approximately do probabilistic inference",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -8064,7 +8272,8 @@
           "data": "...**rejection sampling**!",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -8090,7 +8299,8 @@
           "data": "Key idea:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -8116,7 +8326,8 @@
           "data": "- Draw a ton of samples",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -8142,7 +8353,8 @@
           "data": "- Select the samples that match the evidence",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -8168,7 +8380,8 @@
           "data": "- Record the query",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -8194,7 +8407,8 @@
           "data": "Note: we generalize evidence (e.g., A = 1) and query (B) to ",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -9588,7 +9802,8 @@
           "data": "Downside: if evidence is rare, this is very inefficient",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -9614,7 +9829,8 @@
           "data": "But as number of samples increases to infinity, this converges to the true probability!",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -9640,7 +9856,8 @@
           "data": "**Medical diagnosis**",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -9666,7 +9883,8 @@
           "data": "Example: cold given cough? P(C | H = 1)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -10006,7 +10224,8 @@
           "data": "**Hidden Markov models for object tracking**",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -10034,7 +10253,8 @@
             "width": 400
           },
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -10060,7 +10280,8 @@
           "data": "Example: where is object at time 3 given sensor reading at time 5? P(H_3 | E_5 = 2)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -11162,7 +11383,8 @@
           "data": "Summary:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -11188,7 +11410,8 @@
           "data": "- Probabilistic programming: programs as representations of joint distributions",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -11214,7 +11437,8 @@
           "data": "- Rejection sampling: approximate inference by drawing samples (very flexible and very slow)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -11282,7 +11506,8 @@
           "data": "If you're used to thinking about classifiers, using Bayesian networks requires a shift in mindset.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -11310,7 +11535,8 @@
             "width": 200
           },
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -11336,7 +11562,8 @@
           "data": "Example: predict cold given cough?",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -11362,7 +11589,8 @@
           "data": "- Traditional machine learning: input \u2192 output",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -11388,7 +11616,8 @@
           "data": "- Bayesian networks: output, hidden \u2192 input",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -11414,7 +11643,8 @@
           "data": "Advantages of Bayesian networks:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -11440,7 +11670,8 @@
           "data": "- Handle **heterogenously** missing information, both at training and test time",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -11466,7 +11697,8 @@
           "data": "- Incorporate **prior knowledge** (e.g., Mendelian inheritance, laws of physics)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -11492,7 +11724,8 @@
           "data": "- Can **interpret** all the intermediate variables",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -11518,7 +11751,8 @@
           "data": "- Precursor to **causal** models (can do interventions and counterfactuals)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -11550,7 +11784,8 @@
           "data": "Summary",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -11570,7 +11805,8 @@
           "data": "- Probability: joint distributions, marginalization, conditioning",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -11590,7 +11826,8 @@
           "data": "- Probability tables are tensors, can use einsum to express computations",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -11610,7 +11847,8 @@
           "data": "- Bayesian networks: directed acyclic graphs of random variables",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -11630,7 +11868,8 @@
           "data": "- Probabilistic inference: ask questions P(query | evidence)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -11650,7 +11889,8 @@
           "data": "- Probabilistic programming: programs as representations of joint distributions",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -11670,7 +11910,8 @@
           "data": "- Rejection sampling: approximate inference by drawing samples",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -11690,7 +11931,8 @@
           "data": "Next time: better probabilistic inference!",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     }

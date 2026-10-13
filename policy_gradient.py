@@ -122,7 +122,7 @@ def function_approximation():
 
     text("For the agent, use a parameterized Q-value function (but for simplicity, simulate the tabular setting):")
     policy = partial(walk_tram_policy, mdp.num_locs)
-    rl = ParameterizedQLearning(num_locs=mdp.num_locs, actions=["walk", "tram"],
+    rl = ParameterizedQLearning(num_locs=mdp.num_locs, actions=["walk", "tram"], valid_actions=mdp.actions,
                        exploration_policy=policy, epsilon=0.4, discount=1, learning_rate=0.1)
 
     text("Define feature vector φ(s, a) for each state and action:")
@@ -151,7 +151,7 @@ def function_approximation():
     value = simulate(mdp, rl, num_trials=100)  # @inspect value rl @stepover
 
     text("We can extract the current optimal policy π_θ(s) of the agent:")
-    states = range(1, mdp.num_locs + 1)
+    states = [state for state in range(1, mdp.num_locs + 1) if not mdp.is_end(state)]  # No actions in end states
     pi = {state: rl.pi(state) for state in states}  # @inspect pi @stepover
     text("And the corresponding values V_θ(s) = Q_θ(s, π_θ(s)):")
     V = {state: rl.Q(state, pi[state]) for state in states}  # @inspect V @stepover
@@ -169,10 +169,11 @@ def function_approximation():
 
 
 class ParameterizedQLearning(RLAlgorithm):
-    def __init__(self, num_locs: int, actions: list[str],
+    def __init__(self, num_locs: int, actions: list[str], valid_actions: Callable[[Any], list[str]],
                  exploration_policy: Policy, epsilon: float, discount: float, learning_rate: float):
         self.num_locs = num_locs
-        self.actions = actions
+        self.actions = actions  # All actions
+        self.valid_actions = valid_actions  # The actions available in a given state (told by the environment)
         self.num_features = num_locs * len(actions)
 
         self.exploration_policy = exploration_policy
@@ -204,8 +205,8 @@ class ParameterizedQLearning(RLAlgorithm):
 
     def pi(self, state: int) -> str:
         """Compute the policy for a given state."""
-        # Compute Q-values for all actions
-        q_values = {action: self.Q(state, action) for action in self.actions}  # @inspect q_values @stepover
+        # Compute Q-values for all valid actions
+        q_values = {action: self.Q(state, action) for action in self.valid_actions(state)}  # @inspect q_values @stepover
 
         # Choose the action with the highest Q-value
         action = max(q_values.keys(), key=lambda k: q_values[k].item())  # @inspect action
@@ -347,7 +348,7 @@ def policy_gradient_math():
 def policy_gradient_implementation():
     mdp = FlakyTramMDP(num_locs=6, failure_prob=0.1)
     set_random_seed(1)
-    rl = Reinforce(num_locs=mdp.num_locs, actions=["walk", "tram"], discount=1, learning_rate=0.01)
+    rl = Reinforce(num_locs=mdp.num_locs, actions=["walk", "tram"], valid_actions=mdp.actions, discount=1, learning_rate=0.01)
     text("Note that we don't need an explicit exploration policy")
     text("...because the stochastic policy should give us exploration.")
 
@@ -362,7 +363,7 @@ def policy_gradient_implementation():
     text("Now let's run this agent for multiple rollouts:")
     value = simulate(mdp, rl, num_trials=50)  # @inspect value rl @stepover
     text("We can extract the current optimal policy π_θ(s) of the agent:")
-    states = range(1, mdp.num_locs + 1)
+    states = [state for state in range(1, mdp.num_locs + 1) if not mdp.is_end(state)]  # No actions in end states
     pi = {state: rl.pi(state) for state in states}  # @inspect pi @stepover
 
     text("Summary:")
@@ -371,9 +372,10 @@ def policy_gradient_implementation():
 
 
 class Reinforce(RLAlgorithm):
-    def __init__(self, num_locs: int, actions: list[str], discount: float, learning_rate: float):
+    def __init__(self, num_locs: int, actions: list[str], valid_actions: Callable[[Any], list[str]], discount: float, learning_rate: float):
         self.num_locs = num_locs
-        self.actions = actions
+        self.actions = actions  # All actions
+        self.valid_actions = valid_actions  # The actions available in a given state (told by the environment)
         self.discount = discount
         self.learning_rate = learning_rate
         self.model = nn.Linear(self.num_locs, len(actions))
@@ -388,10 +390,15 @@ class Reinforce(RLAlgorithm):
         index = state - 1
         return one_hot(index, self.num_locs)
 
+    def mask_invalid_actions(self, state: int, logits: torch.Tensor) -> torch.Tensor:
+        """Set the logits of actions that aren't valid in `state` to a large negative number (so they get probability 0)."""
+        valid = torch.tensor([action in self.valid_actions(state) for action in self.actions])
+        return logits.masked_fill(~valid, -1e9)
+
     def pi(self, state: int) -> dict[str, float]:
         """Return a distribution over actions."""
         phi = self.phi(state)
-        logits = self.model(phi)
+        logits = self.mask_invalid_actions(state, self.model(phi))
         probs = torch.softmax(logits, dim=0)
         return dict(zip(self.actions, probs.tolist()))
 
@@ -400,6 +407,8 @@ class Reinforce(RLAlgorithm):
         # Compute logits under the model
         phi = self.phi(state)  # @inspect phi @stepover
         logits = self.model(phi)  # @inspect logits
+        # Only consider valid actions
+        logits = self.mask_invalid_actions(state, logits)  # @inspect logits @stepover
 
         # Sample from the distribution given by the logits
         probs = torch.softmax(logits, dim=0)  # @inspect probs
@@ -427,7 +436,7 @@ class Reinforce(RLAlgorithm):
 
                 # Compute cross-entropy loss for state -> action
                 phi = self.phi(state)  # @inspect phi @stepover
-                logits = self.model(phi) # @inspect logits
+                logits = self.mask_invalid_actions(state, self.model(phi))  # @inspect logits @stepover
                 cross_entropy = nn.CrossEntropyLoss()
                 target = one_hot(self.actions.index(action), len(self.actions))  # @inspect target
                 loss += self.utility * cross_entropy(logits, target)  # @inspect loss

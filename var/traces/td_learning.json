@@ -1,6 +1,6 @@
 {
   "files": {
-    "td_learning.py": "from functools import partial\nfrom typing import Any\nfrom edtrace import text, image, link\nimport numpy as np\nfrom reinforcement_learning import SARSA, RLAlgorithm, walk_tram_policy\nfrom mdp import MDP, Policy, FlakyTramMDP, get_action_successors\nfrom collections import defaultdict\nfrom util import set_random_seed\n\n\ndef main():\n    text(\"Last time: two-player zero-sum games\")\n    review_games()\n    text(\"Today: use reinforcement learning (TD learning) to learn the evaluation function!\")\n\n    td_learning_motivation()\n    td_learning()\n    td_learning_for_games()\n    historical_examples()\n\n    text(\"Next:\")\n    text(\"- Turn-based \u2192 simultaneous games\")\n    text(\"- Zero-sum \u2192 non-zero-sum\")\n\n    \ndef review_games():\n    text(\"Principle: minimax (also expectimax, expectiminimax)\")\n    image(\"images/minimax.png\", width=500)\n    text(\"Speeding up minimax\")\n    text(\"- Alpha-beta pruning (exact)\")\n    text(\"- Evaluation functions (approximate)\")\n    image(\"images/eval-functions-chess.png\", width=500)\n    text(\"This was manual heuristics...can we learn the evaluation function?\")\n\n\ndef td_learning_motivation():\n    text(\"V_\u03c0(s): value (expected utility) of following policy \u03c0 from state s\")\n    text(\"Q_\u03c0(s, a): value (expected utility) of taking action a in state s, and then following policy \u03c0\")\n\n    text(\"Recall SARSA from reinforcement learning:\")\n    text(\"- On-policy: estimating Q-values of the current policy Q_\u03c0(s, a)\")\n    text(\"- Bootstrapping: target is immediate reward + estimated future reward\")\n    image(\"images/sarsa-algorithm.png\", width=500)\n    rl = SARSA(exploration_policy=partial(walk_tram_policy, 6), epsilon=0.4, discount=1, learning_rate=0.1)\n    rl.get_action(state=1)\n    rl.incorporate_feedback(state=1, action=\"walk\", reward=-1, next_state=2, is_end=False)\n    rl.get_action(state=2)\n    rl.incorporate_feedback(state=2, action=\"walk\", reward=-1, next_state=3, is_end=False)\n    rl.get_action(state=3)\n    rl.incorporate_feedback(state=3, action=\"tram\", reward=-2, next_state=6, is_end=True)\n    text(\"**Policy improvement**: \u03c0_new(s) = argmax_a Q_\u03c0(s, a)\")\n    text(\"In other words, from Q-values, you can read out a (myopically optimal) policy.\")\n\n    text(\"Recall policy evaluation from MDPs:\")\n    text(\"- V_\u03c0(s) = Q_\u03c0(s, \u03c0(s))\")\n    text(\"- Q_\u03c0(s, a) = \u03a3_s' T(s, a, s') (R(s, a, s') + \u03b3 V_\u03c0(s'))\")\n    text(\"Question: if you only knew V_\u03c0(s), could you compute a policy from V_\u03c0(s)?\")\n    text(\"Answer: \u03c0_new(s) = argmax_a \u03a3_s' T(s, a, s') (R(s, a, s') + \u03b3 V_\u03c0(s'))\")\n    text(\"Note this requires knowledge of the MDP (transitions T, rewards R)!\")\n\n    text(\"However, for games, we do know T and R!\")\n    text(\"Because it's deterministic, it simplifies to:\")\n    text(\"\u03c0_new(s) = argmax_a V_\u03c0(Succ(s, a))\")\n\n    text(\"Wait, if we already know the MDP, why don't we just solve the MDP via value iteration?\")\n    text(\"Because it's too expensive (number of states is exponential)!\")\n\n    text(\"So we'll use reinforcement learning...\")\n    text(\"...not due to unknown MDP (original motivation),\")\n    text(\"...but because the number of states is exponential!\")\n    \n\ndef td_learning():\n    link(\"https://stanford-cs221.github.io/autumn2023/modules/module.html#include=games%2Ftd-learning.js&mode=print6pp\", title=\"[Autumn 2023 lecture]\")\n\n    text(\"TD learning : V_\u03c0 :: SARSA : Q_\u03c0\")\n\n    text(\"SARSA: Q_\u03c0(s, a) tells us how good each action is\")\n    text(\"TD learning: V_\u03c0(s) tells us how good each state is (since action \u2192 next state is known)\")\n\n    text(\"Assume function approximation: V_\u03c0(s) = V(s; w) for some weights w\")\n    text(\"In deep reinforcement learning, V_\u03c0(s) is called a value network.\")\n\n    text(\"Basic idea:\")\n    text(\"- Get piece of experience (s, a, r, s')\")\n    text(\"- Model predicts V(s; w)\")\n    text(\"- Target (bootstrapping): r + \u03b3 * V(s'; w)\")\n    text(\"- Define squared loss: L(w) = (V(s; w) - (r + \u03b3 * V(s'; w))) ^ 2\")\n    text(\"- Take a gradient step: w = w - \u03b1 * \u2207_w L(w)\")\n\n    image(\"images/td-algorithm.png\", width=500)\n\n    text(\"Let's implement TD learning for the flaky tram MDP:\")\n    set_random_seed(1)\n    mdp = FlakyTramMDP(num_locs=6, failure_prob=0.1)\n    policy = partial(walk_tram_policy, 6)\n    # Note that TDLearning needs knowledge of the MDP to compute the policy (for policy improvement)\n    rl = TDLearning(mdp=mdp, exploration_policy=policy, epsilon=0.2, discount=1, learning_rate=0.1)  # @stepover\n    rl.get_action(state=1)\n    rl.incorporate_feedback(state=1, action=\"walk\", reward=-1, next_state=2, is_end=False)\n    rl.get_action(state=2)  # @stepover\n    rl.incorporate_feedback(state=2, action=\"walk\", reward=-1, next_state=3, is_end=False)  # @stepover\n    rl.get_action(state=3)  # @stepover\n    rl.incorporate_feedback(state=3, action=\"tram\", reward=-2, next_state=6, is_end=True)  # @stepover\n\n    text(\"Summary:\")\n    text(\"- TD learning estimates V_\u03c0(s) from experience (s, a, r, s')\")\n    text(\"- On policy (we're not considering other actions)\")\n    text(\"- Uses bootstrapping\")\n\n\nclass TDLearning(RLAlgorithm):\n    \"\"\"Implements the TD learning algorithm.\"\"\"\n    def __init__(self, mdp: MDP, exploration_policy: Policy, epsilon: float, discount: float, learning_rate: float):\n        self.mdp = mdp\n        self.exploration_policy = exploration_policy\n        self.epsilon = epsilon\n        self.discount = discount\n        self.learning_rate = learning_rate\n        self.V = defaultdict(float)\n\n    def get_action(self, state: Any) -> Any:\n        \"\"\"Use MDP to compute Q_\u03c0(s, a) from V_\u03c0(s).\"\"\"\n        if np.random.random() < self.epsilon:\n            return self.exploration_policy(state)\n        else:\n            return self.pi(state)\n\n    def pi(self, state: Any) -> Any:\n        \"\"\"Return the policy corresponding to the current V_\u03c0(s).\"\"\"\n        # Compute Q-value for each action\n        # Note this is the only place where we use knowledge of the MDP\n        q_values = {}  # action -> Q-value  @inspect q_values\n        for action, successors in get_action_successors(self.mdp, state).items():\n            q_values[action] = sum(succ.prob * (succ.reward + self.discount * self.V[succ.state]) for succ in successors)  # @inspect q_values\n\n        # Take the action with the highest Q-value\n        action = max(q_values.keys(), key=lambda action: q_values[action])  # @inspect action\n\n        return action\n\n    def incorporate_feedback(self, state: Any, action: Any, reward: Any, next_state: Any, is_end: bool) -> None:\n        \"\"\"Update V_\u03c0(s) based on the feedback (s, a, r, s').\"\"\"\n        # Predicted\n        predicted = self.V[state]  # @inspect predicted\n\n        # Target\n        target = reward + self.discount * self.V[next_state]  # @inspect target\n\n        # Update\n        self.V[state] += self.learning_rate * (target - predicted)  # @inspect self.V\n\n\ndef td_learning_for_games():\n    text(\"TD learning works for arbitrary MDPs\")\n    text(\"Now we adapt it to games:\")\n    text(\"- Succ(s, a) captures the transition (deterministically)\")\n    text(\"- No utility until the end of the game\")\n    text(\"- Two players: agent and opponent\")\n\n    text(\"Both agent and opponent use the same value function V_\u03c0(s) (**self-play**)\")\n    text(\"...but the agent maximizes and the opponent minimizes.\")\n    text(\"- \u03c0_agent(s) = argmax_a V_\u03c0(Succ(s, a))\")\n    text(\"- \u03c0_opp(s) = argmin_a V_\u03c0(Succ(s, a))\")\n\n    text(\"**Backgammon**\")\n    text(\"Each player tries to move their pieces off the the board:\")\n    image(\"images/backgammon1.jpg\", width=300)\n    text(\"Dice determines how many places the player can move:\")\n    image(\"images/backgammon2.jpg\", width=300)\n    text(\"Other rules:\")\n    text(\"- If land on an point with 1 opponent piece, move it to the bar\")\n    text(\"- Cannot land on point with >1 opponent pieces\")\n\n    text(\"Note that this game has randomness (dice).\")\n    text(\"Roll out the policies:\")\n    text(\"\u03c0_dice \u2192 \u03c0_agent \u2192 \u03c0_dice \u2192 \u03c0_opp \u2192 \u03c0_dice \u2192 \u03c0_agent \u2192 ...\")\n    text(\"We are learning \u03c0_agent and \u03c0_opp, but \u03c0_dice is fixed.\")\n\n    text(\"Let's define the parameterized value function.\")\n    text(\"First define a feature vector for each state:\")\n    image(\"images/backgammon-features.png\", width=400)\n    text(\"Then define a linear value function: V(s; w) = \u03c6(s) * w\")\n    text(\"...or MLP value function: V(s; w) = MLP_w(\u03c6(s))\")\n\n    text(\"Then just apply TD learning!\")\n\n\ndef historical_examples():\n    text(\"### Checkers\")\n    image(\"images/checkers.jpg\", width=200)\n    text(\"Arthur Samuel's checkers program [1959]:\")\n    text(\"- Learned by playing itself repeatedly (self-play)\")\n    text(\"- Smart features, linear evaluation function, use intermediate rewards\")\n    text(\"- Used alpha-beta pruning + search heuristics\")\n    text(\"- Reach human amateur level of play\")\n    text(\"- IBM 701: 9K of memory!\")\n\n    text(\"### Backgammon\")\n    image(\"images/backgammon1.jpg\", width=200)\n    text(\"Gerald Tesauro's TD-Gammon [1992]:\")\n    text(\"- Learned weights by playing itself repeatedly (1 million times)\")\n    text(\"- Dumb features, neural network, no intermediate rewards\")\n    text(\"- Reached human expert level of play, provided new insights into opening\")\n\n    text(\"### Go\")\n    image(\"images/go.jpg\", width=200)\n    text(\"AlphaGo Zero [2017]:\")\n    text(\"- Learned by self-play (4.9 million games)\")\n    text(\"- Dumb features (stone positions), neural network, no intermediate rewards, Monte Carlo Tree Search\")\n    text(\"- Beat AlphaGo, which beat Le Sedol in 2016\")\n    text(\"- Provided new insights into the game\")\n\n\nif __name__ == \"__main__\":\n    main()"
+    "td_learning.py": "from functools import partial\nfrom typing import Any\nfrom edtrace import text, image, link\nimport numpy as np\nfrom reinforcement_learning import SARSA, RLAlgorithm, walk_tram_policy\nfrom mdp import MDP, Policy, FlakyTramMDP, get_action_successors\nfrom collections import defaultdict\nfrom util import set_random_seed\n\n\ndef main():\n    text(\"Last time: two-player zero-sum games\")\n    review_games()\n    text(\"Today: use reinforcement learning (TD learning) to learn the evaluation function!\")\n\n    td_learning_motivation()\n    td_learning()\n    td_learning_for_games()\n    historical_examples()\n\n    text(\"Next:\")\n    text(\"- Turn-based \u2192 simultaneous games\")\n    text(\"- Zero-sum \u2192 non-zero-sum\")\n\n\ndef review_games():\n    text(\"Principle: minimax (also expectimax, expectiminimax)\")\n    image(\"images/minimax.png\", width=500)\n    text(\"Speeding up minimax\")\n    text(\"- Alpha-beta pruning (exact)\")\n    text(\"- Evaluation functions (approximate)\")\n    image(\"images/eval-functions-chess.png\", width=500)\n    text(\"This was manual heuristics...can we learn the evaluation function?\")\n\n\ndef td_learning_motivation():\n    text(\"V_\u03c0(s): value (expected utility) of following policy \u03c0 from state s\")\n    text(\"Q_\u03c0(s, a): value (expected utility) of taking action a in state s, and then following policy \u03c0\")\n\n    text(\"Recall SARSA from reinforcement learning:\")\n    text(\"- On-policy: estimating Q-values of the current policy Q_\u03c0(s, a)\")\n    text(\"- Bootstrapping: target is immediate reward + estimated future reward\")\n    image(\"images/sarsa-algorithm.png\", width=500)\n    rl = SARSA(exploration_policy=partial(walk_tram_policy, 6), epsilon=0.4, discount=1, learning_rate=0.1)\n    rl.get_action(state=1)\n    rl.incorporate_feedback(state=1, action=\"walk\", reward=-1, next_state=2, is_end=False)\n    rl.get_action(state=2)\n    rl.incorporate_feedback(state=2, action=\"walk\", reward=-1, next_state=3, is_end=False)\n    rl.get_action(state=3)\n    rl.incorporate_feedback(state=3, action=\"tram\", reward=-2, next_state=6, is_end=True)\n    text(\"**Policy improvement**: \u03c0_new(s) = argmax_a Q_\u03c0(s, a)\")\n    text(\"In other words, from Q-values, you can read out a (myopically optimal) policy.\")\n\n    text(\"Recall policy evaluation from MDPs:\")\n    text(\"- V_\u03c0(s) = Q_\u03c0(s, \u03c0(s))\")\n    text(\"- Q_\u03c0(s, a) = \u03a3_s' T(s, a, s') (R(s, a, s') + \u03b3 V_\u03c0(s'))\")\n    text(\"Question: if you only knew V_\u03c0(s), could you compute a policy from V_\u03c0(s)?\")\n    text(\"Answer: \u03c0_new(s) = argmax_a \u03a3_s' T(s, a, s') (R(s, a, s') + \u03b3 V_\u03c0(s'))\")\n    text(\"Note this requires knowledge of the MDP (transitions T, rewards R)!\")\n\n    text(\"However, for games, we do know T and R!\")\n    text(\"Because it's deterministic, it simplifies to:\")\n    text(\"\u03c0_new(s) = argmax_a V_\u03c0(Succ(s, a))\")\n\n    text(\"Wait, if we already know the MDP, why don't we just solve the MDP via value iteration?\")\n    text(\"Because it's too expensive (number of states is exponential)!\")\n\n    text(\"So we'll use reinforcement learning...\")\n    text(\"...not due to unknown MDP (original motivation),\")\n    text(\"...but because the number of states is exponential!\")\n\n\ndef td_learning():\n    link(\"https://stanford-cs221.github.io/autumn2023/modules/module.html#include=games%2Ftd-learning.js&mode=print6pp\", title=\"[Autumn 2023 lecture]\")\n\n    text(\"TD learning : V_\u03c0 :: SARSA : Q_\u03c0\")\n\n    text(\"SARSA: Q_\u03c0(s, a) tells us how good each action is\")\n    text(\"TD learning: V_\u03c0(s) tells us how good each state is (since action \u2192 next state is known)\")\n\n    text(\"Assume function approximation: V_\u03c0(s) = V(s; w) for some weights w\")\n    text(\"In deep reinforcement learning, V_\u03c0(s) is called a value network.\")\n\n    text(\"Basic idea:\")\n    text(\"- Get piece of experience (s, a, r, s')\")\n    text(\"- Model predicts V(s; w)\")\n    text(\"- Target (bootstrapping): r + \u03b3 * V(s'; w)\")\n    text(\"- Define squared loss: L(w) = (V(s; w) - (r + \u03b3 * V(s'; w))) ^ 2\")\n    text(\"- Take a gradient step: w = w - \u03b1 * \u2207_w L(w)\")\n\n    image(\"images/td-algorithm.png\", width=500)\n\n    text(\"Let's implement TD learning for the flaky tram MDP:\")\n    set_random_seed(1)\n    mdp = FlakyTramMDP(num_locs=6, failure_prob=0.1)\n    policy = partial(walk_tram_policy, 6)\n    # Note that TDLearning needs knowledge of the MDP to compute the policy (for policy improvement)\n    rl = TDLearning(mdp=mdp, exploration_policy=policy, epsilon=0.2, discount=1, learning_rate=0.1)  # @stepover\n    rl.get_action(state=1)\n    rl.incorporate_feedback(state=1, action=\"walk\", reward=-1, next_state=2, is_end=False)\n    rl.get_action(state=2)  # @stepover\n    rl.incorporate_feedback(state=2, action=\"walk\", reward=-1, next_state=3, is_end=False)  # @stepover\n    rl.get_action(state=3)  # @stepover\n    rl.incorporate_feedback(state=3, action=\"tram\", reward=-2, next_state=6, is_end=True)  # @stepover\n\n    text(\"Summary:\")\n    text(\"- TD learning estimates V_\u03c0(s) from experience (s, a, r, s')\")\n    text(\"- On policy (we're not considering other actions)\")\n    text(\"- Uses bootstrapping\")\n\n\nclass TDLearning(RLAlgorithm):\n    \"\"\"Implements the TD learning algorithm.\"\"\"\n    def __init__(self, mdp: MDP, exploration_policy: Policy, epsilon: float, discount: float, learning_rate: float):\n        self.mdp = mdp\n        self.exploration_policy = exploration_policy\n        self.epsilon = epsilon\n        self.discount = discount\n        self.learning_rate = learning_rate\n        self.V = defaultdict(float)\n\n    def get_action(self, state: Any) -> Any:\n        \"\"\"Use MDP to compute Q_\u03c0(s, a) from V_\u03c0(s).\"\"\"\n        if np.random.random() < self.epsilon:\n            return self.exploration_policy(state)\n        else:\n            return self.pi(state)\n\n    def pi(self, state: Any) -> Any:\n        \"\"\"Return the policy corresponding to the current V_\u03c0(s).\"\"\"\n        # Compute Q-value for each action\n        # Note this is the only place where we use knowledge of the MDP\n        q_values = {}  # action -> Q-value  @inspect q_values\n        for action, successors in get_action_successors(self.mdp, state).items():\n            q_values[action] = sum(succ.prob * (succ.reward + self.discount * self.V[succ.state]) for succ in successors)  # @inspect q_values\n\n        # Take the action with the highest Q-value\n        action = max(q_values.keys(), key=lambda action: q_values[action])  # @inspect action\n\n        return action\n\n    def incorporate_feedback(self, state: Any, action: Any, reward: Any, next_state: Any, is_end: bool) -> None:\n        \"\"\"Update V_\u03c0(s) based on the feedback (s, a, r, s').\"\"\"\n        # Predicted\n        predicted = self.V[state]  # @inspect predicted\n\n        # Target\n        target = reward + self.discount * self.V[next_state]  # @inspect target\n\n        # Update\n        self.V[state] += self.learning_rate * (target - predicted)  # @inspect self.V\n\n\ndef td_learning_for_games():\n    text(\"TD learning works for arbitrary MDPs\")\n    text(\"Now we adapt it to games:\")\n    text(\"- Succ(s, a) captures the transition (deterministically)\")\n    text(\"- No utility until the end of the game\")\n    text(\"- Two players: agent and opponent\")\n\n    text(\"Both agent and opponent use the same value function V_\u03c0(s) (**self-play**)\")\n    text(\"...but the agent maximizes and the opponent minimizes.\")\n    text(\"- \u03c0_agent(s) = argmax_a V_\u03c0(Succ(s, a))\")\n    text(\"- \u03c0_opp(s) = argmin_a V_\u03c0(Succ(s, a))\")\n\n    text(\"**Backgammon**\")\n    text(\"Each player tries to move their pieces off the the board:\")\n    image(\"images/backgammon1.jpg\", width=300)\n    text(\"Dice determines how many places the player can move:\")\n    image(\"images/backgammon2.jpg\", width=300)\n    text(\"Other rules:\")\n    text(\"- If land on an point with 1 opponent piece, move it to the bar\")\n    text(\"- Cannot land on point with >1 opponent pieces\")\n\n    text(\"Note that this game has randomness (dice).\")\n    text(\"Roll out the policies:\")\n    text(\"\u03c0_dice \u2192 \u03c0_agent \u2192 \u03c0_dice \u2192 \u03c0_opp \u2192 \u03c0_dice \u2192 \u03c0_agent \u2192 ...\")\n    text(\"We are learning \u03c0_agent and \u03c0_opp, but \u03c0_dice is fixed.\")\n\n    text(\"Let's define the parameterized value function.\")\n    text(\"First define a feature vector for each state:\")\n    image(\"images/backgammon-features.png\", width=400)\n    text(\"Then define a linear value function: V(s; w) = \u03c6(s) * w\")\n    text(\"...or MLP value function: V(s; w) = MLP_w(\u03c6(s))\")\n\n    text(\"Then just apply TD learning!\")\n\n\ndef historical_examples():\n    text(\"### Checkers\")\n    image(\"images/checkers.jpg\", width=200)\n    text(\"Arthur Samuel's checkers program [1959]:\")\n    text(\"- Learned by playing itself repeatedly (self-play)\")\n    text(\"- Smart features, linear evaluation function, use intermediate rewards\")\n    text(\"- Used alpha-beta pruning + search heuristics\")\n    text(\"- Reach human amateur level of play\")\n    text(\"- IBM 701: 9K of memory!\")\n\n    text(\"### Backgammon\")\n    image(\"images/backgammon1.jpg\", width=200)\n    text(\"Gerald Tesauro's TD-Gammon [1992]:\")\n    text(\"- Learned weights by playing itself repeatedly (1 million times)\")\n    text(\"- Dumb features, neural network, no intermediate rewards\")\n    text(\"- Reached human expert level of play, provided new insights into opening\")\n\n    text(\"### Go\")\n    image(\"images/go.jpg\", width=200)\n    text(\"AlphaGo Zero [2017]:\")\n    text(\"- Learned by self-play (4.9 million games)\")\n    text(\"- Dumb features (stone positions), neural network, no intermediate rewards, Monte Carlo Tree Search\")\n    text(\"- Beat AlphaGo, which beat Le Sedol in 2016\")\n    text(\"- Provided new insights into the game\")\n\n\nif __name__ == \"__main__\":\n    main()"
   },
   "hidden_line_numbers": {
     "td_learning.py": []
@@ -34,7 +34,8 @@
           "data": "Last time: two-player zero-sum games",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -90,7 +91,8 @@
           "data": "Principle: minimax (also expectimax, expectiminimax)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -118,7 +120,8 @@
             "width": 500
           },
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -144,7 +147,8 @@
           "data": "Speeding up minimax",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -170,7 +174,8 @@
           "data": "- Alpha-beta pruning (exact)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -196,7 +201,8 @@
           "data": "- Evaluation functions (approximate)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -224,7 +230,8 @@
             "width": 500
           },
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -250,7 +257,8 @@
           "data": "This was manual heuristics...can we learn the evaluation function?",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -282,7 +290,8 @@
           "data": "Today: use reinforcement learning (TD learning) to learn the evaluation function!",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -338,7 +347,8 @@
           "data": "V_\u03c0(s): value (expected utility) of following policy \u03c0 from state s",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -364,7 +374,8 @@
           "data": "Q_\u03c0(s, a): value (expected utility) of taking action a in state s, and then following policy \u03c0",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -390,7 +401,8 @@
           "data": "Recall SARSA from reinforcement learning:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -416,7 +428,8 @@
           "data": "- On-policy: estimating Q-values of the current policy Q_\u03c0(s, a)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -442,7 +455,8 @@
           "data": "- Bootstrapping: target is immediate reward + estimated future reward",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -470,7 +484,8 @@
             "width": 500
           },
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -622,7 +637,8 @@
           "data": "**Policy improvement**: \u03c0_new(s) = argmax_a Q_\u03c0(s, a)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -648,7 +664,8 @@
           "data": "In other words, from Q-values, you can read out a (myopically optimal) policy.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -674,7 +691,8 @@
           "data": "Recall policy evaluation from MDPs:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -700,7 +718,8 @@
           "data": "- V_\u03c0(s) = Q_\u03c0(s, \u03c0(s))",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -726,7 +745,8 @@
           "data": "- Q_\u03c0(s, a) = \u03a3_s' T(s, a, s') (R(s, a, s') + \u03b3 V_\u03c0(s'))",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -752,7 +772,8 @@
           "data": "Question: if you only knew V_\u03c0(s), could you compute a policy from V_\u03c0(s)?",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -778,7 +799,8 @@
           "data": "Answer: \u03c0_new(s) = argmax_a \u03a3_s' T(s, a, s') (R(s, a, s') + \u03b3 V_\u03c0(s'))",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -804,7 +826,8 @@
           "data": "Note this requires knowledge of the MDP (transitions T, rewards R)!",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -830,7 +853,8 @@
           "data": "However, for games, we do know T and R!",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -856,7 +880,8 @@
           "data": "Because it's deterministic, it simplifies to:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -882,7 +907,8 @@
           "data": "\u03c0_new(s) = argmax_a V_\u03c0(Succ(s, a))",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -908,7 +934,8 @@
           "data": "Wait, if we already know the MDP, why don't we just solve the MDP via value iteration?",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -934,7 +961,8 @@
           "data": "Because it's too expensive (number of states is exponential)!",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -960,7 +988,8 @@
           "data": "So we'll use reinforcement learning...",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -986,7 +1015,8 @@
           "data": "...not due to unknown MDP (original motivation),",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1012,7 +1042,8 @@
           "data": "...but because the number of states is exponential!",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1077,7 +1108,7 @@
       "renderings": [
         {
           "type": "link",
-          "data": null,
+          "data": "[[Autumn 2023 lecture]]",
           "style": {},
           "external_link": {
             "title": "[Autumn 2023 lecture]",
@@ -1088,7 +1119,8 @@
             "description": null,
             "notes": null
           },
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1114,7 +1146,8 @@
           "data": "TD learning : V_\u03c0 :: SARSA : Q_\u03c0",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1140,7 +1173,8 @@
           "data": "SARSA: Q_\u03c0(s, a) tells us how good each action is",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1166,7 +1200,8 @@
           "data": "TD learning: V_\u03c0(s) tells us how good each state is (since action \u2192 next state is known)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1192,7 +1227,8 @@
           "data": "Assume function approximation: V_\u03c0(s) = V(s; w) for some weights w",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1218,7 +1254,8 @@
           "data": "In deep reinforcement learning, V_\u03c0(s) is called a value network.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1244,7 +1281,8 @@
           "data": "Basic idea:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1270,7 +1308,8 @@
           "data": "- Get piece of experience (s, a, r, s')",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1296,7 +1335,8 @@
           "data": "- Model predicts V(s; w)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1322,7 +1362,8 @@
           "data": "- Target (bootstrapping): r + \u03b3 * V(s'; w)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1348,7 +1389,8 @@
           "data": "- Define squared loss: L(w) = (V(s; w) - (r + \u03b3 * V(s'; w))) ^ 2",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1374,7 +1416,8 @@
           "data": "- Take a gradient step: w = w - \u03b1 * \u2207_w L(w)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1402,7 +1445,8 @@
             "width": 500
           },
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1428,7 +1472,8 @@
           "data": "Let's implement TD learning for the flaky tram MDP:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2346,7 +2391,8 @@
           "data": "Summary:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2372,7 +2418,8 @@
           "data": "- TD learning estimates V_\u03c0(s) from experience (s, a, r, s')",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2398,7 +2445,8 @@
           "data": "- On policy (we're not considering other actions)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2424,7 +2472,8 @@
           "data": "- Uses bootstrapping",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2492,7 +2541,8 @@
           "data": "TD learning works for arbitrary MDPs",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2518,7 +2568,8 @@
           "data": "Now we adapt it to games:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2544,7 +2595,8 @@
           "data": "- Succ(s, a) captures the transition (deterministically)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2570,7 +2622,8 @@
           "data": "- No utility until the end of the game",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2596,7 +2649,8 @@
           "data": "- Two players: agent and opponent",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2622,7 +2676,8 @@
           "data": "Both agent and opponent use the same value function V_\u03c0(s) (**self-play**)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2648,7 +2703,8 @@
           "data": "...but the agent maximizes and the opponent minimizes.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2674,7 +2730,8 @@
           "data": "- \u03c0_agent(s) = argmax_a V_\u03c0(Succ(s, a))",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2700,7 +2757,8 @@
           "data": "- \u03c0_opp(s) = argmin_a V_\u03c0(Succ(s, a))",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2726,7 +2784,8 @@
           "data": "**Backgammon**",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2752,7 +2811,8 @@
           "data": "Each player tries to move their pieces off the the board:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2780,7 +2840,8 @@
             "width": 300
           },
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2806,7 +2867,8 @@
           "data": "Dice determines how many places the player can move:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2834,7 +2896,8 @@
             "width": 300
           },
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2860,7 +2923,8 @@
           "data": "Other rules:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2886,7 +2950,8 @@
           "data": "- If land on an point with 1 opponent piece, move it to the bar",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2912,7 +2977,8 @@
           "data": "- Cannot land on point with >1 opponent pieces",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2938,7 +3004,8 @@
           "data": "Note that this game has randomness (dice).",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2964,7 +3031,8 @@
           "data": "Roll out the policies:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2990,7 +3058,8 @@
           "data": "\u03c0_dice \u2192 \u03c0_agent \u2192 \u03c0_dice \u2192 \u03c0_opp \u2192 \u03c0_dice \u2192 \u03c0_agent \u2192 ...",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3016,7 +3085,8 @@
           "data": "We are learning \u03c0_agent and \u03c0_opp, but \u03c0_dice is fixed.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3042,7 +3112,8 @@
           "data": "Let's define the parameterized value function.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3068,7 +3139,8 @@
           "data": "First define a feature vector for each state:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3096,7 +3168,8 @@
             "width": 400
           },
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3122,7 +3195,8 @@
           "data": "Then define a linear value function: V(s; w) = \u03c6(s) * w",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3148,7 +3222,8 @@
           "data": "...or MLP value function: V(s; w) = MLP_w(\u03c6(s))",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3174,7 +3249,8 @@
           "data": "Then just apply TD learning!",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3242,7 +3318,8 @@
           "data": "### Checkers",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3270,7 +3347,8 @@
             "width": 200
           },
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3296,7 +3374,8 @@
           "data": "Arthur Samuel's checkers program [1959]:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3322,7 +3401,8 @@
           "data": "- Learned by playing itself repeatedly (self-play)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3348,7 +3428,8 @@
           "data": "- Smart features, linear evaluation function, use intermediate rewards",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3374,7 +3455,8 @@
           "data": "- Used alpha-beta pruning + search heuristics",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3400,7 +3482,8 @@
           "data": "- Reach human amateur level of play",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3426,7 +3509,8 @@
           "data": "- IBM 701: 9K of memory!",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3452,7 +3536,8 @@
           "data": "### Backgammon",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3480,7 +3565,8 @@
             "width": 200
           },
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3506,7 +3592,8 @@
           "data": "Gerald Tesauro's TD-Gammon [1992]:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3532,7 +3619,8 @@
           "data": "- Learned weights by playing itself repeatedly (1 million times)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3558,7 +3646,8 @@
           "data": "- Dumb features, neural network, no intermediate rewards",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3584,7 +3673,8 @@
           "data": "- Reached human expert level of play, provided new insights into opening",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3610,7 +3700,8 @@
           "data": "### Go",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3638,7 +3729,8 @@
             "width": 200
           },
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3664,7 +3756,8 @@
           "data": "AlphaGo Zero [2017]:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3690,7 +3783,8 @@
           "data": "- Learned by self-play (4.9 million games)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3716,7 +3810,8 @@
           "data": "- Dumb features (stone positions), neural network, no intermediate rewards, Monte Carlo Tree Search",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3742,7 +3837,8 @@
           "data": "- Beat AlphaGo, which beat Le Sedol in 2016",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3768,7 +3864,8 @@
           "data": "- Provided new insights into the game",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3800,7 +3897,8 @@
           "data": "Next:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3820,7 +3918,8 @@
           "data": "- Turn-based \u2192 simultaneous games",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3840,7 +3939,8 @@
           "data": "- Zero-sum \u2192 non-zero-sum",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     }

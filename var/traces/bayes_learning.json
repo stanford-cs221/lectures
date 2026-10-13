@@ -1,6 +1,6 @@
 {
   "files": {
-    "bayes_learning.py": "from edtrace import text, image, link\nfrom bayes import ProbTable\nfrom einops import einsum\nfrom util import normalize_dict\nfrom collections import defaultdict\nfrom graphviz import Digraph\nfrom copy import deepcopy\n\ndef main():\n    text(\"### Lecture 14: learning parameters of Bayesian networks\")\n    review_bayesian_networks()\n\n    introduce_fully_observable_setting()    # Fully observable setting: all variables are observed\n    introduce_laplace_smoothing()         # Prevent overfitting\n    introduce_expectation_maximization()  # Partially-observable setting: some variables are unobserved\n\n    text(\"Summary:\")\n    text(\"- Learning task: given training data, estimate the parameters of the Bayesian network\")\n    text(\"- Parameters: local conditional distributions (could have parameter sharing)\")\n    text(\"- Laplace smoothing: add pseudocounts (smoothing) to prevent overfitting (zeros)\")\n    text(\"- Expectation Maximization: handle partially-observed data (impute weighted data)\")\n\n    text(\"Next time: logic (higher-order reasoning - e.g., *every student has a TA*)!\")\n\n\ndef review_bayesian_networks():\n    text(\"**Joint distribution**: like a database that specifies how the world works\")\n    text(\"1. Define a set of random variables: X = (X_1, ..., X_n).\")\n    text(\"Example: B(urglary), E(arthquake), A(larm)\")\n\n    text(\"2. Define a directed acyclic graph (DAG) over the variables.\")\n    image(\"images/alarm-bayes.png\", width=200)\n\n    text(\"3. For each node, define a local conditional distribution: p(x_i | parents(x_i)).\")\n    text(\"Example: p(b), p(e), p(a | b, e)\")\n    p_b = ProbTable(\"B\", [0.95, 0.05]) # p(b) @inspect p_b @stepover\n    p_e = ProbTable(\"E\", [0.95, 0.05]) # p(e) @inspect p_e @stepover\n    p_a_given_be = ProbTable(\"A | B E\", lambda b, e, a: a == (b or e), shape=(2, 2, 2)) # p(a | b, e) @inspect p_a_given_be @stepover\n\n    text(\"4. Define the joint distribution: P(X_1, ..., X_n) = \u03a0_i p(x_i | parents(x_i))\")\n    text(\"Example: P(B = b, E = e, A = a) = p(b) p(e) p(a | b, e)\")\n    P_BEA = ProbTable(\"B E A\", einsum(p_b.p, p_e.p, p_a_given_be.p, \"b, e, b e a -> b e a\"))  # P(B, E, A) @inspect P_BEA @stepover\n\n    text(\"**Probabilistic inference**: answer questions (like SQL) on the joint distribution\")  # @clear p_b p_e p_a_given_be\n    text(\"Example: P(B | A = 1)\")\n\n    text(\"1. Exact inference: select A = 1, marginalize out E, divide by P(A = 1)\")\n    text(\"2. Rejection sampling: sample (B, E, A) and reject unless A = 1\")\n    text(\"3. Gibbs sampling: alternate sampling B | E A and E | B A\")\n\n    text(\"**Conditional independence**\")\n    text(\"Question: are A and B conditionally independent given C?\")\n    text(\"Yes iff every path from A to B is blocked (by nodes in C).\")\n    text(\"A path is blocked if it contains one of the following patterns:\")\n    text(\"1. X \u2192 C \u2192 Y\")\n    text(\"2. X \u2190 C \u2192 Y\")\n    text(\"3. X \u2192 Z \u2190 Y unless C = Z or a descendent of Z (remember explaining away!)\")\n    \n    text(\"Contrasting pairs:\")\n    text(\"1. A \u2190 C \u2192 B: A and B are independent given C but not marginally independent\")\n    text(\"2. A \u2192 C \u2190 B: A and B are marginally independent but not independent given C\") \n    \n    text(\"Let's play a game on the whiteboard, building up a Bayesian network involving A and B.\")\n\n    text(\"This class: where do all these probabilities come from?\")\n\n\ndef introduce_fully_observable_setting():\n    link(\"https://stanford-cs221.github.io/autumn2023/modules/module.html#include=bayesian-networks%2Fsupervised-learning.js&level=0&mode=print6pp\", title=\"[Autumn 2023 lecture]\")\n\n    text(\"Learning task:\")\n    text(\"- Input: a set of examples (assignments to all variables)\")\n    text(\"- Output: local conditional distributions\")\n\n    text(\"Let's first walk through some examples intuitively...\")\n    one_variable()\n    two_variables()\n    v_structure()\n    inverted_v_structure()\n    parameter_sharing()\n    hidden_markov_model()\n    general_bayesian_networks()\n\n    text(\"...and then explain the underlying principle.\")\n    maximum_likelihood()\n\n\ndef one_variable():\n    text(\"Variables:\")\n    text(\"- R \u2208 {1, 2, 3, 4, 5}: rating of a movie\")\n    image(\"images/pgm-r.png\", width=50)\n    text(\"P(R = r) = p_R(r)\")\n    text(\"Parameters: \u03b8 = (p_R(1), p_R(2), p_R(3), p_R(4), p_R(5))\")\n\n    text(\"Training data:\")\n    training_data = [{\"R\": r} for r in [1, 3, 4, 4, 4, 4, 4, 5, 5, 5]]  # @inspect training_data\n\n    text(\"Intuition: p_R(r) = fraction of occurrences of r in training data\")\n\n    text(\"1. **Count** the occurrences of each rating:\")\n    counts_r = defaultdict(float)  # @inspect counts_r\n    for x in training_data:  # @inspect x\n        counts_r[x[\"R\"]] += 1  # @inspect counts_r\n\n    text(\"2. **Normalize** to get probabilities:\")  # @clear x\n    p_r = normalize_dict(counts_r)  # @inspect p_r @stepover\n\n    text(\"It's a simple algorithm: count + normalize!\")\n\n\ndef two_variables():\n    text(\"Variables:\")\n    text(\"- R \u2208 {1, 2, 3, 4, 5}: rating of a movie\")\n    text(\"- G \u2208 {drama, comedy}: genre of a movie\")\n    image(\"images/pgm-g-r.png\", width=150)\n    text(\"P(G = g, R = r) = p_G(g) p_R(r | g)\")\n    text(\"Parameters: \u03b8 = (p_G, p_R)\")\n    \n    text(\"Training data:\")\n    training_data = [\n        {\"G\": \"drama\", \"R\": 4},\n        {\"G\": \"drama\", \"R\": 4},\n        {\"G\": \"drama\", \"R\": 5},\n        {\"G\": \"comedy\", \"R\": 1},\n        {\"G\": \"comedy\", \"R\": 5},\n    ]\n\n    text(\"1. **Count** the local assignments:\")\n    counts_g = defaultdict(float)  # @inspect counts_g\n    counts_gr = defaultdict(lambda: defaultdict(float))  # @inspect counts_gr\n    for x in training_data:  # @inspect x\n        counts_g[x[\"G\"]] += 1  # @inspect counts_g\n        counts_gr[x[\"G\"]][x[\"R\"]] += 1  # @inspect counts_gr\n\n    text(\"2. **Normalize** to get probabilities:\")  # @clear x\n    p_g = normalize_dict(counts_g)  # @inspect p_g @stepover\n    p_r_given_g = {}\n    for g in counts_g:  # @inspect g\n        p_r_given_g[g] = normalize_dict(counts_gr[g])  # @inspect p_r_given_g @stepover\n\n    text(\"Notes:\")  # @clear g\n    text(\"- To estimate a local conditional distribution, just ignore the other variables!\")\n    text(\"- Count + normalize!\")\n\n\ndef v_structure():\n    text(\"Variables:\")\n    text(\"- G \u2208 {drama, comedy}: genre of a movie\")\n    text(\"- A \u2208 {0, 1}: did the movie win an award?\")\n    text(\"- R \u2208 {1, 2, 3, 4, 5}: rating of a movie\")\n    image(\"images/pgm-g-a-r.png\", width=150)\n    text(\"P(G = g, A = a, R = r) = p_G(g) p_A(a) p_R(r | g, a)\")\n    text(\"Parameters: \u03b8 = (p_G, p_A, p_R)\")\n\n    text(\"Training data:\")\n    training_data = [\n        {\"G\": \"drama\", \"A\": 0, \"R\": 3},\n        {\"G\": \"drama\", \"A\": 1, \"R\": 5},\n        {\"G\": \"drama\", \"A\": 0, \"R\": 1},\n        {\"G\": \"comedy\", \"A\": 0, \"R\": 5},\n        {\"G\": \"comedy\", \"A\": 1, \"R\": 4},\n    ]\n\n    text(\"1. **Count** the local assignments:\")\n    counts_g = defaultdict(float)  # @inspect counts_g\n    counts_a = defaultdict(float)  # @inspect counts_a\n    counts_gar = defaultdict(lambda: defaultdict(float))  # @inspect counts_gar\n    for x in training_data:  # @inspect x\n        counts_g[x[\"G\"]] += 1  # @inspect counts_g\n        counts_a[x[\"A\"]] += 1  # @inspect counts_a\n        counts_gar[(x[\"G\"], x[\"A\"])][x[\"R\"]] += 1  # @inspect counts_gar\n\n    text(\"2. **Normalize** to get probabilities:\")  # @clear x\n    p_g = normalize_dict(counts_g)  # @inspect p_g @stepover\n    p_a = normalize_dict(counts_a)  # @inspect p_a @stepover\n    p_r_given_ga = {}\n    for ga in counts_gar:  # @inspect ga\n        p_r_given_ga[ga] = normalize_dict(counts_gar[ga])  # @inspect p_r_given_ga @stepover\n\n    text(\"There's nothing special about v-structures here.\")  # @clear ga\n    text(\"Remember to condition on all parents simultaneously.\")\n\n\ndef inverted_v_structure():\n    text(\"Variables:\")\n    text(\"- G \u2208 {drama, comedy}: genre of a movie\")\n    text(\"- R1 \u2208 {1, 2, 3, 4, 5}: user 1's rating of a movie\")\n    text(\"- R2 \u2208 {1, 2, 3, 4, 5}: user 2's rating of a movie\")\n    image(\"images/pgm-g-r1-r2.png\", width=150)\n    text(\"P(G = g, R_1 = r_1, R_2 = r_2) = p_G(g) p_R1(r_1 | g) p_R2(r_2 | g)\")\n    text(\"Parameters: \u03b8 = (p_G, p_R1, p_R2)\")\n\n    text(\"Training data:\")\n    training_data = [\n        {\"G\": \"drama\", \"R1\": 4, \"R2\": 5},\n        {\"G\": \"drama\", \"R1\": 4, \"R2\": 4},\n        {\"G\": \"drama\", \"R1\": 5, \"R2\": 3},\n        {\"G\": \"comedy\", \"R1\": 1, \"R2\": 2},\n        {\"G\": \"comedy\", \"R1\": 5, \"R2\": 4},\n    ]\n\n    text(\"1. **Count** the local assignments:\")\n    counts_g = defaultdict(float)  # @inspect counts_g\n    counts_gr1 = defaultdict(lambda: defaultdict(float))  # @inspect counts_gr1\n    counts_gr2 = defaultdict(lambda: defaultdict(float))  # @inspect counts_gr2\n    for x in training_data:  # @inspect x\n        counts_g[x[\"G\"]] += 1  # @inspect counts_g\n        counts_gr1[x[\"G\"]][x[\"R1\"]] += 1  # @inspect counts_gr1\n        counts_gr2[x[\"G\"]][x[\"R2\"]] += 1  # @inspect counts_gr2\n\n    text(\"2. **Normalize** to get probabilities:\")  # @clear x\n    p_g = normalize_dict(counts_g)  # @inspect p_g @stepover\n    p_r1_given_g = {}\n    for g in counts_g:  # @inspect g\n        p_r1_given_g[g] = normalize_dict(counts_gr1[g])  # @inspect p_r1_given_g @stepover\n    p_r2_given_g = {}\n    for g in counts_g:  # @inspect g\n        p_r2_given_g[g] = normalize_dict(counts_gr2[g])  # @inspect p_r2_given_g @stepover\n\n\ndef parameter_sharing():\n    text(\"Variables:\")\n    text(\"- G \u2208 {drama, comedy}: genre of a movie\")\n    text(\"- R1 \u2208 {1, 2, 3, 4, 5}: user 1's rating of a movie\")\n    text(\"- R2 \u2208 {1, 2, 3, 4, 5}: user 2's rating of a movie\")\n    image(\"images/pgm-g-r1-r2.png\", width=150)\n    text(\"P(G = g, R_1 = r_1, R_2 = r_2) = p_G(g) p_R(r_1 | g) p_R(r_2 | g)\")\n    text(\"Parameters: \u03b8 = (p_G, p_R)\")\n    text(\"Note that this is the same example but now we have a single p_R that is used for both R1 and R2.\")\n    \n    text(\"Key idea: **parameter sharing**\")\n    image(\"images/parameter-sharing.png\", width=400)\n    text(\"Intuition: each node is powered by some local conditional distribution.\")\n\n    text(\"Training data:\")\n    training_data = [\n        {\"G\": \"drama\", \"R1\": 4, \"R2\": 5},\n        {\"G\": \"drama\", \"R1\": 4, \"R2\": 4},\n        {\"G\": \"drama\", \"R1\": 5, \"R2\": 3},\n        {\"G\": \"comedy\", \"R1\": 1, \"R2\": 2},\n        {\"G\": \"comedy\", \"R1\": 5, \"R2\": 4},\n    ]\n\n    text(\"1. **Count** the local assignments:\")\n    counts_g = defaultdict(float)  # @inspect counts_g\n    counts_gr = defaultdict(lambda: defaultdict(float))  # @inspect counts_gr\n    for x in training_data:  # @inspect x\n        counts_g[x[\"G\"]] += 1  # @inspect counts_g\n        # Note: increment the same counts_gr for both R1 and R2!\n        counts_gr[x[\"G\"]][x[\"R1\"]] += 1  # @inspect counts_gr\n        counts_gr[x[\"G\"]][x[\"R2\"]] += 1  # @inspect counts_gr\n\n    text(\"2. **Normalize** to get probabilities:\")  # @clear x\n    p_g = normalize_dict(counts_g)  # @inspect p_g @stepover\n    p_r_given_g = {}\n    for g in counts_g:  # @inspect g\n        p_r_given_g[g] = normalize_dict(counts_gr[g])  # @inspect p_r_given_g @stepover\n\n    text(\"In probabilistic inference, we're only **reading** from the local conditional distributions\")  # @clear g\n    text(\"...so we don't care whether p(r1 | g) and p(r2 | g) are the same distribution or not.\")\n\n    text(\"But when we're learning the parameters, we are **writing** to the local conditional distributions\")\n    text(\"...so it matters if p(r1 | g) and p(r2 | g) are the same distribution or not.\")\n\n    text(\"When do you parameter sharing?\")\n    text(\"- Having fewer parameters requires fewer examples to learn\")\n    text(\"- Having more parameters provides greater flexibility\")\n    text(\"- Which one you choose is a modeling decision (are the two users similar?)\")\n\n\ndef hidden_markov_model():\n    text(\"Variables:\")\n    text(\"- H_t \u2208 {0, 1}: position of the object at time t\")\n    text(\"- E_t \u2208 {0, 1}: sensor reading at time t\")\n    image(\"images/pgm-hmm.png\", width=250)\n    text(\"P(H = h, E = e) =\")\n    text(\"p_start(h_1) p_emit(e_1 | h_1) p_trans(h_2 | h_1) p_emit(e_2 | h_2) p_trans(h_3 | h_2) p_emit(e_3 | h_3)\")\n    text(\"Parameters: \u03b8 = (p_start, p_trans, p_emit)\")\n\n    text(\"Training data:\")\n    training_data = [\n        {\"H1\": 0, \"E1\": 0, \"H2\": 1, \"E2\": 1, \"H3\": 0, \"E3\": 0},\n        {\"H1\": 0, \"E1\": 1, \"H2\": 0, \"E2\": 1, \"H3\": 0, \"E3\": 1},\n    ]\n\n    text(\"1. **Count** the local assignments:\")\n    counts_start = defaultdict(float)  # @inspect counts_start\n    counts_trans = defaultdict(lambda: defaultdict(float))  # @inspect counts_trans\n    counts_emit = defaultdict(lambda: defaultdict(float))  # @inspect counts_emit\n    for x in training_data:  # @inspect x\n        counts_start[x[\"H1\"]] += 1  # @inspect counts_start\n        counts_emit[x[\"H1\"]][x[\"E1\"]] += 1  # @inspect counts_emit\n        counts_trans[x[\"H1\"]][x[\"H2\"]] += 1  # @inspect counts_trans\n        counts_emit[x[\"H2\"]][x[\"E2\"]] += 1  # @inspect counts_emit\n        counts_trans[x[\"H2\"]][x[\"H3\"]] += 1  # @inspect counts_trans\n        counts_emit[x[\"H3\"]][x[\"E3\"]] += 1  # @inspect counts_emit\n\n    text(\"2. **Normalize** to get probabilities:\")  # @clear x\n    p_start = normalize_dict(counts_start)  # @inspect p_start @stepover\n    p_trans = {}\n    for h in counts_trans:  # @inspect h\n        p_trans[h] = normalize_dict(counts_trans[h])  # @inspect p_trans @stepover\n    p_emit = {}\n    for h in counts_emit:  # @inspect h2\n        p_emit[h] = normalize_dict(counts_emit[h])  # @inspect p_emit @stepover\n\n\ndef general_bayesian_networks():\n    text(\"Variables (X_1, ..., X_n)\") \n\n    text(\"**Parameters**\")\n    text(\"Let D be the set of types of local conditional distributions\")\n    text(\"- Example: D = {start, trans, emit} for the HMM\")\n\n    text(\"Parameters \u03b8 = {p_d: d in D}\")\n    text(\"- Example: \u03b8 = {p_start, p_trans, p_emit} for the HMM\")\n    \n    text(\"**Joint distribution**\")\n    text(\"Each X_i is generated from p_{d_i}\")\n    text(\"P(X_1 = x_1, ..., X_n = x_n) = \u03a0_i p_{d_i}(X_i | x_parents(X_i))\")\n    text(\"Parameter sharing: two X_i might have the same d_i\")\n\n    text(\"Training data:\")\n    training_data = [\n        {\"H1\": 0, \"E1\": 0, \"H2\": 1, \"E2\": 1, \"H3\": 0, \"E3\": 0},\n        {\"H1\": 0, \"E1\": 1, \"H2\": 0, \"E2\": 1, \"H3\": 0, \"E3\": 1},\n    ]\n\n    image(\"images/pgm-hmm.png\", width=250)\n    network_structure = {\n        # variable name -> (parameter name, parent variable names)\n        \"H1\": (\"start\", []),\n        \"H2\": (\"trans\", [\"H1\"]),\n        \"H3\": (\"trans\", [\"H2\"]),\n        \"E1\": (\"emit\", [\"H1\"]),\n        \"E2\": (\"emit\", [\"H2\"]),\n        \"E3\": (\"emit\", [\"H3\"]),\n    }\n\n    # Learn the parameters (we are in the fully observed setting)\n    theta = fully_observable_learning(network_structure, training_data)  # @inspect theta\n\n\ndef fully_observable_learning(network_structure, training_data, pseudocounts=None):\n    \"\"\"Perform supervised learning on a Bayesian network.\n    Args:\n        network_structure: variable name -> (parameter name, parent variable names)\n          Example: {\"H1\": (\"p_start\", []), \"H2\": (\"p_trans\", [\"H1\"]), ...}\n        data: a list of dictionaries of variable assignments\n          Example: [{\"H1\": 0, \"E1\": 0}, {\"H1\": 0, \"E1\": 1}, ...]\n        pseudocounts: a dictionary of pseudocounts to add to the counts (for Laplace smoothing)\n    Returns:\n        theta: a dictionary of parameters\n          Example: {\"p_start\": ..., \"p_trans\": ..., \"p_emit\": ...}\n    \"\"\"\n    # Initialize counts\n    # counts[parameter_name][parent_values][value] = how many times we've seen this\n    if pseudocounts is None:\n        counts = defaultdict(lambda: defaultdict(lambda: defaultdict(float))) # @inspect counts\n    else:\n        counts = deepcopy(pseudocounts)  # @inspect counts\n\n    # Count \n    for x in training_data:  # For each assignment x... @inspect x\n        for var, value in x.items():  # @inspect var value\n            parameter_name, parent_vars = network_structure[var]  # @inspect parameter_name parent_vars\n            parents_value = tuple(x[parent_var] for parent_var in parent_vars)  # @inspect parents_value\n            counts[parameter_name][parents_value][value] += 1  # @inspect counts\n\n    # Normalize\n    theta = defaultdict(lambda: defaultdict(lambda: defaultdict(float)))  # @inspect theta @clear x var value parameter_name parent_vars parents_value\n    for parameter_name in counts:  # @inspect parameter_name\n        for parents_value in counts[parameter_name]:  # @inspect parents_value\n            theta[parameter_name][parents_value] = normalize_dict(counts[parameter_name][parents_value])  # @inspect theta @stepover\n\n    return theta\n\n\ndef maximum_likelihood():\n    text(\"So far: count + normalize is an intuitive algorithm\")\n    text(\"It turns out this corresponds exactly to maximum likelihood estimation!\")\n\n    text(\"**Maximum likelihood** principle:\")\n    text(\"Find the parameters \u03b8 that maximize the likelihood of the data\")\n    text(\"max_\u03b8 \u03a0_x P(X = x; \u03b8)\")\n    text(\"= max_\u03b8 \u03a3_x log P(X = x; \u03b8)\")\n\n    text(\"Solution is count + normalize!\")\n    text(\"**Closed form** - no iterative optimization needed!\")\n\n    text(\"Why is this?  Let's justify this by examples.\")\n\n    maximum_likelihood_one_variable()\n    maximum_likelihood_two_variables()\n\n    text(\"Summary:\")\n    text(\"- Maximum likelihood principle: find the parameters \u03b8 that maximize the likelihood of the data\")\n    text(\"- Count + normalize is the closed form solution to maximum likelihood estimation\")\n\n\ndef maximum_likelihood_one_variable():\n    text(\"Consider the one variable case:\")\n    text(\"Variable:\")\n    text(\"- R \u2208 {1, 2, 3, 4, 5}: rating of a movie\")\n    image(\"images/pgm-r.png\", width=50)\n    text(\"P(R = r) = p_R(r)\")\n    text(\"Parameters: \u03b8 = (p_R)\")\n\n    training_data = [{\"R\": 1}, {\"R\": 5}, {\"R\": 5}]\n    text(\"max_\u03b8 p_R(1) p_R(5) p_R(5)\")\n    text(\"subject to p_R(1) + p_R(2) + p_R(3) + p_R(4) + p_R(5) = 1\")\n\n    text(\"Sketch:\")\n    text(\"- Introduce Lagrange multiplier for the sum-to-one constraint\")\n    text(\"- Set gradient of objective to 0 and solve\")\n    text(\"- Result: p_R(1) = 1/3, p_R(5) = 2/3\")\n\ndef maximum_likelihood_two_variables():\n    text(\"Consider the two variable case:\")\n    text(\"Variables:\")\n    text(\"- G \u2208 {drama, comedy}: genre of a movie\")\n    text(\"- R \u2208 {1, 2, 3, 4, 5}: rating of a movie\")\n    image(\"images/pgm-g-r.png\", width=150)\n    text(\"P(G = g, R = r) = p_G(g) p_R(r | g)\")\n    text(\"Parameters: \u03b8 = (p_G, p_R)\")\n    \n    training_data = [\n        {\"G\": \"drama\", \"R\": 4},\n        {\"G\": \"drama\", \"R\": 5},\n        {\"G\": \"comedy\", \"R\": 5},\n    ]\n\n    text(\"max_\u03b8 p_G(drama) p_R(4 | drama) p_G(drama) p_R(5 | drama) p_G(comedy) p_R(5 | comedy)\")\n\n    text(\"Rearrange factors into groups that are actually connected:\")\n    text(\"max_\u03b8 [p_G(drama) p_G(drama) p_G(comedy)] [p_R(4 | drama) p_R(5 | drama)] [p_R(5 | comedy)]\")\n\n    text(\"This splits up into separate optimization problems:\")\n    text(\"max_{p_G} [p_G(drama) p_G(drama) p_G(comedy)]\")\n    text(\"max_{p_R(\u00b7 | drama)} [p_R(4 | drama) p_R(5 | drama)]\")\n    text(\"max_{p_R(\u00b7 | comedy)} [p_R(5 | comedy)]\")\n\n    text(\"Each optimization problem can be solved in the same way as the one variable case!\")\n\n\ndef introduce_laplace_smoothing():\n    link(\"https://stanford-cs221.github.io/autumn2023/modules/module.html#include=bayesian-networks%2Fsmoothing.js&mode=print6pp\", title=\"[Autumn 2023 lecture]\")\n\n    network_structure = {\"R\": (\"R\", [])}\n    training_data = [{\"R\": 1}, {\"R\": 4}]\n    theta = fully_observable_learning(network_structure, training_data)  # @inspect theta @stepover\n    text(\"Do we really believe that p_R(2) = 0?\")\n\n    text(\"Solution: **Laplace smoothing**\")\n    text(\"Simple idea: just add \u03bb to all the counts\")\n    def get_pseudocounts(smoothing: float):\n        # Return the pseudocounts given Laplace smoothing with \u03bb (lam)\n        return {\"R\": {(): {1: smoothing, 2: smoothing, 3: smoothing, 4: smoothing, 5: smoothing}}}\n    pseudocounts = get_pseudocounts(smoothing=1)  # @inspect pseudocounts @stepover\n    theta = fully_observable_learning(network_structure, training_data, pseudocounts)  # @inspect theta @stepover\n\n    text(\"As smoothing \u03bb \u2192 0, we get back to the original maximum likelihood estimate.\")\n    pseudocounts = get_pseudocounts(smoothing=0)  # @inspect pseudocounts @stepover\n    theta = fully_observable_learning(network_structure, training_data, pseudocounts)  # @inspect theta @stepover\n\n    text(\"As smoothing \u03bb \u2192 \u221e, we get a uniform distribution.\")\n    pseudocounts = get_pseudocounts(smoothing=20)  # @inspect pseudocounts @stepover\n    theta = fully_observable_learning(network_structure, training_data, pseudocounts)  # @inspect theta @stepover\n\n    text(\"No matter what the smoothing \u03bb is, as we get more data, it gets washed out:\")\n    training_data = [{\"R\": 4}] * 1000\n    theta = fully_observable_learning(network_structure, training_data, pseudocounts)  # @inspect theta @stepover\n\n    text(\"Summary:\")\n    text(\"- Laplace smoothing: add pseudocounts \u03bb to all the counts\")\n    text(\"- Prevents zeros in the probability estimates\")\n\n\ndef introduce_expectation_maximization():\n    link(\"https://stanford-cs221.github.io/autumn2023/modules/module.html#include=bayesian-networks%2Fem-algorithm.js&mode=print6pp\", title=\"[Autumn 2023 lecture]\")\n\n    text(\"So far: training data consists of full assignments\")\n    text(\"Now: what if some of the variables are unobserved?\")\n\n    text(\"Fully-observed (supervised) setting:\")\n    image(\"images/pgm-g-r1-r2.png\", width=150)\n    training_data = [\n        {\"G\": \"drama\", \"R1\": 1, \"R2\": 1},\n        {\"G\": \"comedy\", \"R1\": 2, \"R2\": 2},\n    ]\n    network_structure = {\n        \"G\": (\"G\", []),\n        \"R1\": (\"R1\", [\"G\"]),\n        \"R2\": (\"R2\", [\"G\"]),\n    }\n    theta = fully_observable_learning(network_structure, training_data)  # @inspect theta @stepover\n\n    text(\"Partially-observed setting:\")\n    image(\"images/pgm-g-r1-r2.png\", width=150)\n    training_data = [  # No G!\n        {\"R1\": 1, \"R2\": 1},\n        {\"R1\": 2, \"R2\": 2},\n    ]\n\n    text(\"What should we do?\")\n\n    text(\"Maximum likelihood: maximize the likelihood of the observed data\")\n    text(\"Here, the data is whatever is observed!\")\n    text(\"max_\u03b8 \u03a3_x log P(X = x; \u03b8)\")\n    text(\"max_\u03b8 \u03a3_{r1,r2} log P(R1 = r1, R2 = r2; \u03b8)\")\n    text(\"max_\u03b8 \u03a3_{r1,r2} log \u03a3_g P(G = g, R1 = r1, R2 = r2; \u03b8)\")\n\n    text(\"The players:\")\n    text(\"- Observed variables: R1, R2\")\n    text(\"- Unobserved variables: G\")\n    text(\"- Parameters: \u03b8\")\n    text(\"Need to figure out what both G and \u03b8 are!\")\n\n    text(\"One algorithm to solve this optimization problem is **Expectation Maximization** (EM) [Dempster+ 1977].\")\n    text(\"It's a chicken and egg problem:\")\n    text(\"- If know parameters \u03b8, can compute distribution over unobserved variables P(G = g | R1 = r1, R2 = r2; \u03b8).\")\n    text(\"- If know unobserved variables, can compute parameters \u03b8.\")\n    \n    text(\"Let's just initialize the parameters \u03b8 randomly, and then iterate:\")\n    text(\"- E-step: compute P(G = g | R1 = r1, R2 = r2; \u03b8) to provide weighted full assignments.\")\n    text(\"- M-step: compute \u03b8 that maximizes the expected log likelihood of the weighted assignments.\")\n\n    theta = expectation_maximization(training_data, num_iterations=5)  # @inspect theta\n\n    text(\"Intuition: model learns hidden variables to explain the data (clustering)\")\n    text(\"EM amplifies initial preferences\")\n\n    text(\"Let's try another example:\")\n    training_data = [  # No G!\n        {\"R1\": 1, \"R2\": 1},\n        {\"R1\": 1, \"R2\": 1},\n        {\"R1\": 1, \"R2\": 1},\n        {\"R1\": 1, \"R2\": 1},\n        {\"R1\": 2, \"R2\": 2},\n        {\"R1\": 2, \"R2\": 2},\n        {\"R1\": 1, \"R2\": 2},\n        {\"R1\": 2, \"R2\": 1},\n    ]\n    theta = expectation_maximization(training_data, num_iterations=10)  # @inspect theta @stepover\n    text(\"The probabilities are a bit smoother to account for more heterogenous assignments.\")\n\n    text(\"Notes\")\n    text(\"- Guaranteed to increase the likelihood each iteration and converge to a local maximum\")\n    text(\"- Not guaranteed to converge to the global maximum\")\n    text(\"- Need to initialize at a non-uniform distribution to break symmetries\")\n    text(\"- Not that we can only recover hidden variable up to permutation of labels (can switch drama and comedy)\")\n\n\ndef expectation_maximization(training_data, num_iterations: int):\n    # Initialize parameters \u03b8 = (p_g, p_r_given_g) randomly\n    p_g = {\"drama\": 0.5, \"comedy\": 0.5}  # @inspect p_g\n    p_r_given_g = {  # @inspect p_r_given_g\n        \"comedy\": {1: 0.4, 2: 0.6},  # e.g., p(r = 1 | g = comedy) = 0.4\n        \"drama\": {1: 0.6, 2: 0.4},\n    }\n\n    # Iterate\n    for iteration in range(num_iterations):  # @inspect iteration\n        # E-step: guess the hidden variables and weight the training data accordingly\n        weighted_training_data = []  # Hallucinated training data  @inspect weighted_training_data\n        for x in training_data:\n            # First compute P(G = g, R1 = r1, R2 = r2; \u03b8)\n            q = {}  # q(g) = P(G = g | R1 = r1, R2 = r2; \u03b8) @inspect q\n            for g in p_g:\n                q[g] = p_g[g] * p_r_given_g[g][x[\"R1\"]] * p_r_given_g[g][x[\"R2\"]]  # @inspect q\n            # Normalize to get P(G = g | R1 = r1, R2 = r2; \u03b8)\n            q = normalize_dict(q)  # @inspect q @stepover\n\n            for g in q:\n                weighted_training_data.append((x | {\"G\": g}, q[g]))  # @inspect weighted_training_data\n\n        # M-step: compute \u03b8 that maximizes the expected log likelihood of the weighted assignments.\n        # Count...\n        counts_g = defaultdict(float) # @inspect counts_g @clear q\n        counts_gr = defaultdict(lambda: defaultdict(float))  # @inspect counts_gr\n        for x, weight in weighted_training_data:\n            counts_g[x[\"G\"]] += weight  # @inspect counts_g\n            counts_gr[x[\"G\"]][x[\"R1\"]] += weight  # @inspect counts_gr\n            counts_gr[x[\"G\"]][x[\"R2\"]] += weight  # @inspect counts_gr\n\n        # and normalize!\n        p_g = normalize_dict(counts_g)  # @inspect p_g @stepover\n        p_r_given_g = {}  # @inspect p_r_given_g\n        for g in counts_gr:\n            p_r_given_g[g] = normalize_dict(counts_gr[g])  # @inspect p_r_given_g @stepover\n\n    return {\"p_g\": p_g, \"p_r_given_g\": p_r_given_g}\n\n\nif __name__ == \"__main__\":\n    main()"
+    "bayes_learning.py": "from edtrace import text, image, link\nfrom bayes import ProbTable\nfrom einops import einsum\nfrom util import normalize_dict\nfrom collections import defaultdict\nfrom graphviz import Digraph\nfrom copy import deepcopy\n\ndef main():\n    text(\"### Lecture 14: learning parameters of Bayesian networks\")\n    review_bayesian_networks()\n\n    introduce_fully_observable_setting()    # Fully observable setting: all variables are observed\n    introduce_laplace_smoothing()         # Prevent overfitting\n    introduce_expectation_maximization()  # Partially-observable setting: some variables are unobserved\n\n    text(\"Summary:\")\n    text(\"- Learning task: given training data, estimate the parameters of the Bayesian network\")\n    text(\"- Parameters: local conditional distributions (could have parameter sharing)\")\n    text(\"- Laplace smoothing: add pseudocounts (smoothing) to prevent overfitting (zeros)\")\n    text(\"- Expectation Maximization: handle partially-observed data (impute weighted data)\")\n\n    text(\"Next time: logic (higher-order reasoning - e.g., *every student has a TA*)!\")\n\n\ndef review_bayesian_networks():\n    text(\"**Joint distribution**: like a database that specifies how the world works\")\n    text(\"1. Define a set of random variables: X = (X_1, ..., X_n).\")\n    text(\"Example: B(urglary), E(arthquake), A(larm)\")\n\n    text(\"2. Define a directed acyclic graph (DAG) over the variables.\")\n    image(\"images/alarm-bayes.png\", width=200)\n\n    text(\"3. For each node, define a local conditional distribution: p(x_i | parents(x_i)).\")\n    text(\"Example: p(b), p(e), p(a | b, e)\")\n    p_b = ProbTable(\"B\", [0.95, 0.05]) # p(b) @inspect p_b @stepover\n    p_e = ProbTable(\"E\", [0.95, 0.05]) # p(e) @inspect p_e @stepover\n    p_a_given_be = ProbTable(\"A | B E\", lambda b, e, a: a == (b or e), shape=(2, 2, 2)) # p(a | b, e) @inspect p_a_given_be @stepover\n\n    text(\"4. Define the joint distribution: P(X_1, ..., X_n) = \u03a0_i p(x_i | parents(x_i))\")\n    text(\"Example: P(B = b, E = e, A = a) = p(b) p(e) p(a | b, e)\")\n    P_BEA = ProbTable(\"B E A\", einsum(p_b.p, p_e.p, p_a_given_be.p, \"b, e, b e a -> b e a\"))  # P(B, E, A) @inspect P_BEA @stepover\n\n    text(\"**Probabilistic inference**: answer questions (like SQL) on the joint distribution\")  # @clear p_b p_e p_a_given_be\n    text(\"Example: P(B | A = 1)\")\n\n    text(\"1. Exact inference: select A = 1, marginalize out E, divide by P(A = 1)\")\n    text(\"2. Rejection sampling: sample (B, E, A) and reject unless A = 1\")\n    text(\"3. Gibbs sampling: alternate sampling B | E A and E | B A\")\n\n    text(\"**Conditional independence**\")\n    text(\"Question: are A and B conditionally independent given C?\")\n    text(\"Yes iff every path from A to B is blocked (by nodes in C).\")\n    text(\"A path is blocked if it contains one of the following patterns:\")\n    text(\"1. X \u2192 C \u2192 Y\")\n    text(\"2. X \u2190 C \u2192 Y\")\n    text(\"3. X \u2192 Z \u2190 Y unless C = Z or a descendent of Z (remember explaining away!)\")\n\n    text(\"Contrasting pairs:\")\n    text(\"1. A \u2190 C \u2192 B: A and B are independent given C but not marginally independent\")\n    text(\"2. A \u2192 C \u2190 B: A and B are marginally independent but not independent given C\")\n\n    text(\"Let's play a game on the whiteboard, building up a Bayesian network involving A and B.\")\n\n    text(\"This class: where do all these probabilities come from?\")\n\n\ndef introduce_fully_observable_setting():\n    link(\"https://stanford-cs221.github.io/autumn2023/modules/module.html#include=bayesian-networks%2Fsupervised-learning.js&level=0&mode=print6pp\", title=\"[Autumn 2023 lecture]\")\n\n    text(\"Learning task:\")\n    text(\"- Input: a set of examples (assignments to all variables)\")\n    text(\"- Output: local conditional distributions\")\n\n    text(\"Let's first walk through some examples intuitively...\")\n    one_variable()\n    two_variables()\n    v_structure()\n    inverted_v_structure()\n    parameter_sharing()\n    hidden_markov_model()\n    general_bayesian_networks()\n\n    text(\"...and then explain the underlying principle.\")\n    maximum_likelihood()\n\n\ndef one_variable():\n    text(\"Variables:\")\n    text(\"- R \u2208 {1, 2, 3, 4, 5}: rating of a movie\")\n    image(\"images/pgm-r.png\", width=50)\n    text(\"P(R = r) = p_R(r)\")\n    text(\"Parameters: \u03b8 = (p_R(1), p_R(2), p_R(3), p_R(4), p_R(5))\")\n\n    text(\"Training data:\")\n    training_data = [{\"R\": r} for r in [1, 3, 4, 4, 4, 4, 4, 5, 5, 5]]  # @inspect training_data\n\n    text(\"Intuition: p_R(r) = fraction of occurrences of r in training data\")\n\n    text(\"1. **Count** the occurrences of each rating:\")\n    counts_r = defaultdict(float)  # @inspect counts_r\n    for x in training_data:  # @inspect x\n        counts_r[x[\"R\"]] += 1  # @inspect counts_r\n\n    text(\"2. **Normalize** to get probabilities:\")  # @clear x\n    p_r = normalize_dict(counts_r)  # @inspect p_r @stepover\n\n    text(\"It's a simple algorithm: count + normalize!\")\n\n\ndef two_variables():\n    text(\"Variables:\")\n    text(\"- R \u2208 {1, 2, 3, 4, 5}: rating of a movie\")\n    text(\"- G \u2208 {drama, comedy}: genre of a movie\")\n    image(\"images/pgm-g-r.png\", width=150)\n    text(\"P(G = g, R = r) = p_G(g) p_R(r | g)\")\n    text(\"Parameters: \u03b8 = (p_G, p_R)\")\n\n    text(\"Training data:\")\n    training_data = [\n        {\"G\": \"drama\", \"R\": 4},\n        {\"G\": \"drama\", \"R\": 4},\n        {\"G\": \"drama\", \"R\": 5},\n        {\"G\": \"comedy\", \"R\": 1},\n        {\"G\": \"comedy\", \"R\": 5},\n    ]\n\n    text(\"1. **Count** the local assignments:\")\n    counts_g = defaultdict(float)  # @inspect counts_g\n    counts_gr = defaultdict(lambda: defaultdict(float))  # @inspect counts_gr\n    for x in training_data:  # @inspect x\n        counts_g[x[\"G\"]] += 1  # @inspect counts_g\n        counts_gr[x[\"G\"]][x[\"R\"]] += 1  # @inspect counts_gr\n\n    text(\"2. **Normalize** to get probabilities:\")  # @clear x\n    p_g = normalize_dict(counts_g)  # @inspect p_g @stepover\n    p_r_given_g = {}\n    for g in counts_g:  # @inspect g\n        p_r_given_g[g] = normalize_dict(counts_gr[g])  # @inspect p_r_given_g @stepover\n\n    text(\"Notes:\")  # @clear g\n    text(\"- To estimate a local conditional distribution, just ignore the other variables!\")\n    text(\"- Count + normalize!\")\n\n\ndef v_structure():\n    text(\"Variables:\")\n    text(\"- G \u2208 {drama, comedy}: genre of a movie\")\n    text(\"- A \u2208 {0, 1}: did the movie win an award?\")\n    text(\"- R \u2208 {1, 2, 3, 4, 5}: rating of a movie\")\n    image(\"images/pgm-g-a-r.png\", width=150)\n    text(\"P(G = g, A = a, R = r) = p_G(g) p_A(a) p_R(r | g, a)\")\n    text(\"Parameters: \u03b8 = (p_G, p_A, p_R)\")\n\n    text(\"Training data:\")\n    training_data = [\n        {\"G\": \"drama\", \"A\": 0, \"R\": 3},\n        {\"G\": \"drama\", \"A\": 1, \"R\": 5},\n        {\"G\": \"drama\", \"A\": 0, \"R\": 1},\n        {\"G\": \"comedy\", \"A\": 0, \"R\": 5},\n        {\"G\": \"comedy\", \"A\": 1, \"R\": 4},\n    ]\n\n    text(\"1. **Count** the local assignments:\")\n    counts_g = defaultdict(float)  # @inspect counts_g\n    counts_a = defaultdict(float)  # @inspect counts_a\n    counts_gar = defaultdict(lambda: defaultdict(float))  # @inspect counts_gar\n    for x in training_data:  # @inspect x\n        counts_g[x[\"G\"]] += 1  # @inspect counts_g\n        counts_a[x[\"A\"]] += 1  # @inspect counts_a\n        counts_gar[(x[\"G\"], x[\"A\"])][x[\"R\"]] += 1  # @inspect counts_gar\n\n    text(\"2. **Normalize** to get probabilities:\")  # @clear x\n    p_g = normalize_dict(counts_g)  # @inspect p_g @stepover\n    p_a = normalize_dict(counts_a)  # @inspect p_a @stepover\n    p_r_given_ga = {}\n    for ga in counts_gar:  # @inspect ga\n        p_r_given_ga[ga] = normalize_dict(counts_gar[ga])  # @inspect p_r_given_ga @stepover\n\n    text(\"There's nothing special about v-structures here.\")  # @clear ga\n    text(\"Remember to condition on all parents simultaneously.\")\n\n\ndef inverted_v_structure():\n    text(\"Variables:\")\n    text(\"- G \u2208 {drama, comedy}: genre of a movie\")\n    text(\"- R1 \u2208 {1, 2, 3, 4, 5}: user 1's rating of a movie\")\n    text(\"- R2 \u2208 {1, 2, 3, 4, 5}: user 2's rating of a movie\")\n    image(\"images/pgm-g-r1-r2.png\", width=150)\n    text(\"P(G = g, R_1 = r_1, R_2 = r_2) = p_G(g) p_R1(r_1 | g) p_R2(r_2 | g)\")\n    text(\"Parameters: \u03b8 = (p_G, p_R1, p_R2)\")\n\n    text(\"Training data:\")\n    training_data = [\n        {\"G\": \"drama\", \"R1\": 4, \"R2\": 5},\n        {\"G\": \"drama\", \"R1\": 4, \"R2\": 4},\n        {\"G\": \"drama\", \"R1\": 5, \"R2\": 3},\n        {\"G\": \"comedy\", \"R1\": 1, \"R2\": 2},\n        {\"G\": \"comedy\", \"R1\": 5, \"R2\": 4},\n    ]\n\n    text(\"1. **Count** the local assignments:\")\n    counts_g = defaultdict(float)  # @inspect counts_g\n    counts_gr1 = defaultdict(lambda: defaultdict(float))  # @inspect counts_gr1\n    counts_gr2 = defaultdict(lambda: defaultdict(float))  # @inspect counts_gr2\n    for x in training_data:  # @inspect x\n        counts_g[x[\"G\"]] += 1  # @inspect counts_g\n        counts_gr1[x[\"G\"]][x[\"R1\"]] += 1  # @inspect counts_gr1\n        counts_gr2[x[\"G\"]][x[\"R2\"]] += 1  # @inspect counts_gr2\n\n    text(\"2. **Normalize** to get probabilities:\")  # @clear x\n    p_g = normalize_dict(counts_g)  # @inspect p_g @stepover\n    p_r1_given_g = {}\n    for g in counts_g:  # @inspect g\n        p_r1_given_g[g] = normalize_dict(counts_gr1[g])  # @inspect p_r1_given_g @stepover\n    p_r2_given_g = {}\n    for g in counts_g:  # @inspect g\n        p_r2_given_g[g] = normalize_dict(counts_gr2[g])  # @inspect p_r2_given_g @stepover\n\n\ndef parameter_sharing():\n    text(\"Variables:\")\n    text(\"- G \u2208 {drama, comedy}: genre of a movie\")\n    text(\"- R1 \u2208 {1, 2, 3, 4, 5}: user 1's rating of a movie\")\n    text(\"- R2 \u2208 {1, 2, 3, 4, 5}: user 2's rating of a movie\")\n    image(\"images/pgm-g-r1-r2.png\", width=150)\n    text(\"P(G = g, R_1 = r_1, R_2 = r_2) = p_G(g) p_R(r_1 | g) p_R(r_2 | g)\")\n    text(\"Parameters: \u03b8 = (p_G, p_R)\")\n    text(\"Note that this is the same example but now we have a single p_R that is used for both R1 and R2.\")\n\n    text(\"Key idea: **parameter sharing**\")\n    image(\"images/parameter-sharing.png\", width=400)\n    text(\"Intuition: each node is powered by some local conditional distribution.\")\n\n    text(\"Training data:\")\n    training_data = [\n        {\"G\": \"drama\", \"R1\": 4, \"R2\": 5},\n        {\"G\": \"drama\", \"R1\": 4, \"R2\": 4},\n        {\"G\": \"drama\", \"R1\": 5, \"R2\": 3},\n        {\"G\": \"comedy\", \"R1\": 1, \"R2\": 2},\n        {\"G\": \"comedy\", \"R1\": 5, \"R2\": 4},\n    ]\n\n    text(\"1. **Count** the local assignments:\")\n    counts_g = defaultdict(float)  # @inspect counts_g\n    counts_gr = defaultdict(lambda: defaultdict(float))  # @inspect counts_gr\n    for x in training_data:  # @inspect x\n        counts_g[x[\"G\"]] += 1  # @inspect counts_g\n        # Note: increment the same counts_gr for both R1 and R2!\n        counts_gr[x[\"G\"]][x[\"R1\"]] += 1  # @inspect counts_gr\n        counts_gr[x[\"G\"]][x[\"R2\"]] += 1  # @inspect counts_gr\n\n    text(\"2. **Normalize** to get probabilities:\")  # @clear x\n    p_g = normalize_dict(counts_g)  # @inspect p_g @stepover\n    p_r_given_g = {}\n    for g in counts_g:  # @inspect g\n        p_r_given_g[g] = normalize_dict(counts_gr[g])  # @inspect p_r_given_g @stepover\n\n    text(\"In probabilistic inference, we're only **reading** from the local conditional distributions\")  # @clear g\n    text(\"...so we don't care whether p(r1 | g) and p(r2 | g) are the same distribution or not.\")\n\n    text(\"But when we're learning the parameters, we are **writing** to the local conditional distributions\")\n    text(\"...so it matters if p(r1 | g) and p(r2 | g) are the same distribution or not.\")\n\n    text(\"When do you parameter sharing?\")\n    text(\"- Having fewer parameters requires fewer examples to learn\")\n    text(\"- Having more parameters provides greater flexibility\")\n    text(\"- Which one you choose is a modeling decision (are the two users similar?)\")\n\n\ndef hidden_markov_model():\n    text(\"Variables:\")\n    text(\"- H_t \u2208 {0, 1}: position of the object at time t\")\n    text(\"- E_t \u2208 {0, 1}: sensor reading at time t\")\n    image(\"images/pgm-hmm.png\", width=250)\n    text(\"P(H = h, E = e) =\")\n    text(\"p_start(h_1) p_emit(e_1 | h_1) p_trans(h_2 | h_1) p_emit(e_2 | h_2) p_trans(h_3 | h_2) p_emit(e_3 | h_3)\")\n    text(\"Parameters: \u03b8 = (p_start, p_trans, p_emit)\")\n\n    text(\"Training data:\")\n    training_data = [\n        {\"H1\": 0, \"E1\": 0, \"H2\": 1, \"E2\": 1, \"H3\": 0, \"E3\": 0},\n        {\"H1\": 0, \"E1\": 1, \"H2\": 0, \"E2\": 1, \"H3\": 0, \"E3\": 1},\n    ]\n\n    text(\"1. **Count** the local assignments:\")\n    counts_start = defaultdict(float)  # @inspect counts_start\n    counts_trans = defaultdict(lambda: defaultdict(float))  # @inspect counts_trans\n    counts_emit = defaultdict(lambda: defaultdict(float))  # @inspect counts_emit\n    for x in training_data:  # @inspect x\n        counts_start[x[\"H1\"]] += 1  # @inspect counts_start\n        counts_emit[x[\"H1\"]][x[\"E1\"]] += 1  # @inspect counts_emit\n        counts_trans[x[\"H1\"]][x[\"H2\"]] += 1  # @inspect counts_trans\n        counts_emit[x[\"H2\"]][x[\"E2\"]] += 1  # @inspect counts_emit\n        counts_trans[x[\"H2\"]][x[\"H3\"]] += 1  # @inspect counts_trans\n        counts_emit[x[\"H3\"]][x[\"E3\"]] += 1  # @inspect counts_emit\n\n    text(\"2. **Normalize** to get probabilities:\")  # @clear x\n    p_start = normalize_dict(counts_start)  # @inspect p_start @stepover\n    p_trans = {}\n    for h in counts_trans:  # @inspect h\n        p_trans[h] = normalize_dict(counts_trans[h])  # @inspect p_trans @stepover\n    p_emit = {}\n    for h in counts_emit:  # @inspect h2\n        p_emit[h] = normalize_dict(counts_emit[h])  # @inspect p_emit @stepover\n\n\ndef general_bayesian_networks():\n    text(\"Variables (X_1, ..., X_n)\")\n\n    text(\"**Parameters**\")\n    text(\"Let D be the set of types of local conditional distributions\")\n    text(\"- Example: D = {start, trans, emit} for the HMM\")\n\n    text(\"Parameters \u03b8 = {p_d: d in D}\")\n    text(\"- Example: \u03b8 = {p_start, p_trans, p_emit} for the HMM\")\n\n    text(\"**Joint distribution**\")\n    text(\"Each X_i is generated from p_{d_i}\")\n    text(\"P(X_1 = x_1, ..., X_n = x_n) = \u03a0_i p_{d_i}(X_i | x_parents(X_i))\")\n    text(\"Parameter sharing: two X_i might have the same d_i\")\n\n    text(\"Training data:\")\n    training_data = [\n        {\"H1\": 0, \"E1\": 0, \"H2\": 1, \"E2\": 1, \"H3\": 0, \"E3\": 0},\n        {\"H1\": 0, \"E1\": 1, \"H2\": 0, \"E2\": 1, \"H3\": 0, \"E3\": 1},\n    ]\n\n    image(\"images/pgm-hmm.png\", width=250)\n    network_structure = {\n        # variable name -> (parameter name, parent variable names)\n        \"H1\": (\"start\", []),\n        \"H2\": (\"trans\", [\"H1\"]),\n        \"H3\": (\"trans\", [\"H2\"]),\n        \"E1\": (\"emit\", [\"H1\"]),\n        \"E2\": (\"emit\", [\"H2\"]),\n        \"E3\": (\"emit\", [\"H3\"]),\n    }\n\n    # Learn the parameters (we are in the fully observed setting)\n    theta = fully_observable_learning(network_structure, training_data)  # @inspect theta\n\n\ndef fully_observable_learning(network_structure, training_data, pseudocounts=None):\n    \"\"\"Perform supervised learning on a Bayesian network.\n    Args:\n        network_structure: variable name -> (parameter name, parent variable names)\n          Example: {\"H1\": (\"p_start\", []), \"H2\": (\"p_trans\", [\"H1\"]), ...}\n        data: a list of dictionaries of variable assignments\n          Example: [{\"H1\": 0, \"E1\": 0}, {\"H1\": 0, \"E1\": 1}, ...]\n        pseudocounts: a dictionary of pseudocounts to add to the counts (for Laplace smoothing)\n    Returns:\n        theta: a dictionary of parameters\n          Example: {\"p_start\": ..., \"p_trans\": ..., \"p_emit\": ...}\n    \"\"\"\n    # Initialize counts\n    # counts[parameter_name][parent_values][value] = how many times we've seen this\n    if pseudocounts is None:\n        counts = defaultdict(lambda: defaultdict(lambda: defaultdict(float))) # @inspect counts\n    else:\n        counts = deepcopy(pseudocounts)  # @inspect counts\n\n    # Count\n    for x in training_data:  # For each assignment x... @inspect x\n        for var, value in x.items():  # @inspect var value\n            parameter_name, parent_vars = network_structure[var]  # @inspect parameter_name parent_vars\n            parents_value = tuple(x[parent_var] for parent_var in parent_vars)  # @inspect parents_value\n            counts[parameter_name][parents_value][value] += 1  # @inspect counts\n\n    # Normalize\n    theta = defaultdict(lambda: defaultdict(lambda: defaultdict(float)))  # @inspect theta @clear x var value parameter_name parent_vars parents_value\n    for parameter_name in counts:  # @inspect parameter_name\n        for parents_value in counts[parameter_name]:  # @inspect parents_value\n            theta[parameter_name][parents_value] = normalize_dict(counts[parameter_name][parents_value])  # @inspect theta @stepover\n\n    return theta\n\n\ndef maximum_likelihood():\n    text(\"So far: count + normalize is an intuitive algorithm\")\n    text(\"It turns out this corresponds exactly to maximum likelihood estimation!\")\n\n    text(\"**Maximum likelihood** principle:\")\n    text(\"Find the parameters \u03b8 that maximize the likelihood of the data\")\n    text(\"max_\u03b8 \u03a0_x P(X = x; \u03b8)\")\n    text(\"= max_\u03b8 \u03a3_x log P(X = x; \u03b8)\")\n\n    text(\"Solution is count + normalize!\")\n    text(\"**Closed form** - no iterative optimization needed!\")\n\n    text(\"Why is this?  Let's justify this by examples.\")\n\n    maximum_likelihood_one_variable()\n    maximum_likelihood_two_variables()\n\n    text(\"Summary:\")\n    text(\"- Maximum likelihood principle: find the parameters \u03b8 that maximize the likelihood of the data\")\n    text(\"- Count + normalize is the closed form solution to maximum likelihood estimation\")\n\n\ndef maximum_likelihood_one_variable():\n    text(\"Consider the one variable case:\")\n    text(\"Variable:\")\n    text(\"- R \u2208 {1, 2, 3, 4, 5}: rating of a movie\")\n    image(\"images/pgm-r.png\", width=50)\n    text(\"P(R = r) = p_R(r)\")\n    text(\"Parameters: \u03b8 = (p_R)\")\n\n    training_data = [{\"R\": 1}, {\"R\": 5}, {\"R\": 5}]\n    text(\"max_\u03b8 p_R(1) p_R(5) p_R(5)\")\n    text(\"subject to p_R(1) + p_R(2) + p_R(3) + p_R(4) + p_R(5) = 1\")\n\n    text(\"Sketch:\")\n    text(\"- Introduce Lagrange multiplier for the sum-to-one constraint\")\n    text(\"- Set gradient of objective to 0 and solve\")\n    text(\"- Result: p_R(1) = 1/3, p_R(5) = 2/3\")\n\ndef maximum_likelihood_two_variables():\n    text(\"Consider the two variable case:\")\n    text(\"Variables:\")\n    text(\"- G \u2208 {drama, comedy}: genre of a movie\")\n    text(\"- R \u2208 {1, 2, 3, 4, 5}: rating of a movie\")\n    image(\"images/pgm-g-r.png\", width=150)\n    text(\"P(G = g, R = r) = p_G(g) p_R(r | g)\")\n    text(\"Parameters: \u03b8 = (p_G, p_R)\")\n\n    training_data = [\n        {\"G\": \"drama\", \"R\": 4},\n        {\"G\": \"drama\", \"R\": 5},\n        {\"G\": \"comedy\", \"R\": 5},\n    ]\n\n    text(\"max_\u03b8 p_G(drama) p_R(4 | drama) p_G(drama) p_R(5 | drama) p_G(comedy) p_R(5 | comedy)\")\n\n    text(\"Rearrange factors into groups that are actually connected:\")\n    text(\"max_\u03b8 [p_G(drama) p_G(drama) p_G(comedy)] [p_R(4 | drama) p_R(5 | drama)] [p_R(5 | comedy)]\")\n\n    text(\"This splits up into separate optimization problems:\")\n    text(\"max_{p_G} [p_G(drama) p_G(drama) p_G(comedy)]\")\n    text(\"max_{p_R(\u00b7 | drama)} [p_R(4 | drama) p_R(5 | drama)]\")\n    text(\"max_{p_R(\u00b7 | comedy)} [p_R(5 | comedy)]\")\n\n    text(\"Each optimization problem can be solved in the same way as the one variable case!\")\n\n\ndef introduce_laplace_smoothing():\n    link(\"https://stanford-cs221.github.io/autumn2023/modules/module.html#include=bayesian-networks%2Fsmoothing.js&mode=print6pp\", title=\"[Autumn 2023 lecture]\")\n\n    network_structure = {\"R\": (\"R\", [])}\n    training_data = [{\"R\": 1}, {\"R\": 4}]\n    theta = fully_observable_learning(network_structure, training_data)  # @inspect theta @stepover\n    text(\"Do we really believe that p_R(2) = 0?\")\n\n    text(\"Solution: **Laplace smoothing**\")\n    text(\"Simple idea: just add \u03bb to all the counts\")\n    def get_pseudocounts(smoothing: float):\n        # Return the pseudocounts given Laplace smoothing with \u03bb (lam)\n        return {\"R\": {(): {1: smoothing, 2: smoothing, 3: smoothing, 4: smoothing, 5: smoothing}}}\n    pseudocounts = get_pseudocounts(smoothing=1)  # @inspect pseudocounts @stepover\n    theta = fully_observable_learning(network_structure, training_data, pseudocounts)  # @inspect theta @stepover\n\n    text(\"As smoothing \u03bb \u2192 0, we get back to the original maximum likelihood estimate.\")\n    pseudocounts = get_pseudocounts(smoothing=0)  # @inspect pseudocounts @stepover\n    theta = fully_observable_learning(network_structure, training_data, pseudocounts)  # @inspect theta @stepover\n\n    text(\"As smoothing \u03bb \u2192 \u221e, we get a uniform distribution.\")\n    pseudocounts = get_pseudocounts(smoothing=20)  # @inspect pseudocounts @stepover\n    theta = fully_observable_learning(network_structure, training_data, pseudocounts)  # @inspect theta @stepover\n\n    text(\"No matter what the smoothing \u03bb is, as we get more data, it gets washed out:\")\n    training_data = [{\"R\": 4}] * 1000\n    theta = fully_observable_learning(network_structure, training_data, pseudocounts)  # @inspect theta @stepover\n\n    text(\"Summary:\")\n    text(\"- Laplace smoothing: add pseudocounts \u03bb to all the counts\")\n    text(\"- Prevents zeros in the probability estimates\")\n\n\ndef introduce_expectation_maximization():\n    link(\"https://stanford-cs221.github.io/autumn2023/modules/module.html#include=bayesian-networks%2Fem-algorithm.js&mode=print6pp\", title=\"[Autumn 2023 lecture]\")\n\n    text(\"So far: training data consists of full assignments\")\n    text(\"Now: what if some of the variables are unobserved?\")\n\n    text(\"Fully-observed (supervised) setting:\")\n    image(\"images/pgm-g-r1-r2.png\", width=150)\n    training_data = [\n        {\"G\": \"drama\", \"R1\": 1, \"R2\": 1},\n        {\"G\": \"comedy\", \"R1\": 2, \"R2\": 2},\n    ]\n    network_structure = {\n        \"G\": (\"G\", []),\n        \"R1\": (\"R1\", [\"G\"]),\n        \"R2\": (\"R2\", [\"G\"]),\n    }\n    theta = fully_observable_learning(network_structure, training_data)  # @inspect theta @stepover\n\n    text(\"Partially-observed setting:\")\n    image(\"images/pgm-g-r1-r2.png\", width=150)\n    training_data = [  # No G!\n        {\"R1\": 1, \"R2\": 1},\n        {\"R1\": 2, \"R2\": 2},\n    ]\n\n    text(\"What should we do?\")\n\n    text(\"Maximum likelihood: maximize the likelihood of the observed data\")\n    text(\"Here, the data is whatever is observed!\")\n    text(\"max_\u03b8 \u03a3_x log P(X = x; \u03b8)\")\n    text(\"max_\u03b8 \u03a3_{r1,r2} log P(R1 = r1, R2 = r2; \u03b8)\")\n    text(\"max_\u03b8 \u03a3_{r1,r2} log \u03a3_g P(G = g, R1 = r1, R2 = r2; \u03b8)\")\n\n    text(\"The players:\")\n    text(\"- Observed variables: R1, R2\")\n    text(\"- Unobserved variables: G\")\n    text(\"- Parameters: \u03b8\")\n    text(\"Need to figure out what both G and \u03b8 are!\")\n\n    text(\"One algorithm to solve this optimization problem is **Expectation Maximization** (EM) [Dempster+ 1977].\")\n    text(\"It's a chicken and egg problem:\")\n    text(\"- If know parameters \u03b8, can compute distribution over unobserved variables P(G = g | R1 = r1, R2 = r2; \u03b8).\")\n    text(\"- If know unobserved variables, can compute parameters \u03b8.\")\n\n    text(\"Let's just initialize the parameters \u03b8 randomly, and then iterate:\")\n    text(\"- E-step: compute P(G = g | R1 = r1, R2 = r2; \u03b8) to provide weighted full assignments.\")\n    text(\"- M-step: compute \u03b8 that maximizes the expected log likelihood of the weighted assignments.\")\n\n    theta = expectation_maximization(training_data, num_iterations=5)  # @inspect theta\n\n    text(\"Intuition: model learns hidden variables to explain the data (clustering)\")\n    text(\"EM amplifies initial preferences\")\n\n    text(\"Let's try another example:\")\n    training_data = [  # No G!\n        {\"R1\": 1, \"R2\": 1},\n        {\"R1\": 1, \"R2\": 1},\n        {\"R1\": 1, \"R2\": 1},\n        {\"R1\": 1, \"R2\": 1},\n        {\"R1\": 2, \"R2\": 2},\n        {\"R1\": 2, \"R2\": 2},\n        {\"R1\": 1, \"R2\": 2},\n        {\"R1\": 2, \"R2\": 1},\n    ]\n    theta = expectation_maximization(training_data, num_iterations=10)  # @inspect theta @stepover\n    text(\"The probabilities are a bit smoother to account for more heterogenous assignments.\")\n\n    text(\"Notes\")\n    text(\"- Guaranteed to increase the likelihood each iteration and converge to a local maximum\")\n    text(\"- Not guaranteed to converge to the global maximum\")\n    text(\"- Need to initialize at a non-uniform distribution to break symmetries\")\n    text(\"- Not that we can only recover hidden variable up to permutation of labels (can switch drama and comedy)\")\n\n\ndef expectation_maximization(training_data, num_iterations: int):\n    # Initialize parameters \u03b8 = (p_g, p_r_given_g) randomly\n    p_g = {\"drama\": 0.5, \"comedy\": 0.5}  # @inspect p_g\n    p_r_given_g = {  # @inspect p_r_given_g\n        \"comedy\": {1: 0.4, 2: 0.6},  # e.g., p(r = 1 | g = comedy) = 0.4\n        \"drama\": {1: 0.6, 2: 0.4},\n    }\n\n    # Iterate\n    for iteration in range(num_iterations):  # @inspect iteration\n        # E-step: guess the hidden variables and weight the training data accordingly\n        weighted_training_data = []  # Hallucinated training data  @inspect weighted_training_data\n        for x in training_data:\n            # First compute P(G = g, R1 = r1, R2 = r2; \u03b8)\n            q = {}  # q(g) = P(G = g | R1 = r1, R2 = r2; \u03b8) @inspect q\n            for g in p_g:\n                q[g] = p_g[g] * p_r_given_g[g][x[\"R1\"]] * p_r_given_g[g][x[\"R2\"]]  # @inspect q\n            # Normalize to get P(G = g | R1 = r1, R2 = r2; \u03b8)\n            q = normalize_dict(q)  # @inspect q @stepover\n\n            for g in q:\n                weighted_training_data.append((x | {\"G\": g}, q[g]))  # @inspect weighted_training_data\n\n        # M-step: compute \u03b8 that maximizes the expected log likelihood of the weighted assignments.\n        # Count...\n        counts_g = defaultdict(float) # @inspect counts_g @clear q\n        counts_gr = defaultdict(lambda: defaultdict(float))  # @inspect counts_gr\n        for x, weight in weighted_training_data:\n            counts_g[x[\"G\"]] += weight  # @inspect counts_g\n            counts_gr[x[\"G\"]][x[\"R1\"]] += weight  # @inspect counts_gr\n            counts_gr[x[\"G\"]][x[\"R2\"]] += weight  # @inspect counts_gr\n\n        # and normalize!\n        p_g = normalize_dict(counts_g)  # @inspect p_g @stepover\n        p_r_given_g = {}  # @inspect p_r_given_g\n        for g in counts_gr:\n            p_r_given_g[g] = normalize_dict(counts_gr[g])  # @inspect p_r_given_g @stepover\n\n    return {\"p_g\": p_g, \"p_r_given_g\": p_r_given_g}\n\n\nif __name__ == \"__main__\":\n    main()"
   },
   "hidden_line_numbers": {
     "bayes_learning.py": []
@@ -34,7 +34,8 @@
           "data": "### Lecture 14: learning parameters of Bayesian networks",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -90,7 +91,8 @@
           "data": "**Joint distribution**: like a database that specifies how the world works",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -116,7 +118,8 @@
           "data": "1. Define a set of random variables: X = (X_1, ..., X_n).",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -142,7 +145,8 @@
           "data": "Example: B(urglary), E(arthquake), A(larm)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -168,7 +172,8 @@
           "data": "2. Define a directed acyclic graph (DAG) over the variables.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -196,7 +201,8 @@
             "width": 200
           },
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -222,7 +228,8 @@
           "data": "3. For each node, define a local conditional distribution: p(x_i | parents(x_i)).",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -248,7 +255,8 @@
           "data": "Example: p(b), p(e), p(a | b, e)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -439,7 +447,8 @@
           "data": "4. Define the joint distribution: P(X_1, ..., X_n) = \u03a0_i p(x_i | parents(x_i))",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -465,7 +474,8 @@
           "data": "Example: P(B = b, E = e, A = a) = p(b) p(e) p(a | b, e)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -578,7 +588,8 @@
           "data": "**Probabilistic inference**: answer questions (like SQL) on the joint distribution",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -604,7 +615,8 @@
           "data": "Example: P(B | A = 1)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -630,7 +642,8 @@
           "data": "1. Exact inference: select A = 1, marginalize out E, divide by P(A = 1)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -656,7 +669,8 @@
           "data": "2. Rejection sampling: sample (B, E, A) and reject unless A = 1",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -682,7 +696,8 @@
           "data": "3. Gibbs sampling: alternate sampling B | E A and E | B A",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -708,7 +723,8 @@
           "data": "**Conditional independence**",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -734,7 +750,8 @@
           "data": "Question: are A and B conditionally independent given C?",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -760,7 +777,8 @@
           "data": "Yes iff every path from A to B is blocked (by nodes in C).",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -786,7 +804,8 @@
           "data": "A path is blocked if it contains one of the following patterns:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -812,7 +831,8 @@
           "data": "1. X \u2192 C \u2192 Y",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -838,7 +858,8 @@
           "data": "2. X \u2190 C \u2192 Y",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -864,7 +885,8 @@
           "data": "3. X \u2192 Z \u2190 Y unless C = Z or a descendent of Z (remember explaining away!)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -890,7 +912,8 @@
           "data": "Contrasting pairs:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -916,7 +939,8 @@
           "data": "1. A \u2190 C \u2192 B: A and B are independent given C but not marginally independent",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -942,7 +966,8 @@
           "data": "2. A \u2192 C \u2190 B: A and B are marginally independent but not independent given C",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -968,7 +993,8 @@
           "data": "Let's play a game on the whiteboard, building up a Bayesian network involving A and B.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -994,7 +1020,8 @@
           "data": "This class: where do all these probabilities come from?",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1059,7 +1086,7 @@
       "renderings": [
         {
           "type": "link",
-          "data": null,
+          "data": "[[Autumn 2023 lecture]]",
           "style": {},
           "external_link": {
             "title": "[Autumn 2023 lecture]",
@@ -1070,7 +1097,8 @@
             "description": null,
             "notes": null
           },
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1096,7 +1124,8 @@
           "data": "Learning task:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1122,7 +1151,8 @@
           "data": "- Input: a set of examples (assignments to all variables)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1148,7 +1178,8 @@
           "data": "- Output: local conditional distributions",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1174,7 +1205,8 @@
           "data": "Let's first walk through some examples intuitively...",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1248,7 +1280,8 @@
           "data": "Variables:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1280,7 +1313,8 @@
           "data": "- R \u2208 {1, 2, 3, 4, 5}: rating of a movie",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1314,7 +1348,8 @@
             "width": 50
           },
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1346,7 +1381,8 @@
           "data": "P(R = r) = p_R(r)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1378,7 +1414,8 @@
           "data": "Parameters: \u03b8 = (p_R(1), p_R(2), p_R(3), p_R(4), p_R(5))",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1410,7 +1447,8 @@
           "data": "Training data:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1604,7 +1642,8 @@
           "data": "Intuition: p_R(r) = fraction of occurrences of r in training data",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1636,7 +1675,8 @@
           "data": "1. **Count** the occurrences of each rating:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2619,7 +2659,8 @@
           "data": "2. **Normalize** to get probabilities:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2707,7 +2748,8 @@
           "data": "It's a simple algorithm: count + normalize!",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2799,7 +2841,8 @@
           "data": "Variables:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2831,7 +2874,8 @@
           "data": "- R \u2208 {1, 2, 3, 4, 5}: rating of a movie",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2863,7 +2907,8 @@
           "data": "- G \u2208 {drama, comedy}: genre of a movie",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2897,7 +2942,8 @@
             "width": 150
           },
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2929,7 +2975,8 @@
           "data": "P(G = g, R = r) = p_G(g) p_R(r | g)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2961,7 +3008,8 @@
           "data": "Parameters: \u03b8 = (p_G, p_R)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2993,7 +3041,8 @@
           "data": "Training data:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3169,7 +3218,8 @@
           "data": "1. **Count** the local assignments:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -4006,7 +4056,8 @@
           "data": "2. **Normalize** to get probabilities:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -4322,7 +4373,8 @@
           "data": "Notes:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -4354,7 +4406,8 @@
           "data": "- To estimate a local conditional distribution, just ignore the other variables!",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -4386,7 +4439,8 @@
           "data": "- Count + normalize!",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -4478,7 +4532,8 @@
           "data": "Variables:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -4510,7 +4565,8 @@
           "data": "- G \u2208 {drama, comedy}: genre of a movie",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -4542,7 +4598,8 @@
           "data": "- A \u2208 {0, 1}: did the movie win an award?",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -4574,7 +4631,8 @@
           "data": "- R \u2208 {1, 2, 3, 4, 5}: rating of a movie",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -4608,7 +4666,8 @@
             "width": 150
           },
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -4640,7 +4699,8 @@
           "data": "P(G = g, A = a, R = r) = p_G(g) p_A(a) p_R(r | g, a)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -4672,7 +4732,8 @@
           "data": "Parameters: \u03b8 = (p_G, p_A, p_R)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -4704,7 +4765,8 @@
           "data": "Training data:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -4880,7 +4942,8 @@
           "data": "1. **Count** the local assignments:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -6057,7 +6120,8 @@
           "data": "2. **Normalize** to get probabilities:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -6705,7 +6769,8 @@
           "data": "There's nothing special about v-structures here.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -6737,7 +6802,8 @@
           "data": "Remember to condition on all parents simultaneously.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -6829,7 +6895,8 @@
           "data": "Variables:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -6861,7 +6928,8 @@
           "data": "- G \u2208 {drama, comedy}: genre of a movie",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -6893,7 +6961,8 @@
           "data": "- R1 \u2208 {1, 2, 3, 4, 5}: user 1's rating of a movie",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -6925,7 +6994,8 @@
           "data": "- R2 \u2208 {1, 2, 3, 4, 5}: user 2's rating of a movie",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -6959,7 +7029,8 @@
             "width": 150
           },
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -6991,7 +7062,8 @@
           "data": "P(G = g, R_1 = r_1, R_2 = r_2) = p_G(g) p_R1(r_1 | g) p_R2(r_2 | g)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -7023,7 +7095,8 @@
           "data": "Parameters: \u03b8 = (p_G, p_R1, p_R2)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -7055,7 +7128,8 @@
           "data": "Training data:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -7231,7 +7305,8 @@
           "data": "1. **Count** the local assignments:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -8434,7 +8509,8 @@
           "data": "2. **Normalize** to get probabilities:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -9058,7 +9134,8 @@
           "data": "Variables:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -9090,7 +9167,8 @@
           "data": "- G \u2208 {drama, comedy}: genre of a movie",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -9122,7 +9200,8 @@
           "data": "- R1 \u2208 {1, 2, 3, 4, 5}: user 1's rating of a movie",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -9154,7 +9233,8 @@
           "data": "- R2 \u2208 {1, 2, 3, 4, 5}: user 2's rating of a movie",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -9188,7 +9268,8 @@
             "width": 150
           },
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -9220,7 +9301,8 @@
           "data": "P(G = g, R_1 = r_1, R_2 = r_2) = p_G(g) p_R(r_1 | g) p_R(r_2 | g)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -9252,7 +9334,8 @@
           "data": "Parameters: \u03b8 = (p_G, p_R)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -9284,7 +9367,8 @@
           "data": "Note that this is the same example but now we have a single p_R that is used for both R1 and R2.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -9316,7 +9400,8 @@
           "data": "Key idea: **parameter sharing**",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -9350,7 +9435,8 @@
             "width": 400
           },
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -9382,7 +9468,8 @@
           "data": "Intuition: each node is powered by some local conditional distribution.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -9414,7 +9501,8 @@
           "data": "Training data:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -9590,7 +9678,8 @@
           "data": "1. **Count** the local assignments:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -10810,7 +10899,8 @@
           "data": "2. **Normalize** to get probabilities:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -11150,7 +11240,8 @@
           "data": "In probabilistic inference, we're only **reading** from the local conditional distributions",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -11182,7 +11273,8 @@
           "data": "...so we don't care whether p(r1 | g) and p(r2 | g) are the same distribution or not.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -11214,7 +11306,8 @@
           "data": "But when we're learning the parameters, we are **writing** to the local conditional distributions",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -11246,7 +11339,8 @@
           "data": "...so it matters if p(r1 | g) and p(r2 | g) are the same distribution or not.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -11278,7 +11372,8 @@
           "data": "When do you parameter sharing?",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -11310,7 +11405,8 @@
           "data": "- Having fewer parameters requires fewer examples to learn",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -11342,7 +11438,8 @@
           "data": "- Having more parameters provides greater flexibility",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -11374,7 +11471,8 @@
           "data": "- Which one you choose is a modeling decision (are the two users similar?)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -11466,7 +11564,8 @@
           "data": "Variables:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -11498,7 +11597,8 @@
           "data": "- H_t \u2208 {0, 1}: position of the object at time t",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -11530,7 +11630,8 @@
           "data": "- E_t \u2208 {0, 1}: sensor reading at time t",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -11564,7 +11665,8 @@
             "width": 250
           },
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -11596,7 +11698,8 @@
           "data": "P(H = h, E = e) =",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -11628,7 +11731,8 @@
           "data": "p_start(h_1) p_emit(e_1 | h_1) p_trans(h_2 | h_1) p_emit(e_2 | h_2) p_trans(h_3 | h_2) p_emit(e_3 | h_3)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -11660,7 +11764,8 @@
           "data": "Parameters: \u03b8 = (p_start, p_trans, p_emit)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -11692,7 +11797,8 @@
           "data": "Training data:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -11796,7 +11902,8 @@
           "data": "1. **Count** the local assignments:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -12787,7 +12894,8 @@
           "data": "2. **Normalize** to get probabilities:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -13360,7 +13468,8 @@
           "data": "Variables (X_1, ..., X_n)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -13392,7 +13501,8 @@
           "data": "**Parameters**",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -13424,7 +13534,8 @@
           "data": "Let D be the set of types of local conditional distributions",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -13456,7 +13567,8 @@
           "data": "- Example: D = {start, trans, emit} for the HMM",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -13488,7 +13600,8 @@
           "data": "Parameters \u03b8 = {p_d: d in D}",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -13520,7 +13633,8 @@
           "data": "- Example: \u03b8 = {p_start, p_trans, p_emit} for the HMM",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -13552,7 +13666,8 @@
           "data": "**Joint distribution**",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -13584,7 +13699,8 @@
           "data": "Each X_i is generated from p_{d_i}",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -13616,7 +13732,8 @@
           "data": "P(X_1 = x_1, ..., X_n = x_n) = \u03a0_i p_{d_i}(X_i | x_parents(X_i))",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -13648,7 +13765,8 @@
           "data": "Parameter sharing: two X_i might have the same d_i",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -13680,7 +13798,8 @@
           "data": "Training data:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -13786,7 +13905,8 @@
             "width": 250
           },
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -19413,7 +19533,8 @@
           "data": "...and then explain the underlying principle.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -19487,7 +19608,8 @@
           "data": "So far: count + normalize is an intuitive algorithm",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -19519,7 +19641,8 @@
           "data": "It turns out this corresponds exactly to maximum likelihood estimation!",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -19551,7 +19674,8 @@
           "data": "**Maximum likelihood** principle:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -19583,7 +19707,8 @@
           "data": "Find the parameters \u03b8 that maximize the likelihood of the data",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -19615,7 +19740,8 @@
           "data": "max_\u03b8 \u03a0_x P(X = x; \u03b8)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -19647,7 +19773,8 @@
           "data": "= max_\u03b8 \u03a3_x log P(X = x; \u03b8)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -19679,7 +19806,8 @@
           "data": "Solution is count + normalize!",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -19711,7 +19839,8 @@
           "data": "**Closed form** - no iterative optimization needed!",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -19743,7 +19872,8 @@
           "data": "Why is this?  Let's justify this by examples.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -19835,7 +19965,8 @@
           "data": "Consider the one variable case:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -19873,7 +20004,8 @@
           "data": "Variable:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -19911,7 +20043,8 @@
           "data": "- R \u2208 {1, 2, 3, 4, 5}: rating of a movie",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -19951,7 +20084,8 @@
             "width": 50
           },
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -19989,7 +20123,8 @@
           "data": "P(R = r) = p_R(r)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -20027,7 +20162,8 @@
           "data": "Parameters: \u03b8 = (p_R)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -20095,7 +20231,8 @@
           "data": "max_\u03b8 p_R(1) p_R(5) p_R(5)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -20133,7 +20270,8 @@
           "data": "subject to p_R(1) + p_R(2) + p_R(3) + p_R(4) + p_R(5) = 1",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -20171,7 +20309,8 @@
           "data": "Sketch:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -20209,7 +20348,8 @@
           "data": "- Introduce Lagrange multiplier for the sum-to-one constraint",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -20247,7 +20387,8 @@
           "data": "- Set gradient of objective to 0 and solve",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -20285,7 +20426,8 @@
           "data": "- Result: p_R(1) = 1/3, p_R(5) = 2/3",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -20401,7 +20543,8 @@
           "data": "Consider the two variable case:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -20439,7 +20582,8 @@
           "data": "Variables:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -20477,7 +20621,8 @@
           "data": "- G \u2208 {drama, comedy}: genre of a movie",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -20515,7 +20660,8 @@
           "data": "- R \u2208 {1, 2, 3, 4, 5}: rating of a movie",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -20555,7 +20701,8 @@
             "width": 150
           },
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -20593,7 +20740,8 @@
           "data": "P(G = g, R = r) = p_G(g) p_R(r | g)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -20631,7 +20779,8 @@
           "data": "Parameters: \u03b8 = (p_G, p_R)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -20789,7 +20938,8 @@
           "data": "max_\u03b8 p_G(drama) p_R(4 | drama) p_G(drama) p_R(5 | drama) p_G(comedy) p_R(5 | comedy)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -20827,7 +20977,8 @@
           "data": "Rearrange factors into groups that are actually connected:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -20865,7 +21016,8 @@
           "data": "max_\u03b8 [p_G(drama) p_G(drama) p_G(comedy)] [p_R(4 | drama) p_R(5 | drama)] [p_R(5 | comedy)]",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -20903,7 +21055,8 @@
           "data": "This splits up into separate optimization problems:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -20941,7 +21094,8 @@
           "data": "max_{p_G} [p_G(drama) p_G(drama) p_G(comedy)]",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -20979,7 +21133,8 @@
           "data": "max_{p_R(\u00b7 | drama)} [p_R(4 | drama) p_R(5 | drama)]",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -21017,7 +21172,8 @@
           "data": "max_{p_R(\u00b7 | comedy)} [p_R(5 | comedy)]",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -21055,7 +21211,8 @@
           "data": "Each optimization problem can be solved in the same way as the one variable case!",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -21111,7 +21268,8 @@
           "data": "Summary:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -21143,7 +21301,8 @@
           "data": "- Maximum likelihood principle: find the parameters \u03b8 that maximize the likelihood of the data",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -21175,7 +21334,8 @@
           "data": "- Count + normalize is the closed form solution to maximum likelihood estimation",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -21258,7 +21418,7 @@
       "renderings": [
         {
           "type": "link",
-          "data": null,
+          "data": "[[Autumn 2023 lecture]]",
           "style": {},
           "external_link": {
             "title": "[Autumn 2023 lecture]",
@@ -21269,7 +21429,8 @@
             "description": null,
             "notes": null
           },
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -21383,7 +21544,8 @@
           "data": "Do we really believe that p_R(2) = 0?",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -21409,7 +21571,8 @@
           "data": "Solution: **Laplace smoothing**",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -21435,7 +21598,8 @@
           "data": "Simple idea: just add \u03bb to all the counts",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -21619,7 +21783,8 @@
           "data": "As smoothing \u03bb \u2192 0, we get back to the original maximum likelihood estimate.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -21785,7 +21950,8 @@
           "data": "As smoothing \u03bb \u2192 \u221e, we get a uniform distribution.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -21951,7 +22117,8 @@
           "data": "No matter what the smoothing \u03bb is, as we get more data, it gets washed out:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -22065,7 +22232,8 @@
           "data": "Summary:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -22091,7 +22259,8 @@
           "data": "- Laplace smoothing: add pseudocounts \u03bb to all the counts",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -22117,7 +22286,8 @@
           "data": "- Prevents zeros in the probability estimates",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -22182,7 +22352,7 @@
       "renderings": [
         {
           "type": "link",
-          "data": null,
+          "data": "[[Autumn 2023 lecture]]",
           "style": {},
           "external_link": {
             "title": "[Autumn 2023 lecture]",
@@ -22193,7 +22363,8 @@
             "description": null,
             "notes": null
           },
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -22219,7 +22390,8 @@
           "data": "So far: training data consists of full assignments",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -22245,7 +22417,8 @@
           "data": "Now: what if some of the variables are unobserved?",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -22271,7 +22444,8 @@
           "data": "Fully-observed (supervised) setting:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -22299,7 +22473,8 @@
             "width": 150
           },
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -22569,7 +22744,8 @@
           "data": "Partially-observed setting:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -22597,7 +22773,8 @@
             "width": 150
           },
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -22677,7 +22854,8 @@
           "data": "What should we do?",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -22703,7 +22881,8 @@
           "data": "Maximum likelihood: maximize the likelihood of the observed data",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -22729,7 +22908,8 @@
           "data": "Here, the data is whatever is observed!",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -22755,7 +22935,8 @@
           "data": "max_\u03b8 \u03a3_x log P(X = x; \u03b8)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -22781,7 +22962,8 @@
           "data": "max_\u03b8 \u03a3_{r1,r2} log P(R1 = r1, R2 = r2; \u03b8)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -22807,7 +22989,8 @@
           "data": "max_\u03b8 \u03a3_{r1,r2} log \u03a3_g P(G = g, R1 = r1, R2 = r2; \u03b8)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -22833,7 +23016,8 @@
           "data": "The players:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -22859,7 +23043,8 @@
           "data": "- Observed variables: R1, R2",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -22885,7 +23070,8 @@
           "data": "- Unobserved variables: G",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -22911,7 +23097,8 @@
           "data": "- Parameters: \u03b8",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -22937,7 +23124,8 @@
           "data": "Need to figure out what both G and \u03b8 are!",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -22963,7 +23151,8 @@
           "data": "One algorithm to solve this optimization problem is **Expectation Maximization** (EM) [Dempster+ 1977].",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -22989,7 +23178,8 @@
           "data": "It's a chicken and egg problem:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -23015,7 +23205,8 @@
           "data": "- If know parameters \u03b8, can compute distribution over unobserved variables P(G = g | R1 = r1, R2 = r2; \u03b8).",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -23041,7 +23232,8 @@
           "data": "- If know unobserved variables, can compute parameters \u03b8.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -23067,7 +23259,8 @@
           "data": "Let's just initialize the parameters \u03b8 randomly, and then iterate:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -23093,7 +23286,8 @@
           "data": "- E-step: compute P(G = g | R1 = r1, R2 = r2; \u03b8) to provide weighted full assignments.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -23119,7 +23313,8 @@
           "data": "- M-step: compute \u03b8 that maximizes the expected log likelihood of the weighted assignments.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -35189,7 +35384,8 @@
           "data": "Intuition: model learns hidden variables to explain the data (clustering)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -35215,7 +35411,8 @@
           "data": "EM amplifies initial preferences",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -35241,7 +35438,8 @@
           "data": "Let's try another example:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -35519,7 +35717,8 @@
           "data": "The probabilities are a bit smoother to account for more heterogenous assignments.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -35545,7 +35744,8 @@
           "data": "Notes",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -35571,7 +35771,8 @@
           "data": "- Guaranteed to increase the likelihood each iteration and converge to a local maximum",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -35597,7 +35798,8 @@
           "data": "- Not guaranteed to converge to the global maximum",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -35623,7 +35825,8 @@
           "data": "- Need to initialize at a non-uniform distribution to break symmetries",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -35649,7 +35852,8 @@
           "data": "- Not that we can only recover hidden variable up to permutation of labels (can switch drama and comedy)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -35681,7 +35885,8 @@
           "data": "Summary:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -35701,7 +35906,8 @@
           "data": "- Learning task: given training data, estimate the parameters of the Bayesian network",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -35721,7 +35927,8 @@
           "data": "- Parameters: local conditional distributions (could have parameter sharing)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -35741,7 +35948,8 @@
           "data": "- Laplace smoothing: add pseudocounts (smoothing) to prevent overfitting (zeros)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -35761,7 +35969,8 @@
           "data": "- Expectation Maximization: handle partially-observed data (impute weighted data)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -35781,7 +35990,8 @@
           "data": "Next time: logic (higher-order reasoning - e.g., *every student has a TA*)!",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     }

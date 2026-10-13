@@ -1,6 +1,6 @@
 {
   "files": {
-    "simultaneous_games.py": "from edtrace import text, image, link\nfrom sympy import symbols\n\ndef main():\n    text(\"So far: turn-based games\")\n    text(\"Now: simultaneous games\")\n    link(\"https://stanford-cs221.github.io/autumn2023/modules/module.html#include=games/simultaneous-games.js&mode=print6pp\", title=\"[Autumn 2023 lecture]\")\n\n    text(\"Example: rock-paper-scissors\")\n    image(\"images/rock-paper-scissors.jpg\", width=200)\n\n    text(\"Poll: can you still play optimally if you reveal your strategy?\")\n\n    text(\"In turn-based games, we could compute minimax policies using a game tree:\")\n    image(\"images/minimax.png\", width=400)\n\n    text(\"But in simultaneous games, two players have to move at the same time,\")\n    text(\"...so the game tree breaks down!\")\n\n    zero_sum_games()\n    non_zero_sum_games()\n\n    text(\"Summary:\")\n    text(\"- Simultaneous games: two players move at the same time\")\n    text(\"- In general, second player has an advantage (and can play pure strategy)\")\n    text(\"- Minimax theorem: if we allow mixed strategies, then both players can play optimally\")\n    text(\"- Nash equilibrium: exists for non-zero-sum games (but not unique)\")\n    text(\"- Huge literature in game theory / economics\")\n\n\ndef zero_sum_games():\n    text(\"We will focus on simultaneous zero-sum games.\")\n    zero_sum_games_definitions()  # Problem\n    minimax_theorem()             # Solution\n\ndef zero_sum_games_definitions():\n    text(\"Let's start with an example game:\")\n    image(\"images/two-finger-morra.png\", width=400)\n    text(\"Intuition: A wants same # fingers as B, leaning towards 4\")\n\n    text(\"Definition: **single-move simultaneous game**\")\n    text(\"Two players: A and B\")\n    text(\"Payoff matrix: V(a, b) for each action pair (a, b)\")\n    text(\"Zero-sum: A's utility is V(a, b), B's utility is -V(a, b)\")\n    text(\"Note that there is no state, only one action.\")\n\n    image(\"images/morra-payoff.png\", width=400)\n    actions = [1, 2]\n    V = {\n        1: {1: 2, 2: -3},\n        2: {1: -3, 2: 4},\n    }\n\n    text(\"Definition: **strategy** (policy)\")\n    text(\"A **pure strategy** (deterministic policy) is just a single action a.\")\n    text(\"A **mixed strategy** (stochastic policy) is a probability distribution over actions \u03c0(a).\")\n\n    text(\"Example policies in two-finger Morra:\")\n    always_one = {1: 1.0}  # \u03c0 = [1, 0]\n    always_two = {2: 1.0}  # \u03c0 = [0, 1]\n    uniform = {1: 0.5, 2: 0.5}  # \u03c0 = [0.5, 0.5]\n\n    text(\"Game evaluation:\")\n    text(\"V(\u03c0_A, \u03c0_B) = \u03a3_a \u03a3_b \u03c0_A(a) \u03c0_B(b) V(a, b)\")\n    value = evaluate_game(V, uniform, uniform)  # @inspect value\n    value = evaluate_game(V, always_one, uniform)  # @inspect value @stepover\n    value = evaluate_game(V, always_two, uniform)  # @inspect value @stepover\n    value = evaluate_game(V, uniform, always_one)  # @inspect value @stepover\n    value = evaluate_game(V, uniform, always_two)  # @inspect value @stepover\n\n\ndef evaluate_game(V, policy_a, policy_b):  # @inspect V policy_a policy_b\n    \"\"\"Computed expected utility of the game.\"\"\"\n    value = 0\n    for a, prob_a in policy_a.items():\n        for b, prob_b in policy_b.items():\n            value += prob_a * prob_b * V[a][b]\n    return value\n\n\ndef minimax_theorem():\n    text(\"How do you come up with the optimal strategy?\")\n    text(\"Think of a strategy and try it with a partner!\")\n\n    text(\"Game value: V(\u03c0_A, \u03c0_B)\")\n    text(\"Player A wants to maximize...\")\n    text(\"Player B wants to minimize...\")\n    text(\"**simultaneously**!\")\n    image(\"images/deadlock-traffic.png\", width=150)\n\n    text(\"Let's break the jam and just let someone go first.\")\n\n    text(\"First, consider pure strategies (actions):\")\n    image(\"images/pure-a-b.png\", width=400)\n    image(\"images/second-is-no-worse.png\", width=400)\n\n    text(\"Now, let's consider mixed strategies:\")\n    text(\"Suppose player A plays a mixed strategy \u03c0_A:\")\n    pi_A = {1: 0.5, 2: 0.5}  # \u03c0_A = [0.5, 0.5]\n\n    text(\"Let's compute the optimal strategy for player B:\")\n    text(\"V(\u03c0_A, \u03c0_B) = \u03c0_A(1) \u03c0_B(1) V(1, 1) + \u03c0_A(1) \u03c0_B(2) V(1, 2) + \u03c0_A(2) \u03c0_B(1) V(2, 1) + \u03c0_A(2) \u03c0_B(2) V(2, 2)\")\n    text(\"V(\u03c0_A, \u03c0_B) = 0.5 * \u03c0_B(1) (2 - 3) + 0.5 * \u03c0_B(2) (4 - 3)\")\n    text(\"V(\u03c0_A, \u03c0_B) = -0.5 * \u03c0_B(1) + 0.5 * \u03c0_B(2)\")\n    text(\"Optimal \u03c0_B: \u03c0_B(1) = 1, \u03c0_B(2) = 0\")\n\n    text(\"In general, the second player can always play a pure strategy:\")\n    image(\"images/second-pure.png\", width=500)\n    \n    text(\"In general, player A plays \u03c0_A = [p, 1-p].\")\n    image(\"images/mixed-a-b.png\", width=400)\n    text(\"Minimax value of the game:\")\n    image(\"images/mixed-a-b-value.png\", width=400)\n\n    text(\"Now let's let player B go first with a mixed strategy \u03c0_B = [p, 1-p]:\")\n    image(\"images/mixed-b-a.png\", width=400)\n    text(\"Minimax value of the game:\")\n    image(\"images/mixed-b-a-value.png\", width=400)\n\n    text(\"It's not a coincidence...\")\n    image(\"images/minimax-theorem.png\", width=600)\n    text(\"Proof: linear programming duality\")\n    text(\"Algorithm: compute optimal mixed strategies via linear programming\")\n\n    text(\"Upshot: **revealing your optimal mixed strategy doesn't hurt you**!\")\n\n    text(\"For two-finger Morra:\")\n    text(\"- The optimal mixed strategy for player A is [7/12, 5/12]\")\n    text(\"- The optimal mixed strategy for player B is [7/12, 5/12]\")\n\n    V = {\n        1: {1: 2, 2: -3},\n        2: {1: -3, 2: 4},\n    }\n    pi_opt = {1: 7/12, 2: 5/12}\n    value = evaluate_game(V, pi_opt, pi_opt)  # @inspect value @stepover\n\n    text(\"From minimax principles:\")\n    text(\"- If your opponent changes their strategy, you can only improve!\")\n    text(\"- If you change your strategy, you can only get worse!\")\n\n\ndef non_zero_sum_games():\n    non_zero_sum_games_definitions()  # Problem\n    nash_equilibria()                 # Solution\n\n\ndef non_zero_sum_games_definitions():\n    text(\"So far: zero-sum games (utility of player A + utility of player B = 0)\")\n    text(\"Now: non-zero-sum games (utility of players are arbitrary)\")\n    link(\"https://stanford-cs221.github.io/autumn2023/modules/module.html#include=games%2Fnon-zero-sum-games.js&mode=print6pp\", title=\"[Autumn 2023 lecture]\")\n\n    text(\"Relationship between utilities:\")\n    text(\"- Competitive games: minimax, via linear programming or search\")\n    text(\"- Cooperative games (utility of all players is same): pure maximization, via search\")\n    text(\"- Real life: somewhere in between\")\n\n    image(\"images/prisoners-dilemma.png\", width=500)\n\n    text(\"Definition: **payoff matrix**\")\n    text(\"V_p(\u03c0_A, \u03c0_B): utility for player p \u2208 {A, B} when \u03c0_A and \u03c0_B are the strategies\")\n\n    text(\"Utility: -number of years in jail\")\n    image(\"images/payoff-prisoners.png\", width=500)\n\n\ndef nash_equilibria():\n    text(\"Can't apply von Neumann's minimax theorem (not zero-sum).\")\n\n    text(\"But we can get something weaker: Nash equilibrium.\")\n    image(\"images/nash-equilibrium.png\", width=500)\n    text(\"Theorem (Nash's existence theorem [1950]):\")\n    text(\"- Consider any finite-player game with finite number of actions.\")\n    text(\"- There exists **at least one** Nash equilibrium.\")\n\n    text(\"Examples of Nash equilibria:\")\n    image(\"images/payoff-morra.png\", width=500)\n    text(\"Nash equilibrium (also the minimax strategy): [7/12, 5/12]\")\n    \n    image(\"images/payoff-collaborative-morra.png\", width=500)\n    text(\"Nash equilibrium: both players play 1 or both players play 2\")\n\n    image(\"images/payoff-prisoners.png\", width=500)\n    text(\"Nash equilibrium: both players testify\")\n\n    text(\"Simultaneous zero-sum games:\")\n    text(\"- von Neumann's minimax theorem\")\n    text(\"- Multiple minimax strategies, single game value\")\n    text(\"Simultaneous non-zero-sum games:\")\n    text(\"- Nash's existence theorem\")\n    text(\"- Multiple Nash equilibria, multiple game values\")\n\n    text(\"Summary:\")\n    text(\"- Nash equilibria are stable (no notion of optimality)\")\n    text(\"- Nash equilibria exist for non-zero-sum games\")\n\n\nif __name__ == \"__main__\":\n    main()"
+    "simultaneous_games.py": "from edtrace import text, image, link\nfrom sympy import symbols\n\ndef main():\n    text(\"So far: turn-based games\")\n    text(\"Now: simultaneous games\")\n    link(\"https://stanford-cs221.github.io/autumn2023/modules/module.html#include=games/simultaneous-games.js&mode=print6pp\", title=\"[Autumn 2023 lecture]\")\n\n    text(\"Example: rock-paper-scissors\")\n    image(\"images/rock-paper-scissors.jpg\", width=200)\n\n    text(\"Poll: can you still play optimally if you reveal your strategy?\")\n\n    text(\"In turn-based games, we could compute minimax policies using a game tree:\")\n    image(\"images/minimax.png\", width=400)\n\n    text(\"But in simultaneous games, two players have to move at the same time,\")\n    text(\"...so the game tree breaks down!\")\n\n    zero_sum_games()\n    non_zero_sum_games()\n\n    text(\"Summary:\")\n    text(\"- Simultaneous games: two players move at the same time\")\n    text(\"- In general, second player has an advantage (and can play pure strategy)\")\n    text(\"- Minimax theorem: if we allow mixed strategies, then both players can play optimally\")\n    text(\"- Nash equilibrium: exists for non-zero-sum games (but not unique)\")\n    text(\"- Huge literature in game theory / economics\")\n\n\ndef zero_sum_games():\n    text(\"We will focus on simultaneous zero-sum games.\")\n    zero_sum_games_definitions()  # Problem\n    minimax_theorem()             # Solution\n\ndef zero_sum_games_definitions():\n    text(\"Let's start with an example game:\")\n    image(\"images/two-finger-morra.png\", width=400)\n    text(\"Intuition: A wants same # fingers as B, leaning towards 4\")\n\n    text(\"Definition: **single-move simultaneous game**\")\n    text(\"Two players: A and B\")\n    text(\"Payoff matrix: V(a, b) for each action pair (a, b)\")\n    text(\"Zero-sum: A's utility is V(a, b), B's utility is -V(a, b)\")\n    text(\"Note that there is no state, only one action.\")\n\n    image(\"images/morra-payoff.png\", width=400)\n    actions = [1, 2]\n    V = {\n        1: {1: 2, 2: -3},\n        2: {1: -3, 2: 4},\n    }\n\n    text(\"Definition: **strategy** (policy)\")\n    text(\"A **pure strategy** (deterministic policy) is just a single action a.\")\n    text(\"A **mixed strategy** (stochastic policy) is a probability distribution over actions \u03c0(a).\")\n\n    text(\"Example policies in two-finger Morra:\")\n    always_one = {1: 1.0}  # \u03c0 = [1, 0]\n    always_two = {2: 1.0}  # \u03c0 = [0, 1]\n    uniform = {1: 0.5, 2: 0.5}  # \u03c0 = [0.5, 0.5]\n\n    text(\"Game evaluation:\")\n    text(\"V(\u03c0_A, \u03c0_B) = \u03a3_a \u03a3_b \u03c0_A(a) \u03c0_B(b) V(a, b)\")\n    value = evaluate_game(V, uniform, uniform)  # @inspect value\n    value = evaluate_game(V, always_one, uniform)  # @inspect value @stepover\n    value = evaluate_game(V, always_two, uniform)  # @inspect value @stepover\n    value = evaluate_game(V, uniform, always_one)  # @inspect value @stepover\n    value = evaluate_game(V, uniform, always_two)  # @inspect value @stepover\n\n\ndef evaluate_game(V, policy_a, policy_b):  # @inspect V policy_a policy_b\n    \"\"\"Computed expected utility of the game.\"\"\"\n    value = 0\n    for a, prob_a in policy_a.items():\n        for b, prob_b in policy_b.items():\n            value += prob_a * prob_b * V[a][b]\n    return value\n\n\ndef minimax_theorem():\n    text(\"How do you come up with the optimal strategy?\")\n    text(\"Think of a strategy and try it with a partner!\")\n\n    text(\"Game value: V(\u03c0_A, \u03c0_B)\")\n    text(\"Player A wants to maximize...\")\n    text(\"Player B wants to minimize...\")\n    text(\"**simultaneously**!\")\n    image(\"images/deadlock-traffic.png\", width=150)\n\n    text(\"Let's break the jam and just let someone go first.\")\n\n    text(\"First, consider pure strategies (actions):\")\n    image(\"images/pure-a-b.png\", width=400)\n    image(\"images/second-is-no-worse.png\", width=400)\n\n    text(\"Now, let's consider mixed strategies:\")\n    text(\"Suppose player A plays a mixed strategy \u03c0_A:\")\n    pi_A = {1: 0.5, 2: 0.5}  # \u03c0_A = [0.5, 0.5]\n\n    text(\"Let's compute the optimal strategy for player B:\")\n    text(\"V(\u03c0_A, \u03c0_B) = \u03c0_A(1) \u03c0_B(1) V(1, 1) + \u03c0_A(1) \u03c0_B(2) V(1, 2) + \u03c0_A(2) \u03c0_B(1) V(2, 1) + \u03c0_A(2) \u03c0_B(2) V(2, 2)\")\n    text(\"V(\u03c0_A, \u03c0_B) = 0.5 * \u03c0_B(1) (2 - 3) + 0.5 * \u03c0_B(2) (4 - 3)\")\n    text(\"V(\u03c0_A, \u03c0_B) = -0.5 * \u03c0_B(1) + 0.5 * \u03c0_B(2)\")\n    text(\"Optimal \u03c0_B: \u03c0_B(1) = 1, \u03c0_B(2) = 0\")\n\n    text(\"In general, the second player can always play a pure strategy:\")\n    image(\"images/second-pure.png\", width=500)\n\n    text(\"In general, player A plays \u03c0_A = [p, 1-p].\")\n    image(\"images/mixed-a-b.png\", width=400)\n    text(\"Minimax value of the game:\")\n    image(\"images/mixed-a-b-value.png\", width=400)\n\n    text(\"Now let's let player B go first with a mixed strategy \u03c0_B = [p, 1-p]:\")\n    image(\"images/mixed-b-a.png\", width=400)\n    text(\"Minimax value of the game:\")\n    image(\"images/mixed-b-a-value.png\", width=400)\n\n    text(\"It's not a coincidence...\")\n    image(\"images/minimax-theorem.png\", width=600)\n    text(\"Proof: linear programming duality\")\n    text(\"Algorithm: compute optimal mixed strategies via linear programming\")\n\n    text(\"Upshot: **revealing your optimal mixed strategy doesn't hurt you**!\")\n\n    text(\"For two-finger Morra:\")\n    text(\"- The optimal mixed strategy for player A is [7/12, 5/12]\")\n    text(\"- The optimal mixed strategy for player B is [7/12, 5/12]\")\n\n    V = {\n        1: {1: 2, 2: -3},\n        2: {1: -3, 2: 4},\n    }\n    pi_opt = {1: 7/12, 2: 5/12}\n    value = evaluate_game(V, pi_opt, pi_opt)  # @inspect value @stepover\n\n    text(\"From minimax principles:\")\n    text(\"- If your opponent changes their strategy, you can only improve!\")\n    text(\"- If you change your strategy, you can only get worse!\")\n\n\ndef non_zero_sum_games():\n    non_zero_sum_games_definitions()  # Problem\n    nash_equilibria()                 # Solution\n\n\ndef non_zero_sum_games_definitions():\n    text(\"So far: zero-sum games (utility of player A + utility of player B = 0)\")\n    text(\"Now: non-zero-sum games (utility of players are arbitrary)\")\n    link(\"https://stanford-cs221.github.io/autumn2023/modules/module.html#include=games%2Fnon-zero-sum-games.js&mode=print6pp\", title=\"[Autumn 2023 lecture]\")\n\n    text(\"Relationship between utilities:\")\n    text(\"- Competitive games: minimax, via linear programming or search\")\n    text(\"- Cooperative games (utility of all players is same): pure maximization, via search\")\n    text(\"- Real life: somewhere in between\")\n\n    image(\"images/prisoners-dilemma.png\", width=500)\n\n    text(\"Definition: **payoff matrix**\")\n    text(\"V_p(\u03c0_A, \u03c0_B): utility for player p \u2208 {A, B} when \u03c0_A and \u03c0_B are the strategies\")\n\n    text(\"Utility: -number of years in jail\")\n    image(\"images/payoff-prisoners.png\", width=500)\n\n\ndef nash_equilibria():\n    text(\"Can't apply von Neumann's minimax theorem (not zero-sum).\")\n\n    text(\"But we can get something weaker: Nash equilibrium.\")\n    image(\"images/nash-equilibrium.png\", width=500)\n    text(\"Theorem (Nash's existence theorem [1950]):\")\n    text(\"- Consider any finite-player game with finite number of actions.\")\n    text(\"- There exists **at least one** Nash equilibrium.\")\n\n    text(\"Examples of Nash equilibria:\")\n    image(\"images/payoff-morra.png\", width=500)\n    text(\"Nash equilibrium (also the minimax strategy): [7/12, 5/12]\")\n\n    image(\"images/payoff-collaborative-morra.png\", width=500)\n    text(\"Nash equilibrium: both players play 1 or both players play 2\")\n\n    image(\"images/payoff-prisoners.png\", width=500)\n    text(\"Nash equilibrium: both players testify\")\n\n    text(\"Simultaneous zero-sum games:\")\n    text(\"- von Neumann's minimax theorem\")\n    text(\"- Multiple minimax strategies, single game value\")\n    text(\"Simultaneous non-zero-sum games:\")\n    text(\"- Nash's existence theorem\")\n    text(\"- Multiple Nash equilibria, multiple game values\")\n\n    text(\"Summary:\")\n    text(\"- Nash equilibria are stable (no notion of optimality)\")\n    text(\"- Nash equilibria exist for non-zero-sum games\")\n\n\nif __name__ == \"__main__\":\n    main()"
   },
   "hidden_line_numbers": {
     "simultaneous_games.py": []
@@ -34,7 +34,8 @@
           "data": "So far: turn-based games",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -54,7 +55,8 @@
           "data": "Now: simultaneous games",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -71,7 +73,7 @@
       "renderings": [
         {
           "type": "link",
-          "data": null,
+          "data": "[[Autumn 2023 lecture]]",
           "style": {},
           "external_link": {
             "title": "[Autumn 2023 lecture]",
@@ -82,7 +84,8 @@
             "description": null,
             "notes": null
           },
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -102,7 +105,8 @@
           "data": "Example: rock-paper-scissors",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -124,7 +128,8 @@
             "width": 200
           },
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -144,7 +149,8 @@
           "data": "Poll: can you still play optimally if you reveal your strategy?",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -164,7 +170,8 @@
           "data": "In turn-based games, we could compute minimax policies using a game tree:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -186,7 +193,8 @@
             "width": 400
           },
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -206,7 +214,8 @@
           "data": "But in simultaneous games, two players have to move at the same time,",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -226,7 +235,8 @@
           "data": "...so the game tree breaks down!",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -282,7 +292,8 @@
           "data": "We will focus on simultaneous zero-sum games.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -356,7 +367,8 @@
           "data": "Let's start with an example game:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -390,7 +402,8 @@
             "width": 400
           },
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -422,7 +435,8 @@
           "data": "Intuition: A wants same # fingers as B, leaning towards 4",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -454,7 +468,8 @@
           "data": "Definition: **single-move simultaneous game**",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -486,7 +501,8 @@
           "data": "Two players: A and B",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -518,7 +534,8 @@
           "data": "Payoff matrix: V(a, b) for each action pair (a, b)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -550,7 +567,8 @@
           "data": "Zero-sum: A's utility is V(a, b), B's utility is -V(a, b)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -582,7 +600,8 @@
           "data": "Note that there is no state, only one action.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -616,7 +635,8 @@
             "width": 400
           },
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -744,7 +764,8 @@
           "data": "Definition: **strategy** (policy)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -776,7 +797,8 @@
           "data": "A **pure strategy** (deterministic policy) is just a single action a.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -808,7 +830,8 @@
           "data": "A **mixed strategy** (stochastic policy) is a probability distribution over actions \u03c0(a).",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -840,7 +863,8 @@
           "data": "Example policies in two-finger Morra:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -944,7 +968,8 @@
           "data": "Game evaluation:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -976,7 +1001,8 @@
           "data": "V(\u03c0_A, \u03c0_B) = \u03a3_a \u03a3_b \u03c0_A(a) \u03c0_B(b) V(a, b)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1811,7 +1837,8 @@
           "data": "How do you come up with the optimal strategy?",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1843,7 +1870,8 @@
           "data": "Think of a strategy and try it with a partner!",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1875,7 +1903,8 @@
           "data": "Game value: V(\u03c0_A, \u03c0_B)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1907,7 +1936,8 @@
           "data": "Player A wants to maximize...",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1939,7 +1969,8 @@
           "data": "Player B wants to minimize...",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1971,7 +2002,8 @@
           "data": "**simultaneously**!",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2005,7 +2037,8 @@
             "width": 150
           },
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2037,7 +2070,8 @@
           "data": "Let's break the jam and just let someone go first.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2069,7 +2103,8 @@
           "data": "First, consider pure strategies (actions):",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2103,7 +2138,8 @@
             "width": 400
           },
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2137,7 +2173,8 @@
             "width": 400
           },
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2169,7 +2206,8 @@
           "data": "Now, let's consider mixed strategies:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2201,7 +2239,8 @@
           "data": "Suppose player A plays a mixed strategy \u03c0_A:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2257,7 +2296,8 @@
           "data": "Let's compute the optimal strategy for player B:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2289,7 +2329,8 @@
           "data": "V(\u03c0_A, \u03c0_B) = \u03c0_A(1) \u03c0_B(1) V(1, 1) + \u03c0_A(1) \u03c0_B(2) V(1, 2) + \u03c0_A(2) \u03c0_B(1) V(2, 1) + \u03c0_A(2) \u03c0_B(2) V(2, 2)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2321,7 +2362,8 @@
           "data": "V(\u03c0_A, \u03c0_B) = 0.5 * \u03c0_B(1) (2 - 3) + 0.5 * \u03c0_B(2) (4 - 3)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2353,7 +2395,8 @@
           "data": "V(\u03c0_A, \u03c0_B) = -0.5 * \u03c0_B(1) + 0.5 * \u03c0_B(2)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2385,7 +2428,8 @@
           "data": "Optimal \u03c0_B: \u03c0_B(1) = 1, \u03c0_B(2) = 0",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2417,7 +2461,8 @@
           "data": "In general, the second player can always play a pure strategy:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2451,7 +2496,8 @@
             "width": 500
           },
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2483,7 +2529,8 @@
           "data": "In general, player A plays \u03c0_A = [p, 1-p].",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2517,7 +2564,8 @@
             "width": 400
           },
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2549,7 +2597,8 @@
           "data": "Minimax value of the game:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2583,7 +2632,8 @@
             "width": 400
           },
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2615,7 +2665,8 @@
           "data": "Now let's let player B go first with a mixed strategy \u03c0_B = [p, 1-p]:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2649,7 +2700,8 @@
             "width": 400
           },
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2681,7 +2733,8 @@
           "data": "Minimax value of the game:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2715,7 +2768,8 @@
             "width": 400
           },
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2747,7 +2801,8 @@
           "data": "It's not a coincidence...",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2781,7 +2836,8 @@
             "width": 600
           },
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2813,7 +2869,8 @@
           "data": "Proof: linear programming duality",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2845,7 +2902,8 @@
           "data": "Algorithm: compute optimal mixed strategies via linear programming",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2877,7 +2935,8 @@
           "data": "Upshot: **revealing your optimal mixed strategy doesn't hurt you**!",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2909,7 +2968,8 @@
           "data": "For two-finger Morra:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2941,7 +3001,8 @@
           "data": "- The optimal mixed strategy for player A is [7/12, 5/12]",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2973,7 +3034,8 @@
           "data": "- The optimal mixed strategy for player B is [7/12, 5/12]",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3132,7 +3194,8 @@
           "data": "From minimax principles:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3164,7 +3227,8 @@
           "data": "- If your opponent changes their strategy, you can only improve!",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3196,7 +3260,8 @@
           "data": "- If you change your strategy, you can only get worse!",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3330,7 +3395,8 @@
           "data": "So far: zero-sum games (utility of player A + utility of player B = 0)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3362,7 +3428,8 @@
           "data": "Now: non-zero-sum games (utility of players are arbitrary)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3391,7 +3458,7 @@
       "renderings": [
         {
           "type": "link",
-          "data": null,
+          "data": "[[Autumn 2023 lecture]]",
           "style": {},
           "external_link": {
             "title": "[Autumn 2023 lecture]",
@@ -3402,7 +3469,8 @@
             "description": null,
             "notes": null
           },
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3434,7 +3502,8 @@
           "data": "Relationship between utilities:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3466,7 +3535,8 @@
           "data": "- Competitive games: minimax, via linear programming or search",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3498,7 +3568,8 @@
           "data": "- Cooperative games (utility of all players is same): pure maximization, via search",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3530,7 +3601,8 @@
           "data": "- Real life: somewhere in between",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3564,7 +3636,8 @@
             "width": 500
           },
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3596,7 +3669,8 @@
           "data": "Definition: **payoff matrix**",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3628,7 +3702,8 @@
           "data": "V_p(\u03c0_A, \u03c0_B): utility for player p \u2208 {A, B} when \u03c0_A and \u03c0_B are the strategies",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3660,7 +3735,8 @@
           "data": "Utility: -number of years in jail",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3694,7 +3770,8 @@
             "width": 500
           },
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3786,7 +3863,8 @@
           "data": "Can't apply von Neumann's minimax theorem (not zero-sum).",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3818,7 +3896,8 @@
           "data": "But we can get something weaker: Nash equilibrium.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3852,7 +3931,8 @@
             "width": 500
           },
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3884,7 +3964,8 @@
           "data": "Theorem (Nash's existence theorem [1950]):",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3916,7 +3997,8 @@
           "data": "- Consider any finite-player game with finite number of actions.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3948,7 +4030,8 @@
           "data": "- There exists **at least one** Nash equilibrium.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3980,7 +4063,8 @@
           "data": "Examples of Nash equilibria:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -4014,7 +4098,8 @@
             "width": 500
           },
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -4046,7 +4131,8 @@
           "data": "Nash equilibrium (also the minimax strategy): [7/12, 5/12]",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -4080,7 +4166,8 @@
             "width": 500
           },
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -4112,7 +4199,8 @@
           "data": "Nash equilibrium: both players play 1 or both players play 2",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -4146,7 +4234,8 @@
             "width": 500
           },
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -4178,7 +4267,8 @@
           "data": "Nash equilibrium: both players testify",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -4210,7 +4300,8 @@
           "data": "Simultaneous zero-sum games:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -4242,7 +4333,8 @@
           "data": "- von Neumann's minimax theorem",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -4274,7 +4366,8 @@
           "data": "- Multiple minimax strategies, single game value",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -4306,7 +4399,8 @@
           "data": "Simultaneous non-zero-sum games:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -4338,7 +4432,8 @@
           "data": "- Nash's existence theorem",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -4370,7 +4465,8 @@
           "data": "- Multiple Nash equilibria, multiple game values",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -4402,7 +4498,8 @@
           "data": "Summary:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -4434,7 +4531,8 @@
           "data": "- Nash equilibria are stable (no notion of optimality)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -4466,7 +4564,8 @@
           "data": "- Nash equilibria exist for non-zero-sum games",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -4516,7 +4615,8 @@
           "data": "Summary:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -4536,7 +4636,8 @@
           "data": "- Simultaneous games: two players move at the same time",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -4556,7 +4657,8 @@
           "data": "- In general, second player has an advantage (and can play pure strategy)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -4576,7 +4678,8 @@
           "data": "- Minimax theorem: if we allow mixed strategies, then both players can play optimally",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -4596,7 +4699,8 @@
           "data": "- Nash equilibrium: exists for non-zero-sum games (but not unique)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -4616,7 +4720,8 @@
           "data": "- Huge literature in game theory / economics",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     }

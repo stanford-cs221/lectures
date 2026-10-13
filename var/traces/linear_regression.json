@@ -34,7 +34,8 @@
           "data": "# Linear regression",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -54,7 +55,8 @@
           "data": "Last unit: tensors, backpropagation",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -74,7 +76,8 @@
           "data": "This unit: the full pipeline of machine learning for **linear regression**.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -130,7 +133,8 @@
           "data": "Predict how well you do on an exam given the number of hours you study",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -156,7 +160,8 @@
           "data": "- **Input**: number of hours you study (e.g., 3)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -182,7 +187,8 @@
           "data": "- **Output**: your score on the exam (e.g., 70)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -208,7 +214,8 @@
           "data": "A **predictor** is a function that takes an input and produces an output.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -234,7 +241,8 @@
           "data": "Here's an example predictor:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -278,7 +286,8 @@
           "data": "Given an input `x`, we can get the output `y` by calling the predictor:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -617,7 +626,8 @@
           "data": "We can also plot the predictor by passing in a range of inputs.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1386,7 +1396,8 @@
           },
           "style": null,
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1412,7 +1423,8 @@
           "data": "But how do we get the predictor?",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1480,7 +1492,8 @@
           "data": "The machine learning problem starts with training data, which demonstrates the task.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1506,7 +1519,8 @@
           "data": "The **training data** is a set of examples.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1532,7 +1546,8 @@
           "data": "Each **example** consists of an (input, output) pair.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1779,7 +1794,8 @@
           "data": "A **learning algorithm** takes the training data and produces a predictor.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1805,7 +1821,8 @@
           "data": "Key questions:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1831,7 +1848,8 @@
           "data": "1. Which predictors are possible? **hypothesis class**",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1857,7 +1875,8 @@
           "data": "2. How good is a predictor? **loss function**",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1883,7 +1902,8 @@
           "data": "3. How do we compute the best predictor? **optimization algorithm**",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1951,7 +1971,8 @@
           "data": "Which predictors are possible?",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1977,7 +1998,8 @@
           "data": "Before, we looked at only one predictor:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2021,7 +2043,8 @@
           "data": "But what we'd like to do is to define a set of *possible* predictors",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2047,7 +2070,8 @@
           "data": "...so that the learning algorithm can choose the best one.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2073,7 +2097,8 @@
           "data": "To define a set of predictors, we first define the notion of **parameters**.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2099,7 +2124,8 @@
           "data": "For linear predictors, each set of parameters has a **weight vector** and a **bias**.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2143,7 +2169,8 @@
           "data": "Given a set of parameters, we can define a predictor:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2207,7 +2234,8 @@
           "data": "Let's take an input and apply the predictor:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2429,7 +2457,8 @@
           "data": "Here's another predictor:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2665,7 +2694,8 @@
           "data": "The **hypothesis class** is the set of all predictors you can get by choosing parameters (weight, bias).",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2691,7 +2721,8 @@
           "data": "In deep learning:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2717,7 +2748,8 @@
           "data": "- Hypothesis class is a **model architecture**",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2743,7 +2775,8 @@
           "data": "- Predictor is a **model**",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2769,7 +2802,8 @@
           "data": "In general, the parameters are a collection of tensors.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2795,7 +2829,8 @@
           "data": "For example, here are the parameters of the DeepSeek-V3 model ",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         },
         {
           "type": "link",
@@ -3011,7 +3046,8 @@
             "description": "We present DeepSeek-V3, a strong Mixture-of-Experts (MoE) language model with 671B total parameters with 37B activated for each token. To achieve efficient inference and cost-effective training, DeepSeek-V3 adopts Multi-head Latent Attention (MLA) and DeepSeekMoE architectures, which were thoroughly validated in DeepSeek-V2. Furthermore, DeepSeek-V3 pioneers an auxiliary-loss-free strategy for load balancing and sets a multi-token prediction training objective for stronger performance. We pre-train DeepSeek-V3 on 14.8 trillion diverse and high-quality tokens, followed by Supervised Fine-Tuning and Reinforcement Learning stages to fully harness its capabilities. Comprehensive evaluations reveal that DeepSeek-V3 outperforms other open-source models and achieves performance comparable to leading closed-source models. Despite its excellent performance, DeepSeek-V3 requires only 2.788M H800 GPU hours for its full training. In addition, its training process is remarkably stable. Throughout the entire training process, we did not experience any irrecoverable loss spikes or perform any rollbacks. The model checkpoints are available at https://github.com/deepseek-ai/DeepSeek-V3.",
             "notes": null
           },
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3045,7 +3081,8 @@
             "description": null,
             "notes": null
           },
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3113,7 +3150,8 @@
           "data": "The next design decision is how to judge each of the (infinitely) many possible predictors.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3139,7 +3177,8 @@
           "data": "Let's consider a predictor:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3946,7 +3985,8 @@
           },
           "style": null,
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3972,7 +4012,8 @@
           "data": "Recall the training data:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -4081,7 +4122,8 @@
           "data": "How well does `params` fit `training_data`?",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -4107,7 +4149,8 @@
           "data": "We define a **loss function** that measures how unhappy we are with `params` on a single example.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -4474,7 +4517,8 @@
           "data": "The training loss is the average of the per-example losses over the training data.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -4758,7 +4802,8 @@
             "width": 400
           },
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -4784,7 +4829,8 @@
           "data": "Here's another predictor:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -4873,7 +4919,8 @@
           "data": "It has a higher training loss, so it's worse.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -4941,7 +4988,8 @@
           "data": "Recall that for every set of parameters `params`, we can compute the training loss `train_loss`.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -5344,7 +5392,8 @@
           "data": "We want to find the parameters that yield the lowest training loss.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -5370,7 +5419,8 @@
           "data": "This is an optimization problem.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -5396,7 +5446,8 @@
           "data": "Solving this optimization problem might seem daunting.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -5422,7 +5473,8 @@
           "data": "Recall that the gradient provides the direction that increases the function the most.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -5448,7 +5500,8 @@
           "data": "So we just have to go in the opposite direction of the gradient!",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -5474,7 +5527,8 @@
           "data": "Let us compute the gradient.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -5781,7 +5835,8 @@
           "data": "Then we can take a little step in the opposite direction.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -5937,7 +5992,8 @@
           "data": "Let's compute the training loss now:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -5988,7 +6044,8 @@
           "data": "It's lower than before!",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -6014,7 +6071,8 @@
           "data": "If we do this repeatedly, that's the gradient descent algorithm.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -8880,7 +8938,8 @@
           },
           "style": null,
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -8924,7 +8983,8 @@
           "data": "Notes:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -8950,7 +9010,8 @@
           "data": "- Learning rate controls how fast you drive (trade off speed versus stability)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -8976,7 +9037,8 @@
           "data": "- Guaranteed to converge for convex functions (with a small enough learning rate), but not for deep learning",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -9002,7 +9064,8 @@
           "data": "- Each gradient step can be computed on a random batch of examples",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -9028,7 +9091,8 @@
           "data": "- Other optimization algorithms: stochastic gradient descent, Adam, Muon",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -9060,7 +9124,8 @@
           "data": "Summary:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -9080,7 +9145,8 @@
           "data": "- Predictor: input \u2192 output",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -9100,7 +9166,8 @@
           "data": "- Training data: set of (input, output) pairs",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -9120,7 +9187,8 @@
           "data": "- Learning algorithm: training data \u2192 predictor",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -9140,7 +9208,8 @@
           "data": "- Hypothesis class: set of possible predictors",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -9160,7 +9229,8 @@
           "data": "- Loss function: how badly the predictor (parameters) fits the data",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -9180,7 +9250,8 @@
           "data": "- Optimization algorithm: find parameters that minimize the loss function",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -9200,7 +9271,8 @@
           "data": "- Gradient descent: iteratively update the parameters in the direction of the negative gradient",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     }

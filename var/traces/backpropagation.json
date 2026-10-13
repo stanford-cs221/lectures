@@ -34,7 +34,8 @@
           "data": "# Backpropagation",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -54,7 +55,8 @@
           "data": "Last unit: **tensors**",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -74,7 +76,8 @@
           "data": "- Atoms in modern machine learning, used to represent everything (data, parameters, etc.)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -94,7 +97,8 @@
           "data": "- einops library to make computations more legible",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -150,7 +154,8 @@
           "data": "A tensor has an **order** (also called rank, but that clashes with the rank of a matrix)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -176,7 +181,8 @@
           "data": "- Order 0 tensors are scalars",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -227,7 +233,8 @@
           "data": "- Order 1 tensors are vectors",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -284,7 +291,8 @@
           "data": "- Order 2 tensors are matrices",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -349,7 +357,8 @@
           "data": "- Order 3 tensors are order-3 tensors",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -445,7 +454,8 @@
           "data": "Order is the number of **axes** of a tensor.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -471,7 +481,8 @@
           "data": "For order 2 tensors (matrices):",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -536,7 +547,8 @@
           "data": "- Axis 0 corresponds to rows",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -562,7 +574,8 @@
           "data": "- Axis 1 corresponds to columns",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -588,7 +601,8 @@
           "data": "In einops, we name the axes of each tensor.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -614,7 +628,8 @@
           "data": "- Choose name based on what that axis represents (just like variable names in code)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -640,7 +655,8 @@
           "data": "Example: for a matrix where rows are data points",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -705,7 +721,8 @@
           "data": "- Axis 0: example",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -731,7 +748,8 @@
           "data": "- Axis 1: feature",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -757,7 +775,8 @@
           "data": "**einsum** is a single function that is like a Swiss Army knife \ud83d\udee0\ufe0f",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -783,7 +802,8 @@
           "data": "Now let's play around with some basic einsum examples.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -809,7 +829,8 @@
           "data": "Start with operations on vectors.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1220,7 +1241,8 @@
           "data": "Now let's try operations on matrices.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1675,7 +1697,8 @@
           "data": "General setup:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1701,7 +1724,8 @@
           "data": "- Input: a list of tensors $x_1, \\dots, x_k$ with named input axes $i_1, \\dots, i_k$",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1727,7 +1751,8 @@
           "data": "- Output: a tensor $y$ with a list of named output axes $o$ (a subset of the input axes)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1753,7 +1778,8 @@
           "data": "- Compute: $y[o] = \\sum_{i_1, \\dots, i_k \\backslash o} \\prod_j x_j[i_j]$",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1779,7 +1805,8 @@
           "data": "It's all just additions and multiplications with bookkeeping!",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1811,7 +1838,8 @@
           "data": "This unit: **gradients**",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1831,7 +1859,8 @@
           "data": "- Define objective functions by composing tensor operations",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1851,7 +1880,8 @@
           "data": "- Gradients of objective functions tell us how to improve the function",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1871,7 +1901,8 @@
           "data": "- Computation graphs allow us to compute gradients efficiently",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1927,7 +1958,8 @@
           "data": "Let us start with a linear regression example.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1953,7 +1985,8 @@
           "data": "For now, focus on the tensor mechanics and don't worry about the machine learning.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1979,7 +2012,8 @@
           "data": "Suppose we have n examples, each of which is a d-dimensional vector.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2105,7 +2139,8 @@
           "data": "We can build new tensors by applying various operations:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2300,7 +2335,8 @@
           "data": "So given a weight vector w, I can compute a total loss.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2326,7 +2362,8 @@
           "data": "Let's wrap it in a function.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2358,7 +2395,8 @@
           "data": "Define an **objective** function that takes a vector input and returns a scalar output.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2402,7 +2440,8 @@
           "data": "In math: $\\mathcal{O}(\\mathbf w) = \\\\|\\mathbf X \\mathbf w - \\mathbf y\\\\|_2^2$",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2428,7 +2467,8 @@
           "data": "For each value of `w`, we can compute the objective.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2504,7 +2544,8 @@
           "data": "Ultimate goal is to find `w` that minimizes `objective(w)`.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2530,7 +2571,8 @@
           "data": "For now: given a fixed `w`, how should we tweak `w` to improve `objective(w)`?",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2598,7 +2640,8 @@
           "data": "Recall from your multivariable calculus course:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2624,7 +2667,8 @@
           "data": "The **gradient** of a function tells us the direction that increases the function the most.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2652,7 +2696,8 @@
             "width": 400
           },
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2678,7 +2723,8 @@
           "data": "Example use cases:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2704,7 +2750,8 @@
           "data": "- Optimizing the parameters of a deep learning model",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2730,7 +2777,8 @@
           "data": "- Optimizing the input (an image) to maximize error (adversarial examples) ",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         },
         {
           "type": "link",
@@ -2749,7 +2797,8 @@
             "description": "Several machine learning models, including neural networks, consistently misclassify adversarial examples---inputs formed by applying small but intentionally worst-case perturbations to examples from the dataset, such that the perturbed input results in the model outputting an incorrect answer with high confidence. Early attempts at explaining this phenomenon focused on nonlinearity and overfitting. We argue instead that the primary cause of neural networks' vulnerability to adversarial perturbation is their linear nature. This explanation is supported by new quantitative results while giving the first explanation of the most intriguing fact about them: their generalization across architectures and training sets. Moreover, this view yields a simple and fast method of generating adversarial examples. Using this approach to provide examples for adversarial training, we reduce the test set error of a maxout network on the MNIST dataset.",
             "notes": null
           },
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2775,7 +2824,8 @@
           "data": "- Optimizing the relative weighting of datasets ",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         },
         {
           "type": "link",
@@ -2799,7 +2849,8 @@
             "description": "The data mixture for large language model pre-training significantly impacts performance, yet how to determine an effective mixture remains unclear. We propose RegMix to automatically identify a high-performing data mixture by formulating it as a regression task. RegMix trains many small models on diverse data mixtures, uses regression to predict performance of unseen mixtures, and applies the best predicted mixture to train a large-scale model with orders of magnitude more compute. To empirically validate RegMix, we train 512 models with 1M parameters for 1B tokens to fit the regression model and predict the best data mixture. Using this mixture we train a 1B parameter model for 25B tokens (i.e. 1000x larger and 25x longer) which we find performs best among 64 candidate 1B parameter models with other mixtures. Furthermore, RegMix consistently outperforms human selection in experiments involving models up to 7B models trained on 100B tokens, while matching or exceeding DoReMi using just 10% of the computational resources. Our experiments also show that (1) Data mixtures significantly impact performance; (2) Web corpora rather than data perceived as high-quality like Wikipedia have the strongest positive correlation with downstream performance; (3) Domains interact in complex ways often contradicting common sense, thus automatic approaches like RegMix are needed; (4) Data mixture effects transcend scaling laws. Our code is available at https://github.com/sail-sg/regmix.",
             "notes": null
           },
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2873,7 +2924,8 @@
           "data": "Consider a simple function (squaring a scalar):",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2929,7 +2981,8 @@
           "data": "Plot the function by passing in a range of inputs.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3710,7 +3763,8 @@
           },
           "style": null,
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3742,7 +3796,8 @@
           "data": "If we change `x` slightly, how much does `f(x)` change?",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -4066,7 +4121,8 @@
           "data": "For each change dx, we get a change dy.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -4129,7 +4185,8 @@
           "data": "As dx \u2192 0, this is the **derivative** of f at x=1, which we can analytically compute:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -4222,7 +4279,8 @@
           "data": "Graphically, the derivative is the slope of the tangent line at `x`.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -4633,7 +4691,8 @@
           },
           "style": null,
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -4725,7 +4784,8 @@
           "data": "Consider a function that takes 2 scalar inputs and outputs a scalar:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -4909,7 +4969,8 @@
           "data": "A **partial derivative** is how much f changes when a single input changes.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -4941,7 +5002,8 @@
           "data": "Analytically compute the partial derivative for each input:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -5277,7 +5339,8 @@
           "data": "From (1, 2), moving in the direction of (dy_x1, dy_x2) will increase f the most.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -5309,7 +5372,8 @@
           "data": "From (1, 2), moving in the direction of -(dy_x1, dy_x2) will decrease f the most.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -5401,7 +5465,8 @@
           "data": "Now let's consider a function of a vector:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -5457,7 +5522,8 @@
           "data": "Input is a 2-dimensional vector, output is a scalar.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -5520,7 +5586,8 @@
           "data": "We have one partial derivative for each dimension.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -5552,7 +5619,8 @@
           "data": "- df/dx[0]: how much does f change if we change x[0]?",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -5584,7 +5652,8 @@
           "data": "- df/dx[1]: how much does f change if we change x[1]?",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -5616,7 +5685,8 @@
           "data": "The **gradient** is the vector of the partial derivatives:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -5648,7 +5718,8 @@
           "data": "- \u2207f = (df/dx[0], df/dx[1])",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -5680,7 +5751,8 @@
           "data": "- Note that these are functions that depend on the evaluation point.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -5712,7 +5784,8 @@
           "data": "Let us analytically compute the gradient:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -5843,7 +5916,8 @@
           "data": "These functions work for any number of dimensions:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -5994,7 +6068,8 @@
           "data": "Summary:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -6020,7 +6095,8 @@
           "data": "- Consider functions that take an input tensor and output a scalar.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -6046,7 +6122,8 @@
           "data": "- A partial derivative measures how much the function changes when one element of the tensor changes.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -6072,7 +6149,8 @@
           "data": "- The gradient is the full tensor of partial derivatives (same shape as input).",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -6140,7 +6218,8 @@
           "data": "For any function, we can compute the gradient manually.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -6166,7 +6245,8 @@
           "data": "This is tedious and error-prone.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -6192,7 +6272,8 @@
           "data": "At the end of the day, even the most complex functions are composed out of basic operations.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -6218,7 +6299,8 @@
           "data": "- addition, multiplication, exp, log, etc.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -6244,7 +6326,8 @@
           "data": "Autodiff (specifically, reverse mode automatic differentiation) ",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         },
         {
           "type": "link",
@@ -6259,7 +6342,8 @@
             "description": null,
             "notes": null
           },
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -6285,7 +6369,8 @@
           "data": "- Build an explicit computation graph representing the function",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -6311,7 +6396,8 @@
           "data": "- Compute partial derivatives recursively by traversing the graph",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -6337,7 +6423,8 @@
           "data": "Today, there are many libraries (PyTorch, JAX).",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -6363,7 +6450,8 @@
           "data": "We will implement a mini-PyTorch today.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -6437,7 +6525,8 @@
           "data": "Let us build a computation graph for the following function:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -7857,7 +7946,8 @@
             "width": 100
           },
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -7889,7 +7979,8 @@
           "data": "We compute the function value (forward pass)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -7921,7 +8012,8 @@
           "data": "...but keep track of the provenance of how the value was computed.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -7955,7 +8047,8 @@
           "data": "Summary so far:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -7987,7 +8080,8 @@
           "data": "- Each input (leaf) node represents some fixed value (e.g., `x1`).",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -8019,7 +8113,8 @@
           "data": "- Each non-input node represents a primitive computation performed on its dependencies.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -8051,7 +8146,8 @@
           "data": "- `forward()` computes the `value` of a node.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -8083,7 +8179,8 @@
           "data": "- The result of the computation is the value of the root node (e.g., `y`).",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -8115,7 +8212,8 @@
           "data": "Now we want to compute partial derivatives (e.g., `dy/dx1`).",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -8147,7 +8245,8 @@
           "data": "Chain rule (from multivariable calculus):",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -8181,7 +8280,8 @@
             "width": 400
           },
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -8221,7 +8321,8 @@
             "description": null,
             "notes": null
           },
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -8253,7 +8354,8 @@
           "data": "Let us compute dy/dx1.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -9263,7 +9365,8 @@
           "data": "In general:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -9295,7 +9398,8 @@
           "data": "- `node.backward()` updates the partial derivatives of the dependencies of `node`.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -9327,7 +9431,8 @@
           "data": "- Assume `node.grad` and all `value`s are computed.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -9419,7 +9524,8 @@
           "data": "Now let's define the **backpropagation** algorithm in full generality.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -9451,7 +9557,8 @@
           "data": "- Traverse the graph from inputs (leaves) to the root and call `forward`.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -9483,7 +9590,8 @@
           "data": "- Traverse the graph from root to inputs (leaves) and call `backward`.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -9515,7 +9623,8 @@
           "data": "Let's redo the same function from before.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -9760,7 +9869,8 @@
             "width": 100
           },
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -10721,277 +10831,6 @@
           "code": "node.backward()  # @inspect root @stepover"
         }
       ],
-      "env": {},
-      "renderings": []
-    },
-    {
-      "stack": [
-        {
-          "path": "backpropagation.py",
-          "line_number": 23,
-          "function_name": "main",
-          "code": "computation_graphs()"
-        },
-        {
-          "path": "backpropagation.py",
-          "line_number": 257,
-          "function_name": "computation_graphs",
-          "code": "computation_graphs_general()"
-        },
-        {
-          "path": "backpropagation.py",
-          "line_number": 316,
-          "function_name": "computation_graphs_general",
-          "code": "backpropagation(y)  # @inspect y"
-        },
-        {
-          "path": "backpropagation.py",
-          "line_number": 490,
-          "function_name": "backpropagation",
-          "code": "node.backward()  # @inspect root @stepover"
-        },
-        {
-          "path": "backpropagation.py",
-          "line_number": 402,
-          "function_name": "backward",
-          "code": "def backward(self):  # @inspect self"
-        }
-      ],
-      "env": {
-        "self": {
-          "type": "dict",
-          "contents": {
-            "name": {
-              "type": "str",
-              "contents": "z",
-              "dtype": null,
-              "shape": null
-            },
-            "value": {
-              "type": "numpy.float64",
-              "contents": 5.0,
-              "dtype": null,
-              "shape": null
-            },
-            "grad": {
-              "type": "numpy.ndarray",
-              "contents": 10.0,
-              "dtype": "float64",
-              "shape": []
-            },
-            "dependencies": {
-              "type": "list",
-              "contents": [
-                {
-                  "type": "dict",
-                  "contents": {
-                    "name": {
-                      "type": "str",
-                      "contents": "x1",
-                      "dtype": null,
-                      "shape": null
-                    },
-                    "value": {
-                      "type": "numpy.ndarray",
-                      "contents": 2.0,
-                      "dtype": "float64",
-                      "shape": []
-                    },
-                    "grad": {
-                      "type": "numpy.ndarray",
-                      "contents": 0.0,
-                      "dtype": "float64",
-                      "shape": []
-                    }
-                  },
-                  "dtype": null,
-                  "shape": null
-                },
-                {
-                  "type": "dict",
-                  "contents": {
-                    "name": {
-                      "type": "str",
-                      "contents": "x2",
-                      "dtype": null,
-                      "shape": null
-                    },
-                    "value": {
-                      "type": "numpy.ndarray",
-                      "contents": 3.0,
-                      "dtype": "float64",
-                      "shape": []
-                    },
-                    "grad": {
-                      "type": "numpy.ndarray",
-                      "contents": 0.0,
-                      "dtype": "float64",
-                      "shape": []
-                    }
-                  },
-                  "dtype": null,
-                  "shape": null
-                }
-              ],
-              "dtype": null,
-              "shape": null
-            }
-          },
-          "dtype": null,
-          "shape": null
-        }
-      },
-      "renderings": []
-    },
-    {
-      "stack": [
-        {
-          "path": "backpropagation.py",
-          "line_number": 23,
-          "function_name": "main",
-          "code": "computation_graphs()"
-        },
-        {
-          "path": "backpropagation.py",
-          "line_number": 257,
-          "function_name": "computation_graphs",
-          "code": "computation_graphs_general()"
-        },
-        {
-          "path": "backpropagation.py",
-          "line_number": 316,
-          "function_name": "computation_graphs_general",
-          "code": "backpropagation(y)  # @inspect y"
-        },
-        {
-          "path": "backpropagation.py",
-          "line_number": 490,
-          "function_name": "backpropagation",
-          "code": "node.backward()  # @inspect root @stepover"
-        },
-        {
-          "path": "backpropagation.py",
-          "line_number": 403,
-          "function_name": "backward",
-          "code": "x, y = self.dependencies"
-        }
-      ],
-      "env": {},
-      "renderings": []
-    },
-    {
-      "stack": [
-        {
-          "path": "backpropagation.py",
-          "line_number": 23,
-          "function_name": "main",
-          "code": "computation_graphs()"
-        },
-        {
-          "path": "backpropagation.py",
-          "line_number": 257,
-          "function_name": "computation_graphs",
-          "code": "computation_graphs_general()"
-        },
-        {
-          "path": "backpropagation.py",
-          "line_number": 316,
-          "function_name": "computation_graphs_general",
-          "code": "backpropagation(y)  # @inspect y"
-        },
-        {
-          "path": "backpropagation.py",
-          "line_number": 490,
-          "function_name": "backpropagation",
-          "code": "node.backward()  # @inspect root @stepover"
-        },
-        {
-          "path": "backpropagation.py",
-          "line_number": 404,
-          "function_name": "backward",
-          "code": "x.grad += self.grad  # @inspect x.grad"
-        }
-      ],
-      "env": {
-        "x.grad": {
-          "type": "numpy.ndarray",
-          "contents": 10.0,
-          "dtype": "float64",
-          "shape": []
-        }
-      },
-      "renderings": []
-    },
-    {
-      "stack": [
-        {
-          "path": "backpropagation.py",
-          "line_number": 23,
-          "function_name": "main",
-          "code": "computation_graphs()"
-        },
-        {
-          "path": "backpropagation.py",
-          "line_number": 257,
-          "function_name": "computation_graphs",
-          "code": "computation_graphs_general()"
-        },
-        {
-          "path": "backpropagation.py",
-          "line_number": 316,
-          "function_name": "computation_graphs_general",
-          "code": "backpropagation(y)  # @inspect y"
-        },
-        {
-          "path": "backpropagation.py",
-          "line_number": 490,
-          "function_name": "backpropagation",
-          "code": "node.backward()  # @inspect root @stepover"
-        },
-        {
-          "path": "backpropagation.py",
-          "line_number": 405,
-          "function_name": "backward",
-          "code": "y.grad += self.grad  # @inspect y.grad"
-        }
-      ],
-      "env": {
-        "y.grad": {
-          "type": "numpy.ndarray",
-          "contents": 10.0,
-          "dtype": "float64",
-          "shape": []
-        }
-      },
-      "renderings": []
-    },
-    {
-      "stack": [
-        {
-          "path": "backpropagation.py",
-          "line_number": 23,
-          "function_name": "main",
-          "code": "computation_graphs()"
-        },
-        {
-          "path": "backpropagation.py",
-          "line_number": 257,
-          "function_name": "computation_graphs",
-          "code": "computation_graphs_general()"
-        },
-        {
-          "path": "backpropagation.py",
-          "line_number": 316,
-          "function_name": "computation_graphs_general",
-          "code": "backpropagation(y)  # @inspect y"
-        },
-        {
-          "path": "backpropagation.py",
-          "line_number": 490,
-          "function_name": "backpropagation",
-          "code": "node.backward()  # @inspect root @stepover"
-        }
-      ],
       "env": {
         "root": {
           "type": "dict",
@@ -11356,108 +11195,6 @@
           "code": "node.backward()  # @inspect root @stepover"
         }
       ],
-      "env": {},
-      "renderings": []
-    },
-    {
-      "stack": [
-        {
-          "path": "backpropagation.py",
-          "line_number": 23,
-          "function_name": "main",
-          "code": "computation_graphs()"
-        },
-        {
-          "path": "backpropagation.py",
-          "line_number": 257,
-          "function_name": "computation_graphs",
-          "code": "computation_graphs_general()"
-        },
-        {
-          "path": "backpropagation.py",
-          "line_number": 316,
-          "function_name": "computation_graphs_general",
-          "code": "backpropagation(y)  # @inspect y"
-        },
-        {
-          "path": "backpropagation.py",
-          "line_number": 490,
-          "function_name": "backpropagation",
-          "code": "node.backward()  # @inspect root @stepover"
-        },
-        {
-          "path": "backpropagation.py",
-          "line_number": 391,
-          "function_name": "backward",
-          "code": "def backward(self):"
-        }
-      ],
-      "env": {},
-      "renderings": []
-    },
-    {
-      "stack": [
-        {
-          "path": "backpropagation.py",
-          "line_number": 23,
-          "function_name": "main",
-          "code": "computation_graphs()"
-        },
-        {
-          "path": "backpropagation.py",
-          "line_number": 257,
-          "function_name": "computation_graphs",
-          "code": "computation_graphs_general()"
-        },
-        {
-          "path": "backpropagation.py",
-          "line_number": 316,
-          "function_name": "computation_graphs_general",
-          "code": "backpropagation(y)  # @inspect y"
-        },
-        {
-          "path": "backpropagation.py",
-          "line_number": 490,
-          "function_name": "backpropagation",
-          "code": "node.backward()  # @inspect root @stepover"
-        },
-        {
-          "path": "backpropagation.py",
-          "line_number": 393,
-          "function_name": "backward",
-          "code": "pass"
-        }
-      ],
-      "env": {},
-      "renderings": []
-    },
-    {
-      "stack": [
-        {
-          "path": "backpropagation.py",
-          "line_number": 23,
-          "function_name": "main",
-          "code": "computation_graphs()"
-        },
-        {
-          "path": "backpropagation.py",
-          "line_number": 257,
-          "function_name": "computation_graphs",
-          "code": "computation_graphs_general()"
-        },
-        {
-          "path": "backpropagation.py",
-          "line_number": 316,
-          "function_name": "computation_graphs_general",
-          "code": "backpropagation(y)  # @inspect y"
-        },
-        {
-          "path": "backpropagation.py",
-          "line_number": 490,
-          "function_name": "backpropagation",
-          "code": "node.backward()  # @inspect root @stepover"
-        }
-      ],
       "env": {
         "root": {
           "type": "dict",
@@ -11785,7 +11522,8 @@
           "data": "Let's look at the original motivating example from linear regression.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -13034,7 +12772,8 @@
             "width": 200
           },
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -15039,499 +14778,6 @@
           "code": "node.backward()  # @inspect root @stepover"
         }
       ],
-      "env": {},
-      "renderings": []
-    },
-    {
-      "stack": [
-        {
-          "path": "backpropagation.py",
-          "line_number": 23,
-          "function_name": "main",
-          "code": "computation_graphs()"
-        },
-        {
-          "path": "backpropagation.py",
-          "line_number": 257,
-          "function_name": "computation_graphs",
-          "code": "computation_graphs_general()"
-        },
-        {
-          "path": "backpropagation.py",
-          "line_number": 328,
-          "function_name": "computation_graphs_general",
-          "code": "backpropagation(total_loss)  # @inspect total_loss"
-        },
-        {
-          "path": "backpropagation.py",
-          "line_number": 490,
-          "function_name": "backpropagation",
-          "code": "node.backward()  # @inspect root @stepover"
-        },
-        {
-          "path": "backpropagation.py",
-          "line_number": 450,
-          "function_name": "backward",
-          "code": "def backward(self):  # @inspect self"
-        }
-      ],
-      "env": {
-        "self": {
-          "type": "dict",
-          "contents": {
-            "name": {
-              "type": "str",
-              "contents": "losses",
-              "dtype": null,
-              "shape": null
-            },
-            "value": {
-              "type": "numpy.ndarray",
-              "contents": [
-                [
-                  1.0
-                ],
-                [
-                  4.0
-                ]
-              ],
-              "dtype": "float64",
-              "shape": [
-                2,
-                1
-              ]
-            },
-            "grad": {
-              "type": "numpy.ndarray",
-              "contents": [
-                [
-                  1.0
-                ],
-                [
-                  1.0
-                ]
-              ],
-              "dtype": "float64",
-              "shape": [
-                2,
-                1
-              ]
-            },
-            "dependencies": {
-              "type": "list",
-              "contents": [
-                {
-                  "type": "dict",
-                  "contents": {
-                    "name": {
-                      "type": "str",
-                      "contents": "residuals",
-                      "dtype": null,
-                      "shape": null
-                    },
-                    "value": {
-                      "type": "numpy.ndarray",
-                      "contents": [
-                        [
-                          1.0
-                        ],
-                        [
-                          -2.0
-                        ]
-                      ],
-                      "dtype": "float64",
-                      "shape": [
-                        2,
-                        1
-                      ]
-                    },
-                    "grad": {
-                      "type": "numpy.ndarray",
-                      "contents": [
-                        [
-                          0.0
-                        ],
-                        [
-                          0.0
-                        ]
-                      ],
-                      "dtype": "float64",
-                      "shape": [
-                        2,
-                        1
-                      ]
-                    },
-                    "dependencies": {
-                      "type": "list",
-                      "contents": [
-                        {
-                          "type": "dict",
-                          "contents": {
-                            "name": {
-                              "type": "str",
-                              "contents": "predictions",
-                              "dtype": null,
-                              "shape": null
-                            },
-                            "value": {
-                              "type": "numpy.ndarray",
-                              "contents": [
-                                [
-                                  1.0
-                                ],
-                                [
-                                  1.0
-                                ]
-                              ],
-                              "dtype": "float64",
-                              "shape": [
-                                2,
-                                1
-                              ]
-                            },
-                            "grad": {
-                              "type": "numpy.ndarray",
-                              "contents": [
-                                [
-                                  0.0
-                                ],
-                                [
-                                  0.0
-                                ]
-                              ],
-                              "dtype": "float64",
-                              "shape": [
-                                2,
-                                1
-                              ]
-                            },
-                            "dependencies": {
-                              "type": "list",
-                              "contents": [
-                                {
-                                  "type": "dict",
-                                  "contents": {
-                                    "name": {
-                                      "type": "str",
-                                      "contents": "x",
-                                      "dtype": null,
-                                      "shape": null
-                                    },
-                                    "value": {
-                                      "type": "numpy.ndarray",
-                                      "contents": [
-                                        [
-                                          1.0,
-                                          2.0,
-                                          0.0
-                                        ],
-                                        [
-                                          0.0,
-                                          -1.0,
-                                          1.0
-                                        ]
-                                      ],
-                                      "dtype": "float64",
-                                      "shape": [
-                                        2,
-                                        3
-                                      ]
-                                    },
-                                    "grad": {
-                                      "type": "numpy.ndarray",
-                                      "contents": [
-                                        [
-                                          0.0,
-                                          0.0,
-                                          0.0
-                                        ],
-                                        [
-                                          0.0,
-                                          0.0,
-                                          0.0
-                                        ]
-                                      ],
-                                      "dtype": "float64",
-                                      "shape": [
-                                        2,
-                                        3
-                                      ]
-                                    }
-                                  },
-                                  "dtype": null,
-                                  "shape": null
-                                },
-                                {
-                                  "type": "dict",
-                                  "contents": {
-                                    "name": {
-                                      "type": "str",
-                                      "contents": "w",
-                                      "dtype": null,
-                                      "shape": null
-                                    },
-                                    "value": {
-                                      "type": "numpy.ndarray",
-                                      "contents": [
-                                        [
-                                          1.0
-                                        ],
-                                        [
-                                          0.0
-                                        ],
-                                        [
-                                          1.0
-                                        ]
-                                      ],
-                                      "dtype": "float64",
-                                      "shape": [
-                                        3,
-                                        1
-                                      ]
-                                    },
-                                    "grad": {
-                                      "type": "numpy.ndarray",
-                                      "contents": [
-                                        [
-                                          0.0
-                                        ],
-                                        [
-                                          0.0
-                                        ],
-                                        [
-                                          0.0
-                                        ]
-                                      ],
-                                      "dtype": "float64",
-                                      "shape": [
-                                        3,
-                                        1
-                                      ]
-                                    }
-                                  },
-                                  "dtype": null,
-                                  "shape": null
-                                }
-                              ],
-                              "dtype": null,
-                              "shape": null
-                            }
-                          },
-                          "dtype": null,
-                          "shape": null
-                        },
-                        {
-                          "type": "dict",
-                          "contents": {
-                            "name": {
-                              "type": "str",
-                              "contents": "y",
-                              "dtype": null,
-                              "shape": null
-                            },
-                            "value": {
-                              "type": "numpy.ndarray",
-                              "contents": [
-                                [
-                                  0.0
-                                ],
-                                [
-                                  3.0
-                                ]
-                              ],
-                              "dtype": "float64",
-                              "shape": [
-                                2,
-                                1
-                              ]
-                            },
-                            "grad": {
-                              "type": "numpy.ndarray",
-                              "contents": [
-                                [
-                                  0.0
-                                ],
-                                [
-                                  0.0
-                                ]
-                              ],
-                              "dtype": "float64",
-                              "shape": [
-                                2,
-                                1
-                              ]
-                            }
-                          },
-                          "dtype": null,
-                          "shape": null
-                        }
-                      ],
-                      "dtype": null,
-                      "shape": null
-                    }
-                  },
-                  "dtype": null,
-                  "shape": null
-                }
-              ],
-              "dtype": null,
-              "shape": null
-            }
-          },
-          "dtype": null,
-          "shape": null
-        }
-      },
-      "renderings": []
-    },
-    {
-      "stack": [
-        {
-          "path": "backpropagation.py",
-          "line_number": 23,
-          "function_name": "main",
-          "code": "computation_graphs()"
-        },
-        {
-          "path": "backpropagation.py",
-          "line_number": 257,
-          "function_name": "computation_graphs",
-          "code": "computation_graphs_general()"
-        },
-        {
-          "path": "backpropagation.py",
-          "line_number": 328,
-          "function_name": "computation_graphs_general",
-          "code": "backpropagation(total_loss)  # @inspect total_loss"
-        },
-        {
-          "path": "backpropagation.py",
-          "line_number": 490,
-          "function_name": "backpropagation",
-          "code": "node.backward()  # @inspect root @stepover"
-        },
-        {
-          "path": "backpropagation.py",
-          "line_number": 451,
-          "function_name": "backward",
-          "code": "x, = self.dependencies"
-        }
-      ],
-      "env": {},
-      "renderings": []
-    },
-    {
-      "stack": [
-        {
-          "path": "backpropagation.py",
-          "line_number": 23,
-          "function_name": "main",
-          "code": "computation_graphs()"
-        },
-        {
-          "path": "backpropagation.py",
-          "line_number": 257,
-          "function_name": "computation_graphs",
-          "code": "computation_graphs_general()"
-        },
-        {
-          "path": "backpropagation.py",
-          "line_number": 328,
-          "function_name": "computation_graphs_general",
-          "code": "backpropagation(total_loss)  # @inspect total_loss"
-        },
-        {
-          "path": "backpropagation.py",
-          "line_number": 490,
-          "function_name": "backpropagation",
-          "code": "node.backward()  # @inspect root @stepover"
-        },
-        {
-          "path": "backpropagation.py",
-          "line_number": 452,
-          "function_name": "backward",
-          "code": "x.grad += 2 * x.value * self.grad  # @inspect x.value self.grad x.grad"
-        }
-      ],
-      "env": {
-        "x.value": {
-          "type": "numpy.ndarray",
-          "contents": [
-            [
-              1.0
-            ],
-            [
-              -2.0
-            ]
-          ],
-          "dtype": "float64",
-          "shape": [
-            2,
-            1
-          ]
-        },
-        "self.grad": {
-          "type": "numpy.ndarray",
-          "contents": [
-            [
-              1.0
-            ],
-            [
-              1.0
-            ]
-          ],
-          "dtype": "float64",
-          "shape": [
-            2,
-            1
-          ]
-        },
-        "x.grad": {
-          "type": "numpy.ndarray",
-          "contents": [
-            [
-              2.0
-            ],
-            [
-              -4.0
-            ]
-          ],
-          "dtype": "float64",
-          "shape": [
-            2,
-            1
-          ]
-        }
-      },
-      "renderings": []
-    },
-    {
-      "stack": [
-        {
-          "path": "backpropagation.py",
-          "line_number": 23,
-          "function_name": "main",
-          "code": "computation_graphs()"
-        },
-        {
-          "path": "backpropagation.py",
-          "line_number": 257,
-          "function_name": "computation_graphs",
-          "code": "computation_graphs_general()"
-        },
-        {
-          "path": "backpropagation.py",
-          "line_number": 328,
-          "function_name": "computation_graphs_general",
-          "code": "backpropagation(total_loss)  # @inspect total_loss"
-        },
-        {
-          "path": "backpropagation.py",
-          "line_number": 490,
-          "function_name": "backpropagation",
-          "code": "node.backward()  # @inspect root @stepover"
-        }
-      ],
       "env": {
         "root": {
           "type": "dict",
@@ -16423,108 +15669,6 @@
           "shape": null
         }
       },
-      "renderings": []
-    },
-    {
-      "stack": [
-        {
-          "path": "backpropagation.py",
-          "line_number": 23,
-          "function_name": "main",
-          "code": "computation_graphs()"
-        },
-        {
-          "path": "backpropagation.py",
-          "line_number": 257,
-          "function_name": "computation_graphs",
-          "code": "computation_graphs_general()"
-        },
-        {
-          "path": "backpropagation.py",
-          "line_number": 328,
-          "function_name": "computation_graphs_general",
-          "code": "backpropagation(total_loss)  # @inspect total_loss"
-        },
-        {
-          "path": "backpropagation.py",
-          "line_number": 490,
-          "function_name": "backpropagation",
-          "code": "node.backward()  # @inspect root @stepover"
-        }
-      ],
-      "env": {},
-      "renderings": []
-    },
-    {
-      "stack": [
-        {
-          "path": "backpropagation.py",
-          "line_number": 23,
-          "function_name": "main",
-          "code": "computation_graphs()"
-        },
-        {
-          "path": "backpropagation.py",
-          "line_number": 257,
-          "function_name": "computation_graphs",
-          "code": "computation_graphs_general()"
-        },
-        {
-          "path": "backpropagation.py",
-          "line_number": 328,
-          "function_name": "computation_graphs_general",
-          "code": "backpropagation(total_loss)  # @inspect total_loss"
-        },
-        {
-          "path": "backpropagation.py",
-          "line_number": 490,
-          "function_name": "backpropagation",
-          "code": "node.backward()  # @inspect root @stepover"
-        },
-        {
-          "path": "backpropagation.py",
-          "line_number": 391,
-          "function_name": "backward",
-          "code": "def backward(self):"
-        }
-      ],
-      "env": {},
-      "renderings": []
-    },
-    {
-      "stack": [
-        {
-          "path": "backpropagation.py",
-          "line_number": 23,
-          "function_name": "main",
-          "code": "computation_graphs()"
-        },
-        {
-          "path": "backpropagation.py",
-          "line_number": 257,
-          "function_name": "computation_graphs",
-          "code": "computation_graphs_general()"
-        },
-        {
-          "path": "backpropagation.py",
-          "line_number": 328,
-          "function_name": "computation_graphs_general",
-          "code": "backpropagation(total_loss)  # @inspect total_loss"
-        },
-        {
-          "path": "backpropagation.py",
-          "line_number": 490,
-          "function_name": "backpropagation",
-          "code": "node.backward()  # @inspect root @stepover"
-        },
-        {
-          "path": "backpropagation.py",
-          "line_number": 393,
-          "function_name": "backward",
-          "code": "pass"
-        }
-      ],
-      "env": {},
       "renderings": []
     },
     {
@@ -17474,108 +16618,6 @@
           "code": "node.backward()  # @inspect root @stepover"
         }
       ],
-      "env": {},
-      "renderings": []
-    },
-    {
-      "stack": [
-        {
-          "path": "backpropagation.py",
-          "line_number": 23,
-          "function_name": "main",
-          "code": "computation_graphs()"
-        },
-        {
-          "path": "backpropagation.py",
-          "line_number": 257,
-          "function_name": "computation_graphs",
-          "code": "computation_graphs_general()"
-        },
-        {
-          "path": "backpropagation.py",
-          "line_number": 328,
-          "function_name": "computation_graphs_general",
-          "code": "backpropagation(total_loss)  # @inspect total_loss"
-        },
-        {
-          "path": "backpropagation.py",
-          "line_number": 490,
-          "function_name": "backpropagation",
-          "code": "node.backward()  # @inspect root @stepover"
-        },
-        {
-          "path": "backpropagation.py",
-          "line_number": 391,
-          "function_name": "backward",
-          "code": "def backward(self):"
-        }
-      ],
-      "env": {},
-      "renderings": []
-    },
-    {
-      "stack": [
-        {
-          "path": "backpropagation.py",
-          "line_number": 23,
-          "function_name": "main",
-          "code": "computation_graphs()"
-        },
-        {
-          "path": "backpropagation.py",
-          "line_number": 257,
-          "function_name": "computation_graphs",
-          "code": "computation_graphs_general()"
-        },
-        {
-          "path": "backpropagation.py",
-          "line_number": 328,
-          "function_name": "computation_graphs_general",
-          "code": "backpropagation(total_loss)  # @inspect total_loss"
-        },
-        {
-          "path": "backpropagation.py",
-          "line_number": 490,
-          "function_name": "backpropagation",
-          "code": "node.backward()  # @inspect root @stepover"
-        },
-        {
-          "path": "backpropagation.py",
-          "line_number": 393,
-          "function_name": "backward",
-          "code": "pass"
-        }
-      ],
-      "env": {},
-      "renderings": []
-    },
-    {
-      "stack": [
-        {
-          "path": "backpropagation.py",
-          "line_number": 23,
-          "function_name": "main",
-          "code": "computation_graphs()"
-        },
-        {
-          "path": "backpropagation.py",
-          "line_number": 257,
-          "function_name": "computation_graphs",
-          "code": "computation_graphs_general()"
-        },
-        {
-          "path": "backpropagation.py",
-          "line_number": 328,
-          "function_name": "computation_graphs_general",
-          "code": "backpropagation(total_loss)  # @inspect total_loss"
-        },
-        {
-          "path": "backpropagation.py",
-          "line_number": 490,
-          "function_name": "backpropagation",
-          "code": "node.backward()  # @inspect root @stepover"
-        }
-      ],
       "env": {
         "root": {
           "type": "dict",
@@ -18496,108 +17538,6 @@
           "code": "node.backward()  # @inspect root @stepover"
         }
       ],
-      "env": {},
-      "renderings": []
-    },
-    {
-      "stack": [
-        {
-          "path": "backpropagation.py",
-          "line_number": 23,
-          "function_name": "main",
-          "code": "computation_graphs()"
-        },
-        {
-          "path": "backpropagation.py",
-          "line_number": 257,
-          "function_name": "computation_graphs",
-          "code": "computation_graphs_general()"
-        },
-        {
-          "path": "backpropagation.py",
-          "line_number": 328,
-          "function_name": "computation_graphs_general",
-          "code": "backpropagation(total_loss)  # @inspect total_loss"
-        },
-        {
-          "path": "backpropagation.py",
-          "line_number": 490,
-          "function_name": "backpropagation",
-          "code": "node.backward()  # @inspect root @stepover"
-        },
-        {
-          "path": "backpropagation.py",
-          "line_number": 391,
-          "function_name": "backward",
-          "code": "def backward(self):"
-        }
-      ],
-      "env": {},
-      "renderings": []
-    },
-    {
-      "stack": [
-        {
-          "path": "backpropagation.py",
-          "line_number": 23,
-          "function_name": "main",
-          "code": "computation_graphs()"
-        },
-        {
-          "path": "backpropagation.py",
-          "line_number": 257,
-          "function_name": "computation_graphs",
-          "code": "computation_graphs_general()"
-        },
-        {
-          "path": "backpropagation.py",
-          "line_number": 328,
-          "function_name": "computation_graphs_general",
-          "code": "backpropagation(total_loss)  # @inspect total_loss"
-        },
-        {
-          "path": "backpropagation.py",
-          "line_number": 490,
-          "function_name": "backpropagation",
-          "code": "node.backward()  # @inspect root @stepover"
-        },
-        {
-          "path": "backpropagation.py",
-          "line_number": 393,
-          "function_name": "backward",
-          "code": "pass"
-        }
-      ],
-      "env": {},
-      "renderings": []
-    },
-    {
-      "stack": [
-        {
-          "path": "backpropagation.py",
-          "line_number": 23,
-          "function_name": "main",
-          "code": "computation_graphs()"
-        },
-        {
-          "path": "backpropagation.py",
-          "line_number": 257,
-          "function_name": "computation_graphs",
-          "code": "computation_graphs_general()"
-        },
-        {
-          "path": "backpropagation.py",
-          "line_number": 328,
-          "function_name": "computation_graphs_general",
-          "code": "backpropagation(total_loss)  # @inspect total_loss"
-        },
-        {
-          "path": "backpropagation.py",
-          "line_number": 490,
-          "function_name": "backpropagation",
-          "code": "node.backward()  # @inspect root @stepover"
-        }
-      ],
       "env": {
         "root": {
           "type": "dict",
@@ -19488,7 +18428,8 @@
           "data": "Summary:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -19514,7 +18455,8 @@
           "data": "- Computation graphs represent complex functions in terms of primitive operations.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -19540,7 +18482,8 @@
           "data": "- We are interested in computing the function value but also gradients with respect to inputs.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -19566,7 +18509,8 @@
           "data": "- Key mathematical property: chain rule",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -19592,7 +18536,8 @@
           "data": "- Backpropagation is a general algorithm to organize the computation of gradients (and values).",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -19618,7 +18563,8 @@
           "data": "- Can deepen your understanding of calculus too!",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -19650,7 +18596,8 @@
           "data": "Summary:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -19670,7 +18617,8 @@
           "data": "- Reviewed einsum (for each assignment of input axes, multiply/add to corresponding outputs)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -19690,7 +18638,8 @@
           "data": "- Construct computation graphs to create other tensors (future: use einsum!)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -19710,7 +18659,8 @@
           "data": "- Gradients / partial derivatives: how much does the function change if we change the input?",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -19730,7 +18680,8 @@
           "data": "- Backpropagation: general algorithm to compute gradients using computation graphs",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     }

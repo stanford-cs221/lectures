@@ -1,10 +1,10 @@
-from edtrace import text, image
+from edtrace import text, image, graph
 from typing import Any
 from collections import defaultdict
 import numpy as np
 from functools import partial
 from typing import Callable
-from mdp import FlakyTramMDP, policy_evaluation, value_iteration, tram_if_possible_policy, generate_rollout, MDP, Step, draw_graph, Rollout
+from mdp import FlakyTramMDP, policy_evaluation, value_iteration, tram_if_possible_policy, generate_rollout, MDP, Step, draw_mdp_graph, Rollout
 
 Policy = Callable[[Any], Any]
 
@@ -45,7 +45,7 @@ def review_mdp():
     state = mdp.start_state()  # @inspect state
     successors = mdp.successors(state)  # @inspect successors
     is_end = mdp.is_end(successors[0].state)  # @inspect is_end
-    image(draw_graph(mdp).render("var/flaky_tram_graph", format="png"), width=400)  # @stepover
+    graph(draw_mdp_graph(mdp))  # @stepover
 
     # Policy
     text("Policy: maps state to action") # @clear successors is_end
@@ -54,6 +54,7 @@ def review_mdp():
 
     # Value of policy
     rollout = generate_rollout(mdp, policy)  # @inspect rollout @clear action
+    graph(draw_mdp_graph(mdp, rollout))  # @stepover
     text("Value of policy: expected utility of policy") # @clear rollout
     text("Policy evaluation: computes value of a given policy")
     result = policy_evaluation(mdp, policy)  # @inspect result

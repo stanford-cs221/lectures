@@ -34,7 +34,8 @@
           "data": "# Tensors",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -56,14 +57,16 @@
             "width": 200
           },
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         },
         {
           "type": "note",
           "data": "This is probably what you think of when you hear the word \"tensor\".",
           "style": null,
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -83,7 +86,8 @@
           "data": "**Tensors** are the atoms of modern machine learning.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -103,7 +107,8 @@
           "data": "They are used to represent data, model parameters, gradients, intermediate computations (activations), etc.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -123,7 +128,8 @@
           "data": "Tensors show up elsewhere in science and engineering, so they're generally useful to learn.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -143,7 +149,8 @@
           "data": "We'll introduce the core ideas through NumPy examples.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -199,7 +206,8 @@
           "data": "Tensors are represented by multi-dimensional arrays (generalizing vectors and matrices).",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -225,7 +233,8 @@
           "data": "The simplest tensor is simply a **scalar** (rank 0 tensor).",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -304,7 +313,8 @@
           "data": "A **vector** is a rank 1 tensor.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -396,7 +406,8 @@
           "data": "A **matrix** is a rank 2 tensor.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -569,7 +580,8 @@
           "data": "In general, a **tensor** can be any rank.  Here's a rank 3 tensor.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -842,7 +854,8 @@
           "data": "You can extract slices from this tensor:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -966,7 +979,8 @@
           "data": "You usually don't create tensors by writing down all the entries.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -992,7 +1006,8 @@
           "data": "You can use special commands to create structured tensors.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1094,14 +1109,14 @@
           "type": "numpy.ndarray",
           "contents": [
             [
-              -1.9032517914966933,
-              0.2970365406860197,
-              -1.752626744490318
+              0.25841816953559216,
+              -1.9685762394103126,
+              -0.2098355266335448
             ],
             [
-              2.041925857230152,
-              1.4562627923665465,
-              2.179119310545775
+              1.8354106092269062,
+              -0.3186484682502147,
+              -1.5925029789062137
             ]
           ],
           "dtype": "float64",
@@ -1223,7 +1238,8 @@
           "data": "Or you can read / write them from disk",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1353,7 +1369,8 @@
           "data": "Here are some typical tensors that show up in machine learning.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1427,7 +1444,8 @@
           "data": "Here, `np.ones` is arbitrary; we're just trying to get a tensor of the right shape.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1455,7 +1473,8 @@
           "data": "We often batch examples together (for efficiency).",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1542,7 +1561,8 @@
           "data": "In language modeling, each example is a whole sequence of length.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1672,7 +1692,8 @@
           "data": "In vision, images have",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1772,7 +1793,8 @@
           "data": "In a neural network, we have a weight matrix that transforms a",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1875,7 +1897,8 @@
           "data": "In general, the parameters of a neural network model are a collection of tensors.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1901,7 +1924,8 @@
           "data": "For example, here are the parameters of the DeepSeek v3 model ",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         },
         {
           "type": "link",
@@ -2117,7 +2141,8 @@
             "description": "We present DeepSeek-V3, a strong Mixture-of-Experts (MoE) language model with 671B total parameters with 37B activated for each token. To achieve efficient inference and cost-effective training, DeepSeek-V3 adopts Multi-head Latent Attention (MLA) and DeepSeekMoE architectures, which were thoroughly validated in DeepSeek-V2. Furthermore, DeepSeek-V3 pioneers an auxiliary-loss-free strategy for load balancing and sets a multi-token prediction training objective for stronger performance. We pre-train DeepSeek-V3 on 14.8 trillion diverse and high-quality tokens, followed by Supervised Fine-Tuning and Reinforcement Learning stages to fully harness its capabilities. Comprehensive evaluations reveal that DeepSeek-V3 outperforms other open-source models and achieves performance comparable to leading closed-source models. Despite its excellent performance, DeepSeek-V3 requires only 2.788M H800 GPU hours for its full training. In addition, its training process is remarkably stable. Throughout the entire training process, we did not experience any irrecoverable loss spikes or perform any rollbacks. The model checkpoints are available at https://github.com/deepseek-ai/DeepSeek-V3.",
             "notes": null
           },
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2140,7 +2165,7 @@
       "renderings": [
         {
           "type": "link",
-          "data": "DeepSeek-V3 on Hugging Face",
+          "data": "[DeepSeek-V3 on Hugging Face]",
           "style": {},
           "external_link": {
             "title": "DeepSeek-V3 on Hugging Face",
@@ -2151,7 +2176,8 @@
             "description": null,
             "notes": null
           },
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2219,7 +2245,8 @@
           "data": "Given a tensor, you can extract parts of it.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2243,14 +2270,14 @@
           "type": "numpy.ndarray",
           "contents": [
             [
-              -0.05873466247363628,
-              -0.047607228439750675,
-              -0.11601415168056022
+              -0.6641033474613632,
+              1.0951821796981485,
+              -1.09752944105243
             ],
             [
-              0.6849882079935563,
-              -0.8086562907494237,
-              -0.44374697997294527
+              0.25265848451560896,
+              -1.3365834602124838,
+              0.24901517029718098
             ]
           ],
           "dtype": "float64",
@@ -2281,9 +2308,9 @@
         "y": {
           "type": "numpy.ndarray",
           "contents": [
-            -0.05873466247363628,
-            -0.047607228439750675,
-            -0.11601415168056022
+            -0.6641033474613632,
+            1.0951821796981485,
+            -1.09752944105243
           ],
           "dtype": "float64",
           "shape": [
@@ -2312,8 +2339,8 @@
         "y": {
           "type": "numpy.ndarray",
           "contents": [
-            -0.047607228439750675,
-            -0.8086562907494237
+            1.0951821796981485,
+            -1.3365834602124838
           ],
           "dtype": "float64",
           "shape": [
@@ -2343,16 +2370,16 @@
           "type": "numpy.ndarray",
           "contents": [
             [
-              -0.05873466247363628,
-              0.6849882079935563
+              -0.6641033474613632,
+              0.25265848451560896
             ],
             [
-              -0.047607228439750675,
-              -0.8086562907494237
+              1.0951821796981485,
+              -1.3365834602124838
             ],
             [
-              -0.11601415168056022,
-              -0.44374697997294527
+              -1.09752944105243,
+              0.24901517029718098
             ]
           ],
           "dtype": "float64",
@@ -2386,7 +2413,8 @@
           "data": "Note that these operations do not make a copy of the tensor.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2412,7 +2440,8 @@
           "data": "...so if you modify the tensor, you modify the view.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2438,7 +2467,8 @@
           "data": "Check that mutating x also mutates y.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2463,13 +2493,13 @@
           "contents": [
             [
               100.0,
-              -0.047607228439750675,
-              -0.11601415168056022
+              1.0951821796981485,
+              -1.09752944105243
             ],
             [
-              0.6849882079935563,
-              -0.8086562907494237,
-              -0.44374697997294527
+              0.25265848451560896,
+              -1.3365834602124838,
+              0.24901517029718098
             ]
           ],
           "dtype": "float64",
@@ -2483,15 +2513,15 @@
           "contents": [
             [
               100.0,
-              0.6849882079935563
+              0.25265848451560896
             ],
             [
-              -0.047607228439750675,
-              -0.8086562907494237
+              1.0951821796981485,
+              -1.3365834602124838
             ],
             [
-              -0.11601415168056022,
-              -0.44374697997294527
+              -1.09752944105243,
+              0.24901517029718098
             ]
           ],
           "dtype": "float64",
@@ -2525,7 +2555,8 @@
           "data": "Generally, be careful and don't mutate tensors if you don't need to!",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2593,7 +2624,8 @@
           "data": "These operations apply some operation to each element of the tensor",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2619,7 +2651,8 @@
           "data": "...and return a (new) tensor of the same shape.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2831,7 +2864,8 @@
           "data": "You can create zeros and ones with the same shape as another tensor:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2961,7 +2995,8 @@
           "data": "Finally, the bread and butter of deep learning: matrix multiplication.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3176,7 +3211,8 @@
           "data": "We can batch multiple matrix operations:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3451,7 +3487,8 @@
           "data": "In this case, for each slice x[0], x[1], ..., we multiply by `w`.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3477,7 +3514,8 @@
           "data": "Terminology: w is **broadcasted** to each slice of x.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3545,7 +3583,8 @@
           "data": "There are often multiple ways to compute the same result.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3571,7 +3610,8 @@
           "data": "Whenever possible, try to express computation as tensor operations.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3651,7 +3691,8 @@
           "data": "Let's compute a matrix multiplication in Python.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3691,7 +3732,7 @@
       "env": {
         "python_time": {
           "type": "float",
-          "contents": 0.46871244700741954,
+          "contents": 0.5478315090294927,
           "dtype": null,
           "shape": null
         }
@@ -3720,7 +3761,8 @@
           "data": "Let's now do it in NumPy.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3742,7 +3784,7 @@
       "env": {
         "numpy_time": {
           "type": "float",
-          "contents": 0.00021131400717422366,
+          "contents": 0.0002607880160212517,
           "dtype": null,
           "shape": null
         }
@@ -3767,7 +3809,7 @@
       "env": {
         "speedup": {
           "type": "float",
-          "contents": 2218.08508236265,
+          "contents": 2100.6774674218536,
           "dtype": null,
           "shape": null
         }
@@ -3796,7 +3838,8 @@
           "data": "Matrix multiplication is even faster on GPUs (for large matrices)!",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3912,7 +3955,8 @@
           "data": "Traditional PyTorch code:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -4120,7 +4164,8 @@
           "data": "Easy to mess up the dimensions (what is -2, -1?)...",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -4164,7 +4209,8 @@
           "data": "Einops is a library for manipulating tensors where dimensions are named.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -4190,7 +4236,8 @@
           "data": "It is inspired by Einstein summation notation (Einstein, 1916).",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -4213,7 +4260,7 @@
       "renderings": [
         {
           "type": "link",
-          "data": "[Einops tutorial]",
+          "data": "[[Einops tutorial]]",
           "style": {},
           "external_link": {
             "title": "[Einops tutorial]",
@@ -4224,7 +4271,8 @@
             "description": null,
             "notes": null
           },
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -4298,7 +4346,8 @@
           "data": "Einsum is generalized matrix multiplication with good bookkeeping.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -4542,7 +4591,8 @@
           "data": "Let's try a more complex example...",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -4866,7 +4916,8 @@
           "data": "Dimensions that are not named in the output are summed over.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -4898,7 +4949,8 @@
           "data": "We can use `...` to represent broadcasting over any number of dimensions (instead of writing `batch`):",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -5060,7 +5112,8 @@
           "data": "You can reduce a single tensor via some operation (e.g., sum, mean, max, min).",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -5318,7 +5371,8 @@
           "data": "Sometimes, a dimension represents two dimensions",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -5350,7 +5404,8 @@
           "data": "...and you want to operate on one of them.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -5447,7 +5502,8 @@
           "data": "...where `total_hidden` is a flattened representation of `heads * hidden1`",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -5538,7 +5594,8 @@
           "data": "Break up `total_hidden` into two dimensions (`heads` and `hidden1`):",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -5648,7 +5705,8 @@
           "data": "Perform the transformation by `w`:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -5758,7 +5816,8 @@
           "data": "Combine `heads` and `hidden2` back together:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -5873,7 +5932,8 @@
           "data": "Summary",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -5893,7 +5953,8 @@
           "data": "- Use tensors to represent everything",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -5913,7 +5974,8 @@
           "data": "- Express computations using a few tensor operations for efficiency (a puzzle!)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -5933,7 +5995,8 @@
           "data": "- Use einops to make computations more legible",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -5953,7 +6016,8 @@
           "data": "- Practice (it's like learning a new language)!",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     }

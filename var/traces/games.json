@@ -1,6 +1,6 @@
 {
   "files": {
-    "games.py": "from edtrace import text, image, link\nfrom typing import Any, Callable\nfrom dataclasses import dataclass\nimport numpy as np\nfrom util import sample_dict, set_random_seed\n\nPolicy = Callable[[Any], Any]\nState = Any\nAction = str\n\n\ndef main():\n    text(\"# Lecture 10: Games I\")\n\n    text(\"Last week: Markov decision processes and reinforcement learning\")\n    text(\"This week: games\")\n\n    image(\"images/game1.png\", width=500)\n    text(\"What should your strategy be?\")\n    text(\"Note that it depends on your opponent (me)'s strategy, which is unknown...\")\n\n    text(\"MDPs: agent tries to maximize utility, environment is random and known\")\n    text(\"Games: agent tries to maximize utility, opponent strategy is **unknown**\")\n\n    modeling()               # What is a game?\n    game_evaluation()        # Play the game and see who wins\n    expectimax()             # Assume the opponent is playing a fixed strategy\n    minimax()                # Assume the opponent is playing the best possible strategy\n    face_off()               # Relationships between values\n    expectiminimax()         # ...and there is randomness in the game\n\n    alpha_beta_pruning()     # Speed up search (exact)\n    evaluation_functions()   # Speed up search (approximate)\n\n    text(\"Summary:\")\n    text(\"- Games: agent tries to maximize utility, opponent strategy is unknown\")\n    text(\"- Minimax principle: assume the opponent tries to minimize utility\")\n    text(\"- Recurrences define various (game, policy) outcomes (evaluation, expectimax, minimax, expectiminimax)\")\n    text(\"- Alpha-beta pruning: branch and bound to speed up minimax (exact)\")\n    text(\"- Evaluation functions: prior knowledge that speeds up (approximately)\")\n\n\ndef modeling():\n    link(\"https://stanford-cs221.github.io/autumn2023/modules/module.html#include=games%2Fmodeling.js&mode=print6pp\", title=\"[Autumn 2023 lecture]\")\n    image(\"images/game-tree.png\", width=500)\n    \n    text(\"This lecture: two-player zero-sum games\")\n    text(\"- Two players: *agent* and *opponent*\")\n    text(\"- Zero-sum: utility of agent = -utility of opponent\")\n\n    game1()\n    halving_game()\n\n\ndef game1():\n    image(\"images/game-tree.png\", width=500)\n    text(\"Let us define a game formally:\")\n    game = Game1()\n\n    # From the root\n    state = game.start_state()  # Root node @inspect state @stepover\n    is_end = game.is_end(state)  # Leaf node? @inspect is_end @stepover\n    player = game.player(state)  # Whose turn is it? @inspect player @stepover\n    successors = game.successors(state)  # For each action -> successor state @inspect successors @stepover\n\n    state = \"A\" # @inspect state @clear is_end player successors\n    is_end = game.is_end(state)  # @inspect is_end @stepover\n    player = game.player(state)  # @inspect player @stepover\n    successors = game.successors(state)  # @inspect successors @stepover\n\n    state = \"A1\" # @inspect state @clear is_end player successors\n    is_end = game.is_end(state)  # @inspect is_end @stepover\n    utility = game.utility(state)  # @inspect utility @stepover\n\n    text(\"Key characteristics of a **game**:\")\n    text(\"- All the utility is at the end state (sparse reward)\")\n    text(\"- Different players in control at different states\")\n\n    text(\"Types of policies:\")\n    text(\"- Deterministic: \u03c0_p(s) is action player p takes in state s\")\n    text(\"- Stochastic: \u03c0_p(a | s) is probability player p takes action a in state s\")\n    text(\"In general, we will consider stochastic policies.\")\n\n\ndef halving_game():\n    text(\"Let's consider another game:\")\n    image(\"images/halving-game.png\", width=500)\n    game = HalvingGame(n=11)  # @stepover\n\n    state = game.start_state()  # @inspect state @stepover\n    player = game.player(state)  # @inspect player @stepover\n    successors = game.successors(state)  # @inspect successors @stepover\n    is_end = game.is_end(state)  # @inspect is_end @stepover\n\n\nclass Game:\n    def start_state(self) -> Any:\n        \"\"\"Where the game starts.\"\"\"\n        raise NotImplementedError\n    \n    def successors(self, state: Any) -> dict[str, Any]:\n        \"\"\"What are the possible successor states?\"\"\"\n        raise NotImplementedError\n\n    def player(self, state: Any) -> str:\n        \"\"\"Which player should move in `state`?\"\"\"\n        raise NotImplementedError\n    \n    def is_end(self, state: Any) -> bool:\n        \"\"\"Is the game over?\"\"\"\n        raise NotImplementedError\n    \n    def utility(self, state: Any) -> float:\n        \"\"\"What is the utility of the game (for the agent).\"\"\"\n        raise NotImplementedError\n\n\nclass Game1(Game):\n    def start_state(self) -> Any:\n        return \"root\"\n\n    def successors(self, state: str) -> dict[str, str]:\n        # state -> action -> next state\n        mapping = {\n            \"root\": {\"A\": \"A\", \"B\": \"B\", \"C\": \"C\"},\n            \"A\": {\"1\": \"A1\", \"2\": \"A2\"},\n            \"B\": {\"1\": \"B1\", \"2\": \"B2\"},\n            \"C\": {\"1\": \"C1\", \"2\": \"C2\"},\n        }\n        return mapping[state]\n\n    def player(self, state: Any) -> str:\n        if state == \"root\":\n            return \"agent\"\n        if state in [\"A\", \"B\", \"C\"]:\n            return \"opp\"\n        raise ValueError(f\"Invalid state: {state}\")\n\n    def is_end(self, state: Any) -> bool:\n        return state in [\"A1\", \"A2\", \"B1\", \"B2\", \"C1\", \"C2\"]\n\n    def utility(self, state: Any) -> float:\n        utilities = {\n            \"A1\": -50,\n            \"A2\": 50,\n            \"B1\": 1,\n            \"B2\": 3,\n            \"C1\": -5,\n            \"C2\": 15,\n        }\n        return utilities[state]\n\n\n@dataclass(frozen=True)\nclass HalvingState:\n    n: int\n    player: str\n\n    def __str__(self) -> str:\n        return f\"({self.n}, {self.player})\"\n\n\nclass HalvingGame(Game):\n    \"\"\"\n    Halving game:\n    - Two players take turns halving or decrementing a number.\n    - The player that is left with 0 wins.\n    \"\"\"\n    def __init__(self, n: int):\n        self.n = n\n\n    def start_state(self) -> Any:\n        return HalvingState(n=self.n, player=\"agent\")\n    \n    def successors(self, state: HalvingState) -> dict[str, Any]:\n        next_player = \"opp\" if state.player == \"agent\" else \"agent\"\n        return {\n            \"decrement\": HalvingState(n=state.n - 1, player=next_player),\n            \"half\": HalvingState(n=state.n // 2, player=next_player),\n        }\n    \n    def player(self, state: HalvingState) -> str:\n        return state.player\n\n    def is_end(self, state: HalvingState) -> bool:\n        return state.n == 0\n\n    def utility(self, state: HalvingState) -> float:\n        assert state.n == 0\n        if state.player == \"agent\":\n            return +1  # Agent wins\n        else:\n            return -1  # Opponent wins\n\n@dataclass(frozen=True)\nclass Step:\n    \"\"\"Represents a step in a game (action and resulting state).\"\"\"\n    action: Any\n    state: Any\n\n@dataclass(frozen=True)\nclass Rollout:\n    \"\"\"Represents a rollout of a game (sequence of actions that produces a utility).\"\"\"\n    steps: list[Step]\n    utility: float\n\ndef simulate(game: Game, policies: dict[str, Policy]) -> Rollout:\n    \"\"\"Simulate the game from the start state using the policy.\"\"\"\n    state = game.start_state()  # @inspect state @stepover\n    steps = []\n\n    while not game.is_end(state):  # @stepover\n        # Player whose turn it is chooses an action\n        player = game.player(state)  # @inspect player @stepover\n        actions = policies[player](state)  # @inspect actions @stepover\n        action = sample_dict(actions)  # @inspect action @stepover\n\n        # Advance the game state\n        state = game.successors(state)[action]  # @inspect state @stepover\n        steps.append(Step(action=action, state=state))  # @inspect steps\n\n    # See who wins?\n    utility = game.utility(state)  # @inspect utility @stepover\n    return Rollout(steps=steps, utility=utility)\n    \n\ndef game_evaluation():\n    link(\"https://stanford-cs221.github.io/autumn2023/modules/module.html#include=games%2Fgame-evaluation.js&mode=print6pp\", title=\"[Autumn 2023 lecture]\")\n\n    text(\"Given a game and a policy for each player...\")\n    text(\"...the **value** (expected utility) of a game over all possible rollouts\")\n\n    # Agent always chooses A\n    def always_choose_a_policy(state: State) -> dict[Action, float]:\n        return {\"A\": 1}\n\n    # Opponent chooses randomly between 1 and 2\n    def random_policy(state: State) -> dict[Action, float]:\n        return {\"1\": 0.5, \"2\": 0.5}\n\n    policies = {\n        \"agent\": always_choose_a_policy,\n        \"opp\": random_policy,\n    }\n\n    game = Game1()\n\n    text(\"Let's play the game!\")\n    set_random_seed(1)\n    utility = simulate(game, policies)  # @inspect utility\n\n    text(\"Do it multiple times and average:\")\n    utilities = [simulate(game, policies).utility for _ in range(20)]  # @inspect utilities @stepover\n    mean_utility = np.mean(utilities)  # @inspect mean_utility\n\n    text(\"Can we compute the game value exactly without simulation?\")\n\n    text(\"Yes, by defining a recurrence!\")\n    image(\"images/game-evaluation-graphical.png\", width=400)\n    image(\"images/game-evaluation-recurrence.png\", width=600)\n    state = game.start_state()  # @stepover\n    value = V_eval(game, policies, state)  # @inspect value\n    text(\"This computation is exact, but could take exponential time!\")\n\n    image(\"images/game-evaluation.png\", width=500)\n\n    text(\"Summary:\")\n    text(\"- Value is the expected utility of the game\")\n    text(\"- Monte Carlo: we can simulate the game and average the utilities\")\n    text(\"- Recurrence to compute value exactly (but could take exponential time!)\")\n    text(\"- Analogous to policy evaluation in MDPs\")\n\n\ndef V_eval(game: Game, policies: dict[str, Policy], state: Any) -> float:\n    \"\"\"Return the value of the game.\"\"\"\n    # At the end of the game?\n    if game.is_end(state):  # @stepover\n        return game.utility(state)  # @stepover\n\n    # Whose turn is it?\n    player = game.player(state)  # @stepover\n    policy = policies[player]\n\n    # Try all actions\n    value = 0  # @inspect value\n    for action, prob in policy(state).items():  # @stepover\n        next_state = game.successors(state)[action]  # @stepover @inspect next_state\n        value += prob * V_eval(game, policies, next_state)  # @stepover @inspect value\n\n    return value\n\n\ndef expectimax():\n    link(\"https://stanford-cs221.github.io/autumn2023/modules/module.html#include=games%2Fexpectimax.js&mode=print6pp\", title=\"[Autumn 2023 lecture]\")\n\n    text(\"Previously: we can evaluate a fixed agent policy\")\n    text(\"Now: find the optimal agent policy\")\n\n    image(\"images/expectimax-graphical.png\", width=400)\n    image(\"images/expectimax-recurrence.png\", width=600)\n\n    # Opponent chooses randomly between 1 and 2\n    def random_policy(state: Any) -> Any:\n        return {\"1\": 0.5, \"2\": 0.5}\n\n    image(\"images/expectimax.png\", width=500)\n\n    game = Game1()\n    state = game.start_state()  # @stepover\n    value = V_exptmax(game, random_policy, state)  # @inspect value\n    text(\"Now the optimal action is to choose C!\")\n\n    text(\"Summary:\")\n    text(\"- Expectimax: find the optimal agent policy with respect to a fixed opponent policy\")\n    text(\"- Analogous to value iteration in MDPs\")\n\n\ndef V_exptmax(game: Game, opp_policy: Policy, state: Any) -> float:\n    \"\"\"Return the value of the game.\"\"\"\n    # At the end of the game?\n    if game.is_end(state):  # @stepover\n        return game.utility(state)  # @stepover\n\n    # Whose turn is it?\n    player = game.player(state)  # @stepover\n\n    if player == \"agent\":\n        # Choose the action (next state) that maximizes utility\n        next_states = list(game.successors(state).values())  # @stepover @inspect next_states\n        values = [V_exptmax(game, opp_policy, next_state) for next_state in next_states]  # @stepover @inspect values\n        value = np.max(values)  # @inspect value\n        return value\n\n    elif player == \"opp\":\n        # Follow the opponent's policy\n        successors = game.successors(state)  # action -> next state\n        values = [prob * V_exptmax(game, opp_policy, successors[action]) for action, prob in opp_policy(state).items()]  # @stepover @inspect values\n        value = np.sum(values)  # @inspect value\n        return value\n\n    else:\n        raise ValueError(f\"Invalid player: {player}\")\n\n\ndef minimax():\n    link(\"https://stanford-cs221.github.io/autumn2023/modules/module.html#include=games%2Fminimax.js&mode=print6pp\", title=\"[Autumn 2023 lecture]\")\n\n    text(\"Previously: assumed the opponent policy was known (expectimax)\")\n    text(\"The whole point of games is that we don't know the opponent policy!\")\n    text(\"What should we do?\")\n\n    text(\"**Minimax**: assume the opponent plays their best possible strategy\")\n\n    text(\"Here is the minimax recurrence:\")\n    image(\"images/minimax-graphical.png\", width=400)\n    image(\"images/minimax-recurrence.png\", width=600)\n\n    text(\"Here's what it looks like for game 1:\")\n    image(\"images/minimax.png\", width=500)\n\n    game = Game1()\n    state = game.start_state()  # @stepover\n    value = V_minmax(game, state)  # @inspect value\n\n    text(\"Let's look at the minimax solution for the halving game:\")\n    game = HalvingGame(n=11)  # @stepover\n\n    def minimax_policy(state: HalvingState) -> dict[Action, float]:\n        # Compute the minimax value and always play the associated action\n        value, action = V_minmax(game, state)\n        return {action: 1.0}  # Always play the associated action\n\n    def random_policy(state: HalvingState) -> dict[Action, float]:\n        return {\"decrement\": 0.5, \"half\": 0.5}\n\n    policies = {\n        \"agent\": minimax_policy,\n        \"opp\": random_policy,\n    }\n\n    set_random_seed(1)\n    rollout = simulate(game, policies)  # @inspect rollout @stepover\n    utilities = [simulate(game, policies).utility for _ in range(10)]  # @inspect utilities @stepover\n    mean_utility = np.mean(utilities)  # @inspect mean_utility\n    text(\"The minimax policy crushes the random policy!\")\n\n    text(\"We can compute the minimax value and optimal action for each state:\")\n    results = {n: V_minmax(game, HalvingState(n=n, player=\"agent\")) for n in range(1, 12)}  # @inspect results @stepover\n    text(\"If the value is 1, agent is guaranteed to win no matter what the opponent does.\")\n    text(\"If the value is -1, opponent is guaranteed to win **if** they play optimally.\")\n\n    text(\"When agent and opponent play optimally, this is **perfect play**.\")\n    text(\"A game is **solved** if the outcome under perfect play is known.\")\n    text(\"Strongly solved games: tic-tac-toe, nim, connect four\")\n    text(\"Weakly solved games (from initial position): checkers, Othello\")\n    text(\"Unsolved games: chess, Go (even if computers are superhuman!)\")\n\n    text(\"Summary:\")\n    text(\"- Agent maximizes utility, opponent minimizes utility\")\n    text(\"- Unlike expectimax, no fixed policies given\")\n    text(\"- No analogy in MDPs\")\n\n\ndef V_minmax(game: Game, state: Any) -> tuple[float, Action]:\n    \"\"\"Return the value of the game and the optimal action.\"\"\"\n    # At the end of the game?\n    if game.is_end(state):  # @stepover\n        return game.utility(state), None  # @stepover\n\n    # Whose turn is it?\n    player = game.player(state)  # @stepover\n\n    # Recurse on all possible next states\n    successors = game.successors(state)  # @stepover @inspect successors\n    values = {action: V_minmax(game, next_state)[0] for action, next_state in successors.items()}  # @stepover @inspect values\n\n    if player == \"agent\":  # Agent maximizes utility\n        action, value = max(values.items(), key=lambda x: x[1])  # @inspect action value\n    elif player == \"opp\":  # Opponent minimizes utility\n        action, value = min(values.items(), key=lambda x: x[1])  # @inspect action value\n    else:\n        raise ValueError(f\"Invalid player: {player}\")\n\n    return value, action\n\n\ndef face_off():\n    text(\"Computing recurrences produce different policies:\")\n    text(\"- V_minmax \u2192 \u03c0_max (agent), \u03c0_min (opponent)\")\n    text(\"- V_exptmax \u2192 \u03c0_exptmax(7) (agent), \u03c0_7 (opponent)\")\n\n    text(\"Each 'optimal' policy bakes in assumptions about how the other player plays.\")\n    text(\"- Minimax: \u03c0_max is optimal against \u03c0_min\")\n    text(\"- Minimax: \u03c0_min is optimal against \u03c0_max\")\n    text(\"- Expectimax: \u03c0_exptmax(7) is optimal against \u03c0_7\")\n    text(\"What happens when these polices play different policies?\")\n\n    text(\"V(\u03c0_agent, \u03c0_opp): value of game when \u03c0_agent plays \u03c0_opp\")\n\n    text(\"We can play the policies against each other:\")\n    image(\"images/face-off.png\", width=500)\n\n    text(\"Property 1: \u03c0_max is the best policy against \u03c0_min\")\n    image(\"images/minimax-prop1.png\", width=500)\n    text(\"V(\u03c0_exptmax(7), \u03c0_min) \u2264 V(\u03c0_max, \u03c0_min)\")\n\n    text(\"Property 2: \u03c0_min is the best policy against \u03c0_max\")\n    image(\"images/minimax-prop2.png\", width=500)\n    text(\"V(\u03c0_max, \u03c0_min) \u2264 V(\u03c0_max, \u03c0_7)\")\n    text(\"If the minimax value is 1, that means agent is guaranteed to win no matter what the opponent does!\")\n\n    text(\"Property 3: \u03c0_exptmax(7) is optimal against \u03c0_7\")\n    image(\"images/minimax-prop3.png\", width=500)\n    text(\"V(\u03c0_max, \u03c0_7) \u2264 V(\u03c0_exptmax(7), \u03c0_7)\")\n    text(\"You can do better than minimax if you know your opponent!\")\n\n    text(\"Putting everything together:\")\n    image(\"images/face-off-rel.png\", width=500)\n\n    text(\"Summary:\")\n    text(\"- Always think about optimality with respect to what?\")\n    text(\"- Minimax provides both optimality and a lower bound against any (unknown) opponent\")\n\n\ndef expectiminimax():\n    link(\"https://stanford-cs221.github.io/autumn2023/modules/module.html#include=games%2Fexpectiminimax.js&mode=print6pp\", title=\"[Autumn 2023 lecture]\")\n\n    image(\"images/game2.png\", width=500)\n\n    text(\"Let's draw the game tree for this game:\")\n    image(\"images/expectiminimax.png\", width=500)\n\n    text(\"Here's the recurrence:\")\n    image(\"images/expectiminimax-graphical.png\", width=400)\n    image(\"images/expectiminimax-recurrence.png\", width=600)\n\n    text(\"In general, one could imagine many possible extensions:\")\n    text(\"- More than two players (either agents or opponents)\")\n    text(\"- Players taking extra turns or choosing who to go next\")\n    text(\"Just define recurrence V_...() generally!\")\n\n    text(\"Things that aren't covered by game trees:\")\n    text(\"- Games with imperfect information (e.g., poker)\")\n    text(\"- Non-zero-sum games (e.g., prisoner's dilemma)\")\n    text(\"- Non-turn-based games (e.g., rock-paper-scissors)\")\n\n\ndef alpha_beta_pruning():\n    link(\"https://stanford-cs221.github.io/autumn2023/modules/module.html#include=games%2Falpha-beta-pruning.js&mode=print6pp\", title=\"[Autumn 2023 lecture]\")\n\n    text(\"Now let's go back to the basic minimax formulation.\")\n    image(\"images/minimax-recurrence.png\", width=500)\n    text(\"Recall that it takes exponential time in general!\")\n    text(\"How can we speed it up?\")\n\n    text(\"**Alpha-beta pruning**: don't visit states that we know aren't going to be optimal.\")\n    text(\"But how do we know if we don't look?\")\n\n    text(\"Simple example:\")\n    text(\"- A has value in [3, 5]\")\n    text(\"- B has value in [5, 100]\")\n    text(\"Which one would you choose?\")\n    text(\"No matter what A and B turn out to be, B will always be better.\")\n    text(\"And we don't need to compute A and B exactly!\")\n    text(\"This idea is called **branch and bound**, used heavily in combinatorial optimization.\")\n\n    text(\"Let's consider the following game tree:\")\n    image(\"images/alpha-beta-example.png\", width=300)\n    text(\"Root computes max(3, min(2, X)) = 3 no matter what X is...so don't need to explore X!\")\n\n    text(\"In general:\")\n    image(\"images/alpha-beta-optimal-path.png\", width=500)\n    text(\"- While we're exploring, each max (min) node has a lower (upper) bound on its value\")\n    text(\"- The minimax value came from some leaf\")\n    text(\"- **Optimal path** is path taken by minimax policies to that leaf\")\n    text(\"- This optimal path should be within the lower/upper bounds\")\n    text(\"- Prune a node if its bounds doesn't overlap every ancestor's bounds\")\n\n    text(\"Let's work this out on the board:\")\n    image(\"images/alpha-beta-example2.png\", width=500)\n\n    text(\"Ordering:\")\n    text(\"- The order in which the children are visited impacts what you can prune\")\n    image(\"images/move-ordering-example.png\", width=300)\n    text(\"In practice, use a heuristic (evaluation function later) to order the children:\")\n    text(\"- Decreasing for max nodes\")\n    text(\"- Increasing for min nodes\")\n\n    text(\"Summary:\")\n    text(\"- Alpha-beta pruning: speed up minimax search, exact computation\")\n    text(\"- Want to order actions to shrink the bounds as fast as possible\")\n\n\ndef evaluation_functions():\n    link(\"https://stanford-cs221.github.io/autumn2023/modules/module.html#include=games%2Feval-functions.js&mode=print6pp\", title=\"[Autumn 2023 lecture]\")\n\n    text(\"Now let's go back to the basic minimax formulation.\")\n    image(\"images/minimax-recurrence.png\", width=600)\n    text(\"Recall that it takes exponential time in general!\")\n    text(\"How can we compute things approximately?\")\n\n    text(\"Key idea: define **evaluation function**\")\n    text(\"- In the game, only thing that matters is who wins at the end\")\n    text(\"- Evaluation function captures prior knowledge about what might be good\")\n    image(\"images/eval-functions-chess.png\", width=500)\n\n    text(\"Using an evaluation function, can define a recurrence that keeps track of a depth d:\")\n    image(\"images/eval-functions-recurrence.png\", width=600)\n    text(\"- No guarantees that we will find the optimal policy!\")\n\n    text(\"Summary:\")\n    text(\"- Evaluation function: prior knowledge that evaluates a state\")\n    text(\"- Do search to a certain depth, and then use the evaluation function\")\n    text(\"- Analogy: FutureCost in search problems\")\n\n\nif __name__ == \"__main__\":\n    main()"
+    "games.py": "from edtrace import text, image, link\nfrom typing import Any, Callable\nfrom dataclasses import dataclass\nimport numpy as np\nfrom util import sample_dict, set_random_seed\n\nPolicy = Callable[[Any], Any]\nState = Any\nAction = str\n\n\ndef main():\n    text(\"# Lecture 10: Games I\")\n\n    text(\"Last week: Markov decision processes and reinforcement learning\")\n    text(\"This week: games\")\n\n    image(\"images/game1.png\", width=500)\n    text(\"What should your strategy be?\")\n    text(\"Note that it depends on your opponent (me)'s strategy, which is unknown...\")\n\n    text(\"MDPs: agent tries to maximize utility, environment is random and known\")\n    text(\"Games: agent tries to maximize utility, opponent strategy is **unknown**\")\n\n    modeling()               # What is a game?\n    game_evaluation()        # Play the game and see who wins\n    expectimax()             # Assume the opponent is playing a fixed strategy\n    minimax()                # Assume the opponent is playing the best possible strategy\n    face_off()               # Relationships between values\n    expectiminimax()         # ...and there is randomness in the game\n\n    alpha_beta_pruning()     # Speed up search (exact)\n    evaluation_functions()   # Speed up search (approximate)\n\n    text(\"Summary:\")\n    text(\"- Games: agent tries to maximize utility, opponent strategy is unknown\")\n    text(\"- Minimax principle: assume the opponent tries to minimize utility\")\n    text(\"- Recurrences define various (game, policy) outcomes (evaluation, expectimax, minimax, expectiminimax)\")\n    text(\"- Alpha-beta pruning: branch and bound to speed up minimax (exact)\")\n    text(\"- Evaluation functions: prior knowledge that speeds up (approximately)\")\n\n\ndef modeling():\n    link(\"https://stanford-cs221.github.io/autumn2023/modules/module.html#include=games%2Fmodeling.js&mode=print6pp\", title=\"[Autumn 2023 lecture]\")\n    image(\"images/game-tree.png\", width=500)\n\n    text(\"This lecture: two-player zero-sum games\")\n    text(\"- Two players: *agent* and *opponent*\")\n    text(\"- Zero-sum: utility of agent = -utility of opponent\")\n\n    game1()\n    halving_game()\n\n\ndef game1():\n    image(\"images/game-tree.png\", width=500)\n    text(\"Let us define a game formally:\")\n    game = Game1()\n\n    # From the root\n    state = game.start_state()  # Root node @inspect state @stepover\n    is_end = game.is_end(state)  # Leaf node? @inspect is_end @stepover\n    player = game.player(state)  # Whose turn is it? @inspect player @stepover\n    successors = game.successors(state)  # For each action -> successor state @inspect successors @stepover\n\n    state = \"A\" # @inspect state @clear is_end player successors\n    is_end = game.is_end(state)  # @inspect is_end @stepover\n    player = game.player(state)  # @inspect player @stepover\n    successors = game.successors(state)  # @inspect successors @stepover\n\n    state = \"A1\" # @inspect state @clear is_end player successors\n    is_end = game.is_end(state)  # @inspect is_end @stepover\n    utility = game.utility(state)  # @inspect utility @stepover\n\n    text(\"Key characteristics of a **game**:\")\n    text(\"- All the utility is at the end state (sparse reward)\")\n    text(\"- Different players in control at different states\")\n\n    text(\"Types of policies:\")\n    text(\"- Deterministic: \u03c0_p(s) is action player p takes in state s\")\n    text(\"- Stochastic: \u03c0_p(a | s) is probability player p takes action a in state s\")\n    text(\"In general, we will consider stochastic policies.\")\n\n\ndef halving_game():\n    text(\"Let's consider another game:\")\n    image(\"images/halving-game.png\", width=500)\n    game = HalvingGame(n=11)  # @stepover\n\n    state = game.start_state()  # @inspect state @stepover\n    player = game.player(state)  # @inspect player @stepover\n    successors = game.successors(state)  # @inspect successors @stepover\n    is_end = game.is_end(state)  # @inspect is_end @stepover\n\n\nclass Game:\n    def start_state(self) -> Any:\n        \"\"\"Where the game starts.\"\"\"\n        raise NotImplementedError\n\n    def successors(self, state: Any) -> dict[str, Any]:\n        \"\"\"What are the possible successor states?\"\"\"\n        raise NotImplementedError\n\n    def player(self, state: Any) -> str:\n        \"\"\"Which player should move in `state`?\"\"\"\n        raise NotImplementedError\n\n    def is_end(self, state: Any) -> bool:\n        \"\"\"Is the game over?\"\"\"\n        raise NotImplementedError\n\n    def utility(self, state: Any) -> float:\n        \"\"\"What is the utility of the game (for the agent).\"\"\"\n        raise NotImplementedError\n\n\nclass Game1(Game):\n    def start_state(self) -> Any:\n        return \"root\"\n\n    def successors(self, state: str) -> dict[str, str]:\n        # state -> action -> next state\n        mapping = {\n            \"root\": {\"A\": \"A\", \"B\": \"B\", \"C\": \"C\"},\n            \"A\": {\"1\": \"A1\", \"2\": \"A2\"},\n            \"B\": {\"1\": \"B1\", \"2\": \"B2\"},\n            \"C\": {\"1\": \"C1\", \"2\": \"C2\"},\n        }\n        return mapping[state]\n\n    def player(self, state: Any) -> str:\n        if state == \"root\":\n            return \"agent\"\n        if state in [\"A\", \"B\", \"C\"]:\n            return \"opp\"\n        raise ValueError(f\"Invalid state: {state}\")\n\n    def is_end(self, state: Any) -> bool:\n        return state in [\"A1\", \"A2\", \"B1\", \"B2\", \"C1\", \"C2\"]\n\n    def utility(self, state: Any) -> float:\n        utilities = {\n            \"A1\": -50,\n            \"A2\": 50,\n            \"B1\": 1,\n            \"B2\": 3,\n            \"C1\": -5,\n            \"C2\": 15,\n        }\n        return utilities[state]\n\n\n@dataclass(frozen=True)\nclass HalvingState:\n    n: int\n    player: str\n\n    def __str__(self) -> str:\n        return f\"({self.n}, {self.player})\"\n\n\nclass HalvingGame(Game):\n    \"\"\"\n    Halving game:\n    - Two players take turns halving or decrementing a number.\n    - The player that is left with 0 wins.\n    \"\"\"\n    def __init__(self, n: int):\n        self.n = n\n\n    def start_state(self) -> Any:\n        return HalvingState(n=self.n, player=\"agent\")\n\n    def successors(self, state: HalvingState) -> dict[str, Any]:\n        next_player = \"opp\" if state.player == \"agent\" else \"agent\"\n        return {\n            \"decrement\": HalvingState(n=state.n - 1, player=next_player),\n            \"half\": HalvingState(n=state.n // 2, player=next_player),\n        }\n\n    def player(self, state: HalvingState) -> str:\n        return state.player\n\n    def is_end(self, state: HalvingState) -> bool:\n        return state.n == 0\n\n    def utility(self, state: HalvingState) -> float:\n        assert state.n == 0\n        if state.player == \"agent\":\n            return +1  # Agent wins\n        else:\n            return -1  # Opponent wins\n\n@dataclass(frozen=True)\nclass Step:\n    \"\"\"Represents a step in a game (action and resulting state).\"\"\"\n    action: Any\n    state: Any\n\n@dataclass(frozen=True)\nclass Rollout:\n    \"\"\"Represents a rollout of a game (sequence of actions that produces a utility).\"\"\"\n    steps: list[Step]\n    utility: float\n\ndef simulate(game: Game, policies: dict[str, Policy]) -> Rollout:\n    \"\"\"Simulate the game from the start state using the policy.\"\"\"\n    state = game.start_state()  # @inspect state @stepover\n    steps = []\n\n    while not game.is_end(state):  # @stepover\n        # Player whose turn it is chooses an action\n        player = game.player(state)  # @inspect player @stepover\n        actions = policies[player](state)  # @inspect actions @stepover\n        action = sample_dict(actions)  # @inspect action @stepover\n\n        # Advance the game state\n        state = game.successors(state)[action]  # @inspect state @stepover\n        steps.append(Step(action=action, state=state))  # @inspect steps\n\n    # See who wins?\n    utility = game.utility(state)  # @inspect utility @stepover\n    return Rollout(steps=steps, utility=utility)\n\n\ndef game_evaluation():\n    link(\"https://stanford-cs221.github.io/autumn2023/modules/module.html#include=games%2Fgame-evaluation.js&mode=print6pp\", title=\"[Autumn 2023 lecture]\")\n\n    text(\"Given a game and a policy for each player...\")\n    text(\"...the **value** (expected utility) of a game over all possible rollouts\")\n\n    # Agent always chooses A\n    def always_choose_a_policy(state: State) -> dict[Action, float]:\n        return {\"A\": 1}\n\n    # Opponent chooses randomly between 1 and 2\n    def random_policy(state: State) -> dict[Action, float]:\n        return {\"1\": 0.5, \"2\": 0.5}\n\n    policies = {\n        \"agent\": always_choose_a_policy,\n        \"opp\": random_policy,\n    }\n\n    game = Game1()\n\n    text(\"Let's play the game!\")\n    set_random_seed(1)\n    utility = simulate(game, policies)  # @inspect utility\n\n    text(\"Do it multiple times and average:\")\n    utilities = [simulate(game, policies).utility for _ in range(20)]  # @inspect utilities @stepover\n    mean_utility = np.mean(utilities)  # @inspect mean_utility\n\n    text(\"Can we compute the game value exactly without simulation?\")\n\n    text(\"Yes, by defining a recurrence!\")\n    image(\"images/game-evaluation-graphical.png\", width=400)\n    image(\"images/game-evaluation-recurrence.png\", width=600)\n    state = game.start_state()  # @stepover\n    value = V_eval(game, policies, state)  # @inspect value\n    text(\"This computation is exact, but could take exponential time!\")\n\n    image(\"images/game-evaluation.png\", width=500)\n\n    text(\"Summary:\")\n    text(\"- Value is the expected utility of the game\")\n    text(\"- Monte Carlo: we can simulate the game and average the utilities\")\n    text(\"- Recurrence to compute value exactly (but could take exponential time!)\")\n    text(\"- Analogous to policy evaluation in MDPs\")\n\n\ndef V_eval(game: Game, policies: dict[str, Policy], state: Any) -> float:\n    \"\"\"Return the value of the game.\"\"\"\n    # At the end of the game?\n    if game.is_end(state):  # @stepover\n        return game.utility(state)  # @stepover\n\n    # Whose turn is it?\n    player = game.player(state)  # @stepover\n    policy = policies[player]\n\n    # Try all actions\n    value = 0  # @inspect value\n    for action, prob in policy(state).items():  # @stepover\n        next_state = game.successors(state)[action]  # @stepover @inspect next_state\n        value += prob * V_eval(game, policies, next_state)  # @stepover @inspect value\n\n    return value\n\n\ndef expectimax():\n    link(\"https://stanford-cs221.github.io/autumn2023/modules/module.html#include=games%2Fexpectimax.js&mode=print6pp\", title=\"[Autumn 2023 lecture]\")\n\n    text(\"Previously: we can evaluate a fixed agent policy\")\n    text(\"Now: find the optimal agent policy\")\n\n    image(\"images/expectimax-graphical.png\", width=400)\n    image(\"images/expectimax-recurrence.png\", width=600)\n\n    # Opponent chooses randomly between 1 and 2\n    def random_policy(state: Any) -> Any:\n        return {\"1\": 0.5, \"2\": 0.5}\n\n    image(\"images/expectimax.png\", width=500)\n\n    game = Game1()\n    state = game.start_state()  # @stepover\n    value = V_exptmax(game, random_policy, state)  # @inspect value\n    text(\"Now the optimal action is to choose C!\")\n\n    text(\"Summary:\")\n    text(\"- Expectimax: find the optimal agent policy with respect to a fixed opponent policy\")\n    text(\"- Analogous to value iteration in MDPs\")\n\n\ndef V_exptmax(game: Game, opp_policy: Policy, state: Any) -> float:\n    \"\"\"Return the value of the game.\"\"\"\n    # At the end of the game?\n    if game.is_end(state):  # @stepover\n        return game.utility(state)  # @stepover\n\n    # Whose turn is it?\n    player = game.player(state)  # @stepover\n\n    if player == \"agent\":\n        # Choose the action (next state) that maximizes utility\n        next_states = list(game.successors(state).values())  # @stepover @inspect next_states\n        values = [V_exptmax(game, opp_policy, next_state) for next_state in next_states]  # @stepover @inspect values\n        value = np.max(values)  # @inspect value\n        return value\n\n    elif player == \"opp\":\n        # Follow the opponent's policy\n        successors = game.successors(state)  # action -> next state\n        values = [prob * V_exptmax(game, opp_policy, successors[action]) for action, prob in opp_policy(state).items()]  # @stepover @inspect values\n        value = np.sum(values)  # @inspect value\n        return value\n\n    else:\n        raise ValueError(f\"Invalid player: {player}\")\n\n\ndef minimax():\n    link(\"https://stanford-cs221.github.io/autumn2023/modules/module.html#include=games%2Fminimax.js&mode=print6pp\", title=\"[Autumn 2023 lecture]\")\n\n    text(\"Previously: assumed the opponent policy was known (expectimax)\")\n    text(\"The whole point of games is that we don't know the opponent policy!\")\n    text(\"What should we do?\")\n\n    text(\"**Minimax**: assume the opponent plays their best possible strategy\")\n\n    text(\"Here is the minimax recurrence:\")\n    image(\"images/minimax-graphical.png\", width=400)\n    image(\"images/minimax-recurrence.png\", width=600)\n\n    text(\"Here's what it looks like for game 1:\")\n    image(\"images/minimax.png\", width=500)\n\n    game = Game1()\n    state = game.start_state()  # @stepover\n    value = V_minmax(game, state)  # @inspect value\n\n    text(\"Let's look at the minimax solution for the halving game:\")\n    game = HalvingGame(n=11)  # @stepover\n\n    def minimax_policy(state: HalvingState) -> dict[Action, float]:\n        # Compute the minimax value and always play the associated action\n        value, action = V_minmax(game, state)\n        return {action: 1.0}  # Always play the associated action\n\n    def random_policy(state: HalvingState) -> dict[Action, float]:\n        return {\"decrement\": 0.5, \"half\": 0.5}\n\n    policies = {\n        \"agent\": minimax_policy,\n        \"opp\": random_policy,\n    }\n\n    set_random_seed(1)\n    rollout = simulate(game, policies)  # @inspect rollout @stepover\n    utilities = [simulate(game, policies).utility for _ in range(10)]  # @inspect utilities @stepover\n    mean_utility = np.mean(utilities)  # @inspect mean_utility\n    text(\"The minimax policy crushes the random policy!\")\n\n    text(\"We can compute the minimax value and optimal action for each state:\")\n    results = {n: V_minmax(game, HalvingState(n=n, player=\"agent\")) for n in range(1, 12)}  # @inspect results @stepover\n    text(\"If the value is 1, agent is guaranteed to win no matter what the opponent does.\")\n    text(\"If the value is -1, opponent is guaranteed to win **if** they play optimally.\")\n\n    text(\"When agent and opponent play optimally, this is **perfect play**.\")\n    text(\"A game is **solved** if the outcome under perfect play is known.\")\n    text(\"Strongly solved games: tic-tac-toe, nim, connect four\")\n    text(\"Weakly solved games (from initial position): checkers, Othello\")\n    text(\"Unsolved games: chess, Go (even if computers are superhuman!)\")\n\n    text(\"Summary:\")\n    text(\"- Agent maximizes utility, opponent minimizes utility\")\n    text(\"- Unlike expectimax, no fixed policies given\")\n    text(\"- No analogy in MDPs\")\n\n\ndef V_minmax(game: Game, state: Any) -> tuple[float, Action]:\n    \"\"\"Return the value of the game and the optimal action.\"\"\"\n    # At the end of the game?\n    if game.is_end(state):  # @stepover\n        return game.utility(state), None  # @stepover\n\n    # Whose turn is it?\n    player = game.player(state)  # @stepover\n\n    # Recurse on all possible next states\n    successors = game.successors(state)  # @stepover @inspect successors\n    values = {action: V_minmax(game, next_state)[0] for action, next_state in successors.items()}  # @stepover @inspect values\n\n    if player == \"agent\":  # Agent maximizes utility\n        action, value = max(values.items(), key=lambda x: x[1])  # @inspect action value\n    elif player == \"opp\":  # Opponent minimizes utility\n        action, value = min(values.items(), key=lambda x: x[1])  # @inspect action value\n    else:\n        raise ValueError(f\"Invalid player: {player}\")\n\n    return value, action\n\n\ndef face_off():\n    text(\"Computing recurrences produce different policies:\")\n    text(\"- V_minmax \u2192 \u03c0_max (agent), \u03c0_min (opponent)\")\n    text(\"- V_exptmax \u2192 \u03c0_exptmax(7) (agent), \u03c0_7 (opponent)\")\n\n    text(\"Each 'optimal' policy bakes in assumptions about how the other player plays.\")\n    text(\"- Minimax: \u03c0_max is optimal against \u03c0_min\")\n    text(\"- Minimax: \u03c0_min is optimal against \u03c0_max\")\n    text(\"- Expectimax: \u03c0_exptmax(7) is optimal against \u03c0_7\")\n    text(\"What happens when these polices play different policies?\")\n\n    text(\"V(\u03c0_agent, \u03c0_opp): value of game when \u03c0_agent plays \u03c0_opp\")\n\n    text(\"We can play the policies against each other:\")\n    image(\"images/face-off.png\", width=500)\n\n    text(\"Property 1: \u03c0_max is the best policy against \u03c0_min\")\n    image(\"images/minimax-prop1.png\", width=500)\n    text(\"V(\u03c0_exptmax(7), \u03c0_min) \u2264 V(\u03c0_max, \u03c0_min)\")\n\n    text(\"Property 2: \u03c0_min is the best policy against \u03c0_max\")\n    image(\"images/minimax-prop2.png\", width=500)\n    text(\"V(\u03c0_max, \u03c0_min) \u2264 V(\u03c0_max, \u03c0_7)\")\n    text(\"If the minimax value is 1, that means agent is guaranteed to win no matter what the opponent does!\")\n\n    text(\"Property 3: \u03c0_exptmax(7) is optimal against \u03c0_7\")\n    image(\"images/minimax-prop3.png\", width=500)\n    text(\"V(\u03c0_max, \u03c0_7) \u2264 V(\u03c0_exptmax(7), \u03c0_7)\")\n    text(\"You can do better than minimax if you know your opponent!\")\n\n    text(\"Putting everything together:\")\n    image(\"images/face-off-rel.png\", width=500)\n\n    text(\"Summary:\")\n    text(\"- Always think about optimality with respect to what?\")\n    text(\"- Minimax provides both optimality and a lower bound against any (unknown) opponent\")\n\n\ndef expectiminimax():\n    link(\"https://stanford-cs221.github.io/autumn2023/modules/module.html#include=games%2Fexpectiminimax.js&mode=print6pp\", title=\"[Autumn 2023 lecture]\")\n\n    image(\"images/game2.png\", width=500)\n\n    text(\"Let's draw the game tree for this game:\")\n    image(\"images/expectiminimax.png\", width=500)\n\n    text(\"Here's the recurrence:\")\n    image(\"images/expectiminimax-graphical.png\", width=400)\n    image(\"images/expectiminimax-recurrence.png\", width=600)\n\n    text(\"In general, one could imagine many possible extensions:\")\n    text(\"- More than two players (either agents or opponents)\")\n    text(\"- Players taking extra turns or choosing who to go next\")\n    text(\"Just define recurrence V_...() generally!\")\n\n    text(\"Things that aren't covered by game trees:\")\n    text(\"- Games with imperfect information (e.g., poker)\")\n    text(\"- Non-zero-sum games (e.g., prisoner's dilemma)\")\n    text(\"- Non-turn-based games (e.g., rock-paper-scissors)\")\n\n\ndef alpha_beta_pruning():\n    link(\"https://stanford-cs221.github.io/autumn2023/modules/module.html#include=games%2Falpha-beta-pruning.js&mode=print6pp\", title=\"[Autumn 2023 lecture]\")\n\n    text(\"Now let's go back to the basic minimax formulation.\")\n    image(\"images/minimax-recurrence.png\", width=500)\n    text(\"Recall that it takes exponential time in general!\")\n    text(\"How can we speed it up?\")\n\n    text(\"**Alpha-beta pruning**: don't visit states that we know aren't going to be optimal.\")\n    text(\"But how do we know if we don't look?\")\n\n    text(\"Simple example:\")\n    text(\"- A has value in [3, 5]\")\n    text(\"- B has value in [5, 100]\")\n    text(\"Which one would you choose?\")\n    text(\"No matter what A and B turn out to be, B will always be better.\")\n    text(\"And we don't need to compute A and B exactly!\")\n    text(\"This idea is called **branch and bound**, used heavily in combinatorial optimization.\")\n\n    text(\"Let's consider the following game tree:\")\n    image(\"images/alpha-beta-example.png\", width=300)\n    text(\"Root computes max(3, min(2, X)) = 3 no matter what X is...so don't need to explore X!\")\n\n    text(\"In general:\")\n    image(\"images/alpha-beta-optimal-path.png\", width=500)\n    text(\"- While we're exploring, each max (min) node has a lower (upper) bound on its value\")\n    text(\"- The minimax value came from some leaf\")\n    text(\"- **Optimal path** is path taken by minimax policies to that leaf\")\n    text(\"- This optimal path should be within the lower/upper bounds\")\n    text(\"- Prune a node if its bounds doesn't overlap every ancestor's bounds\")\n\n    text(\"Let's work this out on the board:\")\n    image(\"images/alpha-beta-example2.png\", width=500)\n\n    text(\"Ordering:\")\n    text(\"- The order in which the children are visited impacts what you can prune\")\n    image(\"images/move-ordering-example.png\", width=300)\n    text(\"In practice, use a heuristic (evaluation function later) to order the children:\")\n    text(\"- Decreasing for max nodes\")\n    text(\"- Increasing for min nodes\")\n\n    text(\"Summary:\")\n    text(\"- Alpha-beta pruning: speed up minimax search, exact computation\")\n    text(\"- Want to order actions to shrink the bounds as fast as possible\")\n\n\ndef evaluation_functions():\n    link(\"https://stanford-cs221.github.io/autumn2023/modules/module.html#include=games%2Feval-functions.js&mode=print6pp\", title=\"[Autumn 2023 lecture]\")\n\n    text(\"Now let's go back to the basic minimax formulation.\")\n    image(\"images/minimax-recurrence.png\", width=600)\n    text(\"Recall that it takes exponential time in general!\")\n    text(\"How can we compute things approximately?\")\n\n    text(\"Key idea: define **evaluation function**\")\n    text(\"- In the game, only thing that matters is who wins at the end\")\n    text(\"- Evaluation function captures prior knowledge about what might be good\")\n    image(\"images/eval-functions-chess.png\", width=500)\n\n    text(\"Using an evaluation function, can define a recurrence that keeps track of a depth d:\")\n    image(\"images/eval-functions-recurrence.png\", width=600)\n    text(\"- No guarantees that we will find the optimal policy!\")\n\n    text(\"Summary:\")\n    text(\"- Evaluation function: prior knowledge that evaluates a state\")\n    text(\"- Do search to a certain depth, and then use the evaluation function\")\n    text(\"- Analogy: FutureCost in search problems\")\n\n\nif __name__ == \"__main__\":\n    main()"
   },
   "hidden_line_numbers": {
     "games.py": []
@@ -34,7 +34,8 @@
           "data": "# Lecture 10: Games I",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -54,7 +55,8 @@
           "data": "Last week: Markov decision processes and reinforcement learning",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -74,7 +76,8 @@
           "data": "This week: games",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -96,7 +99,8 @@
             "width": 500
           },
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -116,7 +120,8 @@
           "data": "What should your strategy be?",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -136,7 +141,8 @@
           "data": "Note that it depends on your opponent (me)'s strategy, which is unknown...",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -156,7 +162,8 @@
           "data": "MDPs: agent tries to maximize utility, environment is random and known",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -176,7 +183,8 @@
           "data": "Games: agent tries to maximize utility, opponent strategy is **unknown**",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -229,7 +237,7 @@
       "renderings": [
         {
           "type": "link",
-          "data": null,
+          "data": "[[Autumn 2023 lecture]]",
           "style": {},
           "external_link": {
             "title": "[Autumn 2023 lecture]",
@@ -240,7 +248,8 @@
             "description": null,
             "notes": null
           },
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -268,7 +277,8 @@
             "width": 500
           },
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -294,7 +304,8 @@
           "data": "This lecture: two-player zero-sum games",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -320,7 +331,8 @@
           "data": "- Two players: *agent* and *opponent*",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -346,7 +358,8 @@
           "data": "- Zero-sum: utility of agent = -utility of opponent",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -422,7 +435,8 @@
             "width": 500
           },
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -454,7 +468,8 @@
           "data": "Let us define a game formally:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -889,7 +904,8 @@
           "data": "Key characteristics of a **game**:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -921,7 +937,8 @@
           "data": "- All the utility is at the end state (sparse reward)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -953,7 +970,8 @@
           "data": "- Different players in control at different states",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -985,7 +1003,8 @@
           "data": "Types of policies:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1017,7 +1036,8 @@
           "data": "- Deterministic: \u03c0_p(s) is action player p takes in state s",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1049,7 +1069,8 @@
           "data": "- Stochastic: \u03c0_p(a | s) is probability player p takes action a in state s",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1081,7 +1102,8 @@
           "data": "In general, we will consider stochastic policies.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1173,7 +1195,8 @@
           "data": "Let's consider another game:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1207,7 +1230,8 @@
             "width": 500
           },
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1490,7 +1514,7 @@
       "renderings": [
         {
           "type": "link",
-          "data": null,
+          "data": "[[Autumn 2023 lecture]]",
           "style": {},
           "external_link": {
             "title": "[Autumn 2023 lecture]",
@@ -1501,7 +1525,8 @@
             "description": null,
             "notes": null
           },
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1527,7 +1552,8 @@
           "data": "Given a game and a policy for each player...",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1553,7 +1579,8 @@
           "data": "...the **value** (expected utility) of a game over all possible rollouts",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1687,7 +1714,8 @@
           "data": "Let's play the game!",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2421,7 +2449,8 @@
           "data": "Do it multiple times and average:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2618,7 +2647,8 @@
           "data": "Can we compute the game value exactly without simulation?",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2644,7 +2674,8 @@
           "data": "Yes, by defining a recurrence!",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2672,7 +2703,8 @@
             "width": 400
           },
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2700,7 +2732,8 @@
             "width": 600
           },
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3048,7 +3081,8 @@
           "data": "This computation is exact, but could take exponential time!",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3076,7 +3110,8 @@
             "width": 500
           },
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3102,7 +3137,8 @@
           "data": "Summary:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3128,7 +3164,8 @@
           "data": "- Value is the expected utility of the game",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3154,7 +3191,8 @@
           "data": "- Monte Carlo: we can simulate the game and average the utilities",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3180,7 +3218,8 @@
           "data": "- Recurrence to compute value exactly (but could take exponential time!)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3206,7 +3245,8 @@
           "data": "- Analogous to policy evaluation in MDPs",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3271,7 +3311,7 @@
       "renderings": [
         {
           "type": "link",
-          "data": null,
+          "data": "[[Autumn 2023 lecture]]",
           "style": {},
           "external_link": {
             "title": "[Autumn 2023 lecture]",
@@ -3282,7 +3322,8 @@
             "description": null,
             "notes": null
           },
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3308,7 +3349,8 @@
           "data": "Previously: we can evaluate a fixed agent policy",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3334,7 +3376,8 @@
           "data": "Now: find the optimal agent policy",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3362,7 +3405,8 @@
             "width": 400
           },
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3390,7 +3434,8 @@
             "width": 600
           },
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3436,7 +3481,8 @@
             "width": 500
           },
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3792,7 +3838,8 @@
           "data": "Now the optimal action is to choose C!",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3818,7 +3865,8 @@
           "data": "Summary:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3844,7 +3892,8 @@
           "data": "- Expectimax: find the optimal agent policy with respect to a fixed opponent policy",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3870,7 +3919,8 @@
           "data": "- Analogous to value iteration in MDPs",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3935,7 +3985,7 @@
       "renderings": [
         {
           "type": "link",
-          "data": null,
+          "data": "[[Autumn 2023 lecture]]",
           "style": {},
           "external_link": {
             "title": "[Autumn 2023 lecture]",
@@ -3946,7 +3996,8 @@
             "description": null,
             "notes": null
           },
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3972,7 +4023,8 @@
           "data": "Previously: assumed the opponent policy was known (expectimax)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3998,7 +4050,8 @@
           "data": "The whole point of games is that we don't know the opponent policy!",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -4024,7 +4077,8 @@
           "data": "What should we do?",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -4050,7 +4104,8 @@
           "data": "**Minimax**: assume the opponent plays their best possible strategy",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -4076,7 +4131,8 @@
           "data": "Here is the minimax recurrence:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -4104,7 +4160,8 @@
             "width": 400
           },
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -4132,7 +4189,8 @@
             "width": 600
           },
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -4158,7 +4216,8 @@
           "data": "Here's what it looks like for game 1:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -4186,7 +4245,8 @@
             "width": 500
           },
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -4387,60 +4447,6 @@
           "code": "values = {action: V_minmax(game, next_state)[0] for action, next_state in successors.items()}  # @stepover @inspect values"
         }
       ],
-      "env": {},
-      "renderings": []
-    },
-    {
-      "stack": [
-        {
-          "path": "games.py",
-          "line_number": 28,
-          "function_name": "main",
-          "code": "minimax()                # Assume the opponent is playing the best possible strategy"
-        },
-        {
-          "path": "games.py",
-          "line_number": 363,
-          "function_name": "minimax",
-          "code": "value = V_minmax(game, state)  # @inspect value"
-        },
-        {
-          "path": "games.py",
-          "line_number": 415,
-          "function_name": "V_minmax",
-          "code": "values = {action: V_minmax(game, next_state)[0] for action, next_state in successors.items()}  # @stepover @inspect values"
-        },
-        {
-          "path": "games.py",
-          "line_number": 415,
-          "function_name": "<dictcomp>",
-          "code": "values = {action: V_minmax(game, next_state)[0] for action, next_state in successors.items()}  # @stepover @inspect values"
-        }
-      ],
-      "env": {},
-      "renderings": []
-    },
-    {
-      "stack": [
-        {
-          "path": "games.py",
-          "line_number": 28,
-          "function_name": "main",
-          "code": "minimax()                # Assume the opponent is playing the best possible strategy"
-        },
-        {
-          "path": "games.py",
-          "line_number": 363,
-          "function_name": "minimax",
-          "code": "value = V_minmax(game, state)  # @inspect value"
-        },
-        {
-          "path": "games.py",
-          "line_number": 415,
-          "function_name": "V_minmax",
-          "code": "values = {action: V_minmax(game, next_state)[0] for action, next_state in successors.items()}  # @stepover @inspect values"
-        }
-      ],
       "env": {
         "values": {
           "type": "dict",
@@ -4615,7 +4621,8 @@
           "data": "Let's look at the minimax solution for the halving game:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -5109,7 +5116,8 @@
           "data": "The minimax policy crushes the random policy!",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -5135,51 +5143,10 @@
           "data": "We can compute the minimax value and optimal action for each state:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
-    },
-    {
-      "stack": [
-        {
-          "path": "games.py",
-          "line_number": 28,
-          "function_name": "main",
-          "code": "minimax()                # Assume the opponent is playing the best possible strategy"
-        },
-        {
-          "path": "games.py",
-          "line_number": 388,
-          "function_name": "minimax",
-          "code": "results = {n: V_minmax(game, HalvingState(n=n, player=\"agent\")) for n in range(1, 12)}  # @inspect results @stepover"
-        }
-      ],
-      "env": {},
-      "renderings": []
-    },
-    {
-      "stack": [
-        {
-          "path": "games.py",
-          "line_number": 28,
-          "function_name": "main",
-          "code": "minimax()                # Assume the opponent is playing the best possible strategy"
-        },
-        {
-          "path": "games.py",
-          "line_number": 388,
-          "function_name": "minimax",
-          "code": "results = {n: V_minmax(game, HalvingState(n=n, player=\"agent\")) for n in range(1, 12)}  # @inspect results @stepover"
-        },
-        {
-          "path": "games.py",
-          "line_number": 388,
-          "function_name": "<dictcomp>",
-          "code": "results = {n: V_minmax(game, HalvingState(n=n, player=\"agent\")) for n in range(1, 12)}  # @inspect results @stepover"
-        }
-      ],
-      "env": {},
-      "renderings": []
     },
     {
       "stack": [
@@ -5438,7 +5405,8 @@
           "data": "If the value is 1, agent is guaranteed to win no matter what the opponent does.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -5464,7 +5432,8 @@
           "data": "If the value is -1, opponent is guaranteed to win **if** they play optimally.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -5490,7 +5459,8 @@
           "data": "When agent and opponent play optimally, this is **perfect play**.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -5516,7 +5486,8 @@
           "data": "A game is **solved** if the outcome under perfect play is known.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -5542,7 +5513,8 @@
           "data": "Strongly solved games: tic-tac-toe, nim, connect four",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -5568,7 +5540,8 @@
           "data": "Weakly solved games (from initial position): checkers, Othello",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -5594,7 +5567,8 @@
           "data": "Unsolved games: chess, Go (even if computers are superhuman!)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -5620,7 +5594,8 @@
           "data": "Summary:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -5646,7 +5621,8 @@
           "data": "- Agent maximizes utility, opponent minimizes utility",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -5672,7 +5648,8 @@
           "data": "- Unlike expectimax, no fixed policies given",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -5698,7 +5675,8 @@
           "data": "- No analogy in MDPs",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -5766,7 +5744,8 @@
           "data": "Computing recurrences produce different policies:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -5792,7 +5771,8 @@
           "data": "- V_minmax \u2192 \u03c0_max (agent), \u03c0_min (opponent)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -5818,7 +5798,8 @@
           "data": "- V_exptmax \u2192 \u03c0_exptmax(7) (agent), \u03c0_7 (opponent)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -5844,7 +5825,8 @@
           "data": "Each 'optimal' policy bakes in assumptions about how the other player plays.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -5870,7 +5852,8 @@
           "data": "- Minimax: \u03c0_max is optimal against \u03c0_min",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -5896,7 +5879,8 @@
           "data": "- Minimax: \u03c0_min is optimal against \u03c0_max",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -5922,7 +5906,8 @@
           "data": "- Expectimax: \u03c0_exptmax(7) is optimal against \u03c0_7",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -5948,7 +5933,8 @@
           "data": "What happens when these polices play different policies?",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -5974,7 +5960,8 @@
           "data": "V(\u03c0_agent, \u03c0_opp): value of game when \u03c0_agent plays \u03c0_opp",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -6000,7 +5987,8 @@
           "data": "We can play the policies against each other:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -6028,7 +6016,8 @@
             "width": 500
           },
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -6054,7 +6043,8 @@
           "data": "Property 1: \u03c0_max is the best policy against \u03c0_min",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -6082,7 +6072,8 @@
             "width": 500
           },
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -6108,7 +6099,8 @@
           "data": "V(\u03c0_exptmax(7), \u03c0_min) \u2264 V(\u03c0_max, \u03c0_min)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -6134,7 +6126,8 @@
           "data": "Property 2: \u03c0_min is the best policy against \u03c0_max",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -6162,7 +6155,8 @@
             "width": 500
           },
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -6188,7 +6182,8 @@
           "data": "V(\u03c0_max, \u03c0_min) \u2264 V(\u03c0_max, \u03c0_7)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -6214,7 +6209,8 @@
           "data": "If the minimax value is 1, that means agent is guaranteed to win no matter what the opponent does!",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -6240,7 +6236,8 @@
           "data": "Property 3: \u03c0_exptmax(7) is optimal against \u03c0_7",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -6268,7 +6265,8 @@
             "width": 500
           },
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -6294,7 +6292,8 @@
           "data": "V(\u03c0_max, \u03c0_7) \u2264 V(\u03c0_exptmax(7), \u03c0_7)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -6320,7 +6319,8 @@
           "data": "You can do better than minimax if you know your opponent!",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -6346,7 +6346,8 @@
           "data": "Putting everything together:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -6374,7 +6375,8 @@
             "width": 500
           },
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -6400,7 +6402,8 @@
           "data": "Summary:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -6426,7 +6429,8 @@
           "data": "- Always think about optimality with respect to what?",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -6452,7 +6456,8 @@
           "data": "- Minimax provides both optimality and a lower bound against any (unknown) opponent",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -6517,7 +6522,7 @@
       "renderings": [
         {
           "type": "link",
-          "data": null,
+          "data": "[[Autumn 2023 lecture]]",
           "style": {},
           "external_link": {
             "title": "[Autumn 2023 lecture]",
@@ -6528,7 +6533,8 @@
             "description": null,
             "notes": null
           },
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -6556,7 +6562,8 @@
             "width": 500
           },
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -6582,7 +6589,8 @@
           "data": "Let's draw the game tree for this game:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -6610,7 +6618,8 @@
             "width": 500
           },
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -6636,7 +6645,8 @@
           "data": "Here's the recurrence:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -6664,7 +6674,8 @@
             "width": 400
           },
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -6692,7 +6703,8 @@
             "width": 600
           },
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -6718,7 +6730,8 @@
           "data": "In general, one could imagine many possible extensions:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -6744,7 +6757,8 @@
           "data": "- More than two players (either agents or opponents)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -6770,7 +6784,8 @@
           "data": "- Players taking extra turns or choosing who to go next",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -6796,7 +6811,8 @@
           "data": "Just define recurrence V_...() generally!",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -6822,7 +6838,8 @@
           "data": "Things that aren't covered by game trees:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -6848,7 +6865,8 @@
           "data": "- Games with imperfect information (e.g., poker)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -6874,7 +6892,8 @@
           "data": "- Non-zero-sum games (e.g., prisoner's dilemma)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -6900,7 +6919,8 @@
           "data": "- Non-turn-based games (e.g., rock-paper-scissors)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -6965,7 +6985,7 @@
       "renderings": [
         {
           "type": "link",
-          "data": null,
+          "data": "[[Autumn 2023 lecture]]",
           "style": {},
           "external_link": {
             "title": "[Autumn 2023 lecture]",
@@ -6976,7 +6996,8 @@
             "description": null,
             "notes": null
           },
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -7002,7 +7023,8 @@
           "data": "Now let's go back to the basic minimax formulation.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -7030,7 +7052,8 @@
             "width": 500
           },
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -7056,7 +7079,8 @@
           "data": "Recall that it takes exponential time in general!",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -7082,7 +7106,8 @@
           "data": "How can we speed it up?",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -7108,7 +7133,8 @@
           "data": "**Alpha-beta pruning**: don't visit states that we know aren't going to be optimal.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -7134,7 +7160,8 @@
           "data": "But how do we know if we don't look?",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -7160,7 +7187,8 @@
           "data": "Simple example:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -7186,7 +7214,8 @@
           "data": "- A has value in [3, 5]",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -7212,7 +7241,8 @@
           "data": "- B has value in [5, 100]",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -7238,7 +7268,8 @@
           "data": "Which one would you choose?",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -7264,7 +7295,8 @@
           "data": "No matter what A and B turn out to be, B will always be better.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -7290,7 +7322,8 @@
           "data": "And we don't need to compute A and B exactly!",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -7316,7 +7349,8 @@
           "data": "This idea is called **branch and bound**, used heavily in combinatorial optimization.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -7342,7 +7376,8 @@
           "data": "Let's consider the following game tree:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -7370,7 +7405,8 @@
             "width": 300
           },
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -7396,7 +7432,8 @@
           "data": "Root computes max(3, min(2, X)) = 3 no matter what X is...so don't need to explore X!",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -7422,7 +7459,8 @@
           "data": "In general:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -7450,7 +7488,8 @@
             "width": 500
           },
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -7476,7 +7515,8 @@
           "data": "- While we're exploring, each max (min) node has a lower (upper) bound on its value",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -7502,7 +7542,8 @@
           "data": "- The minimax value came from some leaf",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -7528,7 +7569,8 @@
           "data": "- **Optimal path** is path taken by minimax policies to that leaf",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -7554,7 +7596,8 @@
           "data": "- This optimal path should be within the lower/upper bounds",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -7580,7 +7623,8 @@
           "data": "- Prune a node if its bounds doesn't overlap every ancestor's bounds",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -7606,7 +7650,8 @@
           "data": "Let's work this out on the board:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -7634,7 +7679,8 @@
             "width": 500
           },
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -7660,7 +7706,8 @@
           "data": "Ordering:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -7686,7 +7733,8 @@
           "data": "- The order in which the children are visited impacts what you can prune",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -7714,7 +7762,8 @@
             "width": 300
           },
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -7740,7 +7789,8 @@
           "data": "In practice, use a heuristic (evaluation function later) to order the children:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -7766,7 +7816,8 @@
           "data": "- Decreasing for max nodes",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -7792,7 +7843,8 @@
           "data": "- Increasing for min nodes",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -7818,7 +7870,8 @@
           "data": "Summary:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -7844,7 +7897,8 @@
           "data": "- Alpha-beta pruning: speed up minimax search, exact computation",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -7870,7 +7924,8 @@
           "data": "- Want to order actions to shrink the bounds as fast as possible",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -7935,7 +7990,7 @@
       "renderings": [
         {
           "type": "link",
-          "data": null,
+          "data": "[[Autumn 2023 lecture]]",
           "style": {},
           "external_link": {
             "title": "[Autumn 2023 lecture]",
@@ -7946,7 +8001,8 @@
             "description": null,
             "notes": null
           },
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -7972,7 +8028,8 @@
           "data": "Now let's go back to the basic minimax formulation.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -8000,7 +8057,8 @@
             "width": 600
           },
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -8026,7 +8084,8 @@
           "data": "Recall that it takes exponential time in general!",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -8052,7 +8111,8 @@
           "data": "How can we compute things approximately?",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -8078,7 +8138,8 @@
           "data": "Key idea: define **evaluation function**",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -8104,7 +8165,8 @@
           "data": "- In the game, only thing that matters is who wins at the end",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -8130,7 +8192,8 @@
           "data": "- Evaluation function captures prior knowledge about what might be good",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -8158,7 +8221,8 @@
             "width": 500
           },
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -8184,7 +8248,8 @@
           "data": "Using an evaluation function, can define a recurrence that keeps track of a depth d:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -8212,7 +8277,8 @@
             "width": 600
           },
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -8238,7 +8304,8 @@
           "data": "- No guarantees that we will find the optimal policy!",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -8264,7 +8331,8 @@
           "data": "Summary:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -8290,7 +8358,8 @@
           "data": "- Evaluation function: prior knowledge that evaluates a state",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -8316,7 +8385,8 @@
           "data": "- Do search to a certain depth, and then use the evaluation function",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -8342,7 +8412,8 @@
           "data": "- Analogy: FutureCost in search problems",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -8374,7 +8445,8 @@
           "data": "Summary:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -8394,7 +8466,8 @@
           "data": "- Games: agent tries to maximize utility, opponent strategy is unknown",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -8414,7 +8487,8 @@
           "data": "- Minimax principle: assume the opponent tries to minimize utility",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -8434,7 +8508,8 @@
           "data": "- Recurrences define various (game, policy) outcomes (evaluation, expectimax, minimax, expectiminimax)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -8454,7 +8529,8 @@
           "data": "- Alpha-beta pruning: branch and bound to speed up minimax (exact)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -8474,7 +8550,8 @@
           "data": "- Evaluation functions: prior knowledge that speeds up (approximately)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     }

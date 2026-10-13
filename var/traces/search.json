@@ -62731,7 +62731,7 @@
       "env": {
         "index": {
           "type": "torch.Tensor",
-          "contents": 4,
+          "contents": 0,
           "dtype": "torch.int64",
           "shape": []
         }
@@ -62765,19 +62765,19 @@
           "contents": {
             "action": {
               "type": "int",
-              "contents": 7772,
+              "contents": 1172,
               "dtype": null,
               "shape": null
             },
             "cost": {
               "type": "float",
-              "contents": 3.515625,
+              "contents": 2.1640625,
               "dtype": null,
               "shape": null
             },
             "state": {
               "type": "str",
-              "contents": "Stanford is the largest",
+              "contents": "Stanford is the only",
               "dtype": null,
               "shape": null
             }
@@ -62833,19 +62833,19 @@
           "contents": {
             "action": {
               "type": "int",
-              "contents": 7772,
+              "contents": 1172,
               "dtype": null,
               "shape": null
             },
             "cost": {
               "type": "float",
-              "contents": 3.515625,
+              "contents": 2.1640625,
               "dtype": null,
               "shape": null
             },
             "state": {
               "type": "str",
-              "contents": "Stanford is the largest",
+              "contents": "Stanford is the only",
               "dtype": null,
               "shape": null
             }

@@ -1,6 +1,6 @@
 {
   "files": {
-    "first_order_logic.py": "from re import T\nfrom edtrace import text, image\nfrom propositional_logic import Formula, I, get_models, to_formula\nfrom dataclasses import dataclass\nfrom z3 import Bool, ExprRef, And, Or, Not, Implies, DeclareSort, Function, BoolSort, Const, ForAll, Exists, Solver, sat, unsat, Var\nfrom z3 import is_not, is_and, is_or, is_implies, is_eq, is_quantifier, is_var\n\nTerm = ExprRef\nVariable = ExprRef\nFormula = ExprRef\n\n# We just define one sort (type) for simplicity\nObject = DeclareSort(\"Object\")\n\n# Constant symbols\nalice = Const(\"alice\", Object)\nbob = Const(\"bob\", Object)\narithmetic = Const(\"arithmetic\", Object)\nphoenix = Const(\"phoenix\", Object)\ncs221 = Const(\"cs221\", Object)\nlogic = Const(\"logic\", Object)\ntwo = Const(\"two\", Object)\n\n# Variables\nx = Const(\"x\", Object)\ny = Const(\"y\", Object)\nz = Const(\"z\", Object)\n\n# Functions\nfather = Function(\"father\", Object, Object)\nadd = Function(\"add\", Object, Object, Object)\n\n# Predicates\nPerson = Function(\"Person\", Object, BoolSort())\nStudent = Function(\"Student\", Object, BoolSort())\nFrom = Function(\"From\", Object, Object, BoolSort())\nKnows = Function(\"Knows\", Object, Object, BoolSort())\nTakes = Function(\"Takes\", Object, Object, BoolSort())\nCovers = Function(\"Covers\", Object, Object, BoolSort())\nCourse = Function(\"Course\", Object, BoolSort())\nConcept = Function(\"Concept\", Object, BoolSort())\nEven = Function(\"Even\", Object, BoolSort())\nGreaterThan = Function(\"GreaterThan\", Object, Object, BoolSort())\nPrime = Function(\"Prime\", Object, BoolSort())\nHot = Function(\"Hot\", Object, BoolSort())\nCity = Function(\"City\", Object, BoolSort())\nPlace = Function(\"Place\", Object, BoolSort())\nSnowing = Bool(\"Snowing\")\nCold = Bool(\"Cold\")\nHappy = Function(\"Happy\", Object, BoolSort())\n\n\ndef main():\n    text(\"### Lecture 16: First-order logic\")\n\n    motivating_example()\n    review_logic()\n    limitations_of_propositional_logic()\n    introduce_first_order_logic()\n\n    text(\"Summary:\")\n    text(\"- First-order logic: more powerful than propositional logic\")\n    text(\"- Introduces terms (denote objects), functions, predicates\")\n    text(\"- Introduces variables and quantifiers (\u2200, \u2203) that operate over objects\")\n    text(\"- Model/interpretation function: maps symbols to objects in the domain\")\n    text(\"- Propositionalization: reduce first-order logic to propositional logic\")\n    text(\"- Modus ponens with substitution and unification: works on definite clauses\")\n    text(\"- Higher-order logics to represent more (*70% of students know machine learning*)\")\n\n\ndef motivating_example():\n    kb = []\n\n    text(\"*Alice is a student.*\")\n    # Student(alice)\n    kb.append(Student(alice))\n\n    text(\"*Alice is from Phoenix.*\")\n    # From(alice, phoenix)\n    kb.append(From(alice, phoenix))\n\n    text(\"*Phoenix is a hot city.*\")\n    # Hot(phoenix) \u2227 City(phoenix)\n    kb.append(And(Hot(phoenix), City(phoenix)))\n\n    text(\"*Students are people.*\")\n    # \u2200x. Student(x) \u2192 Person(x)\n    kb.append(ForAll([x], Implies(Student(x), Person(x))))\n\n    text(\"*Cities are places.*\")\n    # \u2200x. City(x) \u2192 Place(x)\n    kb.append(ForAll([x], Implies(City(x), Place(x))))\n\n    text(\"*If it is snowing, it is cold.*\")\n    # Snowing \u2192 Cold\n    kb.append(Implies(Snowing, Cold))\n\n    text(\"*Is it snowing?*\")\n    result = ask(kb, Snowing)  # @inspect result @stepover\n\n    text(\"*If a person is from a hot place and it is snowing, then they are unhappy.*\")\n    # \u2200x, y. Person(x) \u2227 From(x, y) \u2227 Hot(y) \u2227 Place(y) \u2227 Snowing \u2192 \u00acHappy(x)\n    kb.append(ForAll([x, y], Implies(And(Person(x), From(x, y), Hot(y), Place(y), Snowing), Not(Happy(x)))))\n\n    text(\"*Is it snowing?*\")\n    result = ask(kb, Snowing)  # @inspect result @stepover\n\n    text(\"*Alice is happy.*\")\n    # Happy(alice)\n    kb.append(Happy(alice))\n\n    text(\"*Is it snowing?*\")\n    result = ask(kb, Snowing)  # @inspect result @stepover\n\n    text(\"This is an example of performing inference in first-order logic.\")\n    text(\"What can first-order logic represent?\")\n    text(\"How can we do inference in first-order logic?\")\n\n\ndef ask(kb: list[Formula], f: Formula) -> str:\n    \"\"\"Ask a yes/no question of the KB.  Reduce this to a satisfiability problem and call Z3's solver.\"\"\"\n    solver = Solver()\n    solver.add(kb + [Not(f)])\n    if solver.check() == unsat:\n        return \"Yes\"\n    \n    solver = Solver()\n    solver.add(kb + [f])\n    if solver.check() == unsat:\n        return \"No\"\n    \n    return \"I don't know\"\n\n\ndef review_logic():\n    text(\"Logic is a language for representing knowledge and reasoning about it.\")\n\n    text(\"To define a logic, we need to define its syntax, semantics, and inference rules.\")\n    image(\"images/syntax-semantics-rules.png\", width=600)\n\n    text(\"**Syntax**: what are valid formulas?\")\n    text(\"Propositional logic:\")\n    text(\"- Propositional symbols (e.g., Rain Wet):\")\n    Rain = Bool(\"Rain\")  # Rain\n    Wet = Bool(\"Wet\")  # Wet\n    symbols = [Rain, Wet]\n    text(\"- Recursively combined using logical connectives (e.g., \u2227, \u2228, \u00ac, \u2192, \u2194)\")\n    formula = And(Rain, Not(Wet))  # Rain \u2227 \u00acWet\n    text(\"These are just symbols.\")\n\n    text(\"**Semantics**: what do these formulas mean?\")\n    text(\"Propositional logic:\")\n    text(\"- Models: assignments of truth values to propositional symbols\")\n    w = {Rain: True, Wet: False}\n    text(\"- Interpretation function: maps a formula and a model to a truth value\")\n    result = I(formula, w)  # @inspect result\n    text(\"- Models: maps a formula f to the set of models M(f) that satisfy it\")\n    models = get_models(formula, [Rain, Wet])  # @inspect models\n\n    text(\"- Knowledge base: set of formulas (what we know)\")\n    kb = [Rain, Implies(Rain, Wet)]  # Rain \u2227 (Rain \u2192 Wet)\n    f = Wet\n    text(\"Relationship between knowledge base KB and formula f:\")\n    text(\"Old models: M(KB)\")\n    old_models = get_models(to_formula(kb), symbols)  # @inspect old_models\n    text(\"New models: M(KB \u222a {f})\")\n    new_models = get_models(to_formula(kb + [f]), symbols)  # @inspect new_models\n    text(\"Entailment: M(KB) = M(KB \u222a {f})\")\n    if old_models == new_models:\n        result = \"Entailment\"\n    text(\"Contradiction: M(KB \u222a {f}) = \u2205\")\n    if new_models == []:\n        result = \"Contradiction\"\n    text(\"Contingency: \u2205 \u2260 M(KB \u222a {f}) \u2260 M(KB)\")\n    if new_models != [] and new_models != old_models:\n        result = \"Contingency\"\n\n    text(\"Used to implement:\")\n    text(\"- Ask[f]: check if f is entailed by the KB\")\n    text(\"- Tell[f]: add f to the KB if it is contingent on the KB\")\n\n    text(\"Satisfiability: KB is satisfiable iff M(KB) \u2260 \u2205\")\n    text(\"Model checking: determine if a KB is satisfiable\")\n    text(\"Reduce entailment/contradiction/contingency to satisfiability\")\n\n    text(\"**Inference rules**: how to derive new valid formulas from existing ones?\")\n    text(\"Set of rules (e.g., modus ponens) operate on the syntax\")\n    text(\"Modus ponens: p, p \u2192 q \u22a2 q\")\n    text(\"Syntax: KB derives/proves f (KB \u22a2 f) if exists set of rules that produce f\")\n    text(\"Semantics: KB entails f (KB \u22a7 f) if M(KB) = M(KB \u222a {f})\")\n\n    text(\"Relationship between syntax and semantics:\")\n    text(\"- Soundness: if KB \u22a2 f, then KB \u22a7 f\")\n    text(\"- Completeness: if KB \u22a7 f, then KB \u22a2 f\")\n    text(\"Ideally want soundness (nothing but the truth) and completeness (the whole truth).\")\n\n\ndef limitations_of_propositional_logic():\n    text(\"Let's try to represent some facts in propositional logic.\")\n\n    text(\"*Alice and Bob both know arithmetic.*\")\n    AliceKnowsArithmetic = Bool(\"AliceKnowsArithmetic\")\n    BobKnowsArithmetic = Bool(\"BobKnowsArithmetic\")\n    formula = And(AliceKnowsArithmetic, BobKnowsArithmetic)\n\n    text(\"*All students know arithmetic.*\")\n    AliceIsStudent = Bool(\"AliceIsStudent\")\n    BobIsStudent = Bool(\"BobIsStudent\")\n    formula = And(Implies(AliceIsStudent, AliceKnowsArithmetic), Implies(BobIsStudent, BobKnowsArithmetic))\n\n    text(\"*Every even integer greater than 2 is the sum of two prime numbers.*\")\n    text(\"???\")\n\n    text(\"In these cases, propositional logic is very clunky or not expressive enough.\")\n\n    text(\"What's missing?\")\n    text(\"- Objects and predicates: propositions (e.g., AliceKnowsArithmetic) have more internal structure (alice, Knows, arithmetic)\")\n    text(\"- Quantifiers and variables: *all* is a quantifier that applies to all people, don't/can't enumerate them all\")\n\n\ndef introduce_first_order_logic():\n    image(\"images/syntax-semantics-rules.png\", width=600)\n    first_order_logic_syntax()\n    first_order_logic_semantics()\n    propositionalization()\n    first_order_logic_inference_rules()\n    natural_language_to_first_order_logic()\n\n\ndef first_order_logic_syntax():\n    text(\"**Syntax**: what are valid formulas?\")\n\n    text(\"In propositional logic, formulas denote truth values.\")\n    text(\"In first-order logic, formulas denote truth values and terms denote objects.\")\n\n    text(\"**Terms** (denote objects)\")\n\n    text(\"Constants:\")\n    alice = Const(\"Alice\", Object)  # alice\n    arithmetic = Const(\"arithmetic\", Object)  # arithmetic\n\n    text(\"Variables:\")\n    x = Const(\"x\", Object)  # x\n    y = Const(\"y\", Object)  # y\n\n    text(\"Functions:\")\n    father = Function(\"father\", Object, Object)  # father\n    add = Function(\"add\", Object, Object, Object)  # add\n    term = father(alice)  # father(alice)\n    term = add(x, y)  # add(x, y)\n\n    text(\"**Formulas** (denote truth values)\")\n\n    text(\"Atomic formulas (predicate applied to terms):\")\n    Snowing = Bool(\"Snowing\")  # 0-arity predicate (from propositional logic)\n    Student = Function(\"Student\", Object, BoolSort())  # 1-arity predicate (unary)\n    Knows = Function(\"Knows\", Object, Object, BoolSort())  # 2-arity predicate (binary)\n    formula = Knows(x, arithmetic)  # Knows(x, arithmetic)\n\n    text(\"Connectives applied to formulas (just like propositional logic):\")\n    formula = Implies(Student(x), Knows(x, arithmetic))  # Student(x) \u2192 Knows(x, arithmetic)\n\n    text(\"Quantifiers applied to formulas:\")\n    # \u2200x. Student(x) \u2192 Knows(x, arithmetic)\n    formula = ForAll([x], Implies(Student(x), Knows(x, arithmetic)))\n    # \u2203x. Student(x) \u2227 Knows(x, arithmetic)\n    formula = Exists([x], And(Student(x), Knows(x, arithmetic)))\n\n    text(\"Non-formulas (in first-order logic):\")\n    # father(x) is a term, not a formula\n    text(\"- father(x)\")\n    # Student is a predicate, not a term\n    text(\"- Knows(Student, arithmetic)\")\n    # Can't apply function (Foo, etc.) to formula\n    text(\"- Foo(Knows(alice, arithmetic))\")\n\n    text(\"Convention:\")\n    text(\"- Use lowercase for terms (e.g., alice, x, father(alice))\")\n    text(\"- Use uppercase for formulas (e.g., Knows(x, arithmetic))\")\n\n    text(\"Summary:\")\n    text(\"- Terms (denote objects): arithmetic, x, y, father(x)\")\n    text(\"- Formulas (denote truth values): \u2200x. Student(x) \u2192 Knows(x, arithmetic)\")\n\n\ndef first_order_logic_semantics():\n    text(\"**Semantics**: what do these formulas mean?\")\n\n    text(\"Recall that a model represents a possible world.\")\n\n    text(\"In propositional logic, a model is an assignment of truth values to atomic formulas (propositional symbols).\")\n    AliceKnowsArithmetic = Bool(\"AliceKnowsArithmetic\")\n    BobKnowsArithmetic = Bool(\"BobKnowsArithmetic\")\n    w = {AliceKnowsArithmetic: True, BobKnowsArithmetic: True}\n\n    text(\"What about in first-order logic?\")\n\n    text(\"**Attempt 1**\")\n    text(\"Recall that in first-order logic, atomic formulas are predicates applied to terms.\")\n    term = Knows(alice, arithmetic)  # formula Knows(alice, arithmetic)\n    term = Student(alice)  # formula Student(alice)\n    \n    text(\"So let's define a model as an assignment of truth values to atomic formulas.\")\n    w = {Student(alice): True, Knows(alice, arithmetic): True}\n\n    text(\"Problem 1: what about atomic formulas with functions?\")\n    father = Function(\"father\", Object, Object)  # function father\n    term = father(alice)\n    term = father(father(alice))\n    term = father(father(father(alice)))\n    term = father(father(father(father(alice))))\n    text(\"There are an infinite number of atomic formulas!\")\n    text(\"So a single model has to assign truth values to an infinite number of atomic formulas...not good.\")\n\n    text(\"Problem 2: two terms (different syntax) might actual refer to the same object.\")\n    term = father(alice)\n    term = bob\n    text(\"It could be the case that Bob is Alice's father!\")\n    text(\"But these two terms behave independently of each other in the model...not good.\")\n    w = {Knows(father(alice), arithmetic): True, Knows(bob, arithmetic): False}\n\n    text(\"**Attempt 2**\")\n    text(\"Key idea: introduce a layer of indirection\")\n\n    text(\"Define **domain** to be a set of objects.\")\n    domain = [\"o1\", \"o2\", \"o3\"]\n\n    text(\"Define **interpretation function** to map symbols to objects in the domain.\")\n\n    text(\"We start with the primitive symbols: constants, functions, and predicates.\")\n    text(\"Each symbol is mapped to something involving the objects in the domain.\")\n\n    constants = {\n        alice: \"o1\",\n        bob: \"o2\",\n        arithmetic: \"o3\",\n    }\n\n    functions = {\n        father: {\"o1\": \"o2\"},\n    }\n\n    predicates = {\n        Knows: {\n            (\"o1\", \"o3\"): True,\n            (\"o2\", \"o3\"): True,\n        },\n        Student: {\n            \"o1\": True,\n        },\n    }\n\n    interpretation = Interpretation(\n        constants=constants,\n        functions=functions,\n        predicates=predicates,\n    )\n\n    text(\"The model is therefore the domain and the interpretation function.\")\n    w = FirstOrderLogicModel(\n        domain=domain,\n        interpretation=interpretation,\n    )  # @inspect w\n\n    image(\"images/fol-example.png\", width=400)\n\n    text(\"The interpretation of an arbitrary formula is defined recursively.\")\n    text(\"As in propositional logic, we define the interpretation function \u2110(f, w)...\")\n    text(\"...to map a formula f and a model w to a truth value (true/false).\")\n\n    result = interpret_formula(Knows(alice, arithmetic), w)  # @inspect result\n    result = interpret_formula(ForAll([x], Knows(x, arithmetic)), w)  # @inspect result\n\n    text(\"Summary:\")\n    text(\"- Semantics defined by interpretation function \u2110(f, w)\")\n    text(\"- Model w = (domain, interpretation)\")\n    text(\"- Interpretation maps symbols (constants, functions, predicates) to objects in the domain\")\n    text(\"- Recursively interpret larger formulas and terms\")\n\n    text(\"How can we perform logical inference with respect to these semantics?\")\n\n\n@dataclass(frozen=True)\nclass Interpretation:\n    \"\"\"For defining a model in first-order logic. Maps symbols to objects in the domain.\"\"\"\n    constants: dict[Const, str]\n    functions: dict[Function, dict[str, str]]\n    predicates: dict[Function, dict[tuple[str, ...], bool]]\n\n\n@dataclass(frozen=True)\nclass FirstOrderLogicModel:\n    \"\"\"A model in first-order logic. Consists of a domain and an interpretation function.\"\"\"\n    domain: list[str]\n    interpretation: Interpretation\n\n\ndef interpret_formula(f: Formula, w: FirstOrderLogicModel, subst: dict[Variable, str] = {}) -> bool:  # @inspect f w subst\n    \"\"\"\n    Interpretation function: given a formula f and a model w, compute whether w satisfies f.\n    Substitution: a dictionary mapping variables to terms.\n    \"\"\"\n    if is_quantifier(f) and f.is_forall():\n        # Universal quantifier (e.g., \u2200x. Student(x))\n        assert f.num_vars() == 1  # Only support one variable for now\n        variable = Var(0, f.var_sort(0))  # @inspect variable # Warning: this doesn't work for nested quantifiers\n        body = f.body()  # @inspect body\n\n        # Bind the variable to each object in the domain and check if the formula is true.\n        result = True\n        for o in w.domain:  # @inspect o\n            result = result and interpret_formula(body, w, subst | {variable: o}) # @inspect result\n\n    elif is_quantifier(f) and f.is_exists():\n        # Existential quantifier (e.g., \u2203x. Student(x))\n        assert f.num_vars() == 1  # Only support one variable for now\n        variable = Var(f.var_name(0), f.var_sort(0))  # @inspect variable\n        body = f.body()  # @inspect body\n\n        # Bind the variable to each object in the domain and check if the formula is true.\n        result = False\n        for o in w.domain:  # @inspect o\n            result = result or interpret_formula(body, w, subst | {variable: o}) # @inspect result\n\n    elif f.num_args() == 0:\n        # Constant symbol (e.g., alice)\n        result = w.interpretation.constants[f] # @inspect result\n\n    elif f.num_args() == 1:\n        if is_not(f):\n            # Negation (e.g., \u00acStudent(alice))\n            g = f.arg(0)  # @inspect g\n            result = not interpret_formula(g, w, subst) # @inspect result\n\n        else:\n            # Unary predicate (e.g., Student(alice))\n            predicate, arg = f.decl(), f.arg(0)  # @inspect func arg\n            predicate_value = w.interpretation.predicates[predicate]  # @inspect predicate_value\n            arg_value = interpret_term(arg, w, subst)  # @inspect arg_value\n            result = predicate_value.get(arg_value, False) # @inspect result\n\n    elif f.num_args() == 2:\n        if is_and(f):\n            g, h = f.arg(0), f.arg(1)  # @inspect g h\n            result = interpret_formula(g, w, subst) and interpret_formula(h, w, subst) # @inspect result\n        elif is_or(f):\n            g, h = f.arg(0), f.arg(1)  # @inspect g h\n            result = interpret_formula(g, w, subst) or interpret_formula(h, w, subst) # @inspect result\n        elif is_implies(f):\n            g, h = f.arg(0), f.arg(1)  # @inspect g h\n            result = not interpret_formula(g, w, subst) or interpret_formula(h, w, subst) # @inspect result\n        elif is_eq(f):\n            g, h = f.arg(0), f.arg(1)  # @inspect g h\n            result = interpret_formula(g, w, subst) == interpret_formula(h, w, subst) # @inspect result\n        else:\n            # Binary predicate (e.g., Knows(alice, arithmetic))\n            predicate, arg1, arg2 = f.decl(), f.arg(0), f.arg(1)  # @inspect predicate arg1 arg2\n            predicate_value = w.interpretation.predicates[predicate]  # @inspect predicate_value\n            arg1_value = interpret_term(arg1, w, subst)  # @inspect arg1_value\n            arg2_value = interpret_term(arg2, w, subst)  # @inspect arg2_value\n            result = predicate_value.get((arg1_value, arg2_value), False) # @inspect result\n\n    return result\n\n\ndef interpret_term(t: Term, w: FirstOrderLogicModel, subst: dict[Variable, str]) -> bool:  # @inspect t w subst\n    \"\"\"Interpret a term in a model with a substitution.\"\"\"\n    if is_var(t):\n        # Variable (e.g., x)\n        result = subst[t] # @inspect result\n\n    elif t.num_args() == 0:\n        # Constant symbol (e.g., alice)\n        result = w.interpretation.constants[t] # @inspect result\n\n    else:\n        # Function application (e.g., father(alice))\n        func, args = t.decl(), t.args()  # @inspect func args\n        func_value = w.interpretation.functions[func]  # @inspect func_value\n        arg_values = [interpret_term(arg, w, subst) for arg in args]  # @inspect arg_values\n        result = func_value[arg_values] # @inspect result\n\n    return result\n\n\ndef propositionalization():\n    text(\"How do we perform inference in first-order logic?\")\n\n    text(\"Suppose we have the following knowledge base:\")\n    kb = [\n        Student(alice),\n        Student(bob),\n        ForAll([x], Implies(Student(x), Knows(x, arithmetic))),\n        Exists([x], And(Student(x), Knows(x, arithmetic))),\n    ]\n\n    text(\"Let's reduce to propositional logic.\")\n    text(\"We can't do this in general (because first-order logic is more powerful).\")\n\n    text(\"But we can do it if we assume two things about the model:\")\n    image(\"images/unique-names-domain-closure.png\", width=600)\n    text(\"- Unique names: each object corresponds to **at most one** constant (not w_2).\")\n    text(\"- Domain closure: each object corresponds to **at least one** constant (not w_3).\")\n\n    text(\"In this case, we can **propositionalize** the knowledge base.\")\n    StudentAlice = Bool(\"StudentAlice\")\n    StudentBob = Bool(\"StudentBob\")\n    KnowsAliceArithmetic = Bool(\"KnowsAliceArithmetic\")\n    KnowsBobArithmetic = Bool(\"KnowsBobArithmetic\")\n    kb = [\n        StudentAlice,\n        StudentBob,\n        And(Implies(StudentAlice, KnowsAliceArithmetic), Implies(StudentBob, KnowsBobArithmetic)),\n        Or(And(StudentAlice, KnowsAliceArithmetic), And(StudentBob, KnowsBobArithmetic)),\n    ]\n    text(\"This is just propositional logic, and we can use any techniques from last time (e.g., model checking).\")\n\n    text(\"In this regime, first-order logic is syntactic sugar for propositional logic.\")\n    text(\"In other words, it's the same expressivity, but easier to read/write.\")\n\n    text(\"But what if we don't have these assumptions?\")\n\n\ndef first_order_logic_inference_rules():\n    text(\"Recall that inference rules match formulas in the KB and produce new formulas.\")\n    text(\"Let us now define the modus ponens inference rule.\")\n\n    text(\"This rule operate a special type of formula called a definite clause.\")\n\n    text(\"Definition: a **definite clause** is a formula of the following form:\")\n    text(\"\u2200 x_1 ... x_n. (a_1 \u2227 ... \u2227 a_k) \u2192 b\")\n    text(\"...where x_1, ..., x_n are variables, a_1, ..., a_k, b are atomic formulas.\")\n    \n    text(\"Example: \u2200 x, y, z. (Takes(x, y) \u2227 Covers(y, z)) \u2192 Knows(x, z)\")\n    text(\"Here:\")\n    text(\"- Variables are x, y, z\")\n    text(\"- Atomic formulas are a_1 = Takes(x, y), a_2 = Covers(y, z), b = Knows(x, z)\")\n    formula = ForAll([x, y, z], Implies(And(Takes(x, y), Covers(y, z)), Knows(x, z)))\n\n    text(\"Non-example (disjunction):\")\n    formula = Or(Student(alice), Student(bob))\n    formula = Exists([x], And(Student(x), Knows(x, arithmetic)))\n\n    text(\"Attempt 1: modus ponens with exact match\")\n    text(\"Premises:\")\n    text(\"- a_1\")\n    text(\"- ...\")\n    text(\"- a_k\")\n    text(\"- \u2200 x_1 ... x_n. (a_1 \u2227 ... \u2227 a_k) \u2192 b\")\n    text(\"Conclusion:\")\n    text(\"- b\")\n\n    kb = [\n        # a_1: Takes(alice, cs221)\n        Takes(alice, cs221),\n        # a_2: Covers(cs221, logic)\n        Covers(cs221, logic),\n        # \u2200 x, y, z. (Takes(x, y) \u2227 Covers(y, z)) \u2192 Knows(x, z)\n        ForAll([x, y, z], Implies(And(Takes(x, y), Covers(y, z)), Knows(x, z))),\n    ]\n    text(\"We would like conclude b: Knows(alice, logic)\")\n\n    text(\"However, Takes(alice, cs221) \u2260 Takes(x, y)\")\n    text(\"So we can't apply the rule (no exact match).\")\n\n    text(\"Solution: substitution and unification\")\n    introduce_substitution()\n    introduce_unification()\n\n    text(\"**Attempt 2**: modus ponens with substitution and unification\")\n    text(\"Premises:\")\n    text(\"- a_1'\")\n    text(\"- ...\")\n    text(\"- a_k'\")\n    text(\"- \u2200 x_1 ... x_n. (a_1 \u2227 ... \u2227 a_k) \u2192 b\")\n    text(\"- \u03b8 = unify(a_1' \u2227 ... \u2227 a_k', a_1 \u2227 ... \u2227 a_k)\")\n    text(\"Conclusion:\")\n    text(\"- substitute(b, \u03b8) = b'\")\n\n    kb = [\n        # a_1': Takes(alice, cs221)\n        Takes(alice, cs221),\n        # a_2': Covers(cs221, logic)\n        Covers(cs221, logic),\n        # \u2200 x, y, z. (Takes(x, y) \u2227 Covers(y, z)) \u2192 Knows(x, z)\n        ForAll([x, y, z], Implies(And(Takes(x, y), Covers(y, z)), Knows(x, z))),\n    ]\n\n    text(\"Find the substitution to make a_1' \u2227 a_2' equal to a_1 \u2227 a_2\")\n    theta = unify(  # @inspect theta\n        And(Takes(alice, cs221), Covers(cs221, logic)),\n        And(Takes(x, y), Covers(y, z)),\n    {})\n    if theta is not None:\n        result = substitute(Knows(x, z), theta) # @inspect result @stepover\n\n    text(\"Complexity:\")\n    text(\"- Each application of Modus ponens produces an aotmic formula (e.g., Knows(alice, logic))\")\n    text(\"- If we have no functions, then complexity is num-constant-symbols^(maximum-predicate-arity)\")\n    text(\"- If we have functions, then complexity then possibly infinite:\")\n    Knows(alice, logic)\n    Knows(father(alice), logic)\n    Knows(father(father(alice)), logic)\n    Knows(father(father(father(alice))), logic)\n\n    text(\"Properties of Modus ponens:\")\n    text(\"- Sound: if KB proves f (KB \u22a2 f), then KB entails f (KB \u22a7 f)\")\n    text(\"- Not complete: there are formulas where KB entails f (KB \u22a7 f) but not KB proves f (KB \u22a2 f)\")\n    text(\"- Need the resolution rule to be complete\")\n\n    text(\"Summary:\")\n    text(\"- Modus ponens: works on definite clauses\")\n    text(\"- Intuition: no disjunction (or, exists) allowed\")\n    text(\"- Substitution: search and replace on terms in a formula\")\n    text(\"- Unification: find a substitution that makes two terms equal\")\n\n\ndef introduce_substitution():\n    text(\"Substitution: search and replace on terms in a formula\")\n\n    formula = Knows(x, y)\n    subst = {x: alice, y: cs221}\n    result = substitute(formula, subst) # @inspect result\n\n    formula = And(Student(x), Knows(x, y))  # Student(x) \u2227 Knows(x, y)\n    subst = {x: alice, y: z}\n    result = substitute(formula, subst) # @inspect result\n\n\ndef substitute(f: Formula, subst: dict[Variable, Term]) -> Formula:  # @inspect f subst\n    \"\"\"Substitute variables subst in a formula.\"\"\"\n    if f in subst:\n        result = subst[f] # @inspect result\n    else:\n        new_args = [substitute(f.arg(i), subst) for i in range(f.num_args())]  # @inspect new_args\n        result = f.decl()(*new_args) # @inspect result\n    return result\n\n\ndef introduce_unification():\n    text(\"Unification: find a substitution that makes two terms equal\")\n    \n    result = unify(Knows(x, y), Knows(alice, bob), {}) # @inspect result\n    result = unify(Knows(alice, y), Knows(x, z), {}) # @inspect result @stepover\n    result = unify(Knows(alice, y), Knows(bob, z), {}) # Should fail! @inspect result @stepover\n\n\ndef unify(f1: Formula, f2: Formula, subst: dict[Variable, Term]) -> dict[Variable, Term]:  # @inspect f1 f2 subst\n    \"\"\"Given two formulas `f1` and `f2`, find a substitution (adding to `subst`) that makes them equal.\"\"\"\n    if f1 == f2:\n        return subst\n    elif is_variable(f1):  # @stepover\n        subst[f1] = substitute(f2, subst)  # @inspect subst @stepover\n        return subst\n    elif is_variable(f2):  # @stepover\n        subst[f2] = substitute(f1, subst)  # @inspect subst @stepover\n        return subst\n    else:\n        if f1.decl() != f2.decl():\n            return None\n        for i in range(f1.num_args()):\n            # If any child fails, then fail the whole thing\n            if unify(f1.arg(i), f2.arg(i), subst) is None:\n                return None\n        return subst\n\n\ndef is_variable(f: Formula) -> bool:\n    # In Takes(alice, x), we actually can't tell the difference between a\n    # constant (alice) and a variable (x).  So we have to hardcode them.\n    return f.decl().name() in [\"x\", \"y\", \"z\"]\n\n\ndef natural_language_to_first_order_logic():\n    text(\"First-order logic can be used to encode natural language sentences.\")\n\n    text(\"*Alice and Bob both know arithmetic.*\")\n    # Knows(alice, arithmetic) \u2227 Knows(bob, arithmetic)\n    formula = And(Knows(alice, arithmetic), Knows(bob, arithmetic))\n\n    text(\"*All students know arithmetic.*\")\n    # \u2200x. Student(x) \u2192 Knows(x, arithmetic)\n    formula = ForAll([x], Implies(Student(x), Knows(x, arithmetic)))\n\n    text(\"*Some student knows arithmetic.*\")\n    # \u2203x. Student(x) \u2227 Knows(x, arithmetic)\n    formula = Exists([x], And(Student(x), Knows(x, arithmetic)))\n\n    text(\"Universal quantification (\u2200) is usually paired with an implication (\u2192).\")\n    text(\"Existential quantification (\u2203) is usually paired with a conjunction (\u2227).\")\n\n    text(\"Probably wrong:\")\n    # \u2200x. Student(x) \u2227 Knows(x, arithmetic)\n    formula = ForAll([x], And(Student(x), Knows(x, arithmetic)))\n    text(\"*Every object is both a student and knows arithmetic.*\")\n\n    # \u2203x. Student(x) \u2192 Knows(x, arithmetic)\n    formula = Exists([x], Implies(Student(x), Knows(x, arithmetic)))\n    text(\"*Some object is either not a student or knows arithmetic.*\")\n\n    text(\"*There is some course that every student has taken.*\")\n    # \u2203x. Course(x) \u2227 \u2200y. Student(y) \u2192 Takes(y, x)\n    formula = Exists([x], And(Course(x), ForAll([y], Implies(Student(y), Takes(y, x)))))\n\n    text(\"*Every even integer greater than 2 is the sum of two prime numbers.*\")\n    # \u2200x. Even(x) \u2227 GreaterThan(x, two) \u2192 \u2203y, z. Prime(y) \u2227 Prime(z) \u2227 add(y, z) == x\n    formula = ForAll([x], Implies(And(Even(x), GreaterThan(x, two)), Exists([y, z], And(Prime(y), Prime(z), add(y, z) == x))))\n\n    text(\"*If a student takes a course and the course covers a concept, then the student knows the concept.*\")\n    # \u2200x, y, z. Student(x) \u2227 Takes(x, y) \u2227 Course(y) \u2227 Covers(y, z) \u2227 Concept(z) \u2192 Knows(x, z)\n    formula = ForAll([x, y, z], Implies(And(Student(x), Takes(x, y), Course(y), Covers(y, z), Concept(z)), Knows(x, z)))\n\n\nif __name__ == \"__main__\":\n    main()"
+    "first_order_logic.py": "from re import T\nfrom edtrace import text, image\nfrom propositional_logic import Formula, I, get_models, to_formula\nfrom dataclasses import dataclass\nfrom z3 import Bool, ExprRef, And, Or, Not, Implies, DeclareSort, Function, BoolSort, Const, ForAll, Exists, Solver, sat, unsat, Var\nfrom z3 import is_not, is_and, is_or, is_implies, is_eq, is_quantifier, is_var\n\nTerm = ExprRef\nVariable = ExprRef\nFormula = ExprRef\n\n# We just define one sort (type) for simplicity\nObject = DeclareSort(\"Object\")\n\n# Constant symbols\nalice = Const(\"alice\", Object)\nbob = Const(\"bob\", Object)\narithmetic = Const(\"arithmetic\", Object)\nphoenix = Const(\"phoenix\", Object)\ncs221 = Const(\"cs221\", Object)\nlogic = Const(\"logic\", Object)\ntwo = Const(\"two\", Object)\n\n# Variables\nx = Const(\"x\", Object)\ny = Const(\"y\", Object)\nz = Const(\"z\", Object)\n\n# Functions\nfather = Function(\"father\", Object, Object)\nadd = Function(\"add\", Object, Object, Object)\n\n# Predicates\nPerson = Function(\"Person\", Object, BoolSort())\nStudent = Function(\"Student\", Object, BoolSort())\nFrom = Function(\"From\", Object, Object, BoolSort())\nKnows = Function(\"Knows\", Object, Object, BoolSort())\nTakes = Function(\"Takes\", Object, Object, BoolSort())\nCovers = Function(\"Covers\", Object, Object, BoolSort())\nCourse = Function(\"Course\", Object, BoolSort())\nConcept = Function(\"Concept\", Object, BoolSort())\nEven = Function(\"Even\", Object, BoolSort())\nGreaterThan = Function(\"GreaterThan\", Object, Object, BoolSort())\nPrime = Function(\"Prime\", Object, BoolSort())\nHot = Function(\"Hot\", Object, BoolSort())\nCity = Function(\"City\", Object, BoolSort())\nPlace = Function(\"Place\", Object, BoolSort())\nSnowing = Bool(\"Snowing\")\nCold = Bool(\"Cold\")\nHappy = Function(\"Happy\", Object, BoolSort())\n\n\ndef main():\n    text(\"### Lecture 16: First-order logic\")\n\n    motivating_example()\n    review_logic()\n    limitations_of_propositional_logic()\n    introduce_first_order_logic()\n\n    text(\"Summary:\")\n    text(\"- First-order logic: more powerful than propositional logic\")\n    text(\"- Introduces terms (denote objects), functions, predicates\")\n    text(\"- Introduces variables and quantifiers (\u2200, \u2203) that operate over objects\")\n    text(\"- Model/interpretation function: maps symbols to objects in the domain\")\n    text(\"- Propositionalization: reduce first-order logic to propositional logic\")\n    text(\"- Modus ponens with substitution and unification: works on definite clauses\")\n    text(\"- Higher-order logics to represent more (*70% of students know machine learning*)\")\n\n\ndef motivating_example():\n    kb = []\n\n    text(\"*Alice is a student.*\")\n    # Student(alice)\n    kb.append(Student(alice))\n\n    text(\"*Alice is from Phoenix.*\")\n    # From(alice, phoenix)\n    kb.append(From(alice, phoenix))\n\n    text(\"*Phoenix is a hot city.*\")\n    # Hot(phoenix) \u2227 City(phoenix)\n    kb.append(And(Hot(phoenix), City(phoenix)))\n\n    text(\"*Students are people.*\")\n    # \u2200x. Student(x) \u2192 Person(x)\n    kb.append(ForAll([x], Implies(Student(x), Person(x))))\n\n    text(\"*Cities are places.*\")\n    # \u2200x. City(x) \u2192 Place(x)\n    kb.append(ForAll([x], Implies(City(x), Place(x))))\n\n    text(\"*If it is snowing, it is cold.*\")\n    # Snowing \u2192 Cold\n    kb.append(Implies(Snowing, Cold))\n\n    text(\"*Is it snowing?*\")\n    result = ask(kb, Snowing)  # @inspect result @stepover\n\n    text(\"*If a person is from a hot place and it is snowing, then they are unhappy.*\")\n    # \u2200x, y. Person(x) \u2227 From(x, y) \u2227 Hot(y) \u2227 Place(y) \u2227 Snowing \u2192 \u00acHappy(x)\n    kb.append(ForAll([x, y], Implies(And(Person(x), From(x, y), Hot(y), Place(y), Snowing), Not(Happy(x)))))\n\n    text(\"*Is it snowing?*\")\n    result = ask(kb, Snowing)  # @inspect result @stepover\n\n    text(\"*Alice is happy.*\")\n    # Happy(alice)\n    kb.append(Happy(alice))\n\n    text(\"*Is it snowing?*\")\n    result = ask(kb, Snowing)  # @inspect result @stepover\n\n    text(\"This is an example of performing inference in first-order logic.\")\n    text(\"What can first-order logic represent?\")\n    text(\"How can we do inference in first-order logic?\")\n\n\ndef ask(kb: list[Formula], f: Formula) -> str:\n    \"\"\"Ask a yes/no question of the KB.  Reduce this to a satisfiability problem and call Z3's solver.\"\"\"\n    solver = Solver()\n    solver.add(kb + [Not(f)])\n    if solver.check() == unsat:\n        return \"Yes\"\n\n    solver = Solver()\n    solver.add(kb + [f])\n    if solver.check() == unsat:\n        return \"No\"\n\n    return \"I don't know\"\n\n\ndef review_logic():\n    text(\"Logic is a language for representing knowledge and reasoning about it.\")\n\n    text(\"To define a logic, we need to define its syntax, semantics, and inference rules.\")\n    image(\"images/syntax-semantics-rules.png\", width=600)\n\n    text(\"**Syntax**: what are valid formulas?\")\n    text(\"Propositional logic:\")\n    text(\"- Propositional symbols (e.g., Rain Wet):\")\n    Rain = Bool(\"Rain\")  # Rain\n    Wet = Bool(\"Wet\")  # Wet\n    symbols = [Rain, Wet]\n    text(\"- Recursively combined using logical connectives (e.g., \u2227, \u2228, \u00ac, \u2192, \u2194)\")\n    formula = And(Rain, Not(Wet))  # Rain \u2227 \u00acWet\n    text(\"These are just symbols.\")\n\n    text(\"**Semantics**: what do these formulas mean?\")\n    text(\"Propositional logic:\")\n    text(\"- Models: assignments of truth values to propositional symbols\")\n    w = {Rain: True, Wet: False}\n    text(\"- Interpretation function: maps a formula and a model to a truth value\")\n    result = I(formula, w)  # @inspect result\n    text(\"- Models: maps a formula f to the set of models M(f) that satisfy it\")\n    models = get_models(formula, [Rain, Wet])  # @inspect models\n\n    text(\"- Knowledge base: set of formulas (what we know)\")\n    kb = [Rain, Implies(Rain, Wet)]  # Rain \u2227 (Rain \u2192 Wet)\n    f = Wet\n    text(\"Relationship between knowledge base KB and formula f:\")\n    text(\"Old models: M(KB)\")\n    old_models = get_models(to_formula(kb), symbols)  # @inspect old_models\n    text(\"New models: M(KB \u222a {f})\")\n    new_models = get_models(to_formula(kb + [f]), symbols)  # @inspect new_models\n    text(\"Entailment: M(KB) = M(KB \u222a {f})\")\n    if old_models == new_models:\n        result = \"Entailment\"\n    text(\"Contradiction: M(KB \u222a {f}) = \u2205\")\n    if new_models == []:\n        result = \"Contradiction\"\n    text(\"Contingency: \u2205 \u2260 M(KB \u222a {f}) \u2260 M(KB)\")\n    if new_models != [] and new_models != old_models:\n        result = \"Contingency\"\n\n    text(\"Used to implement:\")\n    text(\"- Ask[f]: check if f is entailed by the KB\")\n    text(\"- Tell[f]: add f to the KB if it is contingent on the KB\")\n\n    text(\"Satisfiability: KB is satisfiable iff M(KB) \u2260 \u2205\")\n    text(\"Model checking: determine if a KB is satisfiable\")\n    text(\"Reduce entailment/contradiction/contingency to satisfiability\")\n\n    text(\"**Inference rules**: how to derive new valid formulas from existing ones?\")\n    text(\"Set of rules (e.g., modus ponens) operate on the syntax\")\n    text(\"Modus ponens: p, p \u2192 q \u22a2 q\")\n    text(\"Syntax: KB derives/proves f (KB \u22a2 f) if exists set of rules that produce f\")\n    text(\"Semantics: KB entails f (KB \u22a7 f) if M(KB) = M(KB \u222a {f})\")\n\n    text(\"Relationship between syntax and semantics:\")\n    text(\"- Soundness: if KB \u22a2 f, then KB \u22a7 f\")\n    text(\"- Completeness: if KB \u22a7 f, then KB \u22a2 f\")\n    text(\"Ideally want soundness (nothing but the truth) and completeness (the whole truth).\")\n\n\ndef limitations_of_propositional_logic():\n    text(\"Let's try to represent some facts in propositional logic.\")\n\n    text(\"*Alice and Bob both know arithmetic.*\")\n    AliceKnowsArithmetic = Bool(\"AliceKnowsArithmetic\")\n    BobKnowsArithmetic = Bool(\"BobKnowsArithmetic\")\n    formula = And(AliceKnowsArithmetic, BobKnowsArithmetic)\n\n    text(\"*All students know arithmetic.*\")\n    AliceIsStudent = Bool(\"AliceIsStudent\")\n    BobIsStudent = Bool(\"BobIsStudent\")\n    formula = And(Implies(AliceIsStudent, AliceKnowsArithmetic), Implies(BobIsStudent, BobKnowsArithmetic))\n\n    text(\"*Every even integer greater than 2 is the sum of two prime numbers.*\")\n    text(\"???\")\n\n    text(\"In these cases, propositional logic is very clunky or not expressive enough.\")\n\n    text(\"What's missing?\")\n    text(\"- Objects and predicates: propositions (e.g., AliceKnowsArithmetic) have more internal structure (alice, Knows, arithmetic)\")\n    text(\"- Quantifiers and variables: *all* is a quantifier that applies to all people, don't/can't enumerate them all\")\n\n\ndef introduce_first_order_logic():\n    image(\"images/syntax-semantics-rules.png\", width=600)\n    first_order_logic_syntax()\n    first_order_logic_semantics()\n    propositionalization()\n    first_order_logic_inference_rules()\n    natural_language_to_first_order_logic()\n\n\ndef first_order_logic_syntax():\n    text(\"**Syntax**: what are valid formulas?\")\n\n    text(\"In propositional logic, formulas denote truth values.\")\n    text(\"In first-order logic, formulas denote truth values and terms denote objects.\")\n\n    text(\"**Terms** (denote objects)\")\n\n    text(\"Constants:\")\n    alice = Const(\"Alice\", Object)  # alice\n    arithmetic = Const(\"arithmetic\", Object)  # arithmetic\n\n    text(\"Variables:\")\n    x = Const(\"x\", Object)  # x\n    y = Const(\"y\", Object)  # y\n\n    text(\"Functions:\")\n    father = Function(\"father\", Object, Object)  # father\n    add = Function(\"add\", Object, Object, Object)  # add\n    term = father(alice)  # father(alice)\n    term = add(x, y)  # add(x, y)\n\n    text(\"**Formulas** (denote truth values)\")\n\n    text(\"Atomic formulas (predicate applied to terms):\")\n    Snowing = Bool(\"Snowing\")  # 0-arity predicate (from propositional logic)\n    Student = Function(\"Student\", Object, BoolSort())  # 1-arity predicate (unary)\n    Knows = Function(\"Knows\", Object, Object, BoolSort())  # 2-arity predicate (binary)\n    formula = Knows(x, arithmetic)  # Knows(x, arithmetic)\n\n    text(\"Connectives applied to formulas (just like propositional logic):\")\n    formula = Implies(Student(x), Knows(x, arithmetic))  # Student(x) \u2192 Knows(x, arithmetic)\n\n    text(\"Quantifiers applied to formulas:\")\n    # \u2200x. Student(x) \u2192 Knows(x, arithmetic)\n    formula = ForAll([x], Implies(Student(x), Knows(x, arithmetic)))\n    # \u2203x. Student(x) \u2227 Knows(x, arithmetic)\n    formula = Exists([x], And(Student(x), Knows(x, arithmetic)))\n\n    text(\"Non-formulas (in first-order logic):\")\n    # father(x) is a term, not a formula\n    text(\"- father(x)\")\n    # Student is a predicate, not a term\n    text(\"- Knows(Student, arithmetic)\")\n    # Can't apply function (Foo, etc.) to formula\n    text(\"- Foo(Knows(alice, arithmetic))\")\n\n    text(\"Convention:\")\n    text(\"- Use lowercase for terms (e.g., alice, x, father(alice))\")\n    text(\"- Use uppercase for formulas (e.g., Knows(x, arithmetic))\")\n\n    text(\"Summary:\")\n    text(\"- Terms (denote objects): arithmetic, x, y, father(x)\")\n    text(\"- Formulas (denote truth values): \u2200x. Student(x) \u2192 Knows(x, arithmetic)\")\n\n\ndef first_order_logic_semantics():\n    text(\"**Semantics**: what do these formulas mean?\")\n\n    text(\"Recall that a model represents a possible world.\")\n\n    text(\"In propositional logic, a model is an assignment of truth values to atomic formulas (propositional symbols).\")\n    AliceKnowsArithmetic = Bool(\"AliceKnowsArithmetic\")\n    BobKnowsArithmetic = Bool(\"BobKnowsArithmetic\")\n    w = {AliceKnowsArithmetic: True, BobKnowsArithmetic: True}\n\n    text(\"What about in first-order logic?\")\n\n    text(\"**Attempt 1**\")\n    text(\"Recall that in first-order logic, atomic formulas are predicates applied to terms.\")\n    term = Knows(alice, arithmetic)  # formula Knows(alice, arithmetic)\n    term = Student(alice)  # formula Student(alice)\n\n    text(\"So let's define a model as an assignment of truth values to atomic formulas.\")\n    w = {Student(alice): True, Knows(alice, arithmetic): True}\n\n    text(\"Problem 1: what about atomic formulas with functions?\")\n    father = Function(\"father\", Object, Object)  # function father\n    term = father(alice)\n    term = father(father(alice))\n    term = father(father(father(alice)))\n    term = father(father(father(father(alice))))\n    text(\"There are an infinite number of atomic formulas!\")\n    text(\"So a single model has to assign truth values to an infinite number of atomic formulas...not good.\")\n\n    text(\"Problem 2: two terms (different syntax) might actual refer to the same object.\")\n    term = father(alice)\n    term = bob\n    text(\"It could be the case that Bob is Alice's father!\")\n    text(\"But these two terms behave independently of each other in the model...not good.\")\n    w = {Knows(father(alice), arithmetic): True, Knows(bob, arithmetic): False}\n\n    text(\"**Attempt 2**\")\n    text(\"Key idea: introduce a layer of indirection\")\n\n    text(\"Define **domain** to be a set of objects.\")\n    domain = [\"o1\", \"o2\", \"o3\"]\n\n    text(\"Define **interpretation function** to map symbols to objects in the domain.\")\n\n    text(\"We start with the primitive symbols: constants, functions, and predicates.\")\n    text(\"Each symbol is mapped to something involving the objects in the domain.\")\n\n    constants = {\n        alice: \"o1\",\n        bob: \"o2\",\n        arithmetic: \"o3\",\n    }\n\n    functions = {\n        father: {\"o1\": \"o2\"},\n    }\n\n    predicates = {\n        Knows: {\n            (\"o1\", \"o3\"): True,\n            (\"o2\", \"o3\"): True,\n        },\n        Student: {\n            \"o1\": True,\n        },\n    }\n\n    interpretation = Interpretation(\n        constants=constants,\n        functions=functions,\n        predicates=predicates,\n    )\n\n    text(\"The model is therefore the domain and the interpretation function.\")\n    w = FirstOrderLogicModel(\n        domain=domain,\n        interpretation=interpretation,\n    )  # @inspect w\n\n    image(\"images/fol-example.png\", width=400)\n\n    text(\"The interpretation of an arbitrary formula is defined recursively.\")\n    text(\"As in propositional logic, we define the interpretation function \u2110(f, w)...\")\n    text(\"...to map a formula f and a model w to a truth value (true/false).\")\n\n    result = interpret_formula(Knows(alice, arithmetic), w)  # @inspect result\n    result = interpret_formula(ForAll([x], Knows(x, arithmetic)), w)  # @inspect result\n\n    text(\"Summary:\")\n    text(\"- Semantics defined by interpretation function \u2110(f, w)\")\n    text(\"- Model w = (domain, interpretation)\")\n    text(\"- Interpretation maps symbols (constants, functions, predicates) to objects in the domain\")\n    text(\"- Recursively interpret larger formulas and terms\")\n\n    text(\"How can we perform logical inference with respect to these semantics?\")\n\n\n@dataclass(frozen=True)\nclass Interpretation:\n    \"\"\"For defining a model in first-order logic. Maps symbols to objects in the domain.\"\"\"\n    constants: dict[Const, str]\n    functions: dict[Function, dict[str, str]]\n    predicates: dict[Function, dict[tuple[str, ...], bool]]\n\n\n@dataclass(frozen=True)\nclass FirstOrderLogicModel:\n    \"\"\"A model in first-order logic. Consists of a domain and an interpretation function.\"\"\"\n    domain: list[str]\n    interpretation: Interpretation\n\n\ndef interpret_formula(f: Formula, w: FirstOrderLogicModel, subst: dict[Variable, str] = {}) -> bool:  # @inspect f w subst\n    \"\"\"\n    Interpretation function: given a formula f and a model w, compute whether w satisfies f.\n    Substitution: a dictionary mapping variables to terms.\n    \"\"\"\n    if is_quantifier(f) and f.is_forall():\n        # Universal quantifier (e.g., \u2200x. Student(x))\n        assert f.num_vars() == 1  # Only support one variable for now\n        variable = Var(0, f.var_sort(0))  # @inspect variable # Warning: this doesn't work for nested quantifiers\n        body = f.body()  # @inspect body\n\n        # Bind the variable to each object in the domain and check if the formula is true.\n        result = True\n        for o in w.domain:  # @inspect o\n            result = result and interpret_formula(body, w, subst | {variable: o}) # @inspect result\n\n    elif is_quantifier(f) and f.is_exists():\n        # Existential quantifier (e.g., \u2203x. Student(x))\n        assert f.num_vars() == 1  # Only support one variable for now\n        variable = Var(f.var_name(0), f.var_sort(0))  # @inspect variable\n        body = f.body()  # @inspect body\n\n        # Bind the variable to each object in the domain and check if the formula is true.\n        result = False\n        for o in w.domain:  # @inspect o\n            result = result or interpret_formula(body, w, subst | {variable: o}) # @inspect result\n\n    elif f.num_args() == 0:\n        # Constant symbol (e.g., alice)\n        result = w.interpretation.constants[f] # @inspect result\n\n    elif f.num_args() == 1:\n        if is_not(f):\n            # Negation (e.g., \u00acStudent(alice))\n            g = f.arg(0)  # @inspect g\n            result = not interpret_formula(g, w, subst) # @inspect result\n\n        else:\n            # Unary predicate (e.g., Student(alice))\n            predicate, arg = f.decl(), f.arg(0)  # @inspect func arg\n            predicate_value = w.interpretation.predicates[predicate]  # @inspect predicate_value\n            arg_value = interpret_term(arg, w, subst)  # @inspect arg_value\n            result = predicate_value.get(arg_value, False) # @inspect result\n\n    elif f.num_args() == 2:\n        if is_and(f):\n            g, h = f.arg(0), f.arg(1)  # @inspect g h\n            result = interpret_formula(g, w, subst) and interpret_formula(h, w, subst) # @inspect result\n        elif is_or(f):\n            g, h = f.arg(0), f.arg(1)  # @inspect g h\n            result = interpret_formula(g, w, subst) or interpret_formula(h, w, subst) # @inspect result\n        elif is_implies(f):\n            g, h = f.arg(0), f.arg(1)  # @inspect g h\n            result = not interpret_formula(g, w, subst) or interpret_formula(h, w, subst) # @inspect result\n        elif is_eq(f):\n            g, h = f.arg(0), f.arg(1)  # @inspect g h\n            result = interpret_formula(g, w, subst) == interpret_formula(h, w, subst) # @inspect result\n        else:\n            # Binary predicate (e.g., Knows(alice, arithmetic))\n            predicate, arg1, arg2 = f.decl(), f.arg(0), f.arg(1)  # @inspect predicate arg1 arg2\n            predicate_value = w.interpretation.predicates[predicate]  # @inspect predicate_value\n            arg1_value = interpret_term(arg1, w, subst)  # @inspect arg1_value\n            arg2_value = interpret_term(arg2, w, subst)  # @inspect arg2_value\n            result = predicate_value.get((arg1_value, arg2_value), False) # @inspect result\n\n    return result\n\n\ndef interpret_term(t: Term, w: FirstOrderLogicModel, subst: dict[Variable, str]) -> bool:  # @inspect t w subst\n    \"\"\"Interpret a term in a model with a substitution.\"\"\"\n    if is_var(t):\n        # Variable (e.g., x)\n        result = subst[t] # @inspect result\n\n    elif t.num_args() == 0:\n        # Constant symbol (e.g., alice)\n        result = w.interpretation.constants[t] # @inspect result\n\n    else:\n        # Function application (e.g., father(alice))\n        func, args = t.decl(), t.args()  # @inspect func args\n        func_value = w.interpretation.functions[func]  # @inspect func_value\n        arg_values = [interpret_term(arg, w, subst) for arg in args]  # @inspect arg_values\n        result = func_value[arg_values] # @inspect result\n\n    return result\n\n\ndef propositionalization():\n    text(\"How do we perform inference in first-order logic?\")\n\n    text(\"Suppose we have the following knowledge base:\")\n    kb = [\n        Student(alice),\n        Student(bob),\n        ForAll([x], Implies(Student(x), Knows(x, arithmetic))),\n        Exists([x], And(Student(x), Knows(x, arithmetic))),\n    ]\n\n    text(\"Let's reduce to propositional logic.\")\n    text(\"We can't do this in general (because first-order logic is more powerful).\")\n\n    text(\"But we can do it if we assume two things about the model:\")\n    image(\"images/unique-names-domain-closure.png\", width=600)\n    text(\"- Unique names: each object corresponds to **at most one** constant (not w_2).\")\n    text(\"- Domain closure: each object corresponds to **at least one** constant (not w_3).\")\n\n    text(\"In this case, we can **propositionalize** the knowledge base.\")\n    StudentAlice = Bool(\"StudentAlice\")\n    StudentBob = Bool(\"StudentBob\")\n    KnowsAliceArithmetic = Bool(\"KnowsAliceArithmetic\")\n    KnowsBobArithmetic = Bool(\"KnowsBobArithmetic\")\n    kb = [\n        StudentAlice,\n        StudentBob,\n        And(Implies(StudentAlice, KnowsAliceArithmetic), Implies(StudentBob, KnowsBobArithmetic)),\n        Or(And(StudentAlice, KnowsAliceArithmetic), And(StudentBob, KnowsBobArithmetic)),\n    ]\n    text(\"This is just propositional logic, and we can use any techniques from last time (e.g., model checking).\")\n\n    text(\"In this regime, first-order logic is syntactic sugar for propositional logic.\")\n    text(\"In other words, it's the same expressivity, but easier to read/write.\")\n\n    text(\"But what if we don't have these assumptions?\")\n\n\ndef first_order_logic_inference_rules():\n    text(\"Recall that inference rules match formulas in the KB and produce new formulas.\")\n    text(\"Let us now define the modus ponens inference rule.\")\n\n    text(\"This rule operate a special type of formula called a definite clause.\")\n\n    text(\"Definition: a **definite clause** is a formula of the following form:\")\n    text(\"\u2200 x_1 ... x_n. (a_1 \u2227 ... \u2227 a_k) \u2192 b\")\n    text(\"...where x_1, ..., x_n are variables, a_1, ..., a_k, b are atomic formulas.\")\n\n    text(\"Example: \u2200 x, y, z. (Takes(x, y) \u2227 Covers(y, z)) \u2192 Knows(x, z)\")\n    text(\"Here:\")\n    text(\"- Variables are x, y, z\")\n    text(\"- Atomic formulas are a_1 = Takes(x, y), a_2 = Covers(y, z), b = Knows(x, z)\")\n    formula = ForAll([x, y, z], Implies(And(Takes(x, y), Covers(y, z)), Knows(x, z)))\n\n    text(\"Non-example (disjunction):\")\n    formula = Or(Student(alice), Student(bob))\n    formula = Exists([x], And(Student(x), Knows(x, arithmetic)))\n\n    text(\"Attempt 1: modus ponens with exact match\")\n    text(\"Premises:\")\n    text(\"- a_1\")\n    text(\"- ...\")\n    text(\"- a_k\")\n    text(\"- \u2200 x_1 ... x_n. (a_1 \u2227 ... \u2227 a_k) \u2192 b\")\n    text(\"Conclusion:\")\n    text(\"- b\")\n\n    kb = [\n        # a_1: Takes(alice, cs221)\n        Takes(alice, cs221),\n        # a_2: Covers(cs221, logic)\n        Covers(cs221, logic),\n        # \u2200 x, y, z. (Takes(x, y) \u2227 Covers(y, z)) \u2192 Knows(x, z)\n        ForAll([x, y, z], Implies(And(Takes(x, y), Covers(y, z)), Knows(x, z))),\n    ]\n    text(\"We would like conclude b: Knows(alice, logic)\")\n\n    text(\"However, Takes(alice, cs221) \u2260 Takes(x, y)\")\n    text(\"So we can't apply the rule (no exact match).\")\n\n    text(\"Solution: substitution and unification\")\n    introduce_substitution()\n    introduce_unification()\n\n    text(\"**Attempt 2**: modus ponens with substitution and unification\")\n    text(\"Premises:\")\n    text(\"- a_1'\")\n    text(\"- ...\")\n    text(\"- a_k'\")\n    text(\"- \u2200 x_1 ... x_n. (a_1 \u2227 ... \u2227 a_k) \u2192 b\")\n    text(\"- \u03b8 = unify(a_1' \u2227 ... \u2227 a_k', a_1 \u2227 ... \u2227 a_k)\")\n    text(\"Conclusion:\")\n    text(\"- substitute(b, \u03b8) = b'\")\n\n    kb = [\n        # a_1': Takes(alice, cs221)\n        Takes(alice, cs221),\n        # a_2': Covers(cs221, logic)\n        Covers(cs221, logic),\n        # \u2200 x, y, z. (Takes(x, y) \u2227 Covers(y, z)) \u2192 Knows(x, z)\n        ForAll([x, y, z], Implies(And(Takes(x, y), Covers(y, z)), Knows(x, z))),\n    ]\n\n    text(\"Find the substitution to make a_1' \u2227 a_2' equal to a_1 \u2227 a_2\")\n    theta = unify(  # @inspect theta\n        And(Takes(alice, cs221), Covers(cs221, logic)),\n        And(Takes(x, y), Covers(y, z)),\n    {})\n    if theta is not None:\n        result = substitute(Knows(x, z), theta) # @inspect result @stepover\n\n    text(\"Complexity:\")\n    text(\"- Each application of Modus ponens produces an aotmic formula (e.g., Knows(alice, logic))\")\n    text(\"- If we have no functions, then complexity is num-constant-symbols^(maximum-predicate-arity)\")\n    text(\"- If we have functions, then complexity then possibly infinite:\")\n    Knows(alice, logic)\n    Knows(father(alice), logic)\n    Knows(father(father(alice)), logic)\n    Knows(father(father(father(alice))), logic)\n\n    text(\"Properties of Modus ponens:\")\n    text(\"- Sound: if KB proves f (KB \u22a2 f), then KB entails f (KB \u22a7 f)\")\n    text(\"- Not complete: there are formulas where KB entails f (KB \u22a7 f) but not KB proves f (KB \u22a2 f)\")\n    text(\"- Need the resolution rule to be complete\")\n\n    text(\"Summary:\")\n    text(\"- Modus ponens: works on definite clauses\")\n    text(\"- Intuition: no disjunction (or, exists) allowed\")\n    text(\"- Substitution: search and replace on terms in a formula\")\n    text(\"- Unification: find a substitution that makes two terms equal\")\n\n\ndef introduce_substitution():\n    text(\"Substitution: search and replace on terms in a formula\")\n\n    formula = Knows(x, y)\n    subst = {x: alice, y: cs221}\n    result = substitute(formula, subst) # @inspect result\n\n    formula = And(Student(x), Knows(x, y))  # Student(x) \u2227 Knows(x, y)\n    subst = {x: alice, y: z}\n    result = substitute(formula, subst) # @inspect result\n\n\ndef substitute(f: Formula, subst: dict[Variable, Term]) -> Formula:  # @inspect f subst\n    \"\"\"Substitute variables subst in a formula.\"\"\"\n    if f in subst:\n        result = subst[f] # @inspect result\n    else:\n        new_args = [substitute(f.arg(i), subst) for i in range(f.num_args())]  # @inspect new_args\n        result = f.decl()(*new_args) # @inspect result\n    return result\n\n\ndef introduce_unification():\n    text(\"Unification: find a substitution that makes two terms equal\")\n\n    result = unify(Knows(x, y), Knows(alice, bob), {}) # @inspect result\n    result = unify(Knows(alice, y), Knows(x, z), {}) # @inspect result @stepover\n    result = unify(Knows(alice, y), Knows(bob, z), {}) # Should fail! @inspect result @stepover\n\n\ndef unify(f1: Formula, f2: Formula, subst: dict[Variable, Term]) -> dict[Variable, Term]:  # @inspect f1 f2 subst\n    \"\"\"Given two formulas `f1` and `f2`, find a substitution (adding to `subst`) that makes them equal.\"\"\"\n    if f1 == f2:\n        return subst\n    elif is_variable(f1):  # @stepover\n        subst[f1] = substitute(f2, subst)  # @inspect subst @stepover\n        return subst\n    elif is_variable(f2):  # @stepover\n        subst[f2] = substitute(f1, subst)  # @inspect subst @stepover\n        return subst\n    else:\n        if f1.decl() != f2.decl():\n            return None\n        for i in range(f1.num_args()):\n            # If any child fails, then fail the whole thing\n            if unify(f1.arg(i), f2.arg(i), subst) is None:\n                return None\n        return subst\n\n\ndef is_variable(f: Formula) -> bool:\n    # In Takes(alice, x), we actually can't tell the difference between a\n    # constant (alice) and a variable (x).  So we have to hardcode them.\n    return f.decl().name() in [\"x\", \"y\", \"z\"]\n\n\ndef natural_language_to_first_order_logic():\n    text(\"First-order logic can be used to encode natural language sentences.\")\n\n    text(\"*Alice and Bob both know arithmetic.*\")\n    # Knows(alice, arithmetic) \u2227 Knows(bob, arithmetic)\n    formula = And(Knows(alice, arithmetic), Knows(bob, arithmetic))\n\n    text(\"*All students know arithmetic.*\")\n    # \u2200x. Student(x) \u2192 Knows(x, arithmetic)\n    formula = ForAll([x], Implies(Student(x), Knows(x, arithmetic)))\n\n    text(\"*Some student knows arithmetic.*\")\n    # \u2203x. Student(x) \u2227 Knows(x, arithmetic)\n    formula = Exists([x], And(Student(x), Knows(x, arithmetic)))\n\n    text(\"Universal quantification (\u2200) is usually paired with an implication (\u2192).\")\n    text(\"Existential quantification (\u2203) is usually paired with a conjunction (\u2227).\")\n\n    text(\"Probably wrong:\")\n    # \u2200x. Student(x) \u2227 Knows(x, arithmetic)\n    formula = ForAll([x], And(Student(x), Knows(x, arithmetic)))\n    text(\"*Every object is both a student and knows arithmetic.*\")\n\n    # \u2203x. Student(x) \u2192 Knows(x, arithmetic)\n    formula = Exists([x], Implies(Student(x), Knows(x, arithmetic)))\n    text(\"*Some object is either not a student or knows arithmetic.*\")\n\n    text(\"*There is some course that every student has taken.*\")\n    # \u2203x. Course(x) \u2227 \u2200y. Student(y) \u2192 Takes(y, x)\n    formula = Exists([x], And(Course(x), ForAll([y], Implies(Student(y), Takes(y, x)))))\n\n    text(\"*Every even integer greater than 2 is the sum of two prime numbers.*\")\n    # \u2200x. Even(x) \u2227 GreaterThan(x, two) \u2192 \u2203y, z. Prime(y) \u2227 Prime(z) \u2227 add(y, z) == x\n    formula = ForAll([x], Implies(And(Even(x), GreaterThan(x, two)), Exists([y, z], And(Prime(y), Prime(z), add(y, z) == x))))\n\n    text(\"*If a student takes a course and the course covers a concept, then the student knows the concept.*\")\n    # \u2200x, y, z. Student(x) \u2227 Takes(x, y) \u2227 Course(y) \u2227 Covers(y, z) \u2227 Concept(z) \u2192 Knows(x, z)\n    formula = ForAll([x, y, z], Implies(And(Student(x), Takes(x, y), Course(y), Covers(y, z), Concept(z)), Knows(x, z)))\n\n\nif __name__ == \"__main__\":\n    main()"
   },
   "hidden_line_numbers": {
     "first_order_logic.py": []
@@ -34,7 +34,8 @@
           "data": "### Lecture 16: First-order logic",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -108,7 +109,8 @@
           "data": "*Alice is a student.*",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -152,7 +154,8 @@
           "data": "*Alice is from Phoenix.*",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -196,7 +199,8 @@
           "data": "*Phoenix is a hot city.*",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -240,7 +244,8 @@
           "data": "*Students are people.*",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -284,7 +289,8 @@
           "data": "*Cities are places.*",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -328,7 +334,8 @@
           "data": "*If it is snowing, it is cold.*",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -372,7 +379,8 @@
           "data": "*Is it snowing?*",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -423,7 +431,8 @@
           "data": "*If a person is from a hot place and it is snowing, then they are unhappy.*",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -467,7 +476,8 @@
           "data": "*Is it snowing?*",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -518,7 +528,8 @@
           "data": "*Alice is happy.*",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -562,7 +573,8 @@
           "data": "*Is it snowing?*",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -613,7 +625,8 @@
           "data": "This is an example of performing inference in first-order logic.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -639,7 +652,8 @@
           "data": "What can first-order logic represent?",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -665,7 +679,8 @@
           "data": "How can we do inference in first-order logic?",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -733,7 +748,8 @@
           "data": "Logic is a language for representing knowledge and reasoning about it.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -759,7 +775,8 @@
           "data": "To define a logic, we need to define its syntax, semantics, and inference rules.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -787,7 +804,8 @@
             "width": 600
           },
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -813,7 +831,8 @@
           "data": "**Syntax**: what are valid formulas?",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -839,7 +858,8 @@
           "data": "Propositional logic:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -865,7 +885,8 @@
           "data": "- Propositional symbols (e.g., Rain Wet):",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -945,7 +966,8 @@
           "data": "- Recursively combined using logical connectives (e.g., \u2227, \u2228, \u00ac, \u2192, \u2194)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -989,7 +1011,8 @@
           "data": "These are just symbols.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1015,7 +1038,8 @@
           "data": "**Semantics**: what do these formulas mean?",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1041,7 +1065,8 @@
           "data": "Propositional logic:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1067,7 +1092,8 @@
           "data": "- Models: assignments of truth values to propositional symbols",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1111,7 +1137,8 @@
           "data": "- Interpretation function: maps a formula and a model to a truth value",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1162,7 +1189,8 @@
           "data": "- Models: maps a formula f to the set of models M(f) that satisfy it",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1233,7 +1261,8 @@
           "data": "- Knowledge base: set of formulas (what we know)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1295,7 +1324,8 @@
           "data": "Relationship between knowledge base KB and formula f:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1321,7 +1351,8 @@
           "data": "Old models: M(KB)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1392,7 +1423,8 @@
           "data": "New models: M(KB \u222a {f})",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1463,7 +1495,8 @@
           "data": "Entailment: M(KB) = M(KB \u222a {f})",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1525,7 +1558,8 @@
           "data": "Contradiction: M(KB \u222a {f}) = \u2205",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1569,7 +1603,8 @@
           "data": "Contingency: \u2205 \u2260 M(KB \u222a {f}) \u2260 M(KB)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1613,7 +1648,8 @@
           "data": "Used to implement:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1639,7 +1675,8 @@
           "data": "- Ask[f]: check if f is entailed by the KB",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1665,7 +1702,8 @@
           "data": "- Tell[f]: add f to the KB if it is contingent on the KB",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1691,7 +1729,8 @@
           "data": "Satisfiability: KB is satisfiable iff M(KB) \u2260 \u2205",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1717,7 +1756,8 @@
           "data": "Model checking: determine if a KB is satisfiable",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1743,7 +1783,8 @@
           "data": "Reduce entailment/contradiction/contingency to satisfiability",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1769,7 +1810,8 @@
           "data": "**Inference rules**: how to derive new valid formulas from existing ones?",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1795,7 +1837,8 @@
           "data": "Set of rules (e.g., modus ponens) operate on the syntax",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1821,7 +1864,8 @@
           "data": "Modus ponens: p, p \u2192 q \u22a2 q",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1847,7 +1891,8 @@
           "data": "Syntax: KB derives/proves f (KB \u22a2 f) if exists set of rules that produce f",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1873,7 +1918,8 @@
           "data": "Semantics: KB entails f (KB \u22a7 f) if M(KB) = M(KB \u222a {f})",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1899,7 +1945,8 @@
           "data": "Relationship between syntax and semantics:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1925,7 +1972,8 @@
           "data": "- Soundness: if KB \u22a2 f, then KB \u22a7 f",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1951,7 +1999,8 @@
           "data": "- Completeness: if KB \u22a7 f, then KB \u22a2 f",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1977,7 +2026,8 @@
           "data": "Ideally want soundness (nothing but the truth) and completeness (the whole truth).",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2045,7 +2095,8 @@
           "data": "Let's try to represent some facts in propositional logic.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2071,7 +2122,8 @@
           "data": "*Alice and Bob both know arithmetic.*",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2151,7 +2203,8 @@
           "data": "*All students know arithmetic.*",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2231,7 +2284,8 @@
           "data": "*Every even integer greater than 2 is the sum of two prime numbers.*",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2257,7 +2311,8 @@
           "data": "???",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2283,7 +2338,8 @@
           "data": "In these cases, propositional logic is very clunky or not expressive enough.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2309,7 +2365,8 @@
           "data": "What's missing?",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2335,7 +2392,8 @@
           "data": "- Objects and predicates: propositions (e.g., AliceKnowsArithmetic) have more internal structure (alice, Knows, arithmetic)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2361,7 +2419,8 @@
           "data": "- Quantifiers and variables: *all* is a quantifier that applies to all people, don't/can't enumerate them all",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2431,7 +2490,8 @@
             "width": 600
           },
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2505,7 +2565,8 @@
           "data": "**Syntax**: what are valid formulas?",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2537,7 +2598,8 @@
           "data": "In propositional logic, formulas denote truth values.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2569,7 +2631,8 @@
           "data": "In first-order logic, formulas denote truth values and terms denote objects.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2601,7 +2664,8 @@
           "data": "**Terms** (denote objects)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2633,7 +2697,8 @@
           "data": "Constants:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2713,7 +2778,8 @@
           "data": "Variables:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2793,7 +2859,8 @@
           "data": "Functions:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2921,7 +2988,8 @@
           "data": "**Formulas** (denote truth values)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2953,7 +3021,8 @@
           "data": "Atomic formulas (predicate applied to terms):",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3081,7 +3150,8 @@
           "data": "Connectives applied to formulas (just like propositional logic):",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3137,7 +3207,8 @@
           "data": "Quantifiers applied to formulas:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3217,7 +3288,8 @@
           "data": "Non-formulas (in first-order logic):",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3249,7 +3321,8 @@
           "data": "- father(x)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3281,7 +3354,8 @@
           "data": "- Knows(Student, arithmetic)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3313,7 +3387,8 @@
           "data": "- Foo(Knows(alice, arithmetic))",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3345,7 +3420,8 @@
           "data": "Convention:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3377,7 +3453,8 @@
           "data": "- Use lowercase for terms (e.g., alice, x, father(alice))",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3409,7 +3486,8 @@
           "data": "- Use uppercase for formulas (e.g., Knows(x, arithmetic))",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3441,7 +3519,8 @@
           "data": "Summary:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3473,7 +3552,8 @@
           "data": "- Terms (denote objects): arithmetic, x, y, father(x)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3505,7 +3585,8 @@
           "data": "- Formulas (denote truth values): \u2200x. Student(x) \u2192 Knows(x, arithmetic)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3597,7 +3678,8 @@
           "data": "**Semantics**: what do these formulas mean?",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3629,7 +3711,8 @@
           "data": "Recall that a model represents a possible world.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3661,7 +3744,8 @@
           "data": "In propositional logic, a model is an assignment of truth values to atomic formulas (propositional symbols).",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3765,7 +3849,8 @@
           "data": "What about in first-order logic?",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3797,7 +3882,8 @@
           "data": "**Attempt 1**",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3829,7 +3915,8 @@
           "data": "Recall that in first-order logic, atomic formulas are predicates applied to terms.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3909,7 +3996,8 @@
           "data": "So let's define a model as an assignment of truth values to atomic formulas.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3965,7 +4053,8 @@
           "data": "Problem 1: what about atomic formulas with functions?",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -4117,7 +4206,8 @@
           "data": "There are an infinite number of atomic formulas!",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -4149,7 +4239,8 @@
           "data": "So a single model has to assign truth values to an infinite number of atomic formulas...not good.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -4181,7 +4272,8 @@
           "data": "Problem 2: two terms (different syntax) might actual refer to the same object.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -4261,7 +4353,8 @@
           "data": "It could be the case that Bob is Alice's father!",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -4293,7 +4386,8 @@
           "data": "But these two terms behave independently of each other in the model...not good.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -4349,7 +4443,8 @@
           "data": "**Attempt 2**",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -4381,7 +4476,8 @@
           "data": "Key idea: introduce a layer of indirection",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -4413,7 +4509,8 @@
           "data": "Define **domain** to be a set of objects.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -4469,7 +4566,8 @@
           "data": "Define **interpretation function** to map symbols to objects in the domain.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -4501,7 +4599,8 @@
           "data": "We start with the primitive symbols: constants, functions, and predicates.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -4533,7 +4632,8 @@
           "data": "Each symbol is mapped to something involving the objects in the domain.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -5021,7 +5121,8 @@
           "data": "The model is therefore the domain and the interpretation function.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -5151,7 +5252,8 @@
             "width": 400
           },
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -5183,7 +5285,8 @@
           "data": "The interpretation of an arbitrary formula is defined recursively.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -5215,7 +5318,8 @@
           "data": "As in propositional logic, we define the interpretation function \u2110(f, w)...",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -5247,7 +5351,8 @@
           "data": "...to map a formula f and a model w to a truth value (true/false).",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -12067,7 +12172,8 @@
           "data": "Summary:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -12099,7 +12205,8 @@
           "data": "- Semantics defined by interpretation function \u2110(f, w)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -12131,7 +12238,8 @@
           "data": "- Model w = (domain, interpretation)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -12163,7 +12271,8 @@
           "data": "- Interpretation maps symbols (constants, functions, predicates) to objects in the domain",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -12195,7 +12304,8 @@
           "data": "- Recursively interpret larger formulas and terms",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -12227,7 +12337,8 @@
           "data": "How can we perform logical inference with respect to these semantics?",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -12319,7 +12430,8 @@
           "data": "How do we perform inference in first-order logic?",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -12351,7 +12463,8 @@
           "data": "Suppose we have the following knowledge base:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -12503,7 +12616,8 @@
           "data": "Let's reduce to propositional logic.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -12535,7 +12649,8 @@
           "data": "We can't do this in general (because first-order logic is more powerful).",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -12567,7 +12682,8 @@
           "data": "But we can do it if we assume two things about the model:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -12601,7 +12717,8 @@
             "width": 600
           },
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -12633,7 +12750,8 @@
           "data": "- Unique names: each object corresponds to **at most one** constant (not w_2).",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -12665,7 +12783,8 @@
           "data": "- Domain closure: each object corresponds to **at least one** constant (not w_3).",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -12697,7 +12816,8 @@
           "data": "In this case, we can **propositionalize** the knowledge base.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -12945,7 +13065,8 @@
           "data": "This is just propositional logic, and we can use any techniques from last time (e.g., model checking).",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -12977,7 +13098,8 @@
           "data": "In this regime, first-order logic is syntactic sugar for propositional logic.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -13009,7 +13131,8 @@
           "data": "In other words, it's the same expressivity, but easier to read/write.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -13041,7 +13164,8 @@
           "data": "But what if we don't have these assumptions?",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -13133,7 +13257,8 @@
           "data": "Recall that inference rules match formulas in the KB and produce new formulas.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -13165,7 +13290,8 @@
           "data": "Let us now define the modus ponens inference rule.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -13197,7 +13323,8 @@
           "data": "This rule operate a special type of formula called a definite clause.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -13229,7 +13356,8 @@
           "data": "Definition: a **definite clause** is a formula of the following form:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -13261,7 +13389,8 @@
           "data": "\u2200 x_1 ... x_n. (a_1 \u2227 ... \u2227 a_k) \u2192 b",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -13293,7 +13422,8 @@
           "data": "...where x_1, ..., x_n are variables, a_1, ..., a_k, b are atomic formulas.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -13325,7 +13455,8 @@
           "data": "Example: \u2200 x, y, z. (Takes(x, y) \u2227 Covers(y, z)) \u2192 Knows(x, z)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -13357,7 +13488,8 @@
           "data": "Here:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -13389,7 +13521,8 @@
           "data": "- Variables are x, y, z",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -13421,7 +13554,8 @@
           "data": "- Atomic formulas are a_1 = Takes(x, y), a_2 = Covers(y, z), b = Knows(x, z)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -13477,7 +13611,8 @@
           "data": "Non-example (disjunction):",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -13557,7 +13692,8 @@
           "data": "Attempt 1: modus ponens with exact match",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -13589,7 +13725,8 @@
           "data": "Premises:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -13621,7 +13758,8 @@
           "data": "- a_1",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -13653,7 +13791,8 @@
           "data": "- ...",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -13685,7 +13824,8 @@
           "data": "- a_k",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -13717,7 +13857,8 @@
           "data": "- \u2200 x_1 ... x_n. (a_1 \u2227 ... \u2227 a_k) \u2192 b",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -13749,7 +13890,8 @@
           "data": "Conclusion:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -13781,7 +13923,8 @@
           "data": "- b",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -13909,7 +14052,8 @@
           "data": "We would like conclude b: Knows(alice, logic)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -13941,7 +14085,8 @@
           "data": "However, Takes(alice, cs221) \u2260 Takes(x, y)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -13973,7 +14118,8 @@
           "data": "So we can't apply the rule (no exact match).",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -14005,7 +14151,8 @@
           "data": "Solution: substitution and unification",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -14097,7 +14244,8 @@
           "data": "Substitution: search and replace on terms in a formula",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -16950,7 +17098,8 @@
           "data": "Unification: find a substitution that makes two terms equal",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -18159,7 +18308,8 @@
           "data": "**Attempt 2**: modus ponens with substitution and unification",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -18191,7 +18341,8 @@
           "data": "Premises:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -18223,7 +18374,8 @@
           "data": "- a_1'",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -18255,7 +18407,8 @@
           "data": "- ...",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -18287,7 +18440,8 @@
           "data": "- a_k'",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -18319,7 +18473,8 @@
           "data": "- \u2200 x_1 ... x_n. (a_1 \u2227 ... \u2227 a_k) \u2192 b",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -18351,7 +18506,8 @@
           "data": "- \u03b8 = unify(a_1' \u2227 ... \u2227 a_k', a_1 \u2227 ... \u2227 a_k)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -18383,7 +18539,8 @@
           "data": "Conclusion:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -18415,7 +18572,8 @@
           "data": "- substitute(b, \u03b8) = b'",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -18543,7 +18701,8 @@
           "data": "Find the substitution to make a_1' \u2227 a_2' equal to a_1 \u2227 a_2",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -21393,7 +21552,8 @@
           "data": "Complexity:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -21425,7 +21585,8 @@
           "data": "- Each application of Modus ponens produces an aotmic formula (e.g., Knows(alice, logic))",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -21457,7 +21618,8 @@
           "data": "- If we have no functions, then complexity is num-constant-symbols^(maximum-predicate-arity)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -21489,7 +21651,8 @@
           "data": "- If we have functions, then complexity then possibly infinite:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -21617,7 +21780,8 @@
           "data": "Properties of Modus ponens:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -21649,7 +21813,8 @@
           "data": "- Sound: if KB proves f (KB \u22a2 f), then KB entails f (KB \u22a7 f)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -21681,7 +21846,8 @@
           "data": "- Not complete: there are formulas where KB entails f (KB \u22a7 f) but not KB proves f (KB \u22a2 f)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -21713,7 +21879,8 @@
           "data": "- Need the resolution rule to be complete",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -21745,7 +21912,8 @@
           "data": "Summary:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -21777,7 +21945,8 @@
           "data": "- Modus ponens: works on definite clauses",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -21809,7 +21978,8 @@
           "data": "- Intuition: no disjunction (or, exists) allowed",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -21841,7 +22011,8 @@
           "data": "- Substitution: search and replace on terms in a formula",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -21873,7 +22044,8 @@
           "data": "- Unification: find a substitution that makes two terms equal",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -21965,7 +22137,8 @@
           "data": "First-order logic can be used to encode natural language sentences.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -21997,7 +22170,8 @@
           "data": "*Alice and Bob both know arithmetic.*",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -22053,7 +22227,8 @@
           "data": "*All students know arithmetic.*",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -22109,7 +22284,8 @@
           "data": "*Some student knows arithmetic.*",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -22165,7 +22341,8 @@
           "data": "Universal quantification (\u2200) is usually paired with an implication (\u2192).",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -22197,7 +22374,8 @@
           "data": "Existential quantification (\u2203) is usually paired with a conjunction (\u2227).",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -22229,7 +22407,8 @@
           "data": "Probably wrong:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -22285,7 +22464,8 @@
           "data": "*Every object is both a student and knows arithmetic.*",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -22341,7 +22521,8 @@
           "data": "*Some object is either not a student or knows arithmetic.*",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -22373,7 +22554,8 @@
           "data": "*There is some course that every student has taken.*",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -22429,7 +22611,8 @@
           "data": "*Every even integer greater than 2 is the sum of two prime numbers.*",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -22485,7 +22668,8 @@
           "data": "*If a student takes a course and the course covers a concept, then the student knows the concept.*",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -22559,7 +22743,8 @@
           "data": "Summary:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -22579,7 +22764,8 @@
           "data": "- First-order logic: more powerful than propositional logic",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -22599,7 +22785,8 @@
           "data": "- Introduces terms (denote objects), functions, predicates",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -22619,7 +22806,8 @@
           "data": "- Introduces variables and quantifiers (\u2200, \u2203) that operate over objects",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -22639,7 +22827,8 @@
           "data": "- Model/interpretation function: maps symbols to objects in the domain",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -22659,7 +22848,8 @@
           "data": "- Propositionalization: reduce first-order logic to propositional logic",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -22679,7 +22869,8 @@
           "data": "- Modus ponens with substitution and unification: works on definite clauses",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -22699,7 +22890,8 @@
           "data": "- Higher-order logics to represent more (*70% of students know machine learning*)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     }

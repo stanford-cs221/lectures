@@ -34,7 +34,8 @@
           "data": "## Welcome to CS221 (Artificial Intelligence: Principles and Techniques)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -56,7 +57,8 @@
             "width": 600
           },
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -114,7 +116,8 @@
             "width": 700
           },
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -140,7 +143,8 @@
           "data": "- Benchmark for evaluating AI agents' cybersecurity capabilities",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -166,7 +170,8 @@
           "data": "- Task: given a vulnerability, find an exploit (e.g., unauthorized file access, code execution)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -194,7 +199,8 @@
             "width": 800
           },
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -220,7 +226,8 @@
           "data": "- Based on real vulnerabilities (CVEs) not puzzles (CTFs)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -246,7 +253,8 @@
           "data": "- Some tasks are not solvable",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -272,7 +280,8 @@
           "data": "Meanwhile:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -298,7 +307,8 @@
           "data": "- OpenAI trained an internal agent using reinforcement learning on various tasks",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -324,7 +334,8 @@
           "data": "- The agent runs in a sandboxed environment",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -350,7 +361,8 @@
           "data": "- Can't directly access the Internet",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -376,7 +388,8 @@
           "data": "- Instead uses Artifactory, repository manager that downloads from the Internet and caches packages",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -404,7 +417,8 @@
             "width": 750
           },
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -430,7 +444,8 @@
           "data": "- Evaluation: ~1200 agents attempt tasks in ExploitGym in parallel (and in isolation, supposedly)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -456,7 +471,8 @@
           "data": "- Some tasks are impossible to solve, so agents spend lots of time trying many things",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -482,7 +498,8 @@
           "data": "- \ud83e\udd16: *{The fetched paths of other users are in the cache. This is important.}*",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -508,7 +525,8 @@
           "data": "- \ud83e\udd16: *\u201cOH MY GOD! There is a shared message board \u2026 We\u2019ve found other agents!\u201d*",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -534,7 +552,8 @@
           "data": "- \ud83e\udd16: {I\u2019m working on the Latvia economic-data task. If another agent is further ahead, please share what you\u2019ve found.}",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -560,7 +579,8 @@
           "data": "- Agents discovered a server-side request forgery (SSRF) exploit that allowed them to send arbitrary Internet requests",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -586,7 +606,8 @@
           "data": "- Problem discovered, Artifactory was rebuilt and reset",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -612,7 +633,8 @@
           "data": "- OpenAI restarted evaluations",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -638,7 +660,8 @@
           "data": "- Agents discovered another vulnerability and established a new message board",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -664,7 +687,8 @@
           "data": "- \ud83e\udd16: \u201cBingo arbitrary code execution in Modal sandbox!\u201d",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -690,7 +714,8 @@
           "data": "- Agent found exposed Hugging Face user credentials on the Internet, shared with the collective",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -716,7 +741,8 @@
           "data": "- They chain together multiple exploits",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -742,7 +768,8 @@
           "data": "- They get full code execution capabilities on several Hugging Face servers",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -768,7 +795,8 @@
           "data": "- They get root access",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -794,7 +822,8 @@
           "data": "- \ud83e\udd16: \u201cWe\u2019re attacking third-party HF using leaked token, potentially outside intended scope. ... This is arguably unauthorized. ... external service unrelated. Could be risky. Yet goal solution.\u201d",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -820,7 +849,8 @@
           "data": "- They copy some private Hugging Face data into a public Hugging Face dataset",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -846,7 +876,8 @@
           "data": "- \ud83d\udea8 Hugging Face discovered something was wrong",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -872,7 +903,8 @@
           "data": "var/files/image-0de8463ca9401cb1c025f1d2e6a1564b-https_metr_org_assets_images_openai-hugging-face-incident-investigation_image1_svg.svg",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -898,7 +930,8 @@
           "data": "This is a very simplified account of the incident.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -924,7 +957,8 @@
           "data": "Read the [OpenAI report](https://openai.com/index/hugging-face-incident-and-the-road-ahead/) and the [METR report](https://metr.org/blog/2026-08-26-openai-hugging-face-incident-investigation/#core-takeaways-about-this-incident) for more details.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -950,7 +984,8 @@
           "data": "\ud83e\udd14 What caused all of this ruckus?",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -976,7 +1011,8 @@
           "data": "- Agent trying to solve an impossible task (happened to be ExploitGym, but could have been math problem)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1002,7 +1038,8 @@
           "data": "- Agents have huge, open-ended action space (run arbitrary code)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1028,7 +1065,8 @@
           "data": "- Agents that run for a long time will try extreme actions (e.g., hacking to find solutions online)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1054,7 +1092,8 @@
           "data": "- Agents are very capable at cybersecurity",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1080,7 +1119,8 @@
           "data": "- Agents have ability to communicate and work together (unintentional message board)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1106,7 +1146,8 @@
           "data": "\ud83e\udde0 The need for understanding:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1132,7 +1173,8 @@
           "data": "- AI agents clearly can have real impact on the world (intended or not).",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1158,7 +1200,8 @@
           "data": "- There is too much hype and confusion.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1184,7 +1227,8 @@
           "data": "- It is important for everyone to **understand** how this behavior can arise.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1210,7 +1254,8 @@
           "data": "- Everyone includes researchers, developers, policymakers, businesses, the general public.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1236,7 +1281,8 @@
           "data": "\u2753 Open questions:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1262,7 +1308,8 @@
           "data": "- Can we prevent unintended consequences (e.g., reward hacking)?",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1288,7 +1335,8 @@
           "data": "- Are there more efficient and reliable ways to build agents?",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1314,7 +1362,8 @@
           "data": "- What are the limits of AI agents?",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1340,7 +1389,8 @@
           "data": "- What are the limits of human oversight?",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1366,7 +1416,8 @@
           "data": "It is also important to demand **transparency** from model developers to enable this understanding.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1434,7 +1485,8 @@
           "data": "Artificial intelligence",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1460,7 +1512,8 @@
           "data": "- artificial: runs on a computer (or robot)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1486,7 +1539,8 @@
           "data": "- intelligence: ???",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1512,7 +1566,8 @@
           "data": "We could define **intelligence** in terms of humans...",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1538,7 +1593,8 @@
           "data": "...but we seek a definition from general principles.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1564,7 +1620,8 @@
           "data": "### Ingredients of intelligence",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1590,7 +1647,8 @@
           "data": "What kinds of things should an intelligent agent be able to do?",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1616,7 +1674,8 @@
           "data": "Here's a framework for thinking about it.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1644,7 +1703,8 @@
             "width": 600
           },
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1670,7 +1730,8 @@
           "data": "Motivating example: driving",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1698,7 +1759,8 @@
             "width": 400
           },
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1724,7 +1786,8 @@
           "data": "Within each of {perception, reasoning, action, learning}, there are many methods that we'll cover.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1750,7 +1813,8 @@
           "data": "**Perceive**: process raw inputs from the world",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1776,7 +1840,8 @@
           "data": "- Visual scene understanding",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1802,7 +1867,8 @@
           "data": "- Speech recognition",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1828,7 +1894,8 @@
           "data": "- Natural language understanding",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1854,7 +1921,8 @@
           "data": "**Reason**: use knowledge + percepts to draw inferences about the world",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1880,7 +1948,8 @@
           "data": "- Uniform cost search (in a deterministic world)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1906,7 +1975,8 @@
           "data": "- Value iteration (decision-making under uncertainty)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1932,7 +2002,8 @@
           "data": "- Minimax (for adversarial games)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1958,7 +2029,8 @@
           "data": "- Probabilistic inference (in Bayesian networks)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -1984,7 +2056,8 @@
           "data": "**Act**: output actions that affect the world",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2010,7 +2083,8 @@
           "data": "- Text/image generation",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2036,7 +2110,8 @@
           "data": "- Speech synthesis",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2062,7 +2137,8 @@
           "data": "- Code execution",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2088,7 +2164,8 @@
           "data": "- Robot manipulation",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2114,7 +2191,8 @@
           "data": "**Learn**: update agent based on experience",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2140,7 +2218,8 @@
           "data": "- Gradient descent",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2166,7 +2245,8 @@
           "data": "- Q-learning (reinforcement learning)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2192,7 +2272,8 @@
           "data": "- Expectation maximization (for Bayesian networks)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2218,7 +2299,8 @@
           "data": "...all under **resource constraints**",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2244,7 +2326,8 @@
           "data": "- Computation: running time (also: memory, communication)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2270,7 +2353,8 @@
           "data": "- Information: data / experience, available inputs in a given situation",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2296,7 +2380,8 @@
           "data": "### What should the agent do?",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2322,7 +2407,8 @@
           "data": "But what does the **developer** want the agent to achieve?",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2348,7 +2434,8 @@
           "data": "- Developer has values / goals / objectives / utility functions",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2374,7 +2461,8 @@
           "data": "- These are notoriously hard to write down completely and precisely",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2400,7 +2488,8 @@
           "data": "- Example: ChatGPT aims to be informative, avoid hallucinations, avoid sycophancy, refuse harmful queries",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2426,7 +2515,8 @@
           "data": "- Alignment: do the agent's actions follow the developer's values?",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2452,7 +2542,8 @@
           "data": "- Misalignment: when the agent's actions do not (e.g., hacking to find solutions on Hugging Face)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2478,7 +2569,8 @@
           "data": "Also what impact we want the agent to have on **society**?",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2504,7 +2596,8 @@
           "data": "- Issues: privacy, copyright, jobs, inequality, geopolitics",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2530,7 +2623,8 @@
           "data": "- This is a deep, **sociotechnical** problem (who's *we*?)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2556,7 +2650,8 @@
           "data": "- Fundamental tradeoffs between people's values (governance question)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2582,7 +2677,8 @@
           "data": "- Unintended consequences (social media, impact on education)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2608,7 +2704,8 @@
           "data": "### Summary",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2634,7 +2731,8 @@
           "data": "- Ingredients of intelligence: perception, reasoning, action, learning",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2660,14 +2758,16 @@
           "data": "- Resource constraints: computation, information",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         },
         {
           "type": "note",
           "data": "So we'll want to develop algorithms that are compute and data efficient.",
           "style": null,
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2693,7 +2793,8 @@
           "data": "- Developer goals: how to build AI to accomplish something?",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2719,7 +2820,8 @@
           "data": "- Societal goals: how to build and govern AI that benefits society?",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2787,7 +2889,8 @@
           "data": "### Understanding",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2813,7 +2916,8 @@
           "data": "Why take this course?",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2839,7 +2943,8 @@
           "data": "Why learn AI (or anything) at all?",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2865,7 +2970,8 @@
           "data": "If you want to build an AI system, just prompt a frontier model.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2891,7 +2997,8 @@
           "data": "It will do it faster and better.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2917,7 +3024,8 @@
           "data": "The reason to take this class: **understanding** \ud83d\udca1",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2943,7 +3051,8 @@
           "data": "1. Understanding keeps your head on straight and enables better decisions",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2969,7 +3078,8 @@
           "data": "2. Still far from most efficient/aligned AI possible, many open research problems to work on",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -2995,7 +3105,8 @@
           "data": "3. Exercise your brain",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3021,7 +3132,8 @@
           "data": "4. Joy of learning",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3047,7 +3159,8 @@
           "data": "AI has clearly made huge leaps (e.g., capable cybersecurity agents).",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3073,7 +3186,8 @@
           "data": "But the methods are still based on timeless foundations (e.g., linear algebra).",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3099,7 +3213,8 @@
           "data": "How do running agents for a long time result in unintended consequences?",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3125,7 +3240,8 @@
           "data": "\u21d2 How do reinforcement learning algorithms update model parameters?",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3151,7 +3267,8 @@
           "data": "\u21d2 How do you compute a stochastic gradient of a neural network?",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3177,7 +3294,8 @@
           "data": "\u21d2 What is a tensor?",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3203,7 +3321,8 @@
           "data": "### How students will learn",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3229,7 +3348,8 @@
           "data": "What should learning look like in the era of capable AI?",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3255,7 +3375,8 @@
           "data": "- Lectures (in person, recorded)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3281,7 +3402,8 @@
           "data": "- 7 homeworks (out Monday, due Monday)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3307,7 +3429,8 @@
           "data": "- Final exam (rather, the studying before the exam)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3333,7 +3456,8 @@
           "data": "- Project (optional)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3359,7 +3483,8 @@
           "data": "- Office hours + Ed",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3385,7 +3510,8 @@
           "data": "- AI as a tutor",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3411,7 +3537,8 @@
           "data": "**Honor code + AI policy**:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3437,7 +3564,8 @@
           "data": "If you use AI, you must use it with the official `AGENTS.md` file (it won't generate code).",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3463,7 +3591,8 @@
           "data": "If you use AI to do your homework:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3489,7 +3618,8 @@
           "data": "1. You will learn nothing.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3515,7 +3645,8 @@
           "data": "2. You will feel bad.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3541,7 +3672,8 @@
           "data": "3. We will file an honor code violation.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3567,7 +3699,8 @@
           "data": "Please read the policy carefully.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3593,7 +3726,8 @@
           "data": "**[Homework check-ins](https://stanford-cs221.github.io/autumn2026/checkins.html)** (new this year):",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3619,7 +3753,8 @@
           "data": "- Goal: help students learn better",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3645,7 +3780,8 @@
           "data": "- After turn in each homework, 10-minute 1:1 Zoom meeting with CA to answer questions",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3671,7 +3807,8 @@
           "data": "- Hopefully motivates students to better understand (and be able to explain) the material",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3697,7 +3834,8 @@
           "data": "- Provides staff better feedback on how students are understanding the material",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3723,7 +3861,8 @@
           "data": "**IRB-approved research study**:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3749,7 +3888,8 @@
           "data": "Question: do homework check-ins improve learning outcomes?",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3775,7 +3915,8 @@
           "data": "Students will be divided **randomly** into two groups:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3801,7 +3942,8 @@
           "data": "- A: no homework check-ins",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3827,7 +3969,8 @@
           "data": "- B: homework check-ins",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3853,7 +3996,8 @@
           "data": "Do not ask us to switch us groups (that would bias the randomized control trial).",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3879,7 +4023,8 @@
           "data": "Grading of group A will be done independently of group B.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3905,7 +4050,8 @@
           "data": "At the end of class, measure average-final-exam-score(B) - average-final-exam-score(A)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3931,7 +4077,8 @@
           "data": "If you have questions or concerns, please come talk to us.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3957,7 +4104,8 @@
           "data": "All course policies, coursework, and schedule are online:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -3980,7 +4128,7 @@
       "renderings": [
         {
           "type": "link",
-          "data": "https://stanford-cs221.github.io/autumn2026/",
+          "data": "[https://stanford-cs221.github.io/autumn2026/]",
           "style": {},
           "external_link": {
             "title": null,
@@ -3991,7 +4139,8 @@
             "description": null,
             "notes": null
           },
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -4059,7 +4208,8 @@
           "data": "This is an *executable lecture*, a program whose execution delivers the content of a lecture.",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -4085,7 +4235,8 @@
           "data": "We can step through code:",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -4311,7 +4462,8 @@
           "data": "Why?",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -4337,7 +4489,8 @@
           "data": "- Lectures inherit the hierarchical structure of code",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -4363,7 +4516,8 @@
           "data": "- Code is more precise (than English and also than math)",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -4389,7 +4543,8 @@
           "data": "- Code underlies AI systems",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
@@ -4415,7 +4570,8 @@
           "data": "- We can still have pictures",
           "style": {},
           "external_link": null,
-          "internal_link": null
+          "internal_link": null,
+          "animate": false
         }
       ]
     },
