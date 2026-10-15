@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 260" width="600" height="260" font-family="Helvetica, Arial, sans-serif" font-size="14">
+<rect width="600" height="260" fill="white"/>
+<!-- Agent: box containing the estimated MDP, from which value iteration computes the policy -->
+<rect x="20" y="25" width="220" height="210" rx="12" fill="#f4f4f4" stroke="#555" stroke-width="2"/>
+<rect x="40" y="40" width="180" height="70" rx="8" fill="white" stroke="#555" stroke-width="1.5" stroke-dasharray="5 3"/>
+<line x1="72" y1="66" x2="106" y2="66" stroke="#2a9d8f" stroke-width="2"/>
+<path d="M116,66 L106,71 L106,61 Z" fill="#2a9d8f"/>
+<line x1="142" y1="66" x2="176" y2="66" stroke="#2a9d8f" stroke-width="2"/>
+<path d="M186,66 L176,71 L176,61 Z" fill="#2a9d8f"/>
+<path d="M66,77 Q130,104 190,79" fill="none" stroke="#9b72cf" stroke-width="2"/>
+<path d="M196,74 L192,85 L185,77 Z" fill="#9b72cf"/>
+<circle cx="60" cy="66" r="11" fill="white" stroke="#555" stroke-width="2"/>
+<circle cx="130" cy="66" r="11" fill="white" stroke="#555" stroke-width="2"/>
+<circle cx="200" cy="66" r="11" fill="white" stroke="#555" stroke-width="2"/>
+<text x="130" y="104" text-anchor="middle" fill="#555" font-size="13">estimated MDP</text>
+<line x1="130" y1="114" x2="130" y2="132" stroke="#555" stroke-width="2"/>
+<path d="M130,142 L124,131 L136,131 Z" fill="#555"/>
+<text x="140" y="132" fill="#555" font-size="13" font-style="italic">value iteration</text>
+<rect x="65" y="145" width="130" height="44" rx="8" fill="white" stroke="#2a9d8f" stroke-width="2.5"/>
+<text x="144" y="174" text-anchor="end" fill="#222" font-size="18">policy</text>
+<text x="150" y="174" fill="#222" font-family="Times New Roman, Times, serif" font-style="italic" font-size="26">π</text>
+<text x="130" y="219" text-anchor="middle" fill="#222" font-size="20">Agent</text>
+<!-- Action: agent -> environment -->
+<line x1="240" y1="95" x2="408" y2="95" stroke="#2a9d8f" stroke-width="3"/>
+<path d="M420,95 L408,101 L408,89 Z" fill="#2a9d8f"/>
+<text x="330" y="81" text-anchor="middle" fill="#2a9d8f" font-size="17" font-weight="bold">action</text>
+<!-- Reward, observation: environment -> agent -->
+<line x1="420" y1="165" x2="252" y2="165" stroke="#9b72cf" stroke-width="3"/>
+<path d="M240,165 L252,159 L252,171 Z" fill="#9b72cf"/>
+<text x="330" y="193" text-anchor="middle" fill="#9b72cf" font-size="17" font-weight="bold">reward, observation</text>
+<!-- Environment: box with a globe -->
+<rect x="420" y="25" width="160" height="210" rx="12" fill="#f4f4f4" stroke="#555" stroke-width="2"/>
+<circle cx="500" cy="120" r="22" fill="white" stroke="#2a9d8f" stroke-width="2.5"/>
+<ellipse cx="500" cy="120" rx="9" ry="22" fill="none" stroke="#2a9d8f" stroke-width="2"/>
+<line x1="478" y1="120" x2="522" y2="120" stroke="#2a9d8f" stroke-width="2"/>
+<path d="M482,108 Q500,114 518,108 M482,132 Q500,126 518,132" fill="none" stroke="#2a9d8f" stroke-width="1.5"/>
+<text x="500" y="219" text-anchor="middle" fill="#222" font-size="20">Environment</text>
+</svg>

@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 220" width="600" height="220" font-family="Helvetica, Arial, sans-serif" font-size="14">
+<rect width="600" height="220" fill="white"/>
+<!-- Agent: box containing a robot head -->
+<rect x="20" y="25" width="200" height="170" rx="12" fill="#f4f4f4" stroke="#555" stroke-width="2"/>
+<text x="120" y="145" text-anchor="middle" fill="#222" font-size="20">Agent</text>
+<line x1="120" y1="56" x2="120" y2="70" stroke="#555" stroke-width="2.5"/>
+<circle cx="120" cy="53" r="5" fill="#f77f00"/>
+<rect x="88" y="82" width="7" height="16" rx="2" fill="#bbb" stroke="#555" stroke-width="1.5"/>
+<rect x="145" y="82" width="7" height="16" rx="2" fill="#bbb" stroke="#555" stroke-width="1.5"/>
+<rect x="95" y="70" width="50" height="40" rx="9" fill="#e8eef7" stroke="#555" stroke-width="2"/>
+<circle cx="109" cy="87" r="5.5" fill="#3366cc"/>
+<circle cx="131" cy="87" r="5.5" fill="#3366cc"/>
+<rect x="110" y="98" width="20" height="4" rx="2" fill="#555"/>
+<!-- Action: agent -> environment -->
+<line x1="220" y1="80" x2="388" y2="80" stroke="#2a9d8f" stroke-width="3"/>
+<path d="M400,80 L388,86 L388,74 Z" fill="#2a9d8f"/>
+<text x="310" y="66" text-anchor="middle" fill="#2a9d8f" font-size="17" font-weight="bold">action</text>
+<!-- Reward, observation: environment -> agent -->
+<line x1="400" y1="145" x2="232" y2="145" stroke="#9b72cf" stroke-width="3"/>
+<path d="M220,145 L232,139 L232,151 Z" fill="#9b72cf"/>
+<text x="310" y="173" text-anchor="middle" fill="#9b72cf" font-size="17" font-weight="bold">reward, observation</text>
+<!-- Environment: box with a globe -->
+<rect x="400" y="25" width="180" height="170" rx="12" fill="#f4f4f4" stroke="#555" stroke-width="2"/>
+<circle cx="490" cy="88" r="22" fill="white" stroke="#2a9d8f" stroke-width="2.5"/>
+<ellipse cx="490" cy="88" rx="9" ry="22" fill="none" stroke="#2a9d8f" stroke-width="2"/>
+<line x1="468" y1="88" x2="512" y2="88" stroke="#2a9d8f" stroke-width="2"/>
+<path d="M472,76 Q490,82 508,76 M472,100 Q490,94 508,100" fill="none" stroke="#2a9d8f" stroke-width="1.5"/>
+<text x="490" y="145" text-anchor="middle" fill="#222" font-size="20">Environment</text>
+</svg>

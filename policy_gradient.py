@@ -3,7 +3,7 @@ from typing import Any
 from functools import partial
 from typing import Callable
 from mdp import FlakyTramMDP, value_iteration
-from reinforcement_learning import QLearning, walk_tram_policy, simulate, RLAlgorithm, Step, Rollout
+from reinforcement_learning import QLearning, walk_tram_policy, generate_rollouts_rl, Agent, Step, Rollout
 from dataclasses import dataclass
 import torch
 import torch.nn as nn
@@ -36,7 +36,7 @@ def main():
 
 def review_rl():
     text("Reinforcement learning (RL) setting:")
-    image("images/rl-framework.png", width=400)
+    image("images/rl-framework.svg", width=560)
 
     text("**Environment**: Markov decision process (MDP)")
     mdp = FlakyTramMDP(num_locs=6, failure_prob=0.1)  # @stepover
@@ -44,19 +44,19 @@ def review_rl():
 
     text("**Agent**: RL algorithm")
     policy = partial(walk_tram_policy, mdp.num_locs)
-    rl = QLearning(exploration_policy=policy, epsilon=0.4, discount=1, learning_rate=0.1)
+    agent = QLearning(exploration_policy=policy, epsilon=0.4, discount=1)
 
     text("An example interaction (what the agent sees):")
-    action = rl.get_action(state=1)  # @inspect action
-    rl.incorporate_feedback(state=1, action="walk", reward=-1, next_state=2, is_end=False)
-    action = rl.get_action(state=2)  # @inspect action
-    rl.incorporate_feedback(state=2, action="walk", reward=-1, next_state=3, is_end=False)
-    action = rl.get_action(state=3)  # @inspect action
-    rl.incorporate_feedback(state=3, action="tram", reward=-2, next_state=6, is_end=True)
+    action = agent.get_action(state=1)  # @inspect action
+    agent.incorporate_feedback(state=1, action="walk", reward=-1, next_state=2, is_end=False)
+    action = agent.get_action(state=2)  # @inspect action
+    agent.incorporate_feedback(state=2, action="walk", reward=-1, next_state=3, is_end=False)
+    action = agent.get_action(state=3)  # @inspect action
+    agent.incorporate_feedback(state=3, action="tram", reward=-2, next_state=6, is_end=True)
     text("Each rollout generates a utility (discounted sum of rewards).")  # @clear action
 
     text("Generate rollouts, value is the mean utility.")
-    value = simulate(mdp, rl, num_trials=100)  # @inspect value
+    value = generate_rollouts_rl(mdp, agent, num_trials=100)  # @inspect value
 
     text("Various flavors of values (expected utility):")
     text("- V_π(s): value of following policy π from state s")
@@ -84,7 +84,7 @@ def review_rl():
     text("- Bootstrapping: immediate reward + estimate of future reward")
 
     text("Algorithms:")
-    text("- Model-based value iteration: estimate the MDP then compute the optimal policy")
+    text("- Model-based RL: estimate the MDP then compute the optimal policy")
     text("- Model-free Monte Carlo: estimate Q_π(s, a) from full rollouts (on-policy): target = utility")
     text("- SARSA: estimate Q_π(s, a) as you rollout (on-policy, bootstrapping): target = r + γ * Q(s', a'), a' = π(s')")
     text(f"- Q-learning: estimate Q`*`(s, a) (off-policy, bootstrapping): target = r + γ * max_a' Q`*`(s', a')")
@@ -122,39 +122,39 @@ def function_approximation():
 
     text("For the agent, use a parameterized Q-value function (but for simplicity, simulate the tabular setting):")
     policy = partial(walk_tram_policy, mdp.num_locs)
-    rl = ParameterizedQLearning(num_locs=mdp.num_locs, actions=["walk", "tram"], valid_actions=mdp.actions,
+    agent = ParameterizedQLearning(num_locs=mdp.num_locs, actions=["walk", "tram"], valid_actions=mdp.actions,
                        exploration_policy=policy, epsilon=0.4, discount=1, learning_rate=0.1)
 
     text("Define feature vector φ(s, a) for each state and action:")
-    phi = rl.phi(state=1, action="walk")  # @inspect phi
-    phi = rl.phi(state=1, action="tram")  # @inspect phi @stepover
-    phi = rl.phi(state=2, action="walk")  # @inspect phi @stepover
-    phi = rl.phi(state=2, action="tram")  # @inspect phi @stepover
-    phi = rl.phi(state=6, action="tram")  # @inspect phi @stepover
+    phi = agent.phi(state=1, action="walk")  # @inspect phi
+    phi = agent.phi(state=1, action="tram")  # @inspect phi @stepover
+    phi = agent.phi(state=2, action="walk")  # @inspect phi @stepover
+    phi = agent.phi(state=2, action="tram")  # @inspect phi @stepover
+    phi = agent.phi(state=6, action="tram")  # @inspect phi @stepover
 
     text("Define Q-value function Q_θ(s, a) = φ(s, a) * θ:")
-    value = rl.Q(state=1, action="walk")  # @inspect value
+    value = agent.Q(state=1, action="walk")  # @inspect value
 
     text("Compute policy π(s) = argmax_a Q_θ(s, a):")
-    action = rl.pi(state=1)  # @inspect action
+    action = agent.pi(state=1)  # @inspect action
 
     text("Using these pieces, the agent interacts with the environment:")  # @clear phi action value
     text("2, 3. loss function and optimization algorithm defined in `incorporate_feedback`")
-    rl.get_action(state=1)
-    rl.incorporate_feedback(state=1, action="walk", reward=-1, next_state=2, is_end=False)
-    rl.get_action(state=2)
-    rl.incorporate_feedback(state=2, action="walk", reward=-1, next_state=3, is_end=False)
-    rl.get_action(state=3)
-    rl.incorporate_feedback(state=3, action="tram", reward=-2, next_state=6, is_end=True)
+    agent.get_action(state=1)
+    agent.incorporate_feedback(state=1, action="walk", reward=-1, next_state=2, is_end=False)
+    agent.get_action(state=2)
+    agent.incorporate_feedback(state=2, action="walk", reward=-1, next_state=3, is_end=False)
+    agent.get_action(state=3)
+    agent.incorporate_feedback(state=3, action="tram", reward=-2, next_state=6, is_end=True)
 
     text("Now let's run this agent for multiple rollouts:")
-    value = simulate(mdp, rl, num_trials=100)  # @inspect value rl @stepover
+    value = generate_rollouts_rl(mdp, agent, num_trials=100)  # @inspect value agent @stepover
 
     text("We can extract the current optimal policy π_θ(s) of the agent:")
     states = [state for state in range(1, mdp.num_locs + 1) if not mdp.is_end(state)]  # No actions in end states
-    pi = {state: rl.pi(state) for state in states}  # @inspect pi @stepover
+    pi = {state: agent.pi(state) for state in states}  # @inspect pi @stepover
     text("And the corresponding values V_θ(s) = Q_θ(s, π_θ(s)):")
-    V = {state: rl.Q(state, pi[state]) for state in states}  # @inspect V @stepover
+    V = {state: agent.Q(state, pi[state]) for state in states}  # @inspect V @stepover
 
     text("Let's compare with the true values by solving the MDP:")
     result = value_iteration(mdp)  # @inspect result.values result.pi
@@ -168,7 +168,7 @@ def function_approximation():
     text("- Q-learning: take a gradient of the loss with respect to θ and take a step")
 
 
-class ParameterizedQLearning(RLAlgorithm):
+class ParameterizedQLearning(Agent):
     def __init__(self, num_locs: int, actions: list[str], valid_actions: Callable[[Any], list[str]],
                  exploration_policy: Policy, epsilon: float, discount: float, learning_rate: float):
         self.num_locs = num_locs
@@ -348,30 +348,30 @@ def policy_gradient_math():
 def policy_gradient_implementation():
     mdp = FlakyTramMDP(num_locs=6, failure_prob=0.1)
     set_random_seed(1)
-    rl = Reinforce(num_locs=mdp.num_locs, actions=["walk", "tram"], valid_actions=mdp.actions, discount=1, learning_rate=0.01)
+    agent = Reinforce(num_locs=mdp.num_locs, actions=["walk", "tram"], valid_actions=mdp.actions, discount=1, learning_rate=0.01)
     text("Note that we don't need an explicit exploration policy")
     text("...because the stochastic policy should give us exploration.")
 
     text("Let's try a rollout:")
-    rl.get_action(state=1)
-    rl.incorporate_feedback(state=1, action="walk", reward=-1, next_state=2, is_end=False)
-    rl.get_action(state=2)
-    rl.incorporate_feedback(state=2, action="tram", reward=-2, next_state=2, is_end=False)
-    rl.get_action(state=2)
-    rl.incorporate_feedback(state=2, action="tram", reward=-2, next_state=4, is_end=True)
+    agent.get_action(state=1)
+    agent.incorporate_feedback(state=1, action="walk", reward=-1, next_state=2, is_end=False)
+    agent.get_action(state=2)
+    agent.incorporate_feedback(state=2, action="tram", reward=-2, next_state=2, is_end=False)
+    agent.get_action(state=2)
+    agent.incorporate_feedback(state=2, action="tram", reward=-2, next_state=4, is_end=True)
 
     text("Now let's run this agent for multiple rollouts:")
-    value = simulate(mdp, rl, num_trials=50)  # @inspect value rl @stepover
+    value = generate_rollouts_rl(mdp, agent, num_trials=50)  # @inspect value agent @stepover
     text("We can extract the current optimal policy π_θ(s) of the agent:")
     states = [state for state in range(1, mdp.num_locs + 1) if not mdp.is_end(state)]  # No actions in end states
-    pi = {state: rl.pi(state) for state in states}  # @inspect pi @stepover
+    pi = {state: agent.pi(state) for state in states}  # @inspect pi @stepover
 
     text("Summary:")
     text("- `get_action`: sample from the policy π_θ(a | s)")
     text("- `incorporate_feedback`: update parameters on (state, action) in the rollout 𝜏, weighted by utility(𝜏)")
 
 
-class Reinforce(RLAlgorithm):
+class Reinforce(Agent):
     def __init__(self, num_locs: int, actions: list[str], valid_actions: Callable[[Any], list[str]], discount: float, learning_rate: float):
         self.num_locs = num_locs
         self.actions = actions  # All actions

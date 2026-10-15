@@ -548,7 +548,6 @@ def policy_evaluation_for_state(mdp: MDP, policy: Policy, state: Any, values: di
 
     # Compute the value of the policy from that state
     value = compute_q_value(successors, mdp.discount(), values)  # @inspect value
-    graph(draw_mdp_graph(mdp, values=values))  # @stepover
     return value
 
 
@@ -623,9 +622,9 @@ class ValueIterationResult:
     distances: list[float]  # iteration -> change in value that iteration
 
 
-def value_iteration(mdp: MDP, max_iters: int = 100, tolerance: float = 1e-3) -> ValueIterationResult:
+def value_iteration(mdp: MDP, max_iters: int = 100, tolerance: float = 1e-3, show: bool = True) -> ValueIterationResult:
     """
-    Compute the value of the optimal policy.
+    Compute the value of the optimal policy (showing the graph at each iteration if `show`).
     Returns:
     - values: dict[Any, float]: state -> optimal value of that state
     - pi: dict[Any, Any]: state -> optimal action for that state
@@ -633,7 +632,8 @@ def value_iteration(mdp: MDP, max_iters: int = 100, tolerance: float = 1e-3) -> 
     """
     # Initialize values of each state
     values = get_initial_values(mdp)  # @stepover @inspect values
-    graph(draw_mdp_graph(mdp, values=values))  # @stepover
+    if show:
+        graph(draw_mdp_graph(mdp, values=values))  # @stepover
     # Initialize the policy (state -> action)
     pi = {state: None for state in values}  # @inspect pi @stepover
 
@@ -641,7 +641,8 @@ def value_iteration(mdp: MDP, max_iters: int = 100, tolerance: float = 1e-3) -> 
     for iter in range(max_iters):  # @inspect iter
         # Compute the values (and best actions) after one more step
         new_values, pi = value_iteration_step(mdp, values)  # @inspect new_values pi @stepover
-        graph(draw_mdp_graph(mdp, values=new_values))  # @stepover
+        if show:
+            graph(draw_mdp_graph(mdp, values=new_values, pi=pi))  # @stepover
 
         # Check for convergence
         distance = compute_distance(values, new_values)  # @inspect distance @stepover
@@ -708,16 +709,20 @@ class DiceGameMDP(MDP):
         return 1
 
 
-def draw_mdp_graph(mdp: MDP, rollout: "Rollout | None" = None, values: dict[Any, float] | None = None) -> dict | None:
+def draw_mdp_graph(mdp: MDP, rollout: "Rollout | None" = None, values: dict[Any, float] | None = None,
+                   pi: dict[Any, Any] | None = None, layout: MDP | None = None) -> dict | None:
     """
     Return the graph of `mdp` (to show with `graph`): states as circles (end states as double circles),
     a small chance node for each (state, action) colored by the action, and an edge from it to each
     possible next state labeled with the probability and reward.
     If `rollout` is given, highlight its path (in orange): the action taken in each state and the resulting next state.
     If `values` is given, show the value of each state (in orange, outside the node).
+    If `pi` is given, highlight the action that the policy takes in each state (in orange).
+    If `layout` is given, lay out the states like that MDP (e.g., draw an estimated MDP like the true one).
     Return None if we don't know how to lay out `mdp` (which `graph` shows as nothing).
     """
-    if isinstance(mdp, FlakyTramMDP):
+    layout = layout or mdp
+    if isinstance(layout, FlakyTramMDP):
         spacing = 80
         position = lambda state: (spacing * (state - 1), 0)
         # Chance nodes: walk above the line (toward the next state), tram below
@@ -728,8 +733,8 @@ def draw_mdp_graph(mdp: MDP, rollout: "Rollout | None" = None, values: dict[Any,
         label_at_source = lambda state, step: step.action == "tram" and step.state > state and curve(state, step) is None
         # Label walks right next to their chance node (leaving room above the next state for its value)
         label_near_chance = lambda state, step: step.action == "walk"
-        width, height = spacing * (mdp.num_locs - 1) + 80, 300
-    elif isinstance(mdp, DiceGameMDP):
+        width, height = spacing * (layout.num_locs - 1) + 80, 300
+    elif isinstance(layout, DiceGameMDP):
         position = {"in": (0, 0), "end": (280, 0)}.get
         chance_offsets = {"quit": (140, -60), "stay": (140, 60)}
         curve = lambda state, step: None
@@ -768,7 +773,8 @@ def draw_mdp_graph(mdp: MDP, rollout: "Rollout | None" = None, values: dict[Any,
             # The action's name goes on the far side of its chance node (away from the state)
             nodes.append({"id": chance, "label": action, "x": x + dx, "y": y + dy,
                           "classes": f"chance action-{i} {'above' if dy < 0 else 'below'}"})
-            edges.append({"source": state, "target": chance, "classes": f"action-{i} choose" + on_path(state, chance)})
+            chosen = " policy" if pi is not None and pi.get(state) == action else ""
+            edges.append({"source": state, "target": chance, "classes": f"action-{i} choose" + chosen + on_path(state, chance)})
             for step in successors:
                 edge = {"source": chance, "target": step.state, "label": f"{format_prob(step.prob)}: {format_number(step.reward)}",
                         "classes": f"action-{i}" + (" label-at-source" if label_at_source(state, step) else "") +
@@ -792,11 +798,39 @@ def draw_mdp_graph(mdp: MDP, rollout: "Rollout | None" = None, values: dict[Any,
             {"selector": f"node.action-{i}", "style": {"background-color": color, "color": color}},
             {"selector": f"edge.action-{i}", "style": {"line-color": color, "target-arrow-color": color, "color": color}},
         ]
+    # Policy: thicker, orange like the values (after the action colors so that it takes precedence)
+    stylesheet.append({"selector": "edge.policy", "style": {"width": 5, "line-color": "#f77f00", "z-index": 5}})
     # Rollout path: thicker, bright orange, drawn on top (after the action colors so that it takes precedence)
     stylesheet.append({"selector": "edge.path", "style": {"width": 4, "line-color": "#f77f00", "target-arrow-color": "#f77f00",
                                                           "color": "#f77f00", "z-index": 10}})
     return make_graph(nodes, edges, stylesheet=stylesheet, width=width, height=height)
 
+
+
+def draw_rollout_graph(mdp: MDP, rollout: Rollout) -> dict:
+    """
+    Return the graph of `rollout` (to show with `graph`) as a chain: the states visited (in order, starting from the
+    start state of `mdp`), with an edge for each step labeled with the action (colored by the action) and the reward.
+    """
+    spacing = 85
+    action_colors = ["#2a9d8f", "#9b72cf"]  # Teal, purple (in order of first appearance, as in `draw_mdp_graph`)
+    action_index = {}
+    # States can repeat (e.g., when the tram fails), so identify nodes by their position in the chain
+    states = [mdp.start_state()] + [step.state for step in rollout.steps]
+    nodes = [{"id": t, "label": str(state), "x": spacing * t, "y": 0, "classes": "end" if mdp.is_end(state) else ""}
+             for t, state in enumerate(states)]
+    edges = []
+    for t, step in enumerate(rollout.steps):
+        i = action_index.setdefault(step.action, len(action_index))
+        edges.append({"source": t, "target": t + 1, "label": f"{step.action}: {format_number(step.reward)}", "classes": f"action-{i}"})
+
+    stylesheet = search_graph_stylesheet() + [
+        {"selector": "edge", "style": {"font-size": 11, "arrow-scale": 0.8, "text-margin-y": -10}},
+    ]
+    for action, i in action_index.items():
+        color = action_colors[i % len(action_colors)]
+        stylesheet.append({"selector": f"edge.action-{i}", "style": {"line-color": color, "target-arrow-color": color, "color": color}})
+    return make_graph(nodes, edges, stylesheet=stylesheet, width=spacing * len(rollout.steps) + 80, height=100)
 
 def format_prob(prob: float) -> str:
     """Show a probability as a decimal if it has at most 2 digits (e.g., 0.6), otherwise as a fraction (e.g., 1/3)."""

@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 660 120" width="660" height="120" font-family="Helvetica, Arial, sans-serif" font-size="14">
+<rect width="660" height="120" fill="white"/>
+<!-- Rollouts -> Exploration -->
+<line x1="15" y1="68" x2="98" y2="68" stroke="#9b72cf" stroke-width="3"/>
+<path d="M110,68 L98,74 L98,62 Z" fill="#9b72cf"/>
+<text x="58" y="56" text-anchor="middle" fill="#9b72cf" font-size="16" font-weight="bold">rollouts</text>
+<!-- Stages -->
+<rect x="110" y="40" width="125" height="56" rx="10" fill="#f4f4f4" stroke="#555" stroke-width="2"/>
+<text x="172.5" y="74" text-anchor="middle" fill="#222" font-size="18">Exploration</text>
+<rect x="315" y="40" width="125" height="56" rx="10" fill="#f4f4f4" stroke="#555" stroke-width="2"/>
+<text x="377.5" y="74" text-anchor="middle" fill="#222" font-size="18">Planning</text>
+<rect x="520" y="40" width="125" height="56" rx="10" fill="#f4f4f4" stroke="#555" stroke-width="2"/>
+<text x="582.5" y="74" text-anchor="middle" fill="#222" font-size="18">Exploitation</text>
+<!-- Exploration -> Planning: estimated MDP -->
+<line x1="235" y1="68" x2="303" y2="68" stroke="#2a9d8f" stroke-width="3"/>
+<path d="M315,68 L303,74 L303,62 Z" fill="#2a9d8f"/>
+<text x="275" y="56" text-anchor="middle" fill="#2a9d8f" font-size="16" font-weight="bold">MDP</text>
+<!-- Planning -> Exploitation: policy -->
+<line x1="440" y1="68" x2="508" y2="68" stroke="#2a9d8f" stroke-width="3"/>
+<path d="M520,68 L508,74 L508,62 Z" fill="#2a9d8f"/>
+<text x="480" y="56" text-anchor="middle" fill="#2a9d8f" font-size="16" font-weight="bold">policy</text>
+</svg>

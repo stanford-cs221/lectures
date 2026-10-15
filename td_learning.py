@@ -2,7 +2,7 @@ from functools import partial
 from typing import Any
 from edtrace import text, image, link
 import numpy as np
-from reinforcement_learning import SARSA, RLAlgorithm, walk_tram_policy
+from reinforcement_learning import SARSA, Agent, walk_tram_policy
 from mdp import MDP, Policy, FlakyTramMDP, get_action_successors
 from collections import defaultdict
 from util import set_random_seed
@@ -41,13 +41,13 @@ def td_learning_motivation():
     text("- On-policy: estimating Q-values of the current policy Q_π(s, a)")
     text("- Bootstrapping: target is immediate reward + estimated future reward")
     image("images/sarsa-algorithm.png", width=500)
-    rl = SARSA(exploration_policy=partial(walk_tram_policy, 6), epsilon=0.4, discount=1, learning_rate=0.1)
-    rl.get_action(state=1)
-    rl.incorporate_feedback(state=1, action="walk", reward=-1, next_state=2, is_end=False)
-    rl.get_action(state=2)
-    rl.incorporate_feedback(state=2, action="walk", reward=-1, next_state=3, is_end=False)
-    rl.get_action(state=3)
-    rl.incorporate_feedback(state=3, action="tram", reward=-2, next_state=6, is_end=True)
+    agent = SARSA(exploration_policy=partial(walk_tram_policy, 6), epsilon=0.4, discount=1)
+    agent.get_action(state=1)
+    agent.incorporate_feedback(state=1, action="walk", reward=-1, next_state=2, is_end=False)
+    agent.get_action(state=2)
+    agent.incorporate_feedback(state=2, action="walk", reward=-1, next_state=3, is_end=False)
+    agent.get_action(state=3)
+    agent.incorporate_feedback(state=3, action="tram", reward=-2, next_state=6, is_end=True)
     text("**Policy improvement**: π_new(s) = argmax_a Q_π(s, a)")
     text("In other words, from Q-values, you can read out a (myopically optimal) policy.")
 
@@ -95,13 +95,13 @@ def td_learning():
     mdp = FlakyTramMDP(num_locs=6, failure_prob=0.1)
     policy = partial(walk_tram_policy, 6)
     # Note that TDLearning needs knowledge of the MDP to compute the policy (for policy improvement)
-    rl = TDLearning(mdp=mdp, exploration_policy=policy, epsilon=0.2, discount=1, learning_rate=0.1)  # @stepover
-    rl.get_action(state=1)
-    rl.incorporate_feedback(state=1, action="walk", reward=-1, next_state=2, is_end=False)
-    rl.get_action(state=2)  # @stepover
-    rl.incorporate_feedback(state=2, action="walk", reward=-1, next_state=3, is_end=False)  # @stepover
-    rl.get_action(state=3)  # @stepover
-    rl.incorporate_feedback(state=3, action="tram", reward=-2, next_state=6, is_end=True)  # @stepover
+    agent = TDLearning(mdp=mdp, exploration_policy=policy, epsilon=0.2, discount=1, learning_rate=0.1)  # @stepover
+    agent.get_action(state=1)
+    agent.incorporate_feedback(state=1, action="walk", reward=-1, next_state=2, is_end=False)
+    agent.get_action(state=2)  # @stepover
+    agent.incorporate_feedback(state=2, action="walk", reward=-1, next_state=3, is_end=False)  # @stepover
+    agent.get_action(state=3)  # @stepover
+    agent.incorporate_feedback(state=3, action="tram", reward=-2, next_state=6, is_end=True)  # @stepover
 
     text("Summary:")
     text("- TD learning estimates V_π(s) from experience (s, a, r, s')")
@@ -109,7 +109,7 @@ def td_learning():
     text("- Uses bootstrapping")
 
 
-class TDLearning(RLAlgorithm):
+class TDLearning(Agent):
     """Implements the TD learning algorithm."""
     def __init__(self, mdp: MDP, exploration_policy: Policy, epsilon: float, discount: float, learning_rate: float):
         self.mdp = mdp

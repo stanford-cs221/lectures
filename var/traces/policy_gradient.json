@@ -1,6 +1,6 @@
 {
   "files": {
-    "policy_gradient.py": "from edtrace import text, image, link\nfrom typing import Any\nfrom functools import partial\nfrom typing import Callable\nfrom mdp import FlakyTramMDP, value_iteration\nfrom reinforcement_learning import QLearning, walk_tram_policy, simulate, RLAlgorithm, Step, Rollout\nfrom dataclasses import dataclass\nimport torch\nimport torch.nn as nn\nfrom util import set_random_seed, one_hot\n\nPolicy = Callable[[Any], Any]\n\ndef main():\n    text(\"Last time: reinforcement learning\")\n    text(\"This time: generalize to large state spaces, learn policy directly\")\n\n    review_rl()\n\n    function_approximation()\n    policy_gradient()\n\n    text(\"Summary:\")\n    text(\"- Model-based: estimate the MDP\")\n    text(\"- Value-based: estimate Q-values\")\n    text(\"- Policy-based: estimate policy\")\n\n    text(\"Form of algorithm\")\n    text(\"1. Generate rollouts from exploration policy\")\n    text(\"2. Form some loss function (parameters of MDP, Q-values, or policy)\")\n    text(\"3. Update parameters using gradient step\")\n\n    text(\"In MDPs and RL, we're maximizing expected utility.\")\n    text(\"Next time: what if there are adversaries in the environment?\")\n\n\ndef review_rl():\n    text(\"Reinforcement learning (RL) setting:\")\n    image(\"images/rl-framework.png\", width=400)\n\n    text(\"**Environment**: Markov decision process (MDP)\")\n    mdp = FlakyTramMDP(num_locs=6, failure_prob=0.1)  # @stepover\n    set_random_seed(1)\n\n    text(\"**Agent**: RL algorithm\")\n    policy = partial(walk_tram_policy, mdp.num_locs)\n    rl = QLearning(exploration_policy=policy, epsilon=0.4, discount=1, learning_rate=0.1)\n\n    text(\"An example interaction (what the agent sees):\")\n    action = rl.get_action(state=1)  # @inspect action\n    rl.incorporate_feedback(state=1, action=\"walk\", reward=-1, next_state=2, is_end=False)\n    action = rl.get_action(state=2)  # @inspect action\n    rl.incorporate_feedback(state=2, action=\"walk\", reward=-1, next_state=3, is_end=False)\n    action = rl.get_action(state=3)  # @inspect action\n    rl.incorporate_feedback(state=3, action=\"tram\", reward=-2, next_state=6, is_end=True)\n    text(\"Each rollout generates a utility (discounted sum of rewards).\")  # @clear action\n\n    text(\"Generate rollouts, value is the mean utility.\")\n    value = simulate(mdp, rl, num_trials=100)  # @inspect value\n\n    text(\"Various flavors of values (expected utility):\")\n    text(\"- V_\u03c0(s): value of following policy \u03c0 from state s\")\n    text(\"- Q_\u03c0(s, a): value of taking action a in state s, and then following policy \u03c0\")\n    text(\"- V`*`(s): value of following the optimal policy from state s\")\n    text(\"- Q`*`(s, a): value of taking action a in state s, and then following the optimal policy\")\n\n    text(\"To model or not to model?\")\n    text(\"- Model-based: estimate the MDP, then compute the optimal policy\")\n    text(\"- Value-based (model-free): don't estimate the MDP, just estimate Q-values directly\")\n\n    text(\"General form for model-free methods (for model-free Monte Carlo, SARSA, Q-learning):\")\n    text(\"- Current model estimate: Q(s, a)\")\n    text(\"- Target (estimate of utility)\")\n    text(\"Update: Q(s, a) \u2190 Q(s, a) + learning_rate * (target - Q(s, a))\")\n\n    text(\"On-policy (Q_\u03c0) vs. off-policy (Q`*`):\")\n    text(\"Follow exploration policy \u03c0 to generate rollouts\")\n    text(\"...to estimate Q-values of an estimation policy\")\n    text(\"- On-policy: exploration policy = estimation policy\")\n    text(\"- Off-policy: exploration policy \u2260 estimation policy\")\n\n    text(\"What to use as targets?\")\n    text(\"- Full rollouts: use actual utility (discounted sum of rewards)\")\n    text(\"- Bootstrapping: immediate reward + estimate of future reward\")\n\n    text(\"Algorithms:\")\n    text(\"- Model-based value iteration: estimate the MDP then compute the optimal policy\")\n    text(\"- Model-free Monte Carlo: estimate Q_\u03c0(s, a) from full rollouts (on-policy): target = utility\")\n    text(\"- SARSA: estimate Q_\u03c0(s, a) as you rollout (on-policy, bootstrapping): target = r + \u03b3 * Q(s', a'), a' = \u03c0(s')\")\n    text(f\"- Q-learning: estimate Q`*`(s, a) (off-policy, bootstrapping): target = r + \u03b3 * max_a' Q`*`(s', a')\")\n\n    text(\"So far, we are estimating a Q-value for each state/action (s, a) pair.\")\n    text(\"This is the **tabular** setting (we keep a lookup table for each state/action pair).\")\n\n    text(\"Examples of states in real-world settings:\")\n    text(\"- State is an image (e.g., for learning a robot policy)\")\n    image(\"https://rail.eecs.berkeley.edu/datasets/bridge_release/raw/bridge_data_v1/berkeley/toykitchen2/put_potato_in_pot_cardboard_fence/2022-01-28_11-25-48/raw/traj_group0/traj13/images0/im_0.jpg\", width=200)\n    text(\"- State is a sentence (e.g., for theorem proving)\")\n    text(\"*Let $x,y$ and $z$ be positive real numbers that satisfy the following system of equations...*\")\n\n    text(\"How do we handle these huge state spaces (all possible images or sentences)?\")\n\n\ndef function_approximation():\n    text(\"Tabular setting: lookup table for Q(s, a)\")\n    text(\"Function approximation: Q_\u03b8(s, a) is a function with parameters \u03b8\")\n\n    text(\"Design decisions:\")\n    text(\"1. What are the possible functions Q_\u03b8(s, a)? (hypothesis class)\")\n    text(\"2. What do we determine whether Q_\u03b8(s, a) is good? (loss function)\")\n    text(\"3. How do we reduce the loss function? (optimization algorithm)\")\n    text(\"Should seem familiar from the machine learning lecture!\")\n\n    text(\"1. What are the possible functions Q_\u03b8(s, a)?\")\n    text(\"- First, map the state and action to a vector of features \u03c6(s, a)\")\n    text(\"- Then, we could use a linear function: Q_\u03b8(s, a) = \u03c6(s, a) * \u03b8\")\n    text(\"- Or a multi-layer perceptron (MLP): Q_\u03b8(s, a) = MLP_\u03b8(\u03c6(s, a))\")\n\n    text(\"Let's define the same environment as before:\")\n    mdp = FlakyTramMDP(num_locs=6, failure_prob=0.1)\n    set_random_seed(2)\n\n    text(\"For the agent, use a parameterized Q-value function (but for simplicity, simulate the tabular setting):\")\n    policy = partial(walk_tram_policy, mdp.num_locs)\n    rl = ParameterizedQLearning(num_locs=mdp.num_locs, actions=[\"walk\", \"tram\"], valid_actions=mdp.actions,\n                       exploration_policy=policy, epsilon=0.4, discount=1, learning_rate=0.1)\n\n    text(\"Define feature vector \u03c6(s, a) for each state and action:\")\n    phi = rl.phi(state=1, action=\"walk\")  # @inspect phi\n    phi = rl.phi(state=1, action=\"tram\")  # @inspect phi @stepover\n    phi = rl.phi(state=2, action=\"walk\")  # @inspect phi @stepover\n    phi = rl.phi(state=2, action=\"tram\")  # @inspect phi @stepover\n    phi = rl.phi(state=6, action=\"tram\")  # @inspect phi @stepover\n\n    text(\"Define Q-value function Q_\u03b8(s, a) = \u03c6(s, a) * \u03b8:\")\n    value = rl.Q(state=1, action=\"walk\")  # @inspect value\n\n    text(\"Compute policy \u03c0(s) = argmax_a Q_\u03b8(s, a):\")\n    action = rl.pi(state=1)  # @inspect action\n\n    text(\"Using these pieces, the agent interacts with the environment:\")  # @clear phi action value\n    text(\"2, 3. loss function and optimization algorithm defined in `incorporate_feedback`\")\n    rl.get_action(state=1)\n    rl.incorporate_feedback(state=1, action=\"walk\", reward=-1, next_state=2, is_end=False)\n    rl.get_action(state=2)\n    rl.incorporate_feedback(state=2, action=\"walk\", reward=-1, next_state=3, is_end=False)\n    rl.get_action(state=3)\n    rl.incorporate_feedback(state=3, action=\"tram\", reward=-2, next_state=6, is_end=True)\n\n    text(\"Now let's run this agent for multiple rollouts:\")\n    value = simulate(mdp, rl, num_trials=100)  # @inspect value rl @stepover\n\n    text(\"We can extract the current optimal policy \u03c0_\u03b8(s) of the agent:\")\n    states = [state for state in range(1, mdp.num_locs + 1) if not mdp.is_end(state)]  # No actions in end states\n    pi = {state: rl.pi(state) for state in states}  # @inspect pi @stepover\n    text(\"And the corresponding values V_\u03b8(s) = Q_\u03b8(s, \u03c0_\u03b8(s)):\")\n    V = {state: rl.Q(state, pi[state]) for state in states}  # @inspect V @stepover\n\n    text(\"Let's compare with the true values by solving the MDP:\")\n    result = value_iteration(mdp)  # @inspect result.values result.pi\n    text(\"It's in the ballpark, and more accurate for more visited states.\")\n\n    text(\"Summary:\")\n    text(\"- Function approximation: parameterize Q_\u03b8(s, a) by some \u03b8\")\n    text(\"- Map states and actions into a vector of features \u03c6(s, a)\")\n    text(\"- Define either a linear function or an MLP to map \u03c6(s, a) \u2192 Q_\u03b8(s, a)\")\n    text(\"- Define squared loss between Q_\u03b8(s, a) and target (r + \u03b3 * max_a' Q_\u03b8(s', a'))\")\n    text(\"- Q-learning: take a gradient of the loss with respect to \u03b8 and take a step\")\n\n\nclass ParameterizedQLearning(RLAlgorithm):\n    def __init__(self, num_locs: int, actions: list[str], valid_actions: Callable[[Any], list[str]],\n                 exploration_policy: Policy, epsilon: float, discount: float, learning_rate: float):\n        self.num_locs = num_locs\n        self.actions = actions  # All actions\n        self.valid_actions = valid_actions  # The actions available in a given state (told by the environment)\n        self.num_features = num_locs * len(actions)\n\n        self.exploration_policy = exploration_policy\n        self.epsilon = epsilon\n        self.discount = discount\n        self.learning_rate = learning_rate\n        self.model = nn.Linear(self.num_features, 1)\n        self.optimizer = torch.optim.SGD(self.model.parameters(), lr=learning_rate)\n\n\n    def phi(self, state: int, action: str) -> torch.Tensor:\n        # Map (state, action) to an integer 0 ... |states|*|actions|-1\n        index = (state - 1) * len(self.actions) + self.actions.index(action)  # @inspect index\n        # Create a one-hot vector of length self.num_features\n        vector = one_hot(index, self.num_features)  # @inspect vector\n        return vector\n\n\n    def Q(self, state: int, action: str) -> torch.Tensor:\n        \"\"\"Compute the Q-value for a given state and action.\"\"\"\n        # Map (state, action) to feature vector\n        phi = self.phi(state, action)  # @inspect phi @stepover\n\n        # Pass it through the model\n        value = self.model(phi)  # @inspect value\n\n        return value\n\n\n    def pi(self, state: int) -> str:\n        \"\"\"Compute the policy for a given state.\"\"\"\n        # Compute Q-values for all valid actions\n        q_values = {action: self.Q(state, action) for action in self.valid_actions(state)}  # @inspect q_values @stepover\n\n        # Choose the action with the highest Q-value\n        action = max(q_values.keys(), key=lambda k: q_values[k].item())  # @inspect action\n\n        return action\n\n\n    def get_action(self, state: Any) -> Any:\n        # Run epsilon-greedy\n        if torch.rand(1).item() < self.epsilon:\n            # Explore\n            return self.exploration_policy(state)\n        else:\n            # Exploit\n            return self.pi(state)  # @stepover\n\n\n    def incorporate_feedback(self, state: Any, action: Any, reward: Any, next_state: Any, is_end: bool) -> None:\n        # Compute target (immediate reward + bootstrapped discounted future reward)\n        if is_end:\n            target = reward  # @inspect target\n        else:   # Bootstrapping\n            next_action = self.pi(next_state)  # @inspect next_action @stepover\n            target = reward + self.discount * self.Q(next_state, next_action)  # @inspect target @stepover\n\n        # Compute predicted value\n        value = self.Q(state, action)  # @inspect value @stepover\n\n        # Compute loss (standard squared loss)\n        loss = (value - target) ** 2  # @inspect loss\n\n        # Update model with a gradient step\n        self.optimizer.zero_grad()\n        loss.backward()  # Compute gradients\n        self.optimizer.step()  # Update the parameters @inspect self\n\n    def asdict(self):\n        return dict(self.model.named_parameters())\n\n\ndef policy_gradient():\n    text(\"Model-based: estimate the MDP \u2192 policy \u03c0(s)\")\n    text(\"Value-based: estimate Q-values Q(s, a) \u2192 policy \u03c0(s)\")\n\n    text(\"Why not **directly** estimate the policy \u03c0(s)?\")\n    text(\"Think of the policy as a classifier (input s \u2192 output a)\")\n\n    text(\"Recall that a classifier is a hard function to optimize directly\")\n    text(\"...so we optimize over a probabilistic classifier \u03c0(a | s).\")\n\n    imitation_learning()\n\n    policy_gradient_math()\n    policy_gradient_implementation()\n    policy_gradient_enhancements()\n\n\ndef imitation_learning():\n    text(\"If we had demonstrations of the policy, it'd be easy.\")\n\n    text(\"Suppose we have a rollout \ud835\udf0f:\")\n    rollout = Rollout(steps=[\n        Step(action=\"walk\", prob=1, reward=-1, state=2),\n        Step(action=\"walk\", prob=1, reward=-1, state=3),\n        Step(action=\"tram\", prob=1, reward=-2, state=6),\n    ], discount=1)\n    text(\"We create the following examples:\")\n    examples = [\n        Example(input=1, output=\"walk\"),\n        Example(input=2, output=\"walk\"),\n        Example(input=3, output=\"tram\"),\n    ]\n    text(\"J(\u03b8) = \u03a3`_`t log \u03c0`_`\u03b8(a`_`t | s`_`{t-1})\")\n    text(\"This is called **imitation learning**.\")\n\n    text(\"Examples:\")\n    text(\"- Robotics: teleoperation\")\n    image(\"https://news.stanford.edu/__data/assets/image/0028/134857/mobilealoha_2.jpg\", width=200)\n    text(\"- Math: human-written solution to a math problem\")\n\n\n@dataclass(frozen=True)\nclass Example:\n    input: Any\n    output: Any\n\n\ndef policy_gradient_math():\n    text(\"But in reinforcement learning, we don't have demonstrations.\")\n    text(\"We have a reward function...\")\n    text(\"So what do we do?\")\n\n    text(\"Suppose we have a rollout (trajectory, episode):\")\n    text(\"\ud835\udf0f = (s_0, a_1, r_1, s_1, a_2, r_2, s_2, a_3, r_3, s_3):\")\n    rollout = Rollout(steps=[  # @inspect rollout\n        Step(action=\"walk\", prob=1, reward=-1, state=2),\n        Step(action=\"walk\", prob=1, reward=-1, state=3),\n        Step(action=\"tram\", prob=1, reward=-2, state=6),\n    ], discount=1)\n    text(\"Each rollout produces a utility.\")\n\n    text(\"What is the probability of a rollout?\")\n    text(\"p(\ud835\udf0f) = p(s_0) * \u03c0_\u03b8(a_1 | s_0) * T(s_0, a_1, s_1) * \u03c0_\u03b8(a_2 | s_1) * T(s_1, a_2, s_2) * \u03c0_\u03b8(a_3 | s_2) * T(s_2, a_3, s_3)\")\n    text(\"Components:\")\n    text(\"- p(s_0): probability of starting in state s_0\")\n    text(\"- \u03c0_\u03b8(a_t | s_{t-1}): policy\")\n    text(\"- T(s_{t-1}, a_t, s_t): transition distribution\")\n\n    text(\"Our goal is to maximize the expected utility of a rollout:\")\n    text(\"V(\u03b8) = E_\u03b8[utility(\ud835\udf0f)] = \u03a3_\ud835\udf0f p_\u03b8(\ud835\udf0f) * utility(\ud835\udf0f)\")\n\n    text(\"Let's just take the gradient of V(\u03b8) with respect to \u03b8:\")\n    text(\"\u2207_\u03b8 V(\u03b8) = \u2207_\u03b8 E_\u03b8[utility(\ud835\udf0f)]\")\n    text(\"\u2207_\u03b8 V(\u03b8) = \u2207_\u03b8 \u03a3_\ud835\udf0f p_\u03b8(\ud835\udf0f) * utility(\ud835\udf0f)\")\n    text(\"\u2207_\u03b8 V(\u03b8) = \u03a3_\ud835\udf0f \u2207_\u03b8 p_\u03b8(\ud835\udf0f) * utility(\ud835\udf0f)\")\n    text(\"\u2207_\u03b8 V(\u03b8) = \u03a3_\ud835\udf0f p_\u03b8(\ud835\udf0f) * \u2207_\u03b8 log p_\u03b8(\ud835\udf0f) * utility(\ud835\udf0f)\")\n    text(\"\u2207_\u03b8 V(\u03b8) = E_\u03b8[\u2207_\u03b8 log p_\u03b8(\ud835\udf0f) * utility(\ud835\udf0f)]\")\n    text(\"This is the **policy gradient theorem (identity)**.\")\n\n    text(\"Whenever you see E_\u03b8[...], you can replace it with a sample \ud835\udf0f ~ p_\u03b8(\ud835\udf0f)\")\n    text(\"...define the objective function J(\u03b8, \ud835\udf0f) = log p_\u03b8(\ud835\udf0f) * utility(\ud835\udf0f)\")\n    text(\"...and update \u03b8 by taking a step in the direction of \u2207_\u03b8 J(\u03b8, \ud835\udf0f).\")\n\n    text(\"Breaking down the gradient:\")\n    text(\"\u2207`_`\u03b8 J(\u03b8, \ud835\udf0f) = utility(\ud835\udf0f) * \u03a3`_`t \u2207`_`\u03b8 log \u03c0`_`\u03b8(a`_`t | s`_`{t-1})\")\n\n    text(\"This is the REINFORCE algorithm \"), link(\"https://link.springer.com/article/10.1007/BF00992696\", title=\"[Williams, 1992]\")\n\n    text(\"Intuition:\")\n    text(\"- Just performing imitation learning on demonstrations from own policy weighted by utility.\")\n    text(\"- If utility(\ud835\udf0f) \u2208 {0, 1} (success/failure), then this is just imitation learning on own successful demonstrations.\")\n\n    text(\"Summary:\")\n    text(\"- Objective: optimize policy directly to maximize expected utility\")\n    text(\"- Due to policy gradient theorem, can compute unbiased gradient\")\n    text(\"- Algorithm: sample a rollout (on-policy), update using (state, action) in the rollout \ud835\udf0f, weighted by utility(\ud835\udf0f)\")\n\n\ndef policy_gradient_implementation():\n    mdp = FlakyTramMDP(num_locs=6, failure_prob=0.1)\n    set_random_seed(1)\n    rl = Reinforce(num_locs=mdp.num_locs, actions=[\"walk\", \"tram\"], valid_actions=mdp.actions, discount=1, learning_rate=0.01)\n    text(\"Note that we don't need an explicit exploration policy\")\n    text(\"...because the stochastic policy should give us exploration.\")\n\n    text(\"Let's try a rollout:\")\n    rl.get_action(state=1)\n    rl.incorporate_feedback(state=1, action=\"walk\", reward=-1, next_state=2, is_end=False)\n    rl.get_action(state=2)\n    rl.incorporate_feedback(state=2, action=\"tram\", reward=-2, next_state=2, is_end=False)\n    rl.get_action(state=2)\n    rl.incorporate_feedback(state=2, action=\"tram\", reward=-2, next_state=4, is_end=True)\n\n    text(\"Now let's run this agent for multiple rollouts:\")\n    value = simulate(mdp, rl, num_trials=50)  # @inspect value rl @stepover\n    text(\"We can extract the current optimal policy \u03c0_\u03b8(s) of the agent:\")\n    states = [state for state in range(1, mdp.num_locs + 1) if not mdp.is_end(state)]  # No actions in end states\n    pi = {state: rl.pi(state) for state in states}  # @inspect pi @stepover\n\n    text(\"Summary:\")\n    text(\"- `get_action`: sample from the policy \u03c0_\u03b8(a | s)\")\n    text(\"- `incorporate_feedback`: update parameters on (state, action) in the rollout \ud835\udf0f, weighted by utility(\ud835\udf0f)\")\n\n\nclass Reinforce(RLAlgorithm):\n    def __init__(self, num_locs: int, actions: list[str], valid_actions: Callable[[Any], list[str]], discount: float, learning_rate: float):\n        self.num_locs = num_locs\n        self.actions = actions  # All actions\n        self.valid_actions = valid_actions  # The actions available in a given state (told by the environment)\n        self.discount = discount\n        self.learning_rate = learning_rate\n        self.model = nn.Linear(self.num_locs, len(actions))\n        self.optimizer = torch.optim.SGD(self.model.parameters(), lr=learning_rate)\n\n        # Keep track of the current rollout (like model-free Monte Carlo)\n        self.start_state = None\n        self.rollout: list[Step] = []\n        self.utility = 0\n\n    def phi(self, state: int) -> torch.Tensor:\n        index = state - 1\n        return one_hot(index, self.num_locs)\n\n    def mask_invalid_actions(self, state: int, logits: torch.Tensor) -> torch.Tensor:\n        \"\"\"Set the logits of actions that aren't valid in `state` to a large negative number (so they get probability 0).\"\"\"\n        valid = torch.tensor([action in self.valid_actions(state) for action in self.actions])\n        return logits.masked_fill(~valid, -1e9)\n\n    def pi(self, state: int) -> dict[str, float]:\n        \"\"\"Return a distribution over actions.\"\"\"\n        phi = self.phi(state)\n        logits = self.mask_invalid_actions(state, self.model(phi))\n        probs = torch.softmax(logits, dim=0)\n        return dict(zip(self.actions, probs.tolist()))\n\n    def get_action(self, state: int) -> str:  # @inspect state\n        \"\"\"Sample an action from the policy.\"\"\"\n        # Compute logits under the model\n        phi = self.phi(state)  # @inspect phi @stepover\n        logits = self.model(phi)  # @inspect logits\n        # Only consider valid actions\n        logits = self.mask_invalid_actions(state, logits)  # @inspect logits @stepover\n\n        # Sample from the distribution given by the logits\n        probs = torch.softmax(logits, dim=0)  # @inspect probs\n        index = torch.multinomial(probs, num_samples=1).item()  # @inspect index\n\n        # Return the action\n        action = self.actions[index]  # @inspect action\n        return action\n\n\n    def incorporate_feedback(self, state: int, action: str, reward: float, next_state: int, is_end: bool) -> None:\n        \"\"\"Update the policy parameters.\"\"\"\n        # Remember the rollout\n        if self.start_state is None:\n            self.start_state = state\n        self.utility += reward * self.discount ** len(self.rollout)  # @inspect self.utility\n        self.rollout.append(Step(action=action, prob=1, reward=reward, state=next_state))  # @inspect self.rollout\n\n        if is_end:\n            # Compute the loss\n            loss = 0  # @inspect loss\n            for i, step in enumerate(self.rollout):\n                state = self.start_state if i == 0 else self.rollout[i - 1].state\n                action = step.action\n\n                # Compute cross-entropy loss for state -> action\n                phi = self.phi(state)  # @inspect phi @stepover\n                logits = self.mask_invalid_actions(state, self.model(phi))  # @inspect logits @stepover\n                cross_entropy = nn.CrossEntropyLoss()\n                target = one_hot(self.actions.index(action), len(self.actions))  # @inspect target\n                loss += self.utility * cross_entropy(logits, target)  # @inspect loss\n\n            # Update parameters\n            self.optimizer.zero_grad()\n            loss.backward()\n            self.optimizer.step()  # @inspect self\n\n            # Reset the rollout\n            self.start_state = None\n            self.rollout = []\n            self.utility = 0\n\n    def asdict(self):\n        return dict(self.model.named_parameters())\n\n\ndef policy_gradient_enhancements():\n    text(\"Recall the objective: maximize expected utility\")\n    text(\"V(\u03b8) = E_\u03b8[utility(\ud835\udf0f)] = \u03a3_\ud835\udf0f p_\u03b8(\ud835\udf0f) * utility(\ud835\udf0f)\")\n\n    text(\"Policy gradient theorem: \u2207_\u03b8 V(\u03b8) = E_\u03b8[\u2207_\u03b8 log p_\u03b8(\ud835\udf0f) * utility(\ud835\udf0f)]\")\n\n    text(\"REINFORCE is one particular (unbiased) estimate of \u2207_\u03b8 V(\u03b8):\")\n    text(\"Sample \ud835\udf0f ~ p_\u03b8(\ud835\udf0f) and compute \u2207_\u03b8 J(\u03b8, \ud835\udf0f) = \u2207_\u03b8 log p_\u03b8(\ud835\udf0f) * utility(\ud835\udf0f)\")\n    text(\"However, can we get a better estimate?\")\n\n    variance_reduction()\n\n    text(\"So how do we find an offset(s, a) that E[offset(s, a)] = 0?\")\n\n    text(\"Key identity:\")\n    text(\"Let b(s) be **any** function that only depends on state s (not action a).\")\n    text(\"Then E_\u03b8[\u2207_\u03b8 log \u03c0_\u03b8(a | s) * b(s)] = 0 for all s, and a ~ \u03c0_\u03b8(a | s).\")\n    text(\"Analogy: heuristics in A* search (use domain knowledge to improve algorithm)\")\n\n    text(\"Proof:\")\n    text(\"- E_\u03b8[b(s)] = constant\")\n    text(\"- \u2207_\u03b8 E_\u03b8[b(s)] = 0\")\n    text(\"- \u2207_\u03b8 \u03a3_a \u03c0_\u03b8(a | s) b(s) = 0\")\n    text(\"- \u03a3_a \u2207_\u03b8 \u03c0_\u03b8(a | s) b(s) = 0\")\n    text(\"- \u03a3_a \u03c0_\u03b8(a | s) \u2207_\u03b8 log \u03c0_\u03b8(a | s) b(s) = 0\")\n    text(\"- E_\u03b8[\u2207_\u03b8 log \u03c0_\u03b8(a | s) * b(s)] = 0\")\n    text(\"This is basically the reverse direction of the policy gradient theorem.\")\n\n    text(\"Enhancements to reduce variance:\")\n    text(\"1. Baselines: subtract off a baseline b(s) from the utility\")\n    text(\"J(\u03b8, \ud835\udf0f) = \u03a3_t log \u03c0_\u03b8(a_t | s_{t-1}) * (utility(\ud835\udf0f) - b(s_{t-1}))\")\n    text(\"2. Use returns-to-go instead of utility\")\n    text(\"J(\u03b8, \ud835\udf0f) = \u03a3_t log \u03c0_\u03b8(a_t | s_{t-1}) * (r_t + \u03b3 r_{t+1} + \u03b3^2 r_{t+2} + ... - b(s_{t-1}))\")\n    text(\"3. Use a **biased** estimate of the value function Q(s, a) instead of utility(\ud835\udf0f) (bootstrapping).\")\n    text(\"J(\u03b8, \ud835\udf0f) = \u03a3_t log \u03c0_\u03b8(a_t | s_{t-1}) * (Q(s_{t-1}, a_t) - b(s_{t-1}))\")\n\n    text(\"Summary:\")\n    text(\"- The game: find a low-bias, low-variance estimate of E_\u03b8[\u2207_\u03b8 log \u03c0_\u03b8(\ud835\udf0f) * utility(\ud835\udf0f)]\")\n    text(\"- Baselines: a general-purpose strategy to reduce variance, still unbiased\")\n    text(\"- Bootstrapping: reduce variance but introduce a bit of bias\")\n\n\ndef variance_reduction():\n    text(\"Consider the simple mean estimation problem:\")\n    text(\"\u03bc = E[f(i)] = \u03a3_i p(i) * f(i)\")\n    probs = torch.tensor([0.1, 0.4, 0.2, 0.3])  # p(0), p(1), ... @inspect probs\n    points = torch.tensor([-4., -6., 6., 8.])  # f(0), f(1), ... @inspect points\n\n    text(\"This is the true mean we want to estimate (is unknown):\")\n    mu = probs @ points  # @inspect mu\n\n    text(\"An **estimator** is any random variable that tries to get close to \u03bc.\")\n    text(\"Each estimator has a **bias** and a **variance** (and a cost).\")\n\n    text(\"The simplest estimate of \u03bc:\")\n    text(\"Sample a single i ~ p and return f(i).\")\n    def estimator1():\n        index = torch.multinomial(probs, num_samples=1)  # @inspect index\n        estimate = points[index]  # @inspect estimate\n        return estimate\n    estimate = estimator1()  # @inspect estimate\n    estimate = estimator1()  # @inspect estimate @stepover\n    estimate = estimator1()  # @inspect estimate @stepover\n    result1 = evaluate_estimator(estimator1)  # @inspect result1\n\n    text(\"A more expensive estimator is to sample 2 points and average:\")\n    def estimator2():\n        indices = torch.multinomial(probs, num_samples=2)  # @inspect indices\n        values = points[indices]  # @inspect values\n        estimate = torch.mean(values)  # @inspect estimate\n        return estimate\n    estimate = estimator2()  # @inspect estimate\n    estimate = estimator2()  # @inspect estimate @stepover\n    estimate = estimator2()  # @inspect estimate @stepover\n    result2 = evaluate_estimator(estimator2)  # @inspect result2 @stepover\n\n    text(\"A worse estimator is to add noise, but it's still unbiased:\")\n    def estimator3():\n        # Add noise\n        index = torch.multinomial(probs, num_samples=1)  # @inspect index\n        noise = torch.randn(1)  # @inspect noise\n        estimate = points[index] + noise  # @inspect estimate\n        return estimate\n    estimate = estimator3()  # @inspect estimate\n    estimate = estimator3()  # @inspect estimate @stepover\n    estimate = estimator3()  # @inspect estimate @stepover\n    result3 = evaluate_estimator(estimator3)  # @inspect result3 @stepover\n\n    text(\"Let's suppose we have a magic function offset(i) that has mean 0.\")\n    text(\"Then E[f(i) - offset(i)]\")\n    text(\"= E[f(i)] - E[offset(i)]\")\n    text(\"= E[f(i)]\")\n    def estimator4():\n        offsets = torch.tensor([-6., -6., 6., 6.])\n        index = torch.multinomial(probs, num_samples=1)  # @inspect index\n        estimate = points[index] - offsets[index]  # @inspect estimate\n        return estimate\n    estimate = estimator4()  # @inspect estimate\n    estimate = estimator4()  # @inspect estimate @stepover\n    estimate = estimator4()  # @inspect estimate @stepover\n    result4 = evaluate_estimator(estimator4)  # @inspect result4 @stepover\n\n\ndef evaluate_estimator(estimator):\n    # Try 100 samples\n    num_samples = 100\n    samples = torch.tensor([estimator() for _ in range(num_samples)])  # @inspect samples @stepover\n    mean = torch.mean(samples)  # @inspect mean\n    variance = torch.var(samples)  # @inspect variance\n    return {\n        \"mean\": mean,\n        \"variance\": variance,\n    }\n\n\nif __name__ == \"__main__\":\n    main()\n"
+    "policy_gradient.py": "from edtrace import text, image, link\nfrom typing import Any\nfrom functools import partial\nfrom typing import Callable\nfrom mdp import FlakyTramMDP, value_iteration\nfrom reinforcement_learning import QLearning, walk_tram_policy, generate_rollouts_rl, Agent, Step, Rollout\nfrom dataclasses import dataclass\nimport torch\nimport torch.nn as nn\nfrom util import set_random_seed, one_hot\n\nPolicy = Callable[[Any], Any]\n\ndef main():\n    text(\"Last time: reinforcement learning\")\n    text(\"This time: generalize to large state spaces, learn policy directly\")\n\n    review_rl()\n\n    function_approximation()\n    policy_gradient()\n\n    text(\"Summary:\")\n    text(\"- Model-based: estimate the MDP\")\n    text(\"- Value-based: estimate Q-values\")\n    text(\"- Policy-based: estimate policy\")\n\n    text(\"Form of algorithm\")\n    text(\"1. Generate rollouts from exploration policy\")\n    text(\"2. Form some loss function (parameters of MDP, Q-values, or policy)\")\n    text(\"3. Update parameters using gradient step\")\n\n    text(\"In MDPs and RL, we're maximizing expected utility.\")\n    text(\"Next time: what if there are adversaries in the environment?\")\n\n\ndef review_rl():\n    text(\"Reinforcement learning (RL) setting:\")\n    image(\"images/rl-framework.svg\", width=560)\n\n    text(\"**Environment**: Markov decision process (MDP)\")\n    mdp = FlakyTramMDP(num_locs=6, failure_prob=0.1)  # @stepover\n    set_random_seed(1)\n\n    text(\"**Agent**: RL algorithm\")\n    policy = partial(walk_tram_policy, mdp.num_locs)\n    agent = QLearning(exploration_policy=policy, epsilon=0.4, discount=1)\n\n    text(\"An example interaction (what the agent sees):\")\n    action = agent.get_action(state=1)  # @inspect action\n    agent.incorporate_feedback(state=1, action=\"walk\", reward=-1, next_state=2, is_end=False)\n    action = agent.get_action(state=2)  # @inspect action\n    agent.incorporate_feedback(state=2, action=\"walk\", reward=-1, next_state=3, is_end=False)\n    action = agent.get_action(state=3)  # @inspect action\n    agent.incorporate_feedback(state=3, action=\"tram\", reward=-2, next_state=6, is_end=True)\n    text(\"Each rollout generates a utility (discounted sum of rewards).\")  # @clear action\n\n    text(\"Generate rollouts, value is the mean utility.\")\n    value = generate_rollouts_rl(mdp, agent, num_trials=100)  # @inspect value\n\n    text(\"Various flavors of values (expected utility):\")\n    text(\"- V_\u03c0(s): value of following policy \u03c0 from state s\")\n    text(\"- Q_\u03c0(s, a): value of taking action a in state s, and then following policy \u03c0\")\n    text(\"- V`*`(s): value of following the optimal policy from state s\")\n    text(\"- Q`*`(s, a): value of taking action a in state s, and then following the optimal policy\")\n\n    text(\"To model or not to model?\")\n    text(\"- Model-based: estimate the MDP, then compute the optimal policy\")\n    text(\"- Value-based (model-free): don't estimate the MDP, just estimate Q-values directly\")\n\n    text(\"General form for model-free methods (for model-free Monte Carlo, SARSA, Q-learning):\")\n    text(\"- Current model estimate: Q(s, a)\")\n    text(\"- Target (estimate of utility)\")\n    text(\"Update: Q(s, a) \u2190 Q(s, a) + learning_rate * (target - Q(s, a))\")\n\n    text(\"On-policy (Q_\u03c0) vs. off-policy (Q`*`):\")\n    text(\"Follow exploration policy \u03c0 to generate rollouts\")\n    text(\"...to estimate Q-values of an estimation policy\")\n    text(\"- On-policy: exploration policy = estimation policy\")\n    text(\"- Off-policy: exploration policy \u2260 estimation policy\")\n\n    text(\"What to use as targets?\")\n    text(\"- Full rollouts: use actual utility (discounted sum of rewards)\")\n    text(\"- Bootstrapping: immediate reward + estimate of future reward\")\n\n    text(\"Algorithms:\")\n    text(\"- Model-based RL: estimate the MDP then compute the optimal policy\")\n    text(\"- Model-free Monte Carlo: estimate Q_\u03c0(s, a) from full rollouts (on-policy): target = utility\")\n    text(\"- SARSA: estimate Q_\u03c0(s, a) as you rollout (on-policy, bootstrapping): target = r + \u03b3 * Q(s', a'), a' = \u03c0(s')\")\n    text(f\"- Q-learning: estimate Q`*`(s, a) (off-policy, bootstrapping): target = r + \u03b3 * max_a' Q`*`(s', a')\")\n\n    text(\"So far, we are estimating a Q-value for each state/action (s, a) pair.\")\n    text(\"This is the **tabular** setting (we keep a lookup table for each state/action pair).\")\n\n    text(\"Examples of states in real-world settings:\")\n    text(\"- State is an image (e.g., for learning a robot policy)\")\n    image(\"https://rail.eecs.berkeley.edu/datasets/bridge_release/raw/bridge_data_v1/berkeley/toykitchen2/put_potato_in_pot_cardboard_fence/2022-01-28_11-25-48/raw/traj_group0/traj13/images0/im_0.jpg\", width=200)\n    text(\"- State is a sentence (e.g., for theorem proving)\")\n    text(\"*Let $x,y$ and $z$ be positive real numbers that satisfy the following system of equations...*\")\n\n    text(\"How do we handle these huge state spaces (all possible images or sentences)?\")\n\n\ndef function_approximation():\n    text(\"Tabular setting: lookup table for Q(s, a)\")\n    text(\"Function approximation: Q_\u03b8(s, a) is a function with parameters \u03b8\")\n\n    text(\"Design decisions:\")\n    text(\"1. What are the possible functions Q_\u03b8(s, a)? (hypothesis class)\")\n    text(\"2. What do we determine whether Q_\u03b8(s, a) is good? (loss function)\")\n    text(\"3. How do we reduce the loss function? (optimization algorithm)\")\n    text(\"Should seem familiar from the machine learning lecture!\")\n\n    text(\"1. What are the possible functions Q_\u03b8(s, a)?\")\n    text(\"- First, map the state and action to a vector of features \u03c6(s, a)\")\n    text(\"- Then, we could use a linear function: Q_\u03b8(s, a) = \u03c6(s, a) * \u03b8\")\n    text(\"- Or a multi-layer perceptron (MLP): Q_\u03b8(s, a) = MLP_\u03b8(\u03c6(s, a))\")\n\n    text(\"Let's define the same environment as before:\")\n    mdp = FlakyTramMDP(num_locs=6, failure_prob=0.1)\n    set_random_seed(2)\n\n    text(\"For the agent, use a parameterized Q-value function (but for simplicity, simulate the tabular setting):\")\n    policy = partial(walk_tram_policy, mdp.num_locs)\n    agent = ParameterizedQLearning(num_locs=mdp.num_locs, actions=[\"walk\", \"tram\"], valid_actions=mdp.actions,\n                       exploration_policy=policy, epsilon=0.4, discount=1, learning_rate=0.1)\n\n    text(\"Define feature vector \u03c6(s, a) for each state and action:\")\n    phi = agent.phi(state=1, action=\"walk\")  # @inspect phi\n    phi = agent.phi(state=1, action=\"tram\")  # @inspect phi @stepover\n    phi = agent.phi(state=2, action=\"walk\")  # @inspect phi @stepover\n    phi = agent.phi(state=2, action=\"tram\")  # @inspect phi @stepover\n    phi = agent.phi(state=6, action=\"tram\")  # @inspect phi @stepover\n\n    text(\"Define Q-value function Q_\u03b8(s, a) = \u03c6(s, a) * \u03b8:\")\n    value = agent.Q(state=1, action=\"walk\")  # @inspect value\n\n    text(\"Compute policy \u03c0(s) = argmax_a Q_\u03b8(s, a):\")\n    action = agent.pi(state=1)  # @inspect action\n\n    text(\"Using these pieces, the agent interacts with the environment:\")  # @clear phi action value\n    text(\"2, 3. loss function and optimization algorithm defined in `incorporate_feedback`\")\n    agent.get_action(state=1)\n    agent.incorporate_feedback(state=1, action=\"walk\", reward=-1, next_state=2, is_end=False)\n    agent.get_action(state=2)\n    agent.incorporate_feedback(state=2, action=\"walk\", reward=-1, next_state=3, is_end=False)\n    agent.get_action(state=3)\n    agent.incorporate_feedback(state=3, action=\"tram\", reward=-2, next_state=6, is_end=True)\n\n    text(\"Now let's run this agent for multiple rollouts:\")\n    value = generate_rollouts_rl(mdp, agent, num_trials=100)  # @inspect value agent @stepover\n\n    text(\"We can extract the current optimal policy \u03c0_\u03b8(s) of the agent:\")\n    states = [state for state in range(1, mdp.num_locs + 1) if not mdp.is_end(state)]  # No actions in end states\n    pi = {state: agent.pi(state) for state in states}  # @inspect pi @stepover\n    text(\"And the corresponding values V_\u03b8(s) = Q_\u03b8(s, \u03c0_\u03b8(s)):\")\n    V = {state: agent.Q(state, pi[state]) for state in states}  # @inspect V @stepover\n\n    text(\"Let's compare with the true values by solving the MDP:\")\n    result = value_iteration(mdp)  # @inspect result.values result.pi\n    text(\"It's in the ballpark, and more accurate for more visited states.\")\n\n    text(\"Summary:\")\n    text(\"- Function approximation: parameterize Q_\u03b8(s, a) by some \u03b8\")\n    text(\"- Map states and actions into a vector of features \u03c6(s, a)\")\n    text(\"- Define either a linear function or an MLP to map \u03c6(s, a) \u2192 Q_\u03b8(s, a)\")\n    text(\"- Define squared loss between Q_\u03b8(s, a) and target (r + \u03b3 * max_a' Q_\u03b8(s', a'))\")\n    text(\"- Q-learning: take a gradient of the loss with respect to \u03b8 and take a step\")\n\n\nclass ParameterizedQLearning(Agent):\n    def __init__(self, num_locs: int, actions: list[str], valid_actions: Callable[[Any], list[str]],\n                 exploration_policy: Policy, epsilon: float, discount: float, learning_rate: float):\n        self.num_locs = num_locs\n        self.actions = actions  # All actions\n        self.valid_actions = valid_actions  # The actions available in a given state (told by the environment)\n        self.num_features = num_locs * len(actions)\n\n        self.exploration_policy = exploration_policy\n        self.epsilon = epsilon\n        self.discount = discount\n        self.learning_rate = learning_rate\n        self.model = nn.Linear(self.num_features, 1)\n        self.optimizer = torch.optim.SGD(self.model.parameters(), lr=learning_rate)\n\n\n    def phi(self, state: int, action: str) -> torch.Tensor:\n        # Map (state, action) to an integer 0 ... |states|*|actions|-1\n        index = (state - 1) * len(self.actions) + self.actions.index(action)  # @inspect index\n        # Create a one-hot vector of length self.num_features\n        vector = one_hot(index, self.num_features)  # @inspect vector\n        return vector\n\n\n    def Q(self, state: int, action: str) -> torch.Tensor:\n        \"\"\"Compute the Q-value for a given state and action.\"\"\"\n        # Map (state, action) to feature vector\n        phi = self.phi(state, action)  # @inspect phi @stepover\n\n        # Pass it through the model\n        value = self.model(phi)  # @inspect value\n\n        return value\n\n\n    def pi(self, state: int) -> str:\n        \"\"\"Compute the policy for a given state.\"\"\"\n        # Compute Q-values for all valid actions\n        q_values = {action: self.Q(state, action) for action in self.valid_actions(state)}  # @inspect q_values @stepover\n\n        # Choose the action with the highest Q-value\n        action = max(q_values.keys(), key=lambda k: q_values[k].item())  # @inspect action\n\n        return action\n\n\n    def get_action(self, state: Any) -> Any:\n        # Run epsilon-greedy\n        if torch.rand(1).item() < self.epsilon:\n            # Explore\n            return self.exploration_policy(state)\n        else:\n            # Exploit\n            return self.pi(state)  # @stepover\n\n\n    def incorporate_feedback(self, state: Any, action: Any, reward: Any, next_state: Any, is_end: bool) -> None:\n        # Compute target (immediate reward + bootstrapped discounted future reward)\n        if is_end:\n            target = reward  # @inspect target\n        else:   # Bootstrapping\n            next_action = self.pi(next_state)  # @inspect next_action @stepover\n            target = reward + self.discount * self.Q(next_state, next_action)  # @inspect target @stepover\n\n        # Compute predicted value\n        value = self.Q(state, action)  # @inspect value @stepover\n\n        # Compute loss (standard squared loss)\n        loss = (value - target) ** 2  # @inspect loss\n\n        # Update model with a gradient step\n        self.optimizer.zero_grad()\n        loss.backward()  # Compute gradients\n        self.optimizer.step()  # Update the parameters @inspect self\n\n    def asdict(self):\n        return dict(self.model.named_parameters())\n\n\ndef policy_gradient():\n    text(\"Model-based: estimate the MDP \u2192 policy \u03c0(s)\")\n    text(\"Value-based: estimate Q-values Q(s, a) \u2192 policy \u03c0(s)\")\n\n    text(\"Why not **directly** estimate the policy \u03c0(s)?\")\n    text(\"Think of the policy as a classifier (input s \u2192 output a)\")\n\n    text(\"Recall that a classifier is a hard function to optimize directly\")\n    text(\"...so we optimize over a probabilistic classifier \u03c0(a | s).\")\n\n    imitation_learning()\n\n    policy_gradient_math()\n    policy_gradient_implementation()\n    policy_gradient_enhancements()\n\n\ndef imitation_learning():\n    text(\"If we had demonstrations of the policy, it'd be easy.\")\n\n    text(\"Suppose we have a rollout \ud835\udf0f:\")\n    rollout = Rollout(steps=[\n        Step(action=\"walk\", prob=1, reward=-1, state=2),\n        Step(action=\"walk\", prob=1, reward=-1, state=3),\n        Step(action=\"tram\", prob=1, reward=-2, state=6),\n    ], discount=1)\n    text(\"We create the following examples:\")\n    examples = [\n        Example(input=1, output=\"walk\"),\n        Example(input=2, output=\"walk\"),\n        Example(input=3, output=\"tram\"),\n    ]\n    text(\"J(\u03b8) = \u03a3`_`t log \u03c0`_`\u03b8(a`_`t | s`_`{t-1})\")\n    text(\"This is called **imitation learning**.\")\n\n    text(\"Examples:\")\n    text(\"- Robotics: teleoperation\")\n    image(\"https://news.stanford.edu/__data/assets/image/0028/134857/mobilealoha_2.jpg\", width=200)\n    text(\"- Math: human-written solution to a math problem\")\n\n\n@dataclass(frozen=True)\nclass Example:\n    input: Any\n    output: Any\n\n\ndef policy_gradient_math():\n    text(\"But in reinforcement learning, we don't have demonstrations.\")\n    text(\"We have a reward function...\")\n    text(\"So what do we do?\")\n\n    text(\"Suppose we have a rollout (trajectory, episode):\")\n    text(\"\ud835\udf0f = (s_0, a_1, r_1, s_1, a_2, r_2, s_2, a_3, r_3, s_3):\")\n    rollout = Rollout(steps=[  # @inspect rollout\n        Step(action=\"walk\", prob=1, reward=-1, state=2),\n        Step(action=\"walk\", prob=1, reward=-1, state=3),\n        Step(action=\"tram\", prob=1, reward=-2, state=6),\n    ], discount=1)\n    text(\"Each rollout produces a utility.\")\n\n    text(\"What is the probability of a rollout?\")\n    text(\"p(\ud835\udf0f) = p(s_0) * \u03c0_\u03b8(a_1 | s_0) * T(s_0, a_1, s_1) * \u03c0_\u03b8(a_2 | s_1) * T(s_1, a_2, s_2) * \u03c0_\u03b8(a_3 | s_2) * T(s_2, a_3, s_3)\")\n    text(\"Components:\")\n    text(\"- p(s_0): probability of starting in state s_0\")\n    text(\"- \u03c0_\u03b8(a_t | s_{t-1}): policy\")\n    text(\"- T(s_{t-1}, a_t, s_t): transition distribution\")\n\n    text(\"Our goal is to maximize the expected utility of a rollout:\")\n    text(\"V(\u03b8) = E_\u03b8[utility(\ud835\udf0f)] = \u03a3_\ud835\udf0f p_\u03b8(\ud835\udf0f) * utility(\ud835\udf0f)\")\n\n    text(\"Let's just take the gradient of V(\u03b8) with respect to \u03b8:\")\n    text(\"\u2207_\u03b8 V(\u03b8) = \u2207_\u03b8 E_\u03b8[utility(\ud835\udf0f)]\")\n    text(\"\u2207_\u03b8 V(\u03b8) = \u2207_\u03b8 \u03a3_\ud835\udf0f p_\u03b8(\ud835\udf0f) * utility(\ud835\udf0f)\")\n    text(\"\u2207_\u03b8 V(\u03b8) = \u03a3_\ud835\udf0f \u2207_\u03b8 p_\u03b8(\ud835\udf0f) * utility(\ud835\udf0f)\")\n    text(\"\u2207_\u03b8 V(\u03b8) = \u03a3_\ud835\udf0f p_\u03b8(\ud835\udf0f) * \u2207_\u03b8 log p_\u03b8(\ud835\udf0f) * utility(\ud835\udf0f)\")\n    text(\"\u2207_\u03b8 V(\u03b8) = E_\u03b8[\u2207_\u03b8 log p_\u03b8(\ud835\udf0f) * utility(\ud835\udf0f)]\")\n    text(\"This is the **policy gradient theorem (identity)**.\")\n\n    text(\"Whenever you see E_\u03b8[...], you can replace it with a sample \ud835\udf0f ~ p_\u03b8(\ud835\udf0f)\")\n    text(\"...define the objective function J(\u03b8, \ud835\udf0f) = log p_\u03b8(\ud835\udf0f) * utility(\ud835\udf0f)\")\n    text(\"...and update \u03b8 by taking a step in the direction of \u2207_\u03b8 J(\u03b8, \ud835\udf0f).\")\n\n    text(\"Breaking down the gradient:\")\n    text(\"\u2207`_`\u03b8 J(\u03b8, \ud835\udf0f) = utility(\ud835\udf0f) * \u03a3`_`t \u2207`_`\u03b8 log \u03c0`_`\u03b8(a`_`t | s`_`{t-1})\")\n\n    text(\"This is the REINFORCE algorithm \"), link(\"https://link.springer.com/article/10.1007/BF00992696\", title=\"[Williams, 1992]\")\n\n    text(\"Intuition:\")\n    text(\"- Just performing imitation learning on demonstrations from own policy weighted by utility.\")\n    text(\"- If utility(\ud835\udf0f) \u2208 {0, 1} (success/failure), then this is just imitation learning on own successful demonstrations.\")\n\n    text(\"Summary:\")\n    text(\"- Objective: optimize policy directly to maximize expected utility\")\n    text(\"- Due to policy gradient theorem, can compute unbiased gradient\")\n    text(\"- Algorithm: sample a rollout (on-policy), update using (state, action) in the rollout \ud835\udf0f, weighted by utility(\ud835\udf0f)\")\n\n\ndef policy_gradient_implementation():\n    mdp = FlakyTramMDP(num_locs=6, failure_prob=0.1)\n    set_random_seed(1)\n    agent = Reinforce(num_locs=mdp.num_locs, actions=[\"walk\", \"tram\"], valid_actions=mdp.actions, discount=1, learning_rate=0.01)\n    text(\"Note that we don't need an explicit exploration policy\")\n    text(\"...because the stochastic policy should give us exploration.\")\n\n    text(\"Let's try a rollout:\")\n    agent.get_action(state=1)\n    agent.incorporate_feedback(state=1, action=\"walk\", reward=-1, next_state=2, is_end=False)\n    agent.get_action(state=2)\n    agent.incorporate_feedback(state=2, action=\"tram\", reward=-2, next_state=2, is_end=False)\n    agent.get_action(state=2)\n    agent.incorporate_feedback(state=2, action=\"tram\", reward=-2, next_state=4, is_end=True)\n\n    text(\"Now let's run this agent for multiple rollouts:\")\n    value = generate_rollouts_rl(mdp, agent, num_trials=50)  # @inspect value agent @stepover\n    text(\"We can extract the current optimal policy \u03c0_\u03b8(s) of the agent:\")\n    states = [state for state in range(1, mdp.num_locs + 1) if not mdp.is_end(state)]  # No actions in end states\n    pi = {state: agent.pi(state) for state in states}  # @inspect pi @stepover\n\n    text(\"Summary:\")\n    text(\"- `get_action`: sample from the policy \u03c0_\u03b8(a | s)\")\n    text(\"- `incorporate_feedback`: update parameters on (state, action) in the rollout \ud835\udf0f, weighted by utility(\ud835\udf0f)\")\n\n\nclass Reinforce(Agent):\n    def __init__(self, num_locs: int, actions: list[str], valid_actions: Callable[[Any], list[str]], discount: float, learning_rate: float):\n        self.num_locs = num_locs\n        self.actions = actions  # All actions\n        self.valid_actions = valid_actions  # The actions available in a given state (told by the environment)\n        self.discount = discount\n        self.learning_rate = learning_rate\n        self.model = nn.Linear(self.num_locs, len(actions))\n        self.optimizer = torch.optim.SGD(self.model.parameters(), lr=learning_rate)\n\n        # Keep track of the current rollout (like model-free Monte Carlo)\n        self.start_state = None\n        self.rollout: list[Step] = []\n        self.utility = 0\n\n    def phi(self, state: int) -> torch.Tensor:\n        index = state - 1\n        return one_hot(index, self.num_locs)\n\n    def mask_invalid_actions(self, state: int, logits: torch.Tensor) -> torch.Tensor:\n        \"\"\"Set the logits of actions that aren't valid in `state` to a large negative number (so they get probability 0).\"\"\"\n        valid = torch.tensor([action in self.valid_actions(state) for action in self.actions])\n        return logits.masked_fill(~valid, -1e9)\n\n    def pi(self, state: int) -> dict[str, float]:\n        \"\"\"Return a distribution over actions.\"\"\"\n        phi = self.phi(state)\n        logits = self.mask_invalid_actions(state, self.model(phi))\n        probs = torch.softmax(logits, dim=0)\n        return dict(zip(self.actions, probs.tolist()))\n\n    def get_action(self, state: int) -> str:  # @inspect state\n        \"\"\"Sample an action from the policy.\"\"\"\n        # Compute logits under the model\n        phi = self.phi(state)  # @inspect phi @stepover\n        logits = self.model(phi)  # @inspect logits\n        # Only consider valid actions\n        logits = self.mask_invalid_actions(state, logits)  # @inspect logits @stepover\n\n        # Sample from the distribution given by the logits\n        probs = torch.softmax(logits, dim=0)  # @inspect probs\n        index = torch.multinomial(probs, num_samples=1).item()  # @inspect index\n\n        # Return the action\n        action = self.actions[index]  # @inspect action\n        return action\n\n\n    def incorporate_feedback(self, state: int, action: str, reward: float, next_state: int, is_end: bool) -> None:\n        \"\"\"Update the policy parameters.\"\"\"\n        # Remember the rollout\n        if self.start_state is None:\n            self.start_state = state\n        self.utility += reward * self.discount ** len(self.rollout)  # @inspect self.utility\n        self.rollout.append(Step(action=action, prob=1, reward=reward, state=next_state))  # @inspect self.rollout\n\n        if is_end:\n            # Compute the loss\n            loss = 0  # @inspect loss\n            for i, step in enumerate(self.rollout):\n                state = self.start_state if i == 0 else self.rollout[i - 1].state\n                action = step.action\n\n                # Compute cross-entropy loss for state -> action\n                phi = self.phi(state)  # @inspect phi @stepover\n                logits = self.mask_invalid_actions(state, self.model(phi))  # @inspect logits @stepover\n                cross_entropy = nn.CrossEntropyLoss()\n                target = one_hot(self.actions.index(action), len(self.actions))  # @inspect target\n                loss += self.utility * cross_entropy(logits, target)  # @inspect loss\n\n            # Update parameters\n            self.optimizer.zero_grad()\n            loss.backward()\n            self.optimizer.step()  # @inspect self\n\n            # Reset the rollout\n            self.start_state = None\n            self.rollout = []\n            self.utility = 0\n\n    def asdict(self):\n        return dict(self.model.named_parameters())\n\n\ndef policy_gradient_enhancements():\n    text(\"Recall the objective: maximize expected utility\")\n    text(\"V(\u03b8) = E_\u03b8[utility(\ud835\udf0f)] = \u03a3_\ud835\udf0f p_\u03b8(\ud835\udf0f) * utility(\ud835\udf0f)\")\n\n    text(\"Policy gradient theorem: \u2207_\u03b8 V(\u03b8) = E_\u03b8[\u2207_\u03b8 log p_\u03b8(\ud835\udf0f) * utility(\ud835\udf0f)]\")\n\n    text(\"REINFORCE is one particular (unbiased) estimate of \u2207_\u03b8 V(\u03b8):\")\n    text(\"Sample \ud835\udf0f ~ p_\u03b8(\ud835\udf0f) and compute \u2207_\u03b8 J(\u03b8, \ud835\udf0f) = \u2207_\u03b8 log p_\u03b8(\ud835\udf0f) * utility(\ud835\udf0f)\")\n    text(\"However, can we get a better estimate?\")\n\n    variance_reduction()\n\n    text(\"So how do we find an offset(s, a) that E[offset(s, a)] = 0?\")\n\n    text(\"Key identity:\")\n    text(\"Let b(s) be **any** function that only depends on state s (not action a).\")\n    text(\"Then E_\u03b8[\u2207_\u03b8 log \u03c0_\u03b8(a | s) * b(s)] = 0 for all s, and a ~ \u03c0_\u03b8(a | s).\")\n    text(\"Analogy: heuristics in A* search (use domain knowledge to improve algorithm)\")\n\n    text(\"Proof:\")\n    text(\"- E_\u03b8[b(s)] = constant\")\n    text(\"- \u2207_\u03b8 E_\u03b8[b(s)] = 0\")\n    text(\"- \u2207_\u03b8 \u03a3_a \u03c0_\u03b8(a | s) b(s) = 0\")\n    text(\"- \u03a3_a \u2207_\u03b8 \u03c0_\u03b8(a | s) b(s) = 0\")\n    text(\"- \u03a3_a \u03c0_\u03b8(a | s) \u2207_\u03b8 log \u03c0_\u03b8(a | s) b(s) = 0\")\n    text(\"- E_\u03b8[\u2207_\u03b8 log \u03c0_\u03b8(a | s) * b(s)] = 0\")\n    text(\"This is basically the reverse direction of the policy gradient theorem.\")\n\n    text(\"Enhancements to reduce variance:\")\n    text(\"1. Baselines: subtract off a baseline b(s) from the utility\")\n    text(\"J(\u03b8, \ud835\udf0f) = \u03a3_t log \u03c0_\u03b8(a_t | s_{t-1}) * (utility(\ud835\udf0f) - b(s_{t-1}))\")\n    text(\"2. Use returns-to-go instead of utility\")\n    text(\"J(\u03b8, \ud835\udf0f) = \u03a3_t log \u03c0_\u03b8(a_t | s_{t-1}) * (r_t + \u03b3 r_{t+1} + \u03b3^2 r_{t+2} + ... - b(s_{t-1}))\")\n    text(\"3. Use a **biased** estimate of the value function Q(s, a) instead of utility(\ud835\udf0f) (bootstrapping).\")\n    text(\"J(\u03b8, \ud835\udf0f) = \u03a3_t log \u03c0_\u03b8(a_t | s_{t-1}) * (Q(s_{t-1}, a_t) - b(s_{t-1}))\")\n\n    text(\"Summary:\")\n    text(\"- The game: find a low-bias, low-variance estimate of E_\u03b8[\u2207_\u03b8 log \u03c0_\u03b8(\ud835\udf0f) * utility(\ud835\udf0f)]\")\n    text(\"- Baselines: a general-purpose strategy to reduce variance, still unbiased\")\n    text(\"- Bootstrapping: reduce variance but introduce a bit of bias\")\n\n\ndef variance_reduction():\n    text(\"Consider the simple mean estimation problem:\")\n    text(\"\u03bc = E[f(i)] = \u03a3_i p(i) * f(i)\")\n    probs = torch.tensor([0.1, 0.4, 0.2, 0.3])  # p(0), p(1), ... @inspect probs\n    points = torch.tensor([-4., -6., 6., 8.])  # f(0), f(1), ... @inspect points\n\n    text(\"This is the true mean we want to estimate (is unknown):\")\n    mu = probs @ points  # @inspect mu\n\n    text(\"An **estimator** is any random variable that tries to get close to \u03bc.\")\n    text(\"Each estimator has a **bias** and a **variance** (and a cost).\")\n\n    text(\"The simplest estimate of \u03bc:\")\n    text(\"Sample a single i ~ p and return f(i).\")\n    def estimator1():\n        index = torch.multinomial(probs, num_samples=1)  # @inspect index\n        estimate = points[index]  # @inspect estimate\n        return estimate\n    estimate = estimator1()  # @inspect estimate\n    estimate = estimator1()  # @inspect estimate @stepover\n    estimate = estimator1()  # @inspect estimate @stepover\n    result1 = evaluate_estimator(estimator1)  # @inspect result1\n\n    text(\"A more expensive estimator is to sample 2 points and average:\")\n    def estimator2():\n        indices = torch.multinomial(probs, num_samples=2)  # @inspect indices\n        values = points[indices]  # @inspect values\n        estimate = torch.mean(values)  # @inspect estimate\n        return estimate\n    estimate = estimator2()  # @inspect estimate\n    estimate = estimator2()  # @inspect estimate @stepover\n    estimate = estimator2()  # @inspect estimate @stepover\n    result2 = evaluate_estimator(estimator2)  # @inspect result2 @stepover\n\n    text(\"A worse estimator is to add noise, but it's still unbiased:\")\n    def estimator3():\n        # Add noise\n        index = torch.multinomial(probs, num_samples=1)  # @inspect index\n        noise = torch.randn(1)  # @inspect noise\n        estimate = points[index] + noise  # @inspect estimate\n        return estimate\n    estimate = estimator3()  # @inspect estimate\n    estimate = estimator3()  # @inspect estimate @stepover\n    estimate = estimator3()  # @inspect estimate @stepover\n    result3 = evaluate_estimator(estimator3)  # @inspect result3 @stepover\n\n    text(\"Let's suppose we have a magic function offset(i) that has mean 0.\")\n    text(\"Then E[f(i) - offset(i)]\")\n    text(\"= E[f(i)] - E[offset(i)]\")\n    text(\"= E[f(i)]\")\n    def estimator4():\n        offsets = torch.tensor([-6., -6., 6., 6.])\n        index = torch.multinomial(probs, num_samples=1)  # @inspect index\n        estimate = points[index] - offsets[index]  # @inspect estimate\n        return estimate\n    estimate = estimator4()  # @inspect estimate\n    estimate = estimator4()  # @inspect estimate @stepover\n    estimate = estimator4()  # @inspect estimate @stepover\n    result4 = evaluate_estimator(estimator4)  # @inspect result4 @stepover\n\n\ndef evaluate_estimator(estimator):\n    # Try 100 samples\n    num_samples = 100\n    samples = torch.tensor([estimator() for _ in range(num_samples)])  # @inspect samples @stepover\n    mean = torch.mean(samples)  # @inspect mean\n    variance = torch.var(samples)  # @inspect variance\n    return {\n        \"mean\": mean,\n        \"variance\": variance,\n    }\n\n\nif __name__ == \"__main__\":\n    main()\n"
   },
   "hidden_line_numbers": {
     "policy_gradient.py": []
@@ -129,16 +129,16 @@
           "path": "policy_gradient.py",
           "line_number": 39,
           "function_name": "review_rl",
-          "code": "image(\"images/rl-framework.png\", width=400)"
+          "code": "image(\"images/rl-framework.svg\", width=560)"
         }
       ],
       "env": {},
       "renderings": [
         {
           "type": "image",
-          "data": "images/rl-framework.png",
+          "data": "images/rl-framework.svg",
           "style": {
-            "width": 400
+            "width": 560
           },
           "external_link": null,
           "internal_link": null,
@@ -266,7 +266,7 @@
           "path": "policy_gradient.py",
           "line_number": 47,
           "function_name": "review_rl",
-          "code": "rl = QLearning(exploration_policy=policy, epsilon=0.4, discount=1, learning_rate=0.1)"
+          "code": "agent = QLearning(exploration_policy=policy, epsilon=0.4, discount=1)"
         }
       ],
       "env": {},
@@ -311,7 +311,7 @@
           "path": "policy_gradient.py",
           "line_number": 50,
           "function_name": "review_rl",
-          "code": "action = rl.get_action(state=1)  # @inspect action"
+          "code": "action = agent.get_action(state=1)  # @inspect action"
         }
       ],
       "env": {
@@ -336,7 +336,7 @@
           "path": "policy_gradient.py",
           "line_number": 51,
           "function_name": "review_rl",
-          "code": "rl.incorporate_feedback(state=1, action=\"walk\", reward=-1, next_state=2, is_end=False)"
+          "code": "agent.incorporate_feedback(state=1, action=\"walk\", reward=-1, next_state=2, is_end=False)"
         }
       ],
       "env": {},
@@ -354,7 +354,7 @@
           "path": "policy_gradient.py",
           "line_number": 52,
           "function_name": "review_rl",
-          "code": "action = rl.get_action(state=2)  # @inspect action"
+          "code": "action = agent.get_action(state=2)  # @inspect action"
         }
       ],
       "env": {
@@ -379,7 +379,7 @@
           "path": "policy_gradient.py",
           "line_number": 53,
           "function_name": "review_rl",
-          "code": "rl.incorporate_feedback(state=2, action=\"walk\", reward=-1, next_state=3, is_end=False)"
+          "code": "agent.incorporate_feedback(state=2, action=\"walk\", reward=-1, next_state=3, is_end=False)"
         }
       ],
       "env": {},
@@ -397,7 +397,7 @@
           "path": "policy_gradient.py",
           "line_number": 54,
           "function_name": "review_rl",
-          "code": "action = rl.get_action(state=3)  # @inspect action"
+          "code": "action = agent.get_action(state=3)  # @inspect action"
         }
       ],
       "env": {
@@ -422,7 +422,7 @@
           "path": "policy_gradient.py",
           "line_number": 55,
           "function_name": "review_rl",
-          "code": "rl.incorporate_feedback(state=3, action=\"tram\", reward=-2, next_state=6, is_end=True)"
+          "code": "agent.incorporate_feedback(state=3, action=\"tram\", reward=-2, next_state=6, is_end=True)"
         }
       ],
       "env": {},
@@ -496,13 +496,13 @@
           "path": "policy_gradient.py",
           "line_number": 59,
           "function_name": "review_rl",
-          "code": "value = simulate(mdp, rl, num_trials=100)  # @inspect value"
+          "code": "value = generate_rollouts_rl(mdp, agent, num_trials=100)  # @inspect value"
         }
       ],
       "env": {
         "value": {
           "type": "float",
-          "contents": -4.92,
+          "contents": -4.67,
           "dtype": null,
           "shape": null
         }
@@ -1088,14 +1088,14 @@
           "path": "policy_gradient.py",
           "line_number": 87,
           "function_name": "review_rl",
-          "code": "text(\"- Model-based value iteration: estimate the MDP then compute the optimal policy\")"
+          "code": "text(\"- Model-based RL: estimate the MDP then compute the optimal policy\")"
         }
       ],
       "env": {},
       "renderings": [
         {
           "type": "markdown",
-          "data": "- Model-based value iteration: estimate the MDP then compute the optimal policy",
+          "data": "- Model-based RL: estimate the MDP then compute the optimal policy",
           "style": {},
           "external_link": null,
           "internal_link": null,
@@ -1861,7 +1861,7 @@
           "path": "policy_gradient.py",
           "line_number": 125,
           "function_name": "function_approximation",
-          "code": "rl = ParameterizedQLearning(num_locs=mdp.num_locs, actions=[\"walk\", \"tram\"], valid_actions=mdp.actions,"
+          "code": "agent = ParameterizedQLearning(num_locs=mdp.num_locs, actions=[\"walk\", \"tram\"], valid_actions=mdp.actions,"
         }
       ],
       "env": {},
@@ -1897,7 +1897,7 @@
           "path": "policy_gradient.py",
           "line_number": 125,
           "function_name": "function_approximation",
-          "code": "rl = ParameterizedQLearning(num_locs=mdp.num_locs, actions=[\"walk\", \"tram\"], valid_actions=mdp.actions,"
+          "code": "agent = ParameterizedQLearning(num_locs=mdp.num_locs, actions=[\"walk\", \"tram\"], valid_actions=mdp.actions,"
         }
       ],
       "env": {},
@@ -1915,7 +1915,7 @@
           "path": "policy_gradient.py",
           "line_number": 125,
           "function_name": "function_approximation",
-          "code": "rl = ParameterizedQLearning(num_locs=mdp.num_locs, actions=[\"walk\", \"tram\"], valid_actions=mdp.actions,"
+          "code": "agent = ParameterizedQLearning(num_locs=mdp.num_locs, actions=[\"walk\", \"tram\"], valid_actions=mdp.actions,"
         },
         {
           "path": "policy_gradient.py",
@@ -1939,7 +1939,7 @@
           "path": "policy_gradient.py",
           "line_number": 125,
           "function_name": "function_approximation",
-          "code": "rl = ParameterizedQLearning(num_locs=mdp.num_locs, actions=[\"walk\", \"tram\"], valid_actions=mdp.actions,"
+          "code": "agent = ParameterizedQLearning(num_locs=mdp.num_locs, actions=[\"walk\", \"tram\"], valid_actions=mdp.actions,"
         },
         {
           "path": "policy_gradient.py",
@@ -1963,7 +1963,7 @@
           "path": "policy_gradient.py",
           "line_number": 125,
           "function_name": "function_approximation",
-          "code": "rl = ParameterizedQLearning(num_locs=mdp.num_locs, actions=[\"walk\", \"tram\"], valid_actions=mdp.actions,"
+          "code": "agent = ParameterizedQLearning(num_locs=mdp.num_locs, actions=[\"walk\", \"tram\"], valid_actions=mdp.actions,"
         },
         {
           "path": "policy_gradient.py",
@@ -1987,7 +1987,7 @@
           "path": "policy_gradient.py",
           "line_number": 125,
           "function_name": "function_approximation",
-          "code": "rl = ParameterizedQLearning(num_locs=mdp.num_locs, actions=[\"walk\", \"tram\"], valid_actions=mdp.actions,"
+          "code": "agent = ParameterizedQLearning(num_locs=mdp.num_locs, actions=[\"walk\", \"tram\"], valid_actions=mdp.actions,"
         },
         {
           "path": "policy_gradient.py",
@@ -2011,7 +2011,7 @@
           "path": "policy_gradient.py",
           "line_number": 125,
           "function_name": "function_approximation",
-          "code": "rl = ParameterizedQLearning(num_locs=mdp.num_locs, actions=[\"walk\", \"tram\"], valid_actions=mdp.actions,"
+          "code": "agent = ParameterizedQLearning(num_locs=mdp.num_locs, actions=[\"walk\", \"tram\"], valid_actions=mdp.actions,"
         },
         {
           "path": "policy_gradient.py",
@@ -2035,7 +2035,7 @@
           "path": "policy_gradient.py",
           "line_number": 125,
           "function_name": "function_approximation",
-          "code": "rl = ParameterizedQLearning(num_locs=mdp.num_locs, actions=[\"walk\", \"tram\"], valid_actions=mdp.actions,"
+          "code": "agent = ParameterizedQLearning(num_locs=mdp.num_locs, actions=[\"walk\", \"tram\"], valid_actions=mdp.actions,"
         },
         {
           "path": "policy_gradient.py",
@@ -2059,7 +2059,7 @@
           "path": "policy_gradient.py",
           "line_number": 125,
           "function_name": "function_approximation",
-          "code": "rl = ParameterizedQLearning(num_locs=mdp.num_locs, actions=[\"walk\", \"tram\"], valid_actions=mdp.actions,"
+          "code": "agent = ParameterizedQLearning(num_locs=mdp.num_locs, actions=[\"walk\", \"tram\"], valid_actions=mdp.actions,"
         },
         {
           "path": "policy_gradient.py",
@@ -2083,7 +2083,7 @@
           "path": "policy_gradient.py",
           "line_number": 125,
           "function_name": "function_approximation",
-          "code": "rl = ParameterizedQLearning(num_locs=mdp.num_locs, actions=[\"walk\", \"tram\"], valid_actions=mdp.actions,"
+          "code": "agent = ParameterizedQLearning(num_locs=mdp.num_locs, actions=[\"walk\", \"tram\"], valid_actions=mdp.actions,"
         },
         {
           "path": "policy_gradient.py",
@@ -2107,7 +2107,7 @@
           "path": "policy_gradient.py",
           "line_number": 125,
           "function_name": "function_approximation",
-          "code": "rl = ParameterizedQLearning(num_locs=mdp.num_locs, actions=[\"walk\", \"tram\"], valid_actions=mdp.actions,"
+          "code": "agent = ParameterizedQLearning(num_locs=mdp.num_locs, actions=[\"walk\", \"tram\"], valid_actions=mdp.actions,"
         },
         {
           "path": "policy_gradient.py",
@@ -2131,7 +2131,7 @@
           "path": "policy_gradient.py",
           "line_number": 125,
           "function_name": "function_approximation",
-          "code": "rl = ParameterizedQLearning(num_locs=mdp.num_locs, actions=[\"walk\", \"tram\"], valid_actions=mdp.actions,"
+          "code": "agent = ParameterizedQLearning(num_locs=mdp.num_locs, actions=[\"walk\", \"tram\"], valid_actions=mdp.actions,"
         },
         {
           "path": "policy_gradient.py",
@@ -2155,7 +2155,7 @@
           "path": "policy_gradient.py",
           "line_number": 125,
           "function_name": "function_approximation",
-          "code": "rl = ParameterizedQLearning(num_locs=mdp.num_locs, actions=[\"walk\", \"tram\"], valid_actions=mdp.actions,"
+          "code": "agent = ParameterizedQLearning(num_locs=mdp.num_locs, actions=[\"walk\", \"tram\"], valid_actions=mdp.actions,"
         },
         {
           "path": "policy_gradient.py",
@@ -2179,7 +2179,7 @@
           "path": "policy_gradient.py",
           "line_number": 125,
           "function_name": "function_approximation",
-          "code": "rl = ParameterizedQLearning(num_locs=mdp.num_locs, actions=[\"walk\", \"tram\"], valid_actions=mdp.actions,"
+          "code": "agent = ParameterizedQLearning(num_locs=mdp.num_locs, actions=[\"walk\", \"tram\"], valid_actions=mdp.actions,"
         }
       ],
       "env": {},
@@ -2224,7 +2224,7 @@
           "path": "policy_gradient.py",
           "line_number": 129,
           "function_name": "function_approximation",
-          "code": "phi = rl.phi(state=1, action=\"walk\")  # @inspect phi"
+          "code": "phi = agent.phi(state=1, action=\"walk\")  # @inspect phi"
         }
       ],
       "env": {},
@@ -2242,7 +2242,7 @@
           "path": "policy_gradient.py",
           "line_number": 129,
           "function_name": "function_approximation",
-          "code": "phi = rl.phi(state=1, action=\"walk\")  # @inspect phi"
+          "code": "phi = agent.phi(state=1, action=\"walk\")  # @inspect phi"
         },
         {
           "path": "policy_gradient.py",
@@ -2266,7 +2266,7 @@
           "path": "policy_gradient.py",
           "line_number": 129,
           "function_name": "function_approximation",
-          "code": "phi = rl.phi(state=1, action=\"walk\")  # @inspect phi"
+          "code": "phi = agent.phi(state=1, action=\"walk\")  # @inspect phi"
         },
         {
           "path": "policy_gradient.py",
@@ -2297,7 +2297,7 @@
           "path": "policy_gradient.py",
           "line_number": 129,
           "function_name": "function_approximation",
-          "code": "phi = rl.phi(state=1, action=\"walk\")  # @inspect phi"
+          "code": "phi = agent.phi(state=1, action=\"walk\")  # @inspect phi"
         },
         {
           "path": "policy_gradient.py",
@@ -2343,7 +2343,7 @@
           "path": "policy_gradient.py",
           "line_number": 129,
           "function_name": "function_approximation",
-          "code": "phi = rl.phi(state=1, action=\"walk\")  # @inspect phi"
+          "code": "phi = agent.phi(state=1, action=\"walk\")  # @inspect phi"
         },
         {
           "path": "policy_gradient.py",
@@ -2367,7 +2367,7 @@
           "path": "policy_gradient.py",
           "line_number": 129,
           "function_name": "function_approximation",
-          "code": "phi = rl.phi(state=1, action=\"walk\")  # @inspect phi"
+          "code": "phi = agent.phi(state=1, action=\"walk\")  # @inspect phi"
         }
       ],
       "env": {
@@ -2407,7 +2407,7 @@
           "path": "policy_gradient.py",
           "line_number": 130,
           "function_name": "function_approximation",
-          "code": "phi = rl.phi(state=1, action=\"tram\")  # @inspect phi @stepover"
+          "code": "phi = agent.phi(state=1, action=\"tram\")  # @inspect phi @stepover"
         }
       ],
       "env": {
@@ -2447,7 +2447,7 @@
           "path": "policy_gradient.py",
           "line_number": 131,
           "function_name": "function_approximation",
-          "code": "phi = rl.phi(state=2, action=\"walk\")  # @inspect phi @stepover"
+          "code": "phi = agent.phi(state=2, action=\"walk\")  # @inspect phi @stepover"
         }
       ],
       "env": {
@@ -2487,7 +2487,7 @@
           "path": "policy_gradient.py",
           "line_number": 132,
           "function_name": "function_approximation",
-          "code": "phi = rl.phi(state=2, action=\"tram\")  # @inspect phi @stepover"
+          "code": "phi = agent.phi(state=2, action=\"tram\")  # @inspect phi @stepover"
         }
       ],
       "env": {
@@ -2527,7 +2527,7 @@
           "path": "policy_gradient.py",
           "line_number": 133,
           "function_name": "function_approximation",
-          "code": "phi = rl.phi(state=6, action=\"tram\")  # @inspect phi @stepover"
+          "code": "phi = agent.phi(state=6, action=\"tram\")  # @inspect phi @stepover"
         }
       ],
       "env": {
@@ -2594,7 +2594,7 @@
           "path": "policy_gradient.py",
           "line_number": 136,
           "function_name": "function_approximation",
-          "code": "value = rl.Q(state=1, action=\"walk\")  # @inspect value"
+          "code": "value = agent.Q(state=1, action=\"walk\")  # @inspect value"
         }
       ],
       "env": {},
@@ -2612,7 +2612,7 @@
           "path": "policy_gradient.py",
           "line_number": 136,
           "function_name": "function_approximation",
-          "code": "value = rl.Q(state=1, action=\"walk\")  # @inspect value"
+          "code": "value = agent.Q(state=1, action=\"walk\")  # @inspect value"
         },
         {
           "path": "policy_gradient.py",
@@ -2636,7 +2636,7 @@
           "path": "policy_gradient.py",
           "line_number": 136,
           "function_name": "function_approximation",
-          "code": "value = rl.Q(state=1, action=\"walk\")  # @inspect value"
+          "code": "value = agent.Q(state=1, action=\"walk\")  # @inspect value"
         },
         {
           "path": "policy_gradient.py",
@@ -2682,7 +2682,7 @@
           "path": "policy_gradient.py",
           "line_number": 136,
           "function_name": "function_approximation",
-          "code": "value = rl.Q(state=1, action=\"walk\")  # @inspect value"
+          "code": "value = agent.Q(state=1, action=\"walk\")  # @inspect value"
         },
         {
           "path": "policy_gradient.py",
@@ -2717,7 +2717,7 @@
           "path": "policy_gradient.py",
           "line_number": 136,
           "function_name": "function_approximation",
-          "code": "value = rl.Q(state=1, action=\"walk\")  # @inspect value"
+          "code": "value = agent.Q(state=1, action=\"walk\")  # @inspect value"
         },
         {
           "path": "policy_gradient.py",
@@ -2741,7 +2741,7 @@
           "path": "policy_gradient.py",
           "line_number": 136,
           "function_name": "function_approximation",
-          "code": "value = rl.Q(state=1, action=\"walk\")  # @inspect value"
+          "code": "value = agent.Q(state=1, action=\"walk\")  # @inspect value"
         }
       ],
       "env": {
@@ -2797,7 +2797,7 @@
           "path": "policy_gradient.py",
           "line_number": 139,
           "function_name": "function_approximation",
-          "code": "action = rl.pi(state=1)  # @inspect action"
+          "code": "action = agent.pi(state=1)  # @inspect action"
         }
       ],
       "env": {},
@@ -2815,7 +2815,7 @@
           "path": "policy_gradient.py",
           "line_number": 139,
           "function_name": "function_approximation",
-          "code": "action = rl.pi(state=1)  # @inspect action"
+          "code": "action = agent.pi(state=1)  # @inspect action"
         },
         {
           "path": "policy_gradient.py",
@@ -2839,7 +2839,7 @@
           "path": "policy_gradient.py",
           "line_number": 139,
           "function_name": "function_approximation",
-          "code": "action = rl.pi(state=1)  # @inspect action"
+          "code": "action = agent.pi(state=1)  # @inspect action"
         },
         {
           "path": "policy_gradient.py",
@@ -2891,7 +2891,7 @@
           "path": "policy_gradient.py",
           "line_number": 139,
           "function_name": "function_approximation",
-          "code": "action = rl.pi(state=1)  # @inspect action"
+          "code": "action = agent.pi(state=1)  # @inspect action"
         },
         {
           "path": "policy_gradient.py",
@@ -2922,7 +2922,7 @@
           "path": "policy_gradient.py",
           "line_number": 139,
           "function_name": "function_approximation",
-          "code": "action = rl.pi(state=1)  # @inspect action"
+          "code": "action = agent.pi(state=1)  # @inspect action"
         },
         {
           "path": "policy_gradient.py",
@@ -2946,7 +2946,7 @@
           "path": "policy_gradient.py",
           "line_number": 139,
           "function_name": "function_approximation",
-          "code": "action = rl.pi(state=1)  # @inspect action"
+          "code": "action = agent.pi(state=1)  # @inspect action"
         }
       ],
       "env": {
@@ -3029,7 +3029,7 @@
           "path": "policy_gradient.py",
           "line_number": 143,
           "function_name": "function_approximation",
-          "code": "rl.get_action(state=1)"
+          "code": "agent.get_action(state=1)"
         }
       ],
       "env": {},
@@ -3047,7 +3047,7 @@
           "path": "policy_gradient.py",
           "line_number": 143,
           "function_name": "function_approximation",
-          "code": "rl.get_action(state=1)"
+          "code": "agent.get_action(state=1)"
         },
         {
           "path": "policy_gradient.py",
@@ -3071,7 +3071,7 @@
           "path": "policy_gradient.py",
           "line_number": 143,
           "function_name": "function_approximation",
-          "code": "rl.get_action(state=1)"
+          "code": "agent.get_action(state=1)"
         },
         {
           "path": "policy_gradient.py",
@@ -3095,7 +3095,7 @@
           "path": "policy_gradient.py",
           "line_number": 143,
           "function_name": "function_approximation",
-          "code": "rl.get_action(state=1)"
+          "code": "agent.get_action(state=1)"
         },
         {
           "path": "policy_gradient.py",
@@ -3119,7 +3119,7 @@
           "path": "policy_gradient.py",
           "line_number": 143,
           "function_name": "function_approximation",
-          "code": "rl.get_action(state=1)"
+          "code": "agent.get_action(state=1)"
         }
       ],
       "env": {},
@@ -3137,7 +3137,7 @@
           "path": "policy_gradient.py",
           "line_number": 144,
           "function_name": "function_approximation",
-          "code": "rl.incorporate_feedback(state=1, action=\"walk\", reward=-1, next_state=2, is_end=False)"
+          "code": "agent.incorporate_feedback(state=1, action=\"walk\", reward=-1, next_state=2, is_end=False)"
         }
       ],
       "env": {},
@@ -3155,7 +3155,7 @@
           "path": "policy_gradient.py",
           "line_number": 144,
           "function_name": "function_approximation",
-          "code": "rl.incorporate_feedback(state=1, action=\"walk\", reward=-1, next_state=2, is_end=False)"
+          "code": "agent.incorporate_feedback(state=1, action=\"walk\", reward=-1, next_state=2, is_end=False)"
         },
         {
           "path": "policy_gradient.py",
@@ -3179,7 +3179,7 @@
           "path": "policy_gradient.py",
           "line_number": 144,
           "function_name": "function_approximation",
-          "code": "rl.incorporate_feedback(state=1, action=\"walk\", reward=-1, next_state=2, is_end=False)"
+          "code": "agent.incorporate_feedback(state=1, action=\"walk\", reward=-1, next_state=2, is_end=False)"
         },
         {
           "path": "policy_gradient.py",
@@ -3203,7 +3203,7 @@
           "path": "policy_gradient.py",
           "line_number": 144,
           "function_name": "function_approximation",
-          "code": "rl.incorporate_feedback(state=1, action=\"walk\", reward=-1, next_state=2, is_end=False)"
+          "code": "agent.incorporate_feedback(state=1, action=\"walk\", reward=-1, next_state=2, is_end=False)"
         },
         {
           "path": "policy_gradient.py",
@@ -3234,7 +3234,7 @@
           "path": "policy_gradient.py",
           "line_number": 144,
           "function_name": "function_approximation",
-          "code": "rl.incorporate_feedback(state=1, action=\"walk\", reward=-1, next_state=2, is_end=False)"
+          "code": "agent.incorporate_feedback(state=1, action=\"walk\", reward=-1, next_state=2, is_end=False)"
         },
         {
           "path": "policy_gradient.py",
@@ -3269,7 +3269,7 @@
           "path": "policy_gradient.py",
           "line_number": 144,
           "function_name": "function_approximation",
-          "code": "rl.incorporate_feedback(state=1, action=\"walk\", reward=-1, next_state=2, is_end=False)"
+          "code": "agent.incorporate_feedback(state=1, action=\"walk\", reward=-1, next_state=2, is_end=False)"
         },
         {
           "path": "policy_gradient.py",
@@ -3304,7 +3304,7 @@
           "path": "policy_gradient.py",
           "line_number": 144,
           "function_name": "function_approximation",
-          "code": "rl.incorporate_feedback(state=1, action=\"walk\", reward=-1, next_state=2, is_end=False)"
+          "code": "agent.incorporate_feedback(state=1, action=\"walk\", reward=-1, next_state=2, is_end=False)"
         },
         {
           "path": "policy_gradient.py",
@@ -3339,7 +3339,7 @@
           "path": "policy_gradient.py",
           "line_number": 144,
           "function_name": "function_approximation",
-          "code": "rl.incorporate_feedback(state=1, action=\"walk\", reward=-1, next_state=2, is_end=False)"
+          "code": "agent.incorporate_feedback(state=1, action=\"walk\", reward=-1, next_state=2, is_end=False)"
         },
         {
           "path": "policy_gradient.py",
@@ -3363,7 +3363,7 @@
           "path": "policy_gradient.py",
           "line_number": 144,
           "function_name": "function_approximation",
-          "code": "rl.incorporate_feedback(state=1, action=\"walk\", reward=-1, next_state=2, is_end=False)"
+          "code": "agent.incorporate_feedback(state=1, action=\"walk\", reward=-1, next_state=2, is_end=False)"
         },
         {
           "path": "policy_gradient.py",
@@ -3387,7 +3387,7 @@
           "path": "policy_gradient.py",
           "line_number": 144,
           "function_name": "function_approximation",
-          "code": "rl.incorporate_feedback(state=1, action=\"walk\", reward=-1, next_state=2, is_end=False)"
+          "code": "agent.incorporate_feedback(state=1, action=\"walk\", reward=-1, next_state=2, is_end=False)"
         },
         {
           "path": "policy_gradient.py",
@@ -3453,7 +3453,7 @@
           "path": "policy_gradient.py",
           "line_number": 144,
           "function_name": "function_approximation",
-          "code": "rl.incorporate_feedback(state=1, action=\"walk\", reward=-1, next_state=2, is_end=False)"
+          "code": "agent.incorporate_feedback(state=1, action=\"walk\", reward=-1, next_state=2, is_end=False)"
         }
       ],
       "env": {},
@@ -3471,7 +3471,7 @@
           "path": "policy_gradient.py",
           "line_number": 145,
           "function_name": "function_approximation",
-          "code": "rl.get_action(state=2)"
+          "code": "agent.get_action(state=2)"
         }
       ],
       "env": {},
@@ -3489,7 +3489,7 @@
           "path": "policy_gradient.py",
           "line_number": 145,
           "function_name": "function_approximation",
-          "code": "rl.get_action(state=2)"
+          "code": "agent.get_action(state=2)"
         },
         {
           "path": "policy_gradient.py",
@@ -3513,7 +3513,7 @@
           "path": "policy_gradient.py",
           "line_number": 145,
           "function_name": "function_approximation",
-          "code": "rl.get_action(state=2)"
+          "code": "agent.get_action(state=2)"
         },
         {
           "path": "policy_gradient.py",
@@ -3537,7 +3537,7 @@
           "path": "policy_gradient.py",
           "line_number": 145,
           "function_name": "function_approximation",
-          "code": "rl.get_action(state=2)"
+          "code": "agent.get_action(state=2)"
         },
         {
           "path": "policy_gradient.py",
@@ -3561,7 +3561,7 @@
           "path": "policy_gradient.py",
           "line_number": 145,
           "function_name": "function_approximation",
-          "code": "rl.get_action(state=2)"
+          "code": "agent.get_action(state=2)"
         }
       ],
       "env": {},
@@ -3579,7 +3579,7 @@
           "path": "policy_gradient.py",
           "line_number": 146,
           "function_name": "function_approximation",
-          "code": "rl.incorporate_feedback(state=2, action=\"walk\", reward=-1, next_state=3, is_end=False)"
+          "code": "agent.incorporate_feedback(state=2, action=\"walk\", reward=-1, next_state=3, is_end=False)"
         }
       ],
       "env": {},
@@ -3597,7 +3597,7 @@
           "path": "policy_gradient.py",
           "line_number": 146,
           "function_name": "function_approximation",
-          "code": "rl.incorporate_feedback(state=2, action=\"walk\", reward=-1, next_state=3, is_end=False)"
+          "code": "agent.incorporate_feedback(state=2, action=\"walk\", reward=-1, next_state=3, is_end=False)"
         },
         {
           "path": "policy_gradient.py",
@@ -3621,7 +3621,7 @@
           "path": "policy_gradient.py",
           "line_number": 146,
           "function_name": "function_approximation",
-          "code": "rl.incorporate_feedback(state=2, action=\"walk\", reward=-1, next_state=3, is_end=False)"
+          "code": "agent.incorporate_feedback(state=2, action=\"walk\", reward=-1, next_state=3, is_end=False)"
         },
         {
           "path": "policy_gradient.py",
@@ -3645,7 +3645,7 @@
           "path": "policy_gradient.py",
           "line_number": 146,
           "function_name": "function_approximation",
-          "code": "rl.incorporate_feedback(state=2, action=\"walk\", reward=-1, next_state=3, is_end=False)"
+          "code": "agent.incorporate_feedback(state=2, action=\"walk\", reward=-1, next_state=3, is_end=False)"
         },
         {
           "path": "policy_gradient.py",
@@ -3676,7 +3676,7 @@
           "path": "policy_gradient.py",
           "line_number": 146,
           "function_name": "function_approximation",
-          "code": "rl.incorporate_feedback(state=2, action=\"walk\", reward=-1, next_state=3, is_end=False)"
+          "code": "agent.incorporate_feedback(state=2, action=\"walk\", reward=-1, next_state=3, is_end=False)"
         },
         {
           "path": "policy_gradient.py",
@@ -3711,7 +3711,7 @@
           "path": "policy_gradient.py",
           "line_number": 146,
           "function_name": "function_approximation",
-          "code": "rl.incorporate_feedback(state=2, action=\"walk\", reward=-1, next_state=3, is_end=False)"
+          "code": "agent.incorporate_feedback(state=2, action=\"walk\", reward=-1, next_state=3, is_end=False)"
         },
         {
           "path": "policy_gradient.py",
@@ -3746,7 +3746,7 @@
           "path": "policy_gradient.py",
           "line_number": 146,
           "function_name": "function_approximation",
-          "code": "rl.incorporate_feedback(state=2, action=\"walk\", reward=-1, next_state=3, is_end=False)"
+          "code": "agent.incorporate_feedback(state=2, action=\"walk\", reward=-1, next_state=3, is_end=False)"
         },
         {
           "path": "policy_gradient.py",
@@ -3781,7 +3781,7 @@
           "path": "policy_gradient.py",
           "line_number": 146,
           "function_name": "function_approximation",
-          "code": "rl.incorporate_feedback(state=2, action=\"walk\", reward=-1, next_state=3, is_end=False)"
+          "code": "agent.incorporate_feedback(state=2, action=\"walk\", reward=-1, next_state=3, is_end=False)"
         },
         {
           "path": "policy_gradient.py",
@@ -3805,7 +3805,7 @@
           "path": "policy_gradient.py",
           "line_number": 146,
           "function_name": "function_approximation",
-          "code": "rl.incorporate_feedback(state=2, action=\"walk\", reward=-1, next_state=3, is_end=False)"
+          "code": "agent.incorporate_feedback(state=2, action=\"walk\", reward=-1, next_state=3, is_end=False)"
         },
         {
           "path": "policy_gradient.py",
@@ -3829,7 +3829,7 @@
           "path": "policy_gradient.py",
           "line_number": 146,
           "function_name": "function_approximation",
-          "code": "rl.incorporate_feedback(state=2, action=\"walk\", reward=-1, next_state=3, is_end=False)"
+          "code": "agent.incorporate_feedback(state=2, action=\"walk\", reward=-1, next_state=3, is_end=False)"
         },
         {
           "path": "policy_gradient.py",
@@ -3895,7 +3895,7 @@
           "path": "policy_gradient.py",
           "line_number": 146,
           "function_name": "function_approximation",
-          "code": "rl.incorporate_feedback(state=2, action=\"walk\", reward=-1, next_state=3, is_end=False)"
+          "code": "agent.incorporate_feedback(state=2, action=\"walk\", reward=-1, next_state=3, is_end=False)"
         }
       ],
       "env": {},
@@ -3913,7 +3913,7 @@
           "path": "policy_gradient.py",
           "line_number": 147,
           "function_name": "function_approximation",
-          "code": "rl.get_action(state=3)"
+          "code": "agent.get_action(state=3)"
         }
       ],
       "env": {},
@@ -3931,7 +3931,7 @@
           "path": "policy_gradient.py",
           "line_number": 147,
           "function_name": "function_approximation",
-          "code": "rl.get_action(state=3)"
+          "code": "agent.get_action(state=3)"
         },
         {
           "path": "policy_gradient.py",
@@ -3955,7 +3955,7 @@
           "path": "policy_gradient.py",
           "line_number": 147,
           "function_name": "function_approximation",
-          "code": "rl.get_action(state=3)"
+          "code": "agent.get_action(state=3)"
         },
         {
           "path": "policy_gradient.py",
@@ -3979,7 +3979,7 @@
           "path": "policy_gradient.py",
           "line_number": 147,
           "function_name": "function_approximation",
-          "code": "rl.get_action(state=3)"
+          "code": "agent.get_action(state=3)"
         },
         {
           "path": "policy_gradient.py",
@@ -4003,7 +4003,7 @@
           "path": "policy_gradient.py",
           "line_number": 147,
           "function_name": "function_approximation",
-          "code": "rl.get_action(state=3)"
+          "code": "agent.get_action(state=3)"
         }
       ],
       "env": {},
@@ -4021,7 +4021,7 @@
           "path": "policy_gradient.py",
           "line_number": 148,
           "function_name": "function_approximation",
-          "code": "rl.incorporate_feedback(state=3, action=\"tram\", reward=-2, next_state=6, is_end=True)"
+          "code": "agent.incorporate_feedback(state=3, action=\"tram\", reward=-2, next_state=6, is_end=True)"
         }
       ],
       "env": {},
@@ -4039,7 +4039,7 @@
           "path": "policy_gradient.py",
           "line_number": 148,
           "function_name": "function_approximation",
-          "code": "rl.incorporate_feedback(state=3, action=\"tram\", reward=-2, next_state=6, is_end=True)"
+          "code": "agent.incorporate_feedback(state=3, action=\"tram\", reward=-2, next_state=6, is_end=True)"
         },
         {
           "path": "policy_gradient.py",
@@ -4063,7 +4063,7 @@
           "path": "policy_gradient.py",
           "line_number": 148,
           "function_name": "function_approximation",
-          "code": "rl.incorporate_feedback(state=3, action=\"tram\", reward=-2, next_state=6, is_end=True)"
+          "code": "agent.incorporate_feedback(state=3, action=\"tram\", reward=-2, next_state=6, is_end=True)"
         },
         {
           "path": "policy_gradient.py",
@@ -4087,7 +4087,7 @@
           "path": "policy_gradient.py",
           "line_number": 148,
           "function_name": "function_approximation",
-          "code": "rl.incorporate_feedback(state=3, action=\"tram\", reward=-2, next_state=6, is_end=True)"
+          "code": "agent.incorporate_feedback(state=3, action=\"tram\", reward=-2, next_state=6, is_end=True)"
         },
         {
           "path": "policy_gradient.py",
@@ -4118,7 +4118,7 @@
           "path": "policy_gradient.py",
           "line_number": 148,
           "function_name": "function_approximation",
-          "code": "rl.incorporate_feedback(state=3, action=\"tram\", reward=-2, next_state=6, is_end=True)"
+          "code": "agent.incorporate_feedback(state=3, action=\"tram\", reward=-2, next_state=6, is_end=True)"
         },
         {
           "path": "policy_gradient.py",
@@ -4153,7 +4153,7 @@
           "path": "policy_gradient.py",
           "line_number": 148,
           "function_name": "function_approximation",
-          "code": "rl.incorporate_feedback(state=3, action=\"tram\", reward=-2, next_state=6, is_end=True)"
+          "code": "agent.incorporate_feedback(state=3, action=\"tram\", reward=-2, next_state=6, is_end=True)"
         },
         {
           "path": "policy_gradient.py",
@@ -4188,7 +4188,7 @@
           "path": "policy_gradient.py",
           "line_number": 148,
           "function_name": "function_approximation",
-          "code": "rl.incorporate_feedback(state=3, action=\"tram\", reward=-2, next_state=6, is_end=True)"
+          "code": "agent.incorporate_feedback(state=3, action=\"tram\", reward=-2, next_state=6, is_end=True)"
         },
         {
           "path": "policy_gradient.py",
@@ -4212,7 +4212,7 @@
           "path": "policy_gradient.py",
           "line_number": 148,
           "function_name": "function_approximation",
-          "code": "rl.incorporate_feedback(state=3, action=\"tram\", reward=-2, next_state=6, is_end=True)"
+          "code": "agent.incorporate_feedback(state=3, action=\"tram\", reward=-2, next_state=6, is_end=True)"
         },
         {
           "path": "policy_gradient.py",
@@ -4236,7 +4236,7 @@
           "path": "policy_gradient.py",
           "line_number": 148,
           "function_name": "function_approximation",
-          "code": "rl.incorporate_feedback(state=3, action=\"tram\", reward=-2, next_state=6, is_end=True)"
+          "code": "agent.incorporate_feedback(state=3, action=\"tram\", reward=-2, next_state=6, is_end=True)"
         },
         {
           "path": "policy_gradient.py",
@@ -4302,7 +4302,7 @@
           "path": "policy_gradient.py",
           "line_number": 148,
           "function_name": "function_approximation",
-          "code": "rl.incorporate_feedback(state=3, action=\"tram\", reward=-2, next_state=6, is_end=True)"
+          "code": "agent.incorporate_feedback(state=3, action=\"tram\", reward=-2, next_state=6, is_end=True)"
         }
       ],
       "env": {},
@@ -4347,7 +4347,7 @@
           "path": "policy_gradient.py",
           "line_number": 151,
           "function_name": "function_approximation",
-          "code": "value = simulate(mdp, rl, num_trials=100)  # @inspect value rl @stepover"
+          "code": "value = generate_rollouts_rl(mdp, agent, num_trials=100)  # @inspect value agent @stepover"
         }
       ],
       "env": {
@@ -4357,7 +4357,7 @@
           "dtype": null,
           "shape": null
         },
-        "rl": {
+        "agent": {
           "type": "dict",
           "contents": {
             "weight": {
@@ -4458,7 +4458,7 @@
           "path": "policy_gradient.py",
           "line_number": 155,
           "function_name": "function_approximation",
-          "code": "pi = {state: rl.pi(state) for state in states}  # @inspect pi @stepover"
+          "code": "pi = {state: agent.pi(state) for state in states}  # @inspect pi @stepover"
         }
       ],
       "env": {
@@ -4541,7 +4541,7 @@
           "path": "policy_gradient.py",
           "line_number": 157,
           "function_name": "function_approximation",
-          "code": "V = {state: rl.Q(state, pi[state]) for state in states}  # @inspect V @stepover"
+          "code": "V = {state: agent.Q(state, pi[state]) for state in states}  # @inspect V @stepover"
         }
       ],
       "env": {
@@ -5251,6 +5251,14 @@
                 }
               },
               {
+                "selector": "edge.policy",
+                "style": {
+                  "width": 5,
+                  "line-color": "#f77f00",
+                  "z-index": 5
+                }
+              },
+              {
                 "selector": "edge.path",
                 "style": {
                   "width": 4,
@@ -5496,7 +5504,7 @@
             ],
             "edges": [
               {
-                "classes": "action-0 choose",
+                "classes": "action-0 choose policy",
                 "data": {
                   "source": "1",
                   "target": "1-walk"
@@ -5534,7 +5542,7 @@
                 }
               },
               {
-                "classes": "action-0 choose",
+                "classes": "action-0 choose policy",
                 "data": {
                   "source": "2",
                   "target": "2-walk"
@@ -5573,7 +5581,7 @@
                 }
               },
               {
-                "classes": "action-0 choose",
+                "classes": "action-0 choose policy",
                 "data": {
                   "source": "3",
                   "target": "3-walk"
@@ -5612,7 +5620,7 @@
                 }
               },
               {
-                "classes": "action-0 choose",
+                "classes": "action-0 choose policy",
                 "data": {
                   "source": "4",
                   "target": "4-walk"
@@ -5627,7 +5635,7 @@
                 }
               },
               {
-                "classes": "action-0 choose",
+                "classes": "action-0 choose policy",
                 "data": {
                   "source": "5",
                   "target": "5-walk"
@@ -5781,6 +5789,14 @@
                   "line-color": "#9b72cf",
                   "target-arrow-color": "#9b72cf",
                   "color": "#9b72cf"
+                }
+              },
+              {
+                "selector": "edge.policy",
+                "style": {
+                  "width": 5,
+                  "line-color": "#f77f00",
+                  "z-index": 5
                 }
               },
               {
@@ -6029,7 +6045,7 @@
             ],
             "edges": [
               {
-                "classes": "action-0 choose",
+                "classes": "action-0 choose policy",
                 "data": {
                   "source": "1",
                   "target": "1-walk"
@@ -6067,7 +6083,7 @@
                 }
               },
               {
-                "classes": "action-0 choose",
+                "classes": "action-0 choose policy",
                 "data": {
                   "source": "2",
                   "target": "2-walk"
@@ -6106,7 +6122,7 @@
                 }
               },
               {
-                "classes": "action-0 choose",
+                "classes": "action-0 choose policy",
                 "data": {
                   "source": "3",
                   "target": "3-walk"
@@ -6145,7 +6161,7 @@
                 }
               },
               {
-                "classes": "action-0 choose",
+                "classes": "action-0 choose policy",
                 "data": {
                   "source": "4",
                   "target": "4-walk"
@@ -6160,7 +6176,7 @@
                 }
               },
               {
-                "classes": "action-0 choose",
+                "classes": "action-0 choose policy",
                 "data": {
                   "source": "5",
                   "target": "5-walk"
@@ -6314,6 +6330,14 @@
                   "line-color": "#9b72cf",
                   "target-arrow-color": "#9b72cf",
                   "color": "#9b72cf"
+                }
+              },
+              {
+                "selector": "edge.policy",
+                "style": {
+                  "width": 5,
+                  "line-color": "#f77f00",
+                  "z-index": 5
                 }
               },
               {
@@ -6562,7 +6586,7 @@
             ],
             "edges": [
               {
-                "classes": "action-0 choose",
+                "classes": "action-0 choose policy",
                 "data": {
                   "source": "1",
                   "target": "1-walk"
@@ -6600,7 +6624,7 @@
                 }
               },
               {
-                "classes": "action-0 choose",
+                "classes": "action-0 choose policy",
                 "data": {
                   "source": "2",
                   "target": "2-walk"
@@ -6654,7 +6678,7 @@
                 }
               },
               {
-                "classes": "action-1 choose",
+                "classes": "action-1 choose policy",
                 "data": {
                   "source": "3",
                   "target": "3-tram"
@@ -6678,7 +6702,7 @@
                 }
               },
               {
-                "classes": "action-0 choose",
+                "classes": "action-0 choose policy",
                 "data": {
                   "source": "4",
                   "target": "4-walk"
@@ -6693,7 +6717,7 @@
                 }
               },
               {
-                "classes": "action-0 choose",
+                "classes": "action-0 choose policy",
                 "data": {
                   "source": "5",
                   "target": "5-walk"
@@ -6847,6 +6871,14 @@
                   "line-color": "#9b72cf",
                   "target-arrow-color": "#9b72cf",
                   "color": "#9b72cf"
+                }
+              },
+              {
+                "selector": "edge.policy",
+                "style": {
+                  "width": 5,
+                  "line-color": "#f77f00",
+                  "z-index": 5
                 }
               },
               {
@@ -7095,7 +7127,7 @@
             ],
             "edges": [
               {
-                "classes": "action-0 choose",
+                "classes": "action-0 choose policy",
                 "data": {
                   "source": "1",
                   "target": "1-walk"
@@ -7133,7 +7165,7 @@
                 }
               },
               {
-                "classes": "action-0 choose",
+                "classes": "action-0 choose policy",
                 "data": {
                   "source": "2",
                   "target": "2-walk"
@@ -7187,7 +7219,7 @@
                 }
               },
               {
-                "classes": "action-1 choose",
+                "classes": "action-1 choose policy",
                 "data": {
                   "source": "3",
                   "target": "3-tram"
@@ -7211,7 +7243,7 @@
                 }
               },
               {
-                "classes": "action-0 choose",
+                "classes": "action-0 choose policy",
                 "data": {
                   "source": "4",
                   "target": "4-walk"
@@ -7226,7 +7258,7 @@
                 }
               },
               {
-                "classes": "action-0 choose",
+                "classes": "action-0 choose policy",
                 "data": {
                   "source": "5",
                   "target": "5-walk"
@@ -7380,6 +7412,14 @@
                   "line-color": "#9b72cf",
                   "target-arrow-color": "#9b72cf",
                   "color": "#9b72cf"
+                }
+              },
+              {
+                "selector": "edge.policy",
+                "style": {
+                  "width": 5,
+                  "line-color": "#f77f00",
+                  "z-index": 5
                 }
               },
               {
@@ -7628,7 +7668,7 @@
             ],
             "edges": [
               {
-                "classes": "action-0 choose",
+                "classes": "action-0 choose policy",
                 "data": {
                   "source": "1",
                   "target": "1-walk"
@@ -7666,7 +7706,7 @@
                 }
               },
               {
-                "classes": "action-0 choose",
+                "classes": "action-0 choose policy",
                 "data": {
                   "source": "2",
                   "target": "2-walk"
@@ -7720,7 +7760,7 @@
                 }
               },
               {
-                "classes": "action-1 choose",
+                "classes": "action-1 choose policy",
                 "data": {
                   "source": "3",
                   "target": "3-tram"
@@ -7744,7 +7784,7 @@
                 }
               },
               {
-                "classes": "action-0 choose",
+                "classes": "action-0 choose policy",
                 "data": {
                   "source": "4",
                   "target": "4-walk"
@@ -7759,7 +7799,7 @@
                 }
               },
               {
-                "classes": "action-0 choose",
+                "classes": "action-0 choose policy",
                 "data": {
                   "source": "5",
                   "target": "5-walk"
@@ -7913,6 +7953,14 @@
                   "line-color": "#9b72cf",
                   "target-arrow-color": "#9b72cf",
                   "color": "#9b72cf"
+                }
+              },
+              {
+                "selector": "edge.policy",
+                "style": {
+                  "width": 5,
+                  "line-color": "#f77f00",
+                  "z-index": 5
                 }
               },
               {
@@ -8161,7 +8209,7 @@
             ],
             "edges": [
               {
-                "classes": "action-0 choose",
+                "classes": "action-0 choose policy",
                 "data": {
                   "source": "1",
                   "target": "1-walk"
@@ -8199,7 +8247,7 @@
                 }
               },
               {
-                "classes": "action-0 choose",
+                "classes": "action-0 choose policy",
                 "data": {
                   "source": "2",
                   "target": "2-walk"
@@ -8253,7 +8301,7 @@
                 }
               },
               {
-                "classes": "action-1 choose",
+                "classes": "action-1 choose policy",
                 "data": {
                   "source": "3",
                   "target": "3-tram"
@@ -8277,7 +8325,7 @@
                 }
               },
               {
-                "classes": "action-0 choose",
+                "classes": "action-0 choose policy",
                 "data": {
                   "source": "4",
                   "target": "4-walk"
@@ -8292,7 +8340,7 @@
                 }
               },
               {
-                "classes": "action-0 choose",
+                "classes": "action-0 choose policy",
                 "data": {
                   "source": "5",
                   "target": "5-walk"
@@ -8446,6 +8494,14 @@
                   "line-color": "#9b72cf",
                   "target-arrow-color": "#9b72cf",
                   "color": "#9b72cf"
+                }
+              },
+              {
+                "selector": "edge.policy",
+                "style": {
+                  "width": 5,
+                  "line-color": "#f77f00",
+                  "z-index": 5
                 }
               },
               {
@@ -8694,7 +8750,7 @@
             ],
             "edges": [
               {
-                "classes": "action-0 choose",
+                "classes": "action-0 choose policy",
                 "data": {
                   "source": "1",
                   "target": "1-walk"
@@ -8732,7 +8788,7 @@
                 }
               },
               {
-                "classes": "action-0 choose",
+                "classes": "action-0 choose policy",
                 "data": {
                   "source": "2",
                   "target": "2-walk"
@@ -8786,7 +8842,7 @@
                 }
               },
               {
-                "classes": "action-1 choose",
+                "classes": "action-1 choose policy",
                 "data": {
                   "source": "3",
                   "target": "3-tram"
@@ -8810,7 +8866,7 @@
                 }
               },
               {
-                "classes": "action-0 choose",
+                "classes": "action-0 choose policy",
                 "data": {
                   "source": "4",
                   "target": "4-walk"
@@ -8825,7 +8881,7 @@
                 }
               },
               {
-                "classes": "action-0 choose",
+                "classes": "action-0 choose policy",
                 "data": {
                   "source": "5",
                   "target": "5-walk"
@@ -8979,6 +9035,14 @@
                   "line-color": "#9b72cf",
                   "target-arrow-color": "#9b72cf",
                   "color": "#9b72cf"
+                }
+              },
+              {
+                "selector": "edge.policy",
+                "style": {
+                  "width": 5,
+                  "line-color": "#f77f00",
+                  "z-index": 5
                 }
               },
               {
@@ -9227,7 +9291,7 @@
             ],
             "edges": [
               {
-                "classes": "action-0 choose",
+                "classes": "action-0 choose policy",
                 "data": {
                   "source": "1",
                   "target": "1-walk"
@@ -9265,7 +9329,7 @@
                 }
               },
               {
-                "classes": "action-0 choose",
+                "classes": "action-0 choose policy",
                 "data": {
                   "source": "2",
                   "target": "2-walk"
@@ -9319,7 +9383,7 @@
                 }
               },
               {
-                "classes": "action-1 choose",
+                "classes": "action-1 choose policy",
                 "data": {
                   "source": "3",
                   "target": "3-tram"
@@ -9343,7 +9407,7 @@
                 }
               },
               {
-                "classes": "action-0 choose",
+                "classes": "action-0 choose policy",
                 "data": {
                   "source": "4",
                   "target": "4-walk"
@@ -9358,7 +9422,7 @@
                 }
               },
               {
-                "classes": "action-0 choose",
+                "classes": "action-0 choose policy",
                 "data": {
                   "source": "5",
                   "target": "5-walk"
@@ -9512,6 +9576,14 @@
                   "line-color": "#9b72cf",
                   "target-arrow-color": "#9b72cf",
                   "color": "#9b72cf"
+                }
+              },
+              {
+                "selector": "edge.policy",
+                "style": {
+                  "width": 5,
+                  "line-color": "#f77f00",
+                  "z-index": 5
                 }
               },
               {
@@ -12145,7 +12217,7 @@
           "path": "policy_gradient.py",
           "line_number": 351,
           "function_name": "policy_gradient_implementation",
-          "code": "rl = Reinforce(num_locs=mdp.num_locs, actions=[\"walk\", \"tram\"], valid_actions=mdp.actions, discount=1, learning_rate=0.01)"
+          "code": "agent = Reinforce(num_locs=mdp.num_locs, actions=[\"walk\", \"tram\"], valid_actions=mdp.actions, discount=1, learning_rate=0.01)"
         }
       ],
       "env": {},
@@ -12169,7 +12241,7 @@
           "path": "policy_gradient.py",
           "line_number": 351,
           "function_name": "policy_gradient_implementation",
-          "code": "rl = Reinforce(num_locs=mdp.num_locs, actions=[\"walk\", \"tram\"], valid_actions=mdp.actions, discount=1, learning_rate=0.01)"
+          "code": "agent = Reinforce(num_locs=mdp.num_locs, actions=[\"walk\", \"tram\"], valid_actions=mdp.actions, discount=1, learning_rate=0.01)"
         },
         {
           "path": "policy_gradient.py",
@@ -12199,7 +12271,7 @@
           "path": "policy_gradient.py",
           "line_number": 351,
           "function_name": "policy_gradient_implementation",
-          "code": "rl = Reinforce(num_locs=mdp.num_locs, actions=[\"walk\", \"tram\"], valid_actions=mdp.actions, discount=1, learning_rate=0.01)"
+          "code": "agent = Reinforce(num_locs=mdp.num_locs, actions=[\"walk\", \"tram\"], valid_actions=mdp.actions, discount=1, learning_rate=0.01)"
         },
         {
           "path": "policy_gradient.py",
@@ -12229,7 +12301,7 @@
           "path": "policy_gradient.py",
           "line_number": 351,
           "function_name": "policy_gradient_implementation",
-          "code": "rl = Reinforce(num_locs=mdp.num_locs, actions=[\"walk\", \"tram\"], valid_actions=mdp.actions, discount=1, learning_rate=0.01)"
+          "code": "agent = Reinforce(num_locs=mdp.num_locs, actions=[\"walk\", \"tram\"], valid_actions=mdp.actions, discount=1, learning_rate=0.01)"
         },
         {
           "path": "policy_gradient.py",
@@ -12259,7 +12331,7 @@
           "path": "policy_gradient.py",
           "line_number": 351,
           "function_name": "policy_gradient_implementation",
-          "code": "rl = Reinforce(num_locs=mdp.num_locs, actions=[\"walk\", \"tram\"], valid_actions=mdp.actions, discount=1, learning_rate=0.01)"
+          "code": "agent = Reinforce(num_locs=mdp.num_locs, actions=[\"walk\", \"tram\"], valid_actions=mdp.actions, discount=1, learning_rate=0.01)"
         },
         {
           "path": "policy_gradient.py",
@@ -12289,7 +12361,7 @@
           "path": "policy_gradient.py",
           "line_number": 351,
           "function_name": "policy_gradient_implementation",
-          "code": "rl = Reinforce(num_locs=mdp.num_locs, actions=[\"walk\", \"tram\"], valid_actions=mdp.actions, discount=1, learning_rate=0.01)"
+          "code": "agent = Reinforce(num_locs=mdp.num_locs, actions=[\"walk\", \"tram\"], valid_actions=mdp.actions, discount=1, learning_rate=0.01)"
         },
         {
           "path": "policy_gradient.py",
@@ -12319,7 +12391,7 @@
           "path": "policy_gradient.py",
           "line_number": 351,
           "function_name": "policy_gradient_implementation",
-          "code": "rl = Reinforce(num_locs=mdp.num_locs, actions=[\"walk\", \"tram\"], valid_actions=mdp.actions, discount=1, learning_rate=0.01)"
+          "code": "agent = Reinforce(num_locs=mdp.num_locs, actions=[\"walk\", \"tram\"], valid_actions=mdp.actions, discount=1, learning_rate=0.01)"
         },
         {
           "path": "policy_gradient.py",
@@ -12349,7 +12421,7 @@
           "path": "policy_gradient.py",
           "line_number": 351,
           "function_name": "policy_gradient_implementation",
-          "code": "rl = Reinforce(num_locs=mdp.num_locs, actions=[\"walk\", \"tram\"], valid_actions=mdp.actions, discount=1, learning_rate=0.01)"
+          "code": "agent = Reinforce(num_locs=mdp.num_locs, actions=[\"walk\", \"tram\"], valid_actions=mdp.actions, discount=1, learning_rate=0.01)"
         },
         {
           "path": "policy_gradient.py",
@@ -12379,7 +12451,7 @@
           "path": "policy_gradient.py",
           "line_number": 351,
           "function_name": "policy_gradient_implementation",
-          "code": "rl = Reinforce(num_locs=mdp.num_locs, actions=[\"walk\", \"tram\"], valid_actions=mdp.actions, discount=1, learning_rate=0.01)"
+          "code": "agent = Reinforce(num_locs=mdp.num_locs, actions=[\"walk\", \"tram\"], valid_actions=mdp.actions, discount=1, learning_rate=0.01)"
         },
         {
           "path": "policy_gradient.py",
@@ -12409,7 +12481,7 @@
           "path": "policy_gradient.py",
           "line_number": 351,
           "function_name": "policy_gradient_implementation",
-          "code": "rl = Reinforce(num_locs=mdp.num_locs, actions=[\"walk\", \"tram\"], valid_actions=mdp.actions, discount=1, learning_rate=0.01)"
+          "code": "agent = Reinforce(num_locs=mdp.num_locs, actions=[\"walk\", \"tram\"], valid_actions=mdp.actions, discount=1, learning_rate=0.01)"
         },
         {
           "path": "policy_gradient.py",
@@ -12439,7 +12511,7 @@
           "path": "policy_gradient.py",
           "line_number": 351,
           "function_name": "policy_gradient_implementation",
-          "code": "rl = Reinforce(num_locs=mdp.num_locs, actions=[\"walk\", \"tram\"], valid_actions=mdp.actions, discount=1, learning_rate=0.01)"
+          "code": "agent = Reinforce(num_locs=mdp.num_locs, actions=[\"walk\", \"tram\"], valid_actions=mdp.actions, discount=1, learning_rate=0.01)"
         },
         {
           "path": "policy_gradient.py",
@@ -12469,7 +12541,7 @@
           "path": "policy_gradient.py",
           "line_number": 351,
           "function_name": "policy_gradient_implementation",
-          "code": "rl = Reinforce(num_locs=mdp.num_locs, actions=[\"walk\", \"tram\"], valid_actions=mdp.actions, discount=1, learning_rate=0.01)"
+          "code": "agent = Reinforce(num_locs=mdp.num_locs, actions=[\"walk\", \"tram\"], valid_actions=mdp.actions, discount=1, learning_rate=0.01)"
         },
         {
           "path": "policy_gradient.py",
@@ -12499,7 +12571,7 @@
           "path": "policy_gradient.py",
           "line_number": 351,
           "function_name": "policy_gradient_implementation",
-          "code": "rl = Reinforce(num_locs=mdp.num_locs, actions=[\"walk\", \"tram\"], valid_actions=mdp.actions, discount=1, learning_rate=0.01)"
+          "code": "agent = Reinforce(num_locs=mdp.num_locs, actions=[\"walk\", \"tram\"], valid_actions=mdp.actions, discount=1, learning_rate=0.01)"
         }
       ],
       "env": {},
@@ -12622,7 +12694,7 @@
           "path": "policy_gradient.py",
           "line_number": 356,
           "function_name": "policy_gradient_implementation",
-          "code": "rl.get_action(state=1)"
+          "code": "agent.get_action(state=1)"
         }
       ],
       "env": {},
@@ -12646,7 +12718,7 @@
           "path": "policy_gradient.py",
           "line_number": 356,
           "function_name": "policy_gradient_implementation",
-          "code": "rl.get_action(state=1)"
+          "code": "agent.get_action(state=1)"
         },
         {
           "path": "policy_gradient.py",
@@ -12683,7 +12755,7 @@
           "path": "policy_gradient.py",
           "line_number": 356,
           "function_name": "policy_gradient_implementation",
-          "code": "rl.get_action(state=1)"
+          "code": "agent.get_action(state=1)"
         },
         {
           "path": "policy_gradient.py",
@@ -12729,7 +12801,7 @@
           "path": "policy_gradient.py",
           "line_number": 356,
           "function_name": "policy_gradient_implementation",
-          "code": "rl.get_action(state=1)"
+          "code": "agent.get_action(state=1)"
         },
         {
           "path": "policy_gradient.py",
@@ -12771,7 +12843,7 @@
           "path": "policy_gradient.py",
           "line_number": 356,
           "function_name": "policy_gradient_implementation",
-          "code": "rl.get_action(state=1)"
+          "code": "agent.get_action(state=1)"
         },
         {
           "path": "policy_gradient.py",
@@ -12813,7 +12885,7 @@
           "path": "policy_gradient.py",
           "line_number": 356,
           "function_name": "policy_gradient_implementation",
-          "code": "rl.get_action(state=1)"
+          "code": "agent.get_action(state=1)"
         },
         {
           "path": "policy_gradient.py",
@@ -12855,7 +12927,7 @@
           "path": "policy_gradient.py",
           "line_number": 356,
           "function_name": "policy_gradient_implementation",
-          "code": "rl.get_action(state=1)"
+          "code": "agent.get_action(state=1)"
         },
         {
           "path": "policy_gradient.py",
@@ -12892,7 +12964,7 @@
           "path": "policy_gradient.py",
           "line_number": 356,
           "function_name": "policy_gradient_implementation",
-          "code": "rl.get_action(state=1)"
+          "code": "agent.get_action(state=1)"
         },
         {
           "path": "policy_gradient.py",
@@ -12929,7 +13001,7 @@
           "path": "policy_gradient.py",
           "line_number": 356,
           "function_name": "policy_gradient_implementation",
-          "code": "rl.get_action(state=1)"
+          "code": "agent.get_action(state=1)"
         },
         {
           "path": "policy_gradient.py",
@@ -12959,7 +13031,7 @@
           "path": "policy_gradient.py",
           "line_number": 356,
           "function_name": "policy_gradient_implementation",
-          "code": "rl.get_action(state=1)"
+          "code": "agent.get_action(state=1)"
         }
       ],
       "env": {},
@@ -12983,7 +13055,7 @@
           "path": "policy_gradient.py",
           "line_number": 357,
           "function_name": "policy_gradient_implementation",
-          "code": "rl.incorporate_feedback(state=1, action=\"walk\", reward=-1, next_state=2, is_end=False)"
+          "code": "agent.incorporate_feedback(state=1, action=\"walk\", reward=-1, next_state=2, is_end=False)"
         }
       ],
       "env": {},
@@ -13007,7 +13079,7 @@
           "path": "policy_gradient.py",
           "line_number": 357,
           "function_name": "policy_gradient_implementation",
-          "code": "rl.incorporate_feedback(state=1, action=\"walk\", reward=-1, next_state=2, is_end=False)"
+          "code": "agent.incorporate_feedback(state=1, action=\"walk\", reward=-1, next_state=2, is_end=False)"
         },
         {
           "path": "policy_gradient.py",
@@ -13037,7 +13109,7 @@
           "path": "policy_gradient.py",
           "line_number": 357,
           "function_name": "policy_gradient_implementation",
-          "code": "rl.incorporate_feedback(state=1, action=\"walk\", reward=-1, next_state=2, is_end=False)"
+          "code": "agent.incorporate_feedback(state=1, action=\"walk\", reward=-1, next_state=2, is_end=False)"
         },
         {
           "path": "policy_gradient.py",
@@ -13067,7 +13139,7 @@
           "path": "policy_gradient.py",
           "line_number": 357,
           "function_name": "policy_gradient_implementation",
-          "code": "rl.incorporate_feedback(state=1, action=\"walk\", reward=-1, next_state=2, is_end=False)"
+          "code": "agent.incorporate_feedback(state=1, action=\"walk\", reward=-1, next_state=2, is_end=False)"
         },
         {
           "path": "policy_gradient.py",
@@ -13097,7 +13169,7 @@
           "path": "policy_gradient.py",
           "line_number": 357,
           "function_name": "policy_gradient_implementation",
-          "code": "rl.incorporate_feedback(state=1, action=\"walk\", reward=-1, next_state=2, is_end=False)"
+          "code": "agent.incorporate_feedback(state=1, action=\"walk\", reward=-1, next_state=2, is_end=False)"
         },
         {
           "path": "policy_gradient.py",
@@ -13134,7 +13206,7 @@
           "path": "policy_gradient.py",
           "line_number": 357,
           "function_name": "policy_gradient_implementation",
-          "code": "rl.incorporate_feedback(state=1, action=\"walk\", reward=-1, next_state=2, is_end=False)"
+          "code": "agent.incorporate_feedback(state=1, action=\"walk\", reward=-1, next_state=2, is_end=False)"
         },
         {
           "path": "policy_gradient.py",
@@ -13203,7 +13275,7 @@
           "path": "policy_gradient.py",
           "line_number": 357,
           "function_name": "policy_gradient_implementation",
-          "code": "rl.incorporate_feedback(state=1, action=\"walk\", reward=-1, next_state=2, is_end=False)"
+          "code": "agent.incorporate_feedback(state=1, action=\"walk\", reward=-1, next_state=2, is_end=False)"
         },
         {
           "path": "policy_gradient.py",
@@ -13233,7 +13305,7 @@
           "path": "policy_gradient.py",
           "line_number": 357,
           "function_name": "policy_gradient_implementation",
-          "code": "rl.incorporate_feedback(state=1, action=\"walk\", reward=-1, next_state=2, is_end=False)"
+          "code": "agent.incorporate_feedback(state=1, action=\"walk\", reward=-1, next_state=2, is_end=False)"
         }
       ],
       "env": {},
@@ -13257,7 +13329,7 @@
           "path": "policy_gradient.py",
           "line_number": 358,
           "function_name": "policy_gradient_implementation",
-          "code": "rl.get_action(state=2)"
+          "code": "agent.get_action(state=2)"
         }
       ],
       "env": {},
@@ -13281,7 +13353,7 @@
           "path": "policy_gradient.py",
           "line_number": 358,
           "function_name": "policy_gradient_implementation",
-          "code": "rl.get_action(state=2)"
+          "code": "agent.get_action(state=2)"
         },
         {
           "path": "policy_gradient.py",
@@ -13318,7 +13390,7 @@
           "path": "policy_gradient.py",
           "line_number": 358,
           "function_name": "policy_gradient_implementation",
-          "code": "rl.get_action(state=2)"
+          "code": "agent.get_action(state=2)"
         },
         {
           "path": "policy_gradient.py",
@@ -13364,7 +13436,7 @@
           "path": "policy_gradient.py",
           "line_number": 358,
           "function_name": "policy_gradient_implementation",
-          "code": "rl.get_action(state=2)"
+          "code": "agent.get_action(state=2)"
         },
         {
           "path": "policy_gradient.py",
@@ -13406,7 +13478,7 @@
           "path": "policy_gradient.py",
           "line_number": 358,
           "function_name": "policy_gradient_implementation",
-          "code": "rl.get_action(state=2)"
+          "code": "agent.get_action(state=2)"
         },
         {
           "path": "policy_gradient.py",
@@ -13448,7 +13520,7 @@
           "path": "policy_gradient.py",
           "line_number": 358,
           "function_name": "policy_gradient_implementation",
-          "code": "rl.get_action(state=2)"
+          "code": "agent.get_action(state=2)"
         },
         {
           "path": "policy_gradient.py",
@@ -13490,7 +13562,7 @@
           "path": "policy_gradient.py",
           "line_number": 358,
           "function_name": "policy_gradient_implementation",
-          "code": "rl.get_action(state=2)"
+          "code": "agent.get_action(state=2)"
         },
         {
           "path": "policy_gradient.py",
@@ -13527,7 +13599,7 @@
           "path": "policy_gradient.py",
           "line_number": 358,
           "function_name": "policy_gradient_implementation",
-          "code": "rl.get_action(state=2)"
+          "code": "agent.get_action(state=2)"
         },
         {
           "path": "policy_gradient.py",
@@ -13564,7 +13636,7 @@
           "path": "policy_gradient.py",
           "line_number": 358,
           "function_name": "policy_gradient_implementation",
-          "code": "rl.get_action(state=2)"
+          "code": "agent.get_action(state=2)"
         },
         {
           "path": "policy_gradient.py",
@@ -13594,7 +13666,7 @@
           "path": "policy_gradient.py",
           "line_number": 358,
           "function_name": "policy_gradient_implementation",
-          "code": "rl.get_action(state=2)"
+          "code": "agent.get_action(state=2)"
         }
       ],
       "env": {},
@@ -13618,7 +13690,7 @@
           "path": "policy_gradient.py",
           "line_number": 359,
           "function_name": "policy_gradient_implementation",
-          "code": "rl.incorporate_feedback(state=2, action=\"tram\", reward=-2, next_state=2, is_end=False)"
+          "code": "agent.incorporate_feedback(state=2, action=\"tram\", reward=-2, next_state=2, is_end=False)"
         }
       ],
       "env": {},
@@ -13642,7 +13714,7 @@
           "path": "policy_gradient.py",
           "line_number": 359,
           "function_name": "policy_gradient_implementation",
-          "code": "rl.incorporate_feedback(state=2, action=\"tram\", reward=-2, next_state=2, is_end=False)"
+          "code": "agent.incorporate_feedback(state=2, action=\"tram\", reward=-2, next_state=2, is_end=False)"
         },
         {
           "path": "policy_gradient.py",
@@ -13672,7 +13744,7 @@
           "path": "policy_gradient.py",
           "line_number": 359,
           "function_name": "policy_gradient_implementation",
-          "code": "rl.incorporate_feedback(state=2, action=\"tram\", reward=-2, next_state=2, is_end=False)"
+          "code": "agent.incorporate_feedback(state=2, action=\"tram\", reward=-2, next_state=2, is_end=False)"
         },
         {
           "path": "policy_gradient.py",
@@ -13702,7 +13774,7 @@
           "path": "policy_gradient.py",
           "line_number": 359,
           "function_name": "policy_gradient_implementation",
-          "code": "rl.incorporate_feedback(state=2, action=\"tram\", reward=-2, next_state=2, is_end=False)"
+          "code": "agent.incorporate_feedback(state=2, action=\"tram\", reward=-2, next_state=2, is_end=False)"
         },
         {
           "path": "policy_gradient.py",
@@ -13739,7 +13811,7 @@
           "path": "policy_gradient.py",
           "line_number": 359,
           "function_name": "policy_gradient_implementation",
-          "code": "rl.incorporate_feedback(state=2, action=\"tram\", reward=-2, next_state=2, is_end=False)"
+          "code": "agent.incorporate_feedback(state=2, action=\"tram\", reward=-2, next_state=2, is_end=False)"
         },
         {
           "path": "policy_gradient.py",
@@ -13839,7 +13911,7 @@
           "path": "policy_gradient.py",
           "line_number": 359,
           "function_name": "policy_gradient_implementation",
-          "code": "rl.incorporate_feedback(state=2, action=\"tram\", reward=-2, next_state=2, is_end=False)"
+          "code": "agent.incorporate_feedback(state=2, action=\"tram\", reward=-2, next_state=2, is_end=False)"
         },
         {
           "path": "policy_gradient.py",
@@ -13869,7 +13941,7 @@
           "path": "policy_gradient.py",
           "line_number": 359,
           "function_name": "policy_gradient_implementation",
-          "code": "rl.incorporate_feedback(state=2, action=\"tram\", reward=-2, next_state=2, is_end=False)"
+          "code": "agent.incorporate_feedback(state=2, action=\"tram\", reward=-2, next_state=2, is_end=False)"
         }
       ],
       "env": {},
@@ -13893,7 +13965,7 @@
           "path": "policy_gradient.py",
           "line_number": 360,
           "function_name": "policy_gradient_implementation",
-          "code": "rl.get_action(state=2)"
+          "code": "agent.get_action(state=2)"
         }
       ],
       "env": {},
@@ -13917,7 +13989,7 @@
           "path": "policy_gradient.py",
           "line_number": 360,
           "function_name": "policy_gradient_implementation",
-          "code": "rl.get_action(state=2)"
+          "code": "agent.get_action(state=2)"
         },
         {
           "path": "policy_gradient.py",
@@ -13954,7 +14026,7 @@
           "path": "policy_gradient.py",
           "line_number": 360,
           "function_name": "policy_gradient_implementation",
-          "code": "rl.get_action(state=2)"
+          "code": "agent.get_action(state=2)"
         },
         {
           "path": "policy_gradient.py",
@@ -14000,7 +14072,7 @@
           "path": "policy_gradient.py",
           "line_number": 360,
           "function_name": "policy_gradient_implementation",
-          "code": "rl.get_action(state=2)"
+          "code": "agent.get_action(state=2)"
         },
         {
           "path": "policy_gradient.py",
@@ -14042,7 +14114,7 @@
           "path": "policy_gradient.py",
           "line_number": 360,
           "function_name": "policy_gradient_implementation",
-          "code": "rl.get_action(state=2)"
+          "code": "agent.get_action(state=2)"
         },
         {
           "path": "policy_gradient.py",
@@ -14084,7 +14156,7 @@
           "path": "policy_gradient.py",
           "line_number": 360,
           "function_name": "policy_gradient_implementation",
-          "code": "rl.get_action(state=2)"
+          "code": "agent.get_action(state=2)"
         },
         {
           "path": "policy_gradient.py",
@@ -14126,7 +14198,7 @@
           "path": "policy_gradient.py",
           "line_number": 360,
           "function_name": "policy_gradient_implementation",
-          "code": "rl.get_action(state=2)"
+          "code": "agent.get_action(state=2)"
         },
         {
           "path": "policy_gradient.py",
@@ -14163,7 +14235,7 @@
           "path": "policy_gradient.py",
           "line_number": 360,
           "function_name": "policy_gradient_implementation",
-          "code": "rl.get_action(state=2)"
+          "code": "agent.get_action(state=2)"
         },
         {
           "path": "policy_gradient.py",
@@ -14200,7 +14272,7 @@
           "path": "policy_gradient.py",
           "line_number": 360,
           "function_name": "policy_gradient_implementation",
-          "code": "rl.get_action(state=2)"
+          "code": "agent.get_action(state=2)"
         },
         {
           "path": "policy_gradient.py",
@@ -14230,7 +14302,7 @@
           "path": "policy_gradient.py",
           "line_number": 360,
           "function_name": "policy_gradient_implementation",
-          "code": "rl.get_action(state=2)"
+          "code": "agent.get_action(state=2)"
         }
       ],
       "env": {},
@@ -14254,7 +14326,7 @@
           "path": "policy_gradient.py",
           "line_number": 361,
           "function_name": "policy_gradient_implementation",
-          "code": "rl.incorporate_feedback(state=2, action=\"tram\", reward=-2, next_state=4, is_end=True)"
+          "code": "agent.incorporate_feedback(state=2, action=\"tram\", reward=-2, next_state=4, is_end=True)"
         }
       ],
       "env": {},
@@ -14278,7 +14350,7 @@
           "path": "policy_gradient.py",
           "line_number": 361,
           "function_name": "policy_gradient_implementation",
-          "code": "rl.incorporate_feedback(state=2, action=\"tram\", reward=-2, next_state=4, is_end=True)"
+          "code": "agent.incorporate_feedback(state=2, action=\"tram\", reward=-2, next_state=4, is_end=True)"
         },
         {
           "path": "policy_gradient.py",
@@ -14308,7 +14380,7 @@
           "path": "policy_gradient.py",
           "line_number": 361,
           "function_name": "policy_gradient_implementation",
-          "code": "rl.incorporate_feedback(state=2, action=\"tram\", reward=-2, next_state=4, is_end=True)"
+          "code": "agent.incorporate_feedback(state=2, action=\"tram\", reward=-2, next_state=4, is_end=True)"
         },
         {
           "path": "policy_gradient.py",
@@ -14338,7 +14410,7 @@
           "path": "policy_gradient.py",
           "line_number": 361,
           "function_name": "policy_gradient_implementation",
-          "code": "rl.incorporate_feedback(state=2, action=\"tram\", reward=-2, next_state=4, is_end=True)"
+          "code": "agent.incorporate_feedback(state=2, action=\"tram\", reward=-2, next_state=4, is_end=True)"
         },
         {
           "path": "policy_gradient.py",
@@ -14375,7 +14447,7 @@
           "path": "policy_gradient.py",
           "line_number": 361,
           "function_name": "policy_gradient_implementation",
-          "code": "rl.incorporate_feedback(state=2, action=\"tram\", reward=-2, next_state=4, is_end=True)"
+          "code": "agent.incorporate_feedback(state=2, action=\"tram\", reward=-2, next_state=4, is_end=True)"
         },
         {
           "path": "policy_gradient.py",
@@ -14506,7 +14578,7 @@
           "path": "policy_gradient.py",
           "line_number": 361,
           "function_name": "policy_gradient_implementation",
-          "code": "rl.incorporate_feedback(state=2, action=\"tram\", reward=-2, next_state=4, is_end=True)"
+          "code": "agent.incorporate_feedback(state=2, action=\"tram\", reward=-2, next_state=4, is_end=True)"
         },
         {
           "path": "policy_gradient.py",
@@ -14536,7 +14608,7 @@
           "path": "policy_gradient.py",
           "line_number": 361,
           "function_name": "policy_gradient_implementation",
-          "code": "rl.incorporate_feedback(state=2, action=\"tram\", reward=-2, next_state=4, is_end=True)"
+          "code": "agent.incorporate_feedback(state=2, action=\"tram\", reward=-2, next_state=4, is_end=True)"
         },
         {
           "path": "policy_gradient.py",
@@ -14573,7 +14645,7 @@
           "path": "policy_gradient.py",
           "line_number": 361,
           "function_name": "policy_gradient_implementation",
-          "code": "rl.incorporate_feedback(state=2, action=\"tram\", reward=-2, next_state=4, is_end=True)"
+          "code": "agent.incorporate_feedback(state=2, action=\"tram\", reward=-2, next_state=4, is_end=True)"
         },
         {
           "path": "policy_gradient.py",
@@ -14603,7 +14675,7 @@
           "path": "policy_gradient.py",
           "line_number": 361,
           "function_name": "policy_gradient_implementation",
-          "code": "rl.incorporate_feedback(state=2, action=\"tram\", reward=-2, next_state=4, is_end=True)"
+          "code": "agent.incorporate_feedback(state=2, action=\"tram\", reward=-2, next_state=4, is_end=True)"
         },
         {
           "path": "policy_gradient.py",
@@ -14633,7 +14705,7 @@
           "path": "policy_gradient.py",
           "line_number": 361,
           "function_name": "policy_gradient_implementation",
-          "code": "rl.incorporate_feedback(state=2, action=\"tram\", reward=-2, next_state=4, is_end=True)"
+          "code": "agent.incorporate_feedback(state=2, action=\"tram\", reward=-2, next_state=4, is_end=True)"
         },
         {
           "path": "policy_gradient.py",
@@ -14663,7 +14735,7 @@
           "path": "policy_gradient.py",
           "line_number": 361,
           "function_name": "policy_gradient_implementation",
-          "code": "rl.incorporate_feedback(state=2, action=\"tram\", reward=-2, next_state=4, is_end=True)"
+          "code": "agent.incorporate_feedback(state=2, action=\"tram\", reward=-2, next_state=4, is_end=True)"
         },
         {
           "path": "policy_gradient.py",
@@ -14709,7 +14781,7 @@
           "path": "policy_gradient.py",
           "line_number": 361,
           "function_name": "policy_gradient_implementation",
-          "code": "rl.incorporate_feedback(state=2, action=\"tram\", reward=-2, next_state=4, is_end=True)"
+          "code": "agent.incorporate_feedback(state=2, action=\"tram\", reward=-2, next_state=4, is_end=True)"
         },
         {
           "path": "policy_gradient.py",
@@ -14751,7 +14823,7 @@
           "path": "policy_gradient.py",
           "line_number": 361,
           "function_name": "policy_gradient_implementation",
-          "code": "rl.incorporate_feedback(state=2, action=\"tram\", reward=-2, next_state=4, is_end=True)"
+          "code": "agent.incorporate_feedback(state=2, action=\"tram\", reward=-2, next_state=4, is_end=True)"
         },
         {
           "path": "policy_gradient.py",
@@ -14781,7 +14853,7 @@
           "path": "policy_gradient.py",
           "line_number": 361,
           "function_name": "policy_gradient_implementation",
-          "code": "rl.incorporate_feedback(state=2, action=\"tram\", reward=-2, next_state=4, is_end=True)"
+          "code": "agent.incorporate_feedback(state=2, action=\"tram\", reward=-2, next_state=4, is_end=True)"
         },
         {
           "path": "policy_gradient.py",
@@ -14823,7 +14895,7 @@
           "path": "policy_gradient.py",
           "line_number": 361,
           "function_name": "policy_gradient_implementation",
-          "code": "rl.incorporate_feedback(state=2, action=\"tram\", reward=-2, next_state=4, is_end=True)"
+          "code": "agent.incorporate_feedback(state=2, action=\"tram\", reward=-2, next_state=4, is_end=True)"
         },
         {
           "path": "policy_gradient.py",
@@ -14860,7 +14932,7 @@
           "path": "policy_gradient.py",
           "line_number": 361,
           "function_name": "policy_gradient_implementation",
-          "code": "rl.incorporate_feedback(state=2, action=\"tram\", reward=-2, next_state=4, is_end=True)"
+          "code": "agent.incorporate_feedback(state=2, action=\"tram\", reward=-2, next_state=4, is_end=True)"
         },
         {
           "path": "policy_gradient.py",
@@ -14890,7 +14962,7 @@
           "path": "policy_gradient.py",
           "line_number": 361,
           "function_name": "policy_gradient_implementation",
-          "code": "rl.incorporate_feedback(state=2, action=\"tram\", reward=-2, next_state=4, is_end=True)"
+          "code": "agent.incorporate_feedback(state=2, action=\"tram\", reward=-2, next_state=4, is_end=True)"
         },
         {
           "path": "policy_gradient.py",
@@ -14920,7 +14992,7 @@
           "path": "policy_gradient.py",
           "line_number": 361,
           "function_name": "policy_gradient_implementation",
-          "code": "rl.incorporate_feedback(state=2, action=\"tram\", reward=-2, next_state=4, is_end=True)"
+          "code": "agent.incorporate_feedback(state=2, action=\"tram\", reward=-2, next_state=4, is_end=True)"
         },
         {
           "path": "policy_gradient.py",
@@ -14950,7 +15022,7 @@
           "path": "policy_gradient.py",
           "line_number": 361,
           "function_name": "policy_gradient_implementation",
-          "code": "rl.incorporate_feedback(state=2, action=\"tram\", reward=-2, next_state=4, is_end=True)"
+          "code": "agent.incorporate_feedback(state=2, action=\"tram\", reward=-2, next_state=4, is_end=True)"
         },
         {
           "path": "policy_gradient.py",
@@ -14996,7 +15068,7 @@
           "path": "policy_gradient.py",
           "line_number": 361,
           "function_name": "policy_gradient_implementation",
-          "code": "rl.incorporate_feedback(state=2, action=\"tram\", reward=-2, next_state=4, is_end=True)"
+          "code": "agent.incorporate_feedback(state=2, action=\"tram\", reward=-2, next_state=4, is_end=True)"
         },
         {
           "path": "policy_gradient.py",
@@ -15038,7 +15110,7 @@
           "path": "policy_gradient.py",
           "line_number": 361,
           "function_name": "policy_gradient_implementation",
-          "code": "rl.incorporate_feedback(state=2, action=\"tram\", reward=-2, next_state=4, is_end=True)"
+          "code": "agent.incorporate_feedback(state=2, action=\"tram\", reward=-2, next_state=4, is_end=True)"
         },
         {
           "path": "policy_gradient.py",
@@ -15068,7 +15140,7 @@
           "path": "policy_gradient.py",
           "line_number": 361,
           "function_name": "policy_gradient_implementation",
-          "code": "rl.incorporate_feedback(state=2, action=\"tram\", reward=-2, next_state=4, is_end=True)"
+          "code": "agent.incorporate_feedback(state=2, action=\"tram\", reward=-2, next_state=4, is_end=True)"
         },
         {
           "path": "policy_gradient.py",
@@ -15110,7 +15182,7 @@
           "path": "policy_gradient.py",
           "line_number": 361,
           "function_name": "policy_gradient_implementation",
-          "code": "rl.incorporate_feedback(state=2, action=\"tram\", reward=-2, next_state=4, is_end=True)"
+          "code": "agent.incorporate_feedback(state=2, action=\"tram\", reward=-2, next_state=4, is_end=True)"
         },
         {
           "path": "policy_gradient.py",
@@ -15147,7 +15219,7 @@
           "path": "policy_gradient.py",
           "line_number": 361,
           "function_name": "policy_gradient_implementation",
-          "code": "rl.incorporate_feedback(state=2, action=\"tram\", reward=-2, next_state=4, is_end=True)"
+          "code": "agent.incorporate_feedback(state=2, action=\"tram\", reward=-2, next_state=4, is_end=True)"
         },
         {
           "path": "policy_gradient.py",
@@ -15177,7 +15249,7 @@
           "path": "policy_gradient.py",
           "line_number": 361,
           "function_name": "policy_gradient_implementation",
-          "code": "rl.incorporate_feedback(state=2, action=\"tram\", reward=-2, next_state=4, is_end=True)"
+          "code": "agent.incorporate_feedback(state=2, action=\"tram\", reward=-2, next_state=4, is_end=True)"
         },
         {
           "path": "policy_gradient.py",
@@ -15207,7 +15279,7 @@
           "path": "policy_gradient.py",
           "line_number": 361,
           "function_name": "policy_gradient_implementation",
-          "code": "rl.incorporate_feedback(state=2, action=\"tram\", reward=-2, next_state=4, is_end=True)"
+          "code": "agent.incorporate_feedback(state=2, action=\"tram\", reward=-2, next_state=4, is_end=True)"
         },
         {
           "path": "policy_gradient.py",
@@ -15237,7 +15309,7 @@
           "path": "policy_gradient.py",
           "line_number": 361,
           "function_name": "policy_gradient_implementation",
-          "code": "rl.incorporate_feedback(state=2, action=\"tram\", reward=-2, next_state=4, is_end=True)"
+          "code": "agent.incorporate_feedback(state=2, action=\"tram\", reward=-2, next_state=4, is_end=True)"
         },
         {
           "path": "policy_gradient.py",
@@ -15283,7 +15355,7 @@
           "path": "policy_gradient.py",
           "line_number": 361,
           "function_name": "policy_gradient_implementation",
-          "code": "rl.incorporate_feedback(state=2, action=\"tram\", reward=-2, next_state=4, is_end=True)"
+          "code": "agent.incorporate_feedback(state=2, action=\"tram\", reward=-2, next_state=4, is_end=True)"
         },
         {
           "path": "policy_gradient.py",
@@ -15325,7 +15397,7 @@
           "path": "policy_gradient.py",
           "line_number": 361,
           "function_name": "policy_gradient_implementation",
-          "code": "rl.incorporate_feedback(state=2, action=\"tram\", reward=-2, next_state=4, is_end=True)"
+          "code": "agent.incorporate_feedback(state=2, action=\"tram\", reward=-2, next_state=4, is_end=True)"
         },
         {
           "path": "policy_gradient.py",
@@ -15355,7 +15427,7 @@
           "path": "policy_gradient.py",
           "line_number": 361,
           "function_name": "policy_gradient_implementation",
-          "code": "rl.incorporate_feedback(state=2, action=\"tram\", reward=-2, next_state=4, is_end=True)"
+          "code": "agent.incorporate_feedback(state=2, action=\"tram\", reward=-2, next_state=4, is_end=True)"
         },
         {
           "path": "policy_gradient.py",
@@ -15397,7 +15469,7 @@
           "path": "policy_gradient.py",
           "line_number": 361,
           "function_name": "policy_gradient_implementation",
-          "code": "rl.incorporate_feedback(state=2, action=\"tram\", reward=-2, next_state=4, is_end=True)"
+          "code": "agent.incorporate_feedback(state=2, action=\"tram\", reward=-2, next_state=4, is_end=True)"
         },
         {
           "path": "policy_gradient.py",
@@ -15434,7 +15506,7 @@
           "path": "policy_gradient.py",
           "line_number": 361,
           "function_name": "policy_gradient_implementation",
-          "code": "rl.incorporate_feedback(state=2, action=\"tram\", reward=-2, next_state=4, is_end=True)"
+          "code": "agent.incorporate_feedback(state=2, action=\"tram\", reward=-2, next_state=4, is_end=True)"
         },
         {
           "path": "policy_gradient.py",
@@ -15464,7 +15536,7 @@
           "path": "policy_gradient.py",
           "line_number": 361,
           "function_name": "policy_gradient_implementation",
-          "code": "rl.incorporate_feedback(state=2, action=\"tram\", reward=-2, next_state=4, is_end=True)"
+          "code": "agent.incorporate_feedback(state=2, action=\"tram\", reward=-2, next_state=4, is_end=True)"
         },
         {
           "path": "policy_gradient.py",
@@ -15494,7 +15566,7 @@
           "path": "policy_gradient.py",
           "line_number": 361,
           "function_name": "policy_gradient_implementation",
-          "code": "rl.incorporate_feedback(state=2, action=\"tram\", reward=-2, next_state=4, is_end=True)"
+          "code": "agent.incorporate_feedback(state=2, action=\"tram\", reward=-2, next_state=4, is_end=True)"
         },
         {
           "path": "policy_gradient.py",
@@ -15524,7 +15596,7 @@
           "path": "policy_gradient.py",
           "line_number": 361,
           "function_name": "policy_gradient_implementation",
-          "code": "rl.incorporate_feedback(state=2, action=\"tram\", reward=-2, next_state=4, is_end=True)"
+          "code": "agent.incorporate_feedback(state=2, action=\"tram\", reward=-2, next_state=4, is_end=True)"
         },
         {
           "path": "policy_gradient.py",
@@ -15599,7 +15671,7 @@
           "path": "policy_gradient.py",
           "line_number": 361,
           "function_name": "policy_gradient_implementation",
-          "code": "rl.incorporate_feedback(state=2, action=\"tram\", reward=-2, next_state=4, is_end=True)"
+          "code": "agent.incorporate_feedback(state=2, action=\"tram\", reward=-2, next_state=4, is_end=True)"
         },
         {
           "path": "policy_gradient.py",
@@ -15629,7 +15701,7 @@
           "path": "policy_gradient.py",
           "line_number": 361,
           "function_name": "policy_gradient_implementation",
-          "code": "rl.incorporate_feedback(state=2, action=\"tram\", reward=-2, next_state=4, is_end=True)"
+          "code": "agent.incorporate_feedback(state=2, action=\"tram\", reward=-2, next_state=4, is_end=True)"
         },
         {
           "path": "policy_gradient.py",
@@ -15659,7 +15731,7 @@
           "path": "policy_gradient.py",
           "line_number": 361,
           "function_name": "policy_gradient_implementation",
-          "code": "rl.incorporate_feedback(state=2, action=\"tram\", reward=-2, next_state=4, is_end=True)"
+          "code": "agent.incorporate_feedback(state=2, action=\"tram\", reward=-2, next_state=4, is_end=True)"
         },
         {
           "path": "policy_gradient.py",
@@ -15689,7 +15761,7 @@
           "path": "policy_gradient.py",
           "line_number": 361,
           "function_name": "policy_gradient_implementation",
-          "code": "rl.incorporate_feedback(state=2, action=\"tram\", reward=-2, next_state=4, is_end=True)"
+          "code": "agent.incorporate_feedback(state=2, action=\"tram\", reward=-2, next_state=4, is_end=True)"
         }
       ],
       "env": {},
@@ -15746,7 +15818,7 @@
           "path": "policy_gradient.py",
           "line_number": 364,
           "function_name": "policy_gradient_implementation",
-          "code": "value = simulate(mdp, rl, num_trials=50)  # @inspect value rl @stepover"
+          "code": "value = generate_rollouts_rl(mdp, agent, num_trials=50)  # @inspect value agent @stepover"
         }
       ],
       "env": {
@@ -15756,7 +15828,7 @@
           "dtype": null,
           "shape": null
         },
-        "rl": {
+        "agent": {
           "type": "dict",
           "contents": {
             "weight": {
@@ -15878,7 +15950,7 @@
           "path": "policy_gradient.py",
           "line_number": 367,
           "function_name": "policy_gradient_implementation",
-          "code": "pi = {state: rl.pi(state) for state in states}  # @inspect pi @stepover"
+          "code": "pi = {state: agent.pi(state) for state in states}  # @inspect pi @stepover"
         }
       ],
       "env": {

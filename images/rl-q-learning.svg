@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 290" width="600" height="290" font-family="Helvetica, Arial, sans-serif" font-size="14">
+<rect width="600" height="290" fill="white"/>
+<!-- Agent: estimated optimal Q-values -> greedy policy -> acting (epsilon-greedy) policy -->
+<rect x="20" y="25" width="220" height="240" rx="12" fill="#f4f4f4" stroke="#555" stroke-width="2"/>
+<rect x="65" y="40" width="130" height="42" rx="8" fill="white" stroke="#555" stroke-width="1.5" stroke-dasharray="5 3"/>
+<text x="84" y="69" fill="#222" font-family="Times New Roman, Times, serif" font-style="italic" font-size="24">Q</text>
+<path d="M88,49 L94.5,44 L101,49" fill="none" stroke="#222" stroke-width="1.5"/>
+<text x="102" y="75" fill="#222" font-family="Times New Roman, Times, serif" font-size="15">opt</text>
+<text x="121" y="69" fill="#222" font-family="Times New Roman, Times, serif" font-style="italic" font-size="24"><tspan font-style="normal">(</tspan>s<tspan font-style="normal">, </tspan>a<tspan font-style="normal">)</tspan></text>
+<line x1="130" y1="84" x2="130" y2="96" stroke="#555" stroke-width="2"/>
+<path d="M130,106 L124,95 L136,95 Z" fill="#555"/>
+<text x="142" y="99" fill="#555" font-size="13" font-style="italic">argmax</text>
+<rect x="65" y="108" width="130" height="42" rx="8" fill="white" stroke="#555" stroke-width="1.5" stroke-dasharray="5 3"/>
+<text x="113" y="137" fill="#222" font-family="Times New Roman, Times, serif" font-style="italic" font-size="26">π</text>
+<path d="M114,124 L120,119 L126,124" fill="none" stroke="#222" stroke-width="1.5"/>
+<text x="128" y="143" fill="#222" font-family="Times New Roman, Times, serif" font-size="16">opt</text>
+<line x1="130" y1="152" x2="130" y2="164" stroke="#555" stroke-width="2"/>
+<path d="M130,174 L124,163 L136,163 Z" fill="#555"/>
+<text x="142" y="167" fill="#555" font-size="13" font-style="italic">ε-greedy</text>
+<rect x="65" y="176" width="130" height="42" rx="8" fill="white" stroke="#2a9d8f" stroke-width="2.5"/>
+<text x="113" y="205" fill="#222" font-family="Times New Roman, Times, serif" font-style="italic" font-size="26">π</text>
+<text x="128" y="211" fill="#222" font-family="Times New Roman, Times, serif" font-size="16">act</text>
+<text x="130" y="250" text-anchor="middle" fill="#222" font-size="20">Agent</text>
+<!-- Action: agent -> environment -->
+<line x1="240" y1="110" x2="408" y2="110" stroke="#2a9d8f" stroke-width="3"/>
+<path d="M420,110 L408,116 L408,104 Z" fill="#2a9d8f"/>
+<text x="330" y="96" text-anchor="middle" fill="#2a9d8f" font-size="17" font-weight="bold">action</text>
+<!-- Reward, observation: environment -> agent -->
+<line x1="420" y1="180" x2="252" y2="180" stroke="#9b72cf" stroke-width="3"/>
+<path d="M240,180 L252,174 L252,186 Z" fill="#9b72cf"/>
+<text x="330" y="208" text-anchor="middle" fill="#9b72cf" font-size="17" font-weight="bold">reward, observation</text>
+<!-- Environment: box with a globe -->
+<rect x="420" y="25" width="160" height="240" rx="12" fill="#f4f4f4" stroke="#555" stroke-width="2"/>
+<circle cx="500" cy="140" r="22" fill="white" stroke="#2a9d8f" stroke-width="2.5"/>
+<ellipse cx="500" cy="140" rx="9" ry="22" fill="none" stroke="#2a9d8f" stroke-width="2"/>
+<line x1="478" y1="140" x2="522" y2="140" stroke="#2a9d8f" stroke-width="2"/>
+<path d="M482,128 Q500,134 518,128 M482,152 Q500,146 518,152" fill="none" stroke="#2a9d8f" stroke-width="1.5"/>
+<text x="500" y="250" text-anchor="middle" fill="#222" font-size="20">Environment</text>
+</svg>

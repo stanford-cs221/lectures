@@ -9,4 +9,10 @@ modules=()
 for f in "$@"; do
   modules+=("${f%.py}")
 done
-uv run --with-editable edtrace/backend python -m edtrace.execute -m "${modules[@]}"
+# Run offline (from uv's cache) if everything is cached, so that no internet access is needed; otherwise go online.
+offline=--offline
+if ! uv run --offline --with-editable edtrace/backend python -c "" 2>/dev/null; then
+  echo "Not everything is cached; using network access..." >&2
+  offline=
+fi
+uv run $offline --with-editable edtrace/backend python -m edtrace.execute -m "${modules[@]}"
