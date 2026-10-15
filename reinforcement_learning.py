@@ -420,7 +420,7 @@ def introduce_model_free_monte_carlo():
     example_utility_calculation()
 
     text(r"Model-free Monte Carlo update, on each $(s_t, a_t, u_t)$ of the rollout:")
-    text(r"$\displaystyle \hat Q_\text{act}(s_t, a_t) \leftarrow \hat Q_\text{act}(s_t, a_t) - \eta \Big(\underbrace{\hat Q_\text{act}(s_t, a_t)}_\text{model} - \underbrace{u_t}_\text{target}\Big)$")
+    text(r"$\displaystyle \hat Q_\text{act}(s_t, a_t) \leftarrow \hat Q_\text{act}(s_t, a_t) - \eta (\hat Q_\text{act}(s_t, a_t) - u_t)$")
     text(r"With learning rate $\eta = 1 / (\text{number of updates to } \hat Q_\text{act}(s, a))$, $\hat Q_\text{act}(s, a)$ is exactly the average of the utilities.")
 
     text("Which policy should we use to roll out?")
@@ -583,7 +583,7 @@ def introduce_sarsa():
     text(r"- Nudge model towards target")
 
     text(r"SARSA update, on each $(s_t, a_t, r_t, s_{t+1}, a_{t+1})$ (where $a_{t+1}$ is the action the agent takes next):")
-    text(r"$\displaystyle \hat Q_\text{act}(s_t, a_t) \leftarrow \hat Q_\text{act}(s_t, a_t) - \eta \Big(\underbrace{\hat Q_\text{act}(s_t, a_t)}_\text{model} - \underbrace{\big(r_t + \gamma \hat Q_\text{act}(s_{t+1}, a_{t+1})\big)}_\text{target}\Big)$")
+    text(r"$\displaystyle \hat Q_\text{act}(s_t, a_t) \leftarrow \hat Q_\text{act}(s_t, a_t) - \eta \Big(\hat Q_\text{act}(s_t, a_t) - \big(r_t + \gamma \hat Q_\text{act}(s_{t+1}, a_{t+1})\big)$")
 
     image("images/rl-model-free.svg", width=600)
     exploration_policy = partial(walk_tram_policy, mdp.num_locs)
@@ -668,7 +668,7 @@ def introduce_q_learning():
     text(r"SARSA: estimate Q-values of the current policy $\hat Q_\text{act}(s, a)$")
     text(r"Q-learning: estimate Q-values of the optimal policy $\hat Q_\text{opt}(s, a)$")
     text(r"Q-learning update, on each $(s_t, a_t, r_t, s_{t+1})$:")
-    text(r"$\displaystyle \hat Q_\text{opt}(s_t, a_t) \leftarrow \hat Q_\text{opt}(s_t, a_t) - \eta \Big(\underbrace{\hat Q_\text{opt}(s_t, a_t)}_\text{model} - \underbrace{\big(r_t + \gamma \max_{a' \in \text{Actions}(s_{t+1})} \hat Q_\text{opt}(s_{t+1}, a')\big)}_\text{target}\Big)$")
+    text(r"$\displaystyle \hat Q_\text{opt}(s_t, a_t) \leftarrow \hat Q_\text{opt}(s_t, a_t) - \eta \hat Q_\text{opt}(s_t, a_t) - (r_t + \gamma \max_{a' \in \text{Actions}(s_{t+1})} \hat Q_\text{opt}(s_{t+1}, a'))$")
 
     text("But we don't know the optimal policy... 🤷")
     text("Key insight: in the target, use the best next action (according to the current Q-values) instead of the action the agent actually takes.")
