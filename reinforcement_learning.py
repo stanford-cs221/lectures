@@ -349,7 +349,7 @@ class EstimatedMDP(MDP):
     def __init__(self, discount: float):
         self.start_state_ = None
         self.rewards = defaultdict(float)  # (state, action, state') -> reward
-        self.transitions = defaultdict(lambda : defaultdict(lambda : defaultdict(int)))  # state -> action -> state' -> count
+        self.transitions = defaultdict(partial(defaultdict, partial(defaultdict, int)))  # state -> action -> state' -> count
         self.end_states = set()
         self.discount_ = discount
 
@@ -484,8 +484,8 @@ class ModelFreeMonteCarlo(Agent):
         self.epsilon = epsilon
         self.epsilon_decay = epsilon_decay  # Multiply epsilon by this after each rollout (explore less over time)
         self.discount = discount
-        self.Q = defaultdict(lambda : defaultdict(float))  # state -> action -> Q-value
-        self.num_updates = defaultdict(lambda : defaultdict(int))  # state -> action -> number of updates (for the learning rate)
+        self.Q = defaultdict(partial(defaultdict, float))  # state -> action -> Q-value
+        self.num_updates = defaultdict(partial(defaultdict, int))  # state -> action -> number of updates (for the learning rate)
 
         # Keep track of the current rollout
         self.start_state = None
@@ -583,7 +583,7 @@ def introduce_sarsa():
     text(r"- Nudge model towards target")
 
     text(r"SARSA update, on each $(s_t, a_t, r_t, s_{t+1}, a_{t+1})$ (where $a_{t+1}$ is the action the agent takes next):")
-    text(r"$\displaystyle \hat Q_\text{act}(s_t, a_t) \leftarrow \hat Q_\text{act}(s_t, a_t) - \eta \Big(\hat Q_\text{act}(s_t, a_t) - \big(r_t + \gamma \hat Q_\text{act}(s_{t+1}, a_{t+1})\big)$")
+    text(r"$\displaystyle \hat Q_\text{act}(s_t, a_t) \leftarrow \hat Q_\text{act}(s_t, a_t) - \eta \Big(\hat Q_\text{act}(s_t, a_t) - \big(r_t + \gamma \hat Q_\text{act}(s_{t+1}, a_{t+1})\big)\Big)$")
 
     image("images/rl-model-free.svg", width=600)
     exploration_policy = partial(walk_tram_policy, mdp.num_locs)
@@ -610,8 +610,8 @@ class SARSA(Agent):
         self.epsilon = epsilon
         self.epsilon_decay = epsilon_decay  # Multiply epsilon by this after each rollout (explore less over time)
         self.discount = discount
-        self.Q = defaultdict(lambda : defaultdict(float))  # state -> action -> Q-value
-        self.num_updates = defaultdict(lambda : defaultdict(int))  # state -> action -> number of updates (for the learning rate)
+        self.Q = defaultdict(partial(defaultdict, float))  # state -> action -> Q-value
+        self.num_updates = defaultdict(partial(defaultdict, int))  # state -> action -> number of updates (for the learning rate)
 
     def get_action(self, state: Any) -> Any:  # @inspect state
         # This is \pi_act
@@ -668,7 +668,7 @@ def introduce_q_learning():
     text(r"SARSA: estimate Q-values of the current policy $\hat Q_\text{act}(s, a)$")
     text(r"Q-learning: estimate Q-values of the optimal policy $\hat Q_\text{opt}(s, a)$")
     text(r"Q-learning update, on each $(s_t, a_t, r_t, s_{t+1})$:")
-    text(r"$\displaystyle \hat Q_\text{opt}(s_t, a_t) \leftarrow \hat Q_\text{opt}(s_t, a_t) - \eta \hat Q_\text{opt}(s_t, a_t) - (r_t + \gamma \max_{a' \in \text{Actions}(s_{t+1})} \hat Q_\text{opt}(s_{t+1}, a'))$")
+    text(r"$\displaystyle \hat Q_\text{opt}(s_t, a_t) \leftarrow \hat Q_\text{opt}(s_t, a_t) - \eta \Big(\hat Q_\text{opt}(s_t, a_t) - \big(r_t + \gamma \max_{a' \in \text{Actions}(s_{t+1})} \hat Q_\text{opt}(s_{t+1}, a')\big)\Big)$")
 
     text("But we don't know the optimal policy... 🤷")
     text("Key insight: in the target, use the best next action (according to the current Q-values) instead of the action the agent actually takes.")

@@ -46,21 +46,22 @@ To run locally:
 
 - [ucs_astar](https://stanford-cs221.github.io/lectures/?trace=ucs_astar)
 
-### Lecture 7 (Tue Oct 13): MDPs I
+### Lecture 7 (Tue Oct 13): RL I
 
 - [mdp](https://stanford-cs221.github.io/lectures/?trace=mdp)
 
-### Lecture 8 (Thu Oct 15): MDPs II
+### Lecture 8 (Thu Oct 15): RL II
 
 - [reinforcement_learning](https://stanford-cs221.github.io/lectures/?trace=reinforcement_learning)
 
-### Lecture 9 (Tue Oct 20): MDPs III
+### Lecture 9 (Tue Oct 20): RL III
 
+- [function_approximation](https://stanford-cs221.github.io/lectures/?trace=function_approximation)
 - [policy_gradient](https://stanford-cs221.github.io/lectures/?trace=policy_gradient)
 
-### Lecture 10 (Thu Oct 22): RL Applications
+### Lecture 10 (Thu Oct 22): RL IV
 
-- [td_learning](https://stanford-cs221.github.io/lectures/?trace=td_learning)
+- [rl_enhancements](https://stanford-cs221.github.io/lectures/?trace=rl_enhancements)
 
 ### Lecture 11 (Tue Oct 27): Games I
 
@@ -68,6 +69,7 @@ To run locally:
 
 ### Lecture 12 (Thu Oct 29): Games II
 
+- [td_learning](https://stanford-cs221.github.io/lectures/?trace=td_learning)
 - [simultaneous_games](https://stanford-cs221.github.io/lectures/?trace=simultaneous_games)
 
 ### Lecture 13 (Thu Nov 5): Bayesian Networks I

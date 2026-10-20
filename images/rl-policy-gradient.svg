@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 220" width="600" height="220" font-family="Helvetica, Arial, sans-serif" font-size="14">
+<rect width="600" height="220" fill="white"/>
+<!-- Agent: just the (stochastic) policy -->
+<rect x="20" y="25" width="220" height="170" rx="12" fill="#f4f4f4" stroke="#555" stroke-width="2"/>
+<rect x="55" y="58" width="150" height="50" rx="8" fill="white" stroke="#2a9d8f" stroke-width="2.5"/>
+<text x="86" y="92" fill="#222" font-family="Times New Roman, Times, serif" font-style="italic" font-size="26">π</text>
+<text x="100" y="98" fill="#222" font-family="Times New Roman, Times, serif" font-style="italic" font-size="17">θ</text>
+<text x="111" y="92" fill="#222" font-family="Times New Roman, Times, serif" font-style="italic" font-size="24"><tspan font-style="normal">(</tspan>a<tspan font-style="normal"> | </tspan>s<tspan font-style="normal">)</tspan></text>
+<text x="130" y="175" text-anchor="middle" fill="#222" font-size="20">Agent</text>
+<!-- Action: agent -> environment -->
+<line x1="240" y1="80" x2="408" y2="80" stroke="#2a9d8f" stroke-width="3"/>
+<path d="M420,80 L408,86 L408,74 Z" fill="#2a9d8f"/>
+<text x="330" y="66" text-anchor="middle" fill="#2a9d8f" font-size="17" font-weight="bold">action</text>
+<!-- Reward, observation: environment -> agent -->
+<line x1="420" y1="145" x2="252" y2="145" stroke="#9b72cf" stroke-width="3"/>
+<path d="M240,145 L252,139 L252,151 Z" fill="#9b72cf"/>
+<text x="330" y="173" text-anchor="middle" fill="#9b72cf" font-size="17" font-weight="bold">reward, observation</text>
+<!-- Environment: box with a globe -->
+<rect x="420" y="25" width="160" height="170" rx="12" fill="#f4f4f4" stroke="#555" stroke-width="2"/>
+<circle cx="500" cy="88" r="22" fill="white" stroke="#2a9d8f" stroke-width="2.5"/>
+<ellipse cx="500" cy="88" rx="9" ry="22" fill="none" stroke="#2a9d8f" stroke-width="2"/>
+<line x1="478" y1="88" x2="522" y2="88" stroke="#2a9d8f" stroke-width="2"/>
+<path d="M482,76 Q500,82 518,76 M482,100 Q500,94 518,100" fill="none" stroke="#2a9d8f" stroke-width="1.5"/>
+<text x="500" y="175" text-anchor="middle" fill="#222" font-size="20">Environment</text>
+</svg>

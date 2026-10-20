@@ -1,0 +1,3330 @@
+{
+  "files": {
+    "rl_enhancements.py": "from edtrace import text\nimport torch\n\n\ndef main():\n    text(\"# RL enhancements\")\n    text(r\"Last time: policy gradient (REINFORCE) optimizes the policy $\\pi_\\theta(a \\mid s)$ directly\")\n    text(\"This time: how to get better (lower variance) estimates of the policy gradient\")\n\n    policy_gradient_enhancements()\n\n    text(\"Next time: what if there are adversaries in the environment?\")\n\n\ndef policy_gradient_enhancements():\n    text(\"Recall the objective: maximize expected utility\")\n    text(r\"$\\displaystyle V(\\theta) = \\mathbb E_{\\tau \\sim p_\\theta}[u(\\tau)] = \\sum_\\tau p_\\theta(\\tau) u(\\tau)$\")\n\n    text(r\"Policy gradient theorem: $\\nabla_\\theta V(\\theta) = \\mathbb E_{\\tau \\sim p_\\theta}[\\nabla_\\theta \\log p_\\theta(\\tau) u(\\tau)]$\")\n\n    text(r\"REINFORCE is one particular (unbiased) estimate of $\\nabla_\\theta V(\\theta)$:\")\n    text(r\"Sample $\\tau \\sim p_\\theta$ and compute $\\nabla_\\theta J(\\theta, \\tau) = \\nabla_\\theta \\log p_\\theta(\\tau) u(\\tau)$\")\n    text(\"Can we get a better estimate?\")\n\n    variance_reduction()\n\n    text(\"So how do we find an offset with mean zero for the policy gradient?\")\n\n    text(\"Key identity:\")\n    text(r\"Let $b(s)$ be **any** function that only depends on the state $s$ (not the action $a$).\")\n    text(r\"Then $\\mathbb E_{a \\sim \\pi_\\theta(\\cdot \\mid s)}[\\nabla_\\theta \\log \\pi_\\theta(a \\mid s) b(s)] = 0$ for every state $s$.\")\n    text(\"Analogy: heuristics in A* search (use domain knowledge to improve the algorithm without changing the answer)\")\n\n    text(\"Proof:\")\n    text(r\"- $\\mathbb E_{a \\sim \\pi_\\theta(\\cdot \\mid s)}[b(s)] = b(s)$, which doesn't depend on $\\theta$\")\n    text(r\"- $\\nabla_\\theta \\mathbb E_{a \\sim \\pi_\\theta(\\cdot \\mid s)}[b(s)] = 0$\")\n    text(r\"- $\\nabla_\\theta \\sum_a \\pi_\\theta(a \\mid s) b(s) = 0$\")\n    text(r\"- $\\sum_a \\nabla_\\theta \\pi_\\theta(a \\mid s) b(s) = 0$\")\n    text(r\"- $\\sum_a \\pi_\\theta(a \\mid s) \\nabla_\\theta \\log \\pi_\\theta(a \\mid s) b(s) = 0$\")\n    text(r\"- $\\mathbb E_{a \\sim \\pi_\\theta(\\cdot \\mid s)}[\\nabla_\\theta \\log \\pi_\\theta(a \\mid s) b(s)] = 0$\")\n    text(\"This is basically the reverse direction of the policy gradient theorem.\")\n\n    text(\"Enhancements to reduce variance:\")\n    text(r\"1. Baselines: subtract a baseline $b(s_t)$ from the utility\")\n    text(r\"$\\displaystyle J(\\theta, \\tau) = \\sum_t \\log \\pi_\\theta(a_t \\mid s_t) (u(\\tau) - b(s_t))$\")\n    text(r\"2. Use the utility from step $t$ on (rewards before step $t$ don't depend on $a_t$)\")\n    text(r\"$\\displaystyle J(\\theta, \\tau) = \\sum_t \\log \\pi_\\theta(a_t \\mid s_t) (\\underbrace{r_t + \\gamma r_{t+1} + \\gamma^2 r_{t+2} + \\cdots}_{u_t} - b(s_t))$\")\n    text(r\"3. Use a (**biased**) estimate of the Q-value $\\hat Q(s_t, a_t)$ instead of the utility (bootstrapping)\")\n    text(r\"$\\displaystyle J(\\theta, \\tau) = \\sum_t \\log \\pi_\\theta(a_t \\mid s_t) (\\hat Q(s_t, a_t) - b(s_t))$\")\n\n    text(\"Summary:\")\n    text(r\"- The game: find a low-bias, low-variance estimate of $\\mathbb E_{\\tau \\sim p_\\theta}[\\nabla_\\theta \\log p_\\theta(\\tau) u(\\tau)]$\")\n    text(\"- Baselines: a general-purpose strategy to reduce variance while remaining unbiased\")\n    text(\"- Bootstrapping: reduces variance but introduces a bit of bias\")\n\n\ndef variance_reduction():\n    text(\"Consider the simple mean estimation problem:\")\n    text(r\"$\\displaystyle \\mu = \\mathbb E_{i \\sim p}[f(i)] = \\sum_i p(i) f(i)$\")\n    probs = torch.tensor([0.1, 0.4, 0.2, 0.3])  # p(0), p(1), ... @inspect probs\n    points = torch.tensor([-4., -6., 6., 8.])  # f(0), f(1), ... @inspect points\n\n    text(r\"This is the true mean $\\mu$ that we want to estimate (in general, unknown):\")\n    mu = probs @ points  # @inspect mu\n\n    text(r\"An **estimator** is any random variable that tries to get close to $\\mu$.\")\n    text(\"Each estimator has a **bias** and a **variance** (and a cost).\")\n\n    text(r\"The simplest estimator of $\\mu$:\")\n    text(r\"Sample a single $i \\sim p$ and return $f(i)$.\")\n    def estimator1():\n        index = torch.multinomial(probs, num_samples=1)  # @inspect index\n        estimate = points[index]  # @inspect estimate\n        return estimate\n    estimate = estimator1()  # @inspect estimate\n    estimate = estimator1()  # @inspect estimate @stepover\n    estimate = estimator1()  # @inspect estimate @stepover\n    result1 = evaluate_estimator(estimator1)  # @inspect result1\n\n    text(\"A more expensive estimator is to sample 2 points and average them:\")\n    def estimator2():\n        indices = torch.multinomial(probs, num_samples=2, replacement=True)  # @inspect indices\n        values = points[indices]  # @inspect values\n        estimate = torch.mean(values)  # @inspect estimate\n        return estimate\n    estimate = estimator2()  # @inspect estimate\n    estimate = estimator2()  # @inspect estimate @stepover\n    estimate = estimator2()  # @inspect estimate @stepover\n    result2 = evaluate_estimator(estimator2)  # @inspect result2 @stepover\n\n    text(\"A worse estimator is to add noise, but it's still unbiased:\")\n    def estimator3():\n        # Add noise\n        index = torch.multinomial(probs, num_samples=1)  # @inspect index\n        noise = torch.randn(1)  # @inspect noise\n        estimate = points[index] + noise  # @inspect estimate\n        return estimate\n    estimate = estimator3()  # @inspect estimate\n    estimate = estimator3()  # @inspect estimate @stepover\n    estimate = estimator3()  # @inspect estimate @stepover\n    result3 = evaluate_estimator(estimator3)  # @inspect result3 @stepover\n\n    text(r\"Suppose we have a magic function $\\text{offset}(i)$ that has mean 0: $\\mathbb E_{i \\sim p}[\\text{offset}(i)] = 0$.\")\n    text(r\"Then $\\mathbb E[f(i) - \\text{offset}(i)] = \\mathbb E[f(i)] - \\mathbb E[\\text{offset}(i)] = \\mathbb E[f(i)]$, so $f(i) - \\text{offset}(i)$ is also unbiased.\")\n    def estimator4():\n        offsets = torch.tensor([-6., -6., 6., 6.])\n        index = torch.multinomial(probs, num_samples=1)  # @inspect index\n        estimate = points[index] - offsets[index]  # @inspect estimate\n        return estimate\n    estimate = estimator4()  # @inspect estimate\n    estimate = estimator4()  # @inspect estimate @stepover\n    estimate = estimator4()  # @inspect estimate @stepover\n    result4 = evaluate_estimator(estimator4)  # @inspect result4 @stepover\n\n\ndef evaluate_estimator(estimator):\n    # Try 100 samples\n    num_samples = 100\n    samples = torch.tensor([estimator() for _ in range(num_samples)])  # @inspect samples @stepover\n    mean = torch.mean(samples)  # @inspect mean\n    variance = torch.var(samples)  # @inspect variance\n    return {\n        \"mean\": mean,\n        \"variance\": variance,\n    }\n\n\nif __name__ == \"__main__\":\n    main()\n"
+  },
+  "hidden_line_numbers": {
+    "rl_enhancements.py": []
+  },
+  "steps": [
+    {
+      "stack": [
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 5,
+          "function_name": "main",
+          "code": "def main():"
+        }
+      ],
+      "env": {},
+      "renderings": []
+    },
+    {
+      "stack": [
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 6,
+          "function_name": "main",
+          "code": "text(\"# RL enhancements\")"
+        }
+      ],
+      "env": {},
+      "renderings": [
+        {
+          "type": "markdown",
+          "data": "# RL enhancements",
+          "style": {},
+          "external_link": null,
+          "internal_link": null,
+          "animate": false
+        }
+      ]
+    },
+    {
+      "stack": [
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 7,
+          "function_name": "main",
+          "code": "text(r\"Last time: policy gradient (REINFORCE) optimizes the policy $\\pi_\\theta(a \\mid s)$ directly\")"
+        }
+      ],
+      "env": {},
+      "renderings": [
+        {
+          "type": "markdown",
+          "data": "Last time: policy gradient (REINFORCE) optimizes the policy $\\pi_\\theta(a \\mid s)$ directly",
+          "style": {},
+          "external_link": null,
+          "internal_link": null,
+          "animate": false
+        }
+      ]
+    },
+    {
+      "stack": [
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 8,
+          "function_name": "main",
+          "code": "text(\"This time: how to get better (lower variance) estimates of the policy gradient\")"
+        }
+      ],
+      "env": {},
+      "renderings": [
+        {
+          "type": "markdown",
+          "data": "This time: how to get better (lower variance) estimates of the policy gradient",
+          "style": {},
+          "external_link": null,
+          "internal_link": null,
+          "animate": false
+        }
+      ]
+    },
+    {
+      "stack": [
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 10,
+          "function_name": "main",
+          "code": "policy_gradient_enhancements()"
+        }
+      ],
+      "env": {},
+      "renderings": []
+    },
+    {
+      "stack": [
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 10,
+          "function_name": "main",
+          "code": "policy_gradient_enhancements()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 15,
+          "function_name": "policy_gradient_enhancements",
+          "code": "def policy_gradient_enhancements():"
+        }
+      ],
+      "env": {},
+      "renderings": []
+    },
+    {
+      "stack": [
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 10,
+          "function_name": "main",
+          "code": "policy_gradient_enhancements()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 16,
+          "function_name": "policy_gradient_enhancements",
+          "code": "text(\"Recall the objective: maximize expected utility\")"
+        }
+      ],
+      "env": {},
+      "renderings": [
+        {
+          "type": "markdown",
+          "data": "Recall the objective: maximize expected utility",
+          "style": {},
+          "external_link": null,
+          "internal_link": null,
+          "animate": false
+        }
+      ]
+    },
+    {
+      "stack": [
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 10,
+          "function_name": "main",
+          "code": "policy_gradient_enhancements()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 17,
+          "function_name": "policy_gradient_enhancements",
+          "code": "text(r\"$\\displaystyle V(\\theta) = \\mathbb E_{\\tau \\sim p_\\theta}[u(\\tau)] = \\sum_\\tau p_\\theta(\\tau) u(\\tau)$\")"
+        }
+      ],
+      "env": {},
+      "renderings": [
+        {
+          "type": "markdown",
+          "data": "$\\displaystyle V(\\theta) = \\mathbb E_{\\tau \\sim p_\\theta}[u(\\tau)] = \\sum_\\tau p_\\theta(\\tau) u(\\tau)$",
+          "style": {},
+          "external_link": null,
+          "internal_link": null,
+          "animate": false
+        }
+      ]
+    },
+    {
+      "stack": [
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 10,
+          "function_name": "main",
+          "code": "policy_gradient_enhancements()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 19,
+          "function_name": "policy_gradient_enhancements",
+          "code": "text(r\"Policy gradient theorem: $\\nabla_\\theta V(\\theta) = \\mathbb E_{\\tau \\sim p_\\theta}[\\nabla_\\theta \\log p_\\theta(\\tau) u(\\tau)]$\")"
+        }
+      ],
+      "env": {},
+      "renderings": [
+        {
+          "type": "markdown",
+          "data": "Policy gradient theorem: $\\nabla_\\theta V(\\theta) = \\mathbb E_{\\tau \\sim p_\\theta}[\\nabla_\\theta \\log p_\\theta(\\tau) u(\\tau)]$",
+          "style": {},
+          "external_link": null,
+          "internal_link": null,
+          "animate": false
+        }
+      ]
+    },
+    {
+      "stack": [
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 10,
+          "function_name": "main",
+          "code": "policy_gradient_enhancements()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 21,
+          "function_name": "policy_gradient_enhancements",
+          "code": "text(r\"REINFORCE is one particular (unbiased) estimate of $\\nabla_\\theta V(\\theta)$:\")"
+        }
+      ],
+      "env": {},
+      "renderings": [
+        {
+          "type": "markdown",
+          "data": "REINFORCE is one particular (unbiased) estimate of $\\nabla_\\theta V(\\theta)$:",
+          "style": {},
+          "external_link": null,
+          "internal_link": null,
+          "animate": false
+        }
+      ]
+    },
+    {
+      "stack": [
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 10,
+          "function_name": "main",
+          "code": "policy_gradient_enhancements()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 22,
+          "function_name": "policy_gradient_enhancements",
+          "code": "text(r\"Sample $\\tau \\sim p_\\theta$ and compute $\\nabla_\\theta J(\\theta, \\tau) = \\nabla_\\theta \\log p_\\theta(\\tau) u(\\tau)$\")"
+        }
+      ],
+      "env": {},
+      "renderings": [
+        {
+          "type": "markdown",
+          "data": "Sample $\\tau \\sim p_\\theta$ and compute $\\nabla_\\theta J(\\theta, \\tau) = \\nabla_\\theta \\log p_\\theta(\\tau) u(\\tau)$",
+          "style": {},
+          "external_link": null,
+          "internal_link": null,
+          "animate": false
+        }
+      ]
+    },
+    {
+      "stack": [
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 10,
+          "function_name": "main",
+          "code": "policy_gradient_enhancements()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 23,
+          "function_name": "policy_gradient_enhancements",
+          "code": "text(\"Can we get a better estimate?\")"
+        }
+      ],
+      "env": {},
+      "renderings": [
+        {
+          "type": "markdown",
+          "data": "Can we get a better estimate?",
+          "style": {},
+          "external_link": null,
+          "internal_link": null,
+          "animate": false
+        }
+      ]
+    },
+    {
+      "stack": [
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 10,
+          "function_name": "main",
+          "code": "policy_gradient_enhancements()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 25,
+          "function_name": "policy_gradient_enhancements",
+          "code": "variance_reduction()"
+        }
+      ],
+      "env": {},
+      "renderings": []
+    },
+    {
+      "stack": [
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 10,
+          "function_name": "main",
+          "code": "policy_gradient_enhancements()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 25,
+          "function_name": "policy_gradient_enhancements",
+          "code": "variance_reduction()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 57,
+          "function_name": "variance_reduction",
+          "code": "def variance_reduction():"
+        }
+      ],
+      "env": {},
+      "renderings": []
+    },
+    {
+      "stack": [
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 10,
+          "function_name": "main",
+          "code": "policy_gradient_enhancements()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 25,
+          "function_name": "policy_gradient_enhancements",
+          "code": "variance_reduction()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 58,
+          "function_name": "variance_reduction",
+          "code": "text(\"Consider the simple mean estimation problem:\")"
+        }
+      ],
+      "env": {},
+      "renderings": [
+        {
+          "type": "markdown",
+          "data": "Consider the simple mean estimation problem:",
+          "style": {},
+          "external_link": null,
+          "internal_link": null,
+          "animate": false
+        }
+      ]
+    },
+    {
+      "stack": [
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 10,
+          "function_name": "main",
+          "code": "policy_gradient_enhancements()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 25,
+          "function_name": "policy_gradient_enhancements",
+          "code": "variance_reduction()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 59,
+          "function_name": "variance_reduction",
+          "code": "text(r\"$\\displaystyle \\mu = \\mathbb E_{i \\sim p}[f(i)] = \\sum_i p(i) f(i)$\")"
+        }
+      ],
+      "env": {},
+      "renderings": [
+        {
+          "type": "markdown",
+          "data": "$\\displaystyle \\mu = \\mathbb E_{i \\sim p}[f(i)] = \\sum_i p(i) f(i)$",
+          "style": {},
+          "external_link": null,
+          "internal_link": null,
+          "animate": false
+        }
+      ]
+    },
+    {
+      "stack": [
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 10,
+          "function_name": "main",
+          "code": "policy_gradient_enhancements()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 25,
+          "function_name": "policy_gradient_enhancements",
+          "code": "variance_reduction()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 60,
+          "function_name": "variance_reduction",
+          "code": "probs = torch.tensor([0.1, 0.4, 0.2, 0.3])  # p(0), p(1), ... @inspect probs"
+        }
+      ],
+      "env": {
+        "probs": {
+          "type": "torch.Tensor",
+          "contents": [
+            0.10000000149011612,
+            0.4000000059604645,
+            0.20000000298023224,
+            0.30000001192092896
+          ],
+          "dtype": "torch.float32",
+          "shape": [
+            4
+          ]
+        }
+      },
+      "renderings": []
+    },
+    {
+      "stack": [
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 10,
+          "function_name": "main",
+          "code": "policy_gradient_enhancements()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 25,
+          "function_name": "policy_gradient_enhancements",
+          "code": "variance_reduction()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 61,
+          "function_name": "variance_reduction",
+          "code": "points = torch.tensor([-4., -6., 6., 8.])  # f(0), f(1), ... @inspect points"
+        }
+      ],
+      "env": {
+        "points": {
+          "type": "torch.Tensor",
+          "contents": [
+            -4.0,
+            -6.0,
+            6.0,
+            8.0
+          ],
+          "dtype": "torch.float32",
+          "shape": [
+            4
+          ]
+        }
+      },
+      "renderings": []
+    },
+    {
+      "stack": [
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 10,
+          "function_name": "main",
+          "code": "policy_gradient_enhancements()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 25,
+          "function_name": "policy_gradient_enhancements",
+          "code": "variance_reduction()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 63,
+          "function_name": "variance_reduction",
+          "code": "text(r\"This is the true mean $\\mu$ that we want to estimate (in general, unknown):\")"
+        }
+      ],
+      "env": {},
+      "renderings": [
+        {
+          "type": "markdown",
+          "data": "This is the true mean $\\mu$ that we want to estimate (in general, unknown):",
+          "style": {},
+          "external_link": null,
+          "internal_link": null,
+          "animate": false
+        }
+      ]
+    },
+    {
+      "stack": [
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 10,
+          "function_name": "main",
+          "code": "policy_gradient_enhancements()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 25,
+          "function_name": "policy_gradient_enhancements",
+          "code": "variance_reduction()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 64,
+          "function_name": "variance_reduction",
+          "code": "mu = probs @ points  # @inspect mu"
+        }
+      ],
+      "env": {
+        "mu": {
+          "type": "torch.Tensor",
+          "contents": 0.7999999523162842,
+          "dtype": "torch.float32",
+          "shape": []
+        }
+      },
+      "renderings": []
+    },
+    {
+      "stack": [
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 10,
+          "function_name": "main",
+          "code": "policy_gradient_enhancements()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 25,
+          "function_name": "policy_gradient_enhancements",
+          "code": "variance_reduction()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 66,
+          "function_name": "variance_reduction",
+          "code": "text(r\"An **estimator** is any random variable that tries to get close to $\\mu$.\")"
+        }
+      ],
+      "env": {},
+      "renderings": [
+        {
+          "type": "markdown",
+          "data": "An **estimator** is any random variable that tries to get close to $\\mu$.",
+          "style": {},
+          "external_link": null,
+          "internal_link": null,
+          "animate": false
+        }
+      ]
+    },
+    {
+      "stack": [
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 10,
+          "function_name": "main",
+          "code": "policy_gradient_enhancements()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 25,
+          "function_name": "policy_gradient_enhancements",
+          "code": "variance_reduction()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 67,
+          "function_name": "variance_reduction",
+          "code": "text(\"Each estimator has a **bias** and a **variance** (and a cost).\")"
+        }
+      ],
+      "env": {},
+      "renderings": [
+        {
+          "type": "markdown",
+          "data": "Each estimator has a **bias** and a **variance** (and a cost).",
+          "style": {},
+          "external_link": null,
+          "internal_link": null,
+          "animate": false
+        }
+      ]
+    },
+    {
+      "stack": [
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 10,
+          "function_name": "main",
+          "code": "policy_gradient_enhancements()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 25,
+          "function_name": "policy_gradient_enhancements",
+          "code": "variance_reduction()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 69,
+          "function_name": "variance_reduction",
+          "code": "text(r\"The simplest estimator of $\\mu$:\")"
+        }
+      ],
+      "env": {},
+      "renderings": [
+        {
+          "type": "markdown",
+          "data": "The simplest estimator of $\\mu$:",
+          "style": {},
+          "external_link": null,
+          "internal_link": null,
+          "animate": false
+        }
+      ]
+    },
+    {
+      "stack": [
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 10,
+          "function_name": "main",
+          "code": "policy_gradient_enhancements()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 25,
+          "function_name": "policy_gradient_enhancements",
+          "code": "variance_reduction()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 70,
+          "function_name": "variance_reduction",
+          "code": "text(r\"Sample a single $i \\sim p$ and return $f(i)$.\")"
+        }
+      ],
+      "env": {},
+      "renderings": [
+        {
+          "type": "markdown",
+          "data": "Sample a single $i \\sim p$ and return $f(i)$.",
+          "style": {},
+          "external_link": null,
+          "internal_link": null,
+          "animate": false
+        }
+      ]
+    },
+    {
+      "stack": [
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 10,
+          "function_name": "main",
+          "code": "policy_gradient_enhancements()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 25,
+          "function_name": "policy_gradient_enhancements",
+          "code": "variance_reduction()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 71,
+          "function_name": "variance_reduction",
+          "code": "def estimator1():"
+        }
+      ],
+      "env": {},
+      "renderings": []
+    },
+    {
+      "stack": [
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 10,
+          "function_name": "main",
+          "code": "policy_gradient_enhancements()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 25,
+          "function_name": "policy_gradient_enhancements",
+          "code": "variance_reduction()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 75,
+          "function_name": "variance_reduction",
+          "code": "estimate = estimator1()  # @inspect estimate"
+        }
+      ],
+      "env": {},
+      "renderings": []
+    },
+    {
+      "stack": [
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 10,
+          "function_name": "main",
+          "code": "policy_gradient_enhancements()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 25,
+          "function_name": "policy_gradient_enhancements",
+          "code": "variance_reduction()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 75,
+          "function_name": "variance_reduction",
+          "code": "estimate = estimator1()  # @inspect estimate"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 71,
+          "function_name": "estimator1",
+          "code": "def estimator1():"
+        }
+      ],
+      "env": {},
+      "renderings": []
+    },
+    {
+      "stack": [
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 10,
+          "function_name": "main",
+          "code": "policy_gradient_enhancements()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 25,
+          "function_name": "policy_gradient_enhancements",
+          "code": "variance_reduction()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 75,
+          "function_name": "variance_reduction",
+          "code": "estimate = estimator1()  # @inspect estimate"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 72,
+          "function_name": "estimator1",
+          "code": "index = torch.multinomial(probs, num_samples=1)  # @inspect index"
+        }
+      ],
+      "env": {
+        "index": {
+          "type": "torch.Tensor",
+          "contents": [
+            3
+          ],
+          "dtype": "torch.int64",
+          "shape": [
+            1
+          ]
+        }
+      },
+      "renderings": []
+    },
+    {
+      "stack": [
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 10,
+          "function_name": "main",
+          "code": "policy_gradient_enhancements()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 25,
+          "function_name": "policy_gradient_enhancements",
+          "code": "variance_reduction()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 75,
+          "function_name": "variance_reduction",
+          "code": "estimate = estimator1()  # @inspect estimate"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 73,
+          "function_name": "estimator1",
+          "code": "estimate = points[index]  # @inspect estimate"
+        }
+      ],
+      "env": {
+        "estimate": {
+          "type": "torch.Tensor",
+          "contents": [
+            8.0
+          ],
+          "dtype": "torch.float32",
+          "shape": [
+            1
+          ]
+        }
+      },
+      "renderings": []
+    },
+    {
+      "stack": [
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 10,
+          "function_name": "main",
+          "code": "policy_gradient_enhancements()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 25,
+          "function_name": "policy_gradient_enhancements",
+          "code": "variance_reduction()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 75,
+          "function_name": "variance_reduction",
+          "code": "estimate = estimator1()  # @inspect estimate"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 74,
+          "function_name": "estimator1",
+          "code": "return estimate"
+        }
+      ],
+      "env": {},
+      "renderings": []
+    },
+    {
+      "stack": [
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 10,
+          "function_name": "main",
+          "code": "policy_gradient_enhancements()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 25,
+          "function_name": "policy_gradient_enhancements",
+          "code": "variance_reduction()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 75,
+          "function_name": "variance_reduction",
+          "code": "estimate = estimator1()  # @inspect estimate"
+        }
+      ],
+      "env": {
+        "estimate": {
+          "type": "torch.Tensor",
+          "contents": [
+            8.0
+          ],
+          "dtype": "torch.float32",
+          "shape": [
+            1
+          ]
+        }
+      },
+      "renderings": []
+    },
+    {
+      "stack": [
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 10,
+          "function_name": "main",
+          "code": "policy_gradient_enhancements()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 25,
+          "function_name": "policy_gradient_enhancements",
+          "code": "variance_reduction()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 76,
+          "function_name": "variance_reduction",
+          "code": "estimate = estimator1()  # @inspect estimate @stepover"
+        }
+      ],
+      "env": {
+        "estimate": {
+          "type": "torch.Tensor",
+          "contents": [
+            -4.0
+          ],
+          "dtype": "torch.float32",
+          "shape": [
+            1
+          ]
+        }
+      },
+      "renderings": []
+    },
+    {
+      "stack": [
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 10,
+          "function_name": "main",
+          "code": "policy_gradient_enhancements()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 25,
+          "function_name": "policy_gradient_enhancements",
+          "code": "variance_reduction()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 77,
+          "function_name": "variance_reduction",
+          "code": "estimate = estimator1()  # @inspect estimate @stepover"
+        }
+      ],
+      "env": {
+        "estimate": {
+          "type": "torch.Tensor",
+          "contents": [
+            8.0
+          ],
+          "dtype": "torch.float32",
+          "shape": [
+            1
+          ]
+        }
+      },
+      "renderings": []
+    },
+    {
+      "stack": [
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 10,
+          "function_name": "main",
+          "code": "policy_gradient_enhancements()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 25,
+          "function_name": "policy_gradient_enhancements",
+          "code": "variance_reduction()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 78,
+          "function_name": "variance_reduction",
+          "code": "result1 = evaluate_estimator(estimator1)  # @inspect result1"
+        }
+      ],
+      "env": {},
+      "renderings": []
+    },
+    {
+      "stack": [
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 10,
+          "function_name": "main",
+          "code": "policy_gradient_enhancements()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 25,
+          "function_name": "policy_gradient_enhancements",
+          "code": "variance_reduction()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 78,
+          "function_name": "variance_reduction",
+          "code": "result1 = evaluate_estimator(estimator1)  # @inspect result1"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 116,
+          "function_name": "evaluate_estimator",
+          "code": "def evaluate_estimator(estimator):"
+        }
+      ],
+      "env": {},
+      "renderings": []
+    },
+    {
+      "stack": [
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 10,
+          "function_name": "main",
+          "code": "policy_gradient_enhancements()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 25,
+          "function_name": "policy_gradient_enhancements",
+          "code": "variance_reduction()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 78,
+          "function_name": "variance_reduction",
+          "code": "result1 = evaluate_estimator(estimator1)  # @inspect result1"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 118,
+          "function_name": "evaluate_estimator",
+          "code": "num_samples = 100"
+        }
+      ],
+      "env": {},
+      "renderings": []
+    },
+    {
+      "stack": [
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 10,
+          "function_name": "main",
+          "code": "policy_gradient_enhancements()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 25,
+          "function_name": "policy_gradient_enhancements",
+          "code": "variance_reduction()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 78,
+          "function_name": "variance_reduction",
+          "code": "result1 = evaluate_estimator(estimator1)  # @inspect result1"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 119,
+          "function_name": "evaluate_estimator",
+          "code": "samples = torch.tensor([estimator() for _ in range(num_samples)])  # @inspect samples @stepover"
+        }
+      ],
+      "env": {
+        "samples": {
+          "type": "torch.Tensor",
+          "contents": [
+            6.0,
+            6.0,
+            6.0,
+            -4.0,
+            8.0,
+            6.0,
+            8.0,
+            -6.0,
+            -6.0,
+            -6.0,
+            8.0,
+            8.0,
+            -4.0,
+            -6.0,
+            -6.0,
+            6.0,
+            6.0,
+            8.0,
+            6.0,
+            -6.0,
+            8.0,
+            -4.0,
+            8.0,
+            8.0,
+            6.0,
+            -4.0,
+            8.0,
+            -6.0,
+            -6.0,
+            8.0,
+            -6.0,
+            6.0,
+            -4.0,
+            -6.0,
+            -6.0,
+            6.0,
+            8.0,
+            6.0,
+            6.0,
+            -4.0,
+            -6.0,
+            -6.0,
+            8.0,
+            -6.0,
+            8.0,
+            8.0,
+            -6.0,
+            6.0,
+            -6.0,
+            8.0,
+            -6.0,
+            -6.0,
+            8.0,
+            -6.0,
+            6.0,
+            -6.0,
+            -4.0,
+            8.0,
+            -4.0,
+            6.0,
+            6.0,
+            -6.0,
+            -6.0,
+            -6.0,
+            8.0,
+            6.0,
+            -6.0,
+            -4.0,
+            6.0,
+            -6.0,
+            -6.0,
+            8.0,
+            -6.0,
+            6.0,
+            8.0,
+            -6.0,
+            -6.0,
+            6.0,
+            8.0,
+            8.0,
+            8.0,
+            -6.0,
+            -6.0,
+            6.0,
+            -6.0,
+            -6.0,
+            8.0,
+            -6.0,
+            8.0,
+            8.0,
+            8.0,
+            6.0,
+            6.0,
+            8.0,
+            -6.0,
+            -6.0,
+            8.0,
+            -6.0,
+            8.0,
+            8.0
+          ],
+          "dtype": "torch.float32",
+          "shape": [
+            100
+          ]
+        }
+      },
+      "renderings": []
+    },
+    {
+      "stack": [
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 10,
+          "function_name": "main",
+          "code": "policy_gradient_enhancements()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 25,
+          "function_name": "policy_gradient_enhancements",
+          "code": "variance_reduction()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 78,
+          "function_name": "variance_reduction",
+          "code": "result1 = evaluate_estimator(estimator1)  # @inspect result1"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 120,
+          "function_name": "evaluate_estimator",
+          "code": "mean = torch.mean(samples)  # @inspect mean"
+        }
+      ],
+      "env": {
+        "mean": {
+          "type": "torch.Tensor",
+          "contents": 1.2799999713897705,
+          "dtype": "torch.float32",
+          "shape": []
+        }
+      },
+      "renderings": []
+    },
+    {
+      "stack": [
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 10,
+          "function_name": "main",
+          "code": "policy_gradient_enhancements()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 25,
+          "function_name": "policy_gradient_enhancements",
+          "code": "variance_reduction()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 78,
+          "function_name": "variance_reduction",
+          "code": "result1 = evaluate_estimator(estimator1)  # @inspect result1"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 121,
+          "function_name": "evaluate_estimator",
+          "code": "variance = torch.var(samples)  # @inspect variance"
+        }
+      ],
+      "env": {
+        "variance": {
+          "type": "torch.Tensor",
+          "contents": 41.658180236816406,
+          "dtype": "torch.float32",
+          "shape": []
+        }
+      },
+      "renderings": []
+    },
+    {
+      "stack": [
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 10,
+          "function_name": "main",
+          "code": "policy_gradient_enhancements()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 25,
+          "function_name": "policy_gradient_enhancements",
+          "code": "variance_reduction()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 78,
+          "function_name": "variance_reduction",
+          "code": "result1 = evaluate_estimator(estimator1)  # @inspect result1"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 123,
+          "function_name": "evaluate_estimator",
+          "code": "\"mean\": mean,"
+        }
+      ],
+      "env": {},
+      "renderings": []
+    },
+    {
+      "stack": [
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 10,
+          "function_name": "main",
+          "code": "policy_gradient_enhancements()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 25,
+          "function_name": "policy_gradient_enhancements",
+          "code": "variance_reduction()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 78,
+          "function_name": "variance_reduction",
+          "code": "result1 = evaluate_estimator(estimator1)  # @inspect result1"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 124,
+          "function_name": "evaluate_estimator",
+          "code": "\"variance\": variance,"
+        }
+      ],
+      "env": {},
+      "renderings": []
+    },
+    {
+      "stack": [
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 10,
+          "function_name": "main",
+          "code": "policy_gradient_enhancements()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 25,
+          "function_name": "policy_gradient_enhancements",
+          "code": "variance_reduction()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 78,
+          "function_name": "variance_reduction",
+          "code": "result1 = evaluate_estimator(estimator1)  # @inspect result1"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 122,
+          "function_name": "evaluate_estimator",
+          "code": "return {"
+        }
+      ],
+      "env": {},
+      "renderings": []
+    },
+    {
+      "stack": [
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 10,
+          "function_name": "main",
+          "code": "policy_gradient_enhancements()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 25,
+          "function_name": "policy_gradient_enhancements",
+          "code": "variance_reduction()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 78,
+          "function_name": "variance_reduction",
+          "code": "result1 = evaluate_estimator(estimator1)  # @inspect result1"
+        }
+      ],
+      "env": {
+        "result1": {
+          "type": "dict",
+          "contents": {
+            "mean": {
+              "type": "torch.Tensor",
+              "contents": 1.2799999713897705,
+              "dtype": "torch.float32",
+              "shape": []
+            },
+            "variance": {
+              "type": "torch.Tensor",
+              "contents": 41.658180236816406,
+              "dtype": "torch.float32",
+              "shape": []
+            }
+          },
+          "dtype": null,
+          "shape": null
+        }
+      },
+      "renderings": []
+    },
+    {
+      "stack": [
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 10,
+          "function_name": "main",
+          "code": "policy_gradient_enhancements()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 25,
+          "function_name": "policy_gradient_enhancements",
+          "code": "variance_reduction()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 80,
+          "function_name": "variance_reduction",
+          "code": "text(\"A more expensive estimator is to sample 2 points and average them:\")"
+        }
+      ],
+      "env": {},
+      "renderings": [
+        {
+          "type": "markdown",
+          "data": "A more expensive estimator is to sample 2 points and average them:",
+          "style": {},
+          "external_link": null,
+          "internal_link": null,
+          "animate": false
+        }
+      ]
+    },
+    {
+      "stack": [
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 10,
+          "function_name": "main",
+          "code": "policy_gradient_enhancements()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 25,
+          "function_name": "policy_gradient_enhancements",
+          "code": "variance_reduction()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 81,
+          "function_name": "variance_reduction",
+          "code": "def estimator2():"
+        }
+      ],
+      "env": {},
+      "renderings": []
+    },
+    {
+      "stack": [
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 10,
+          "function_name": "main",
+          "code": "policy_gradient_enhancements()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 25,
+          "function_name": "policy_gradient_enhancements",
+          "code": "variance_reduction()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 86,
+          "function_name": "variance_reduction",
+          "code": "estimate = estimator2()  # @inspect estimate"
+        }
+      ],
+      "env": {},
+      "renderings": []
+    },
+    {
+      "stack": [
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 10,
+          "function_name": "main",
+          "code": "policy_gradient_enhancements()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 25,
+          "function_name": "policy_gradient_enhancements",
+          "code": "variance_reduction()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 86,
+          "function_name": "variance_reduction",
+          "code": "estimate = estimator2()  # @inspect estimate"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 81,
+          "function_name": "estimator2",
+          "code": "def estimator2():"
+        }
+      ],
+      "env": {},
+      "renderings": []
+    },
+    {
+      "stack": [
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 10,
+          "function_name": "main",
+          "code": "policy_gradient_enhancements()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 25,
+          "function_name": "policy_gradient_enhancements",
+          "code": "variance_reduction()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 86,
+          "function_name": "variance_reduction",
+          "code": "estimate = estimator2()  # @inspect estimate"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 82,
+          "function_name": "estimator2",
+          "code": "indices = torch.multinomial(probs, num_samples=2, replacement=True)  # @inspect indices"
+        }
+      ],
+      "env": {
+        "indices": {
+          "type": "torch.Tensor",
+          "contents": [
+            1,
+            3
+          ],
+          "dtype": "torch.int64",
+          "shape": [
+            2
+          ]
+        }
+      },
+      "renderings": []
+    },
+    {
+      "stack": [
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 10,
+          "function_name": "main",
+          "code": "policy_gradient_enhancements()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 25,
+          "function_name": "policy_gradient_enhancements",
+          "code": "variance_reduction()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 86,
+          "function_name": "variance_reduction",
+          "code": "estimate = estimator2()  # @inspect estimate"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 83,
+          "function_name": "estimator2",
+          "code": "values = points[indices]  # @inspect values"
+        }
+      ],
+      "env": {
+        "values": {
+          "type": "torch.Tensor",
+          "contents": [
+            -6.0,
+            8.0
+          ],
+          "dtype": "torch.float32",
+          "shape": [
+            2
+          ]
+        }
+      },
+      "renderings": []
+    },
+    {
+      "stack": [
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 10,
+          "function_name": "main",
+          "code": "policy_gradient_enhancements()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 25,
+          "function_name": "policy_gradient_enhancements",
+          "code": "variance_reduction()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 86,
+          "function_name": "variance_reduction",
+          "code": "estimate = estimator2()  # @inspect estimate"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 84,
+          "function_name": "estimator2",
+          "code": "estimate = torch.mean(values)  # @inspect estimate"
+        }
+      ],
+      "env": {
+        "estimate": {
+          "type": "torch.Tensor",
+          "contents": 1.0,
+          "dtype": "torch.float32",
+          "shape": []
+        }
+      },
+      "renderings": []
+    },
+    {
+      "stack": [
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 10,
+          "function_name": "main",
+          "code": "policy_gradient_enhancements()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 25,
+          "function_name": "policy_gradient_enhancements",
+          "code": "variance_reduction()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 86,
+          "function_name": "variance_reduction",
+          "code": "estimate = estimator2()  # @inspect estimate"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 85,
+          "function_name": "estimator2",
+          "code": "return estimate"
+        }
+      ],
+      "env": {},
+      "renderings": []
+    },
+    {
+      "stack": [
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 10,
+          "function_name": "main",
+          "code": "policy_gradient_enhancements()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 25,
+          "function_name": "policy_gradient_enhancements",
+          "code": "variance_reduction()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 86,
+          "function_name": "variance_reduction",
+          "code": "estimate = estimator2()  # @inspect estimate"
+        }
+      ],
+      "env": {
+        "estimate": {
+          "type": "torch.Tensor",
+          "contents": 1.0,
+          "dtype": "torch.float32",
+          "shape": []
+        }
+      },
+      "renderings": []
+    },
+    {
+      "stack": [
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 10,
+          "function_name": "main",
+          "code": "policy_gradient_enhancements()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 25,
+          "function_name": "policy_gradient_enhancements",
+          "code": "variance_reduction()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 87,
+          "function_name": "variance_reduction",
+          "code": "estimate = estimator2()  # @inspect estimate @stepover"
+        }
+      ],
+      "env": {
+        "estimate": {
+          "type": "torch.Tensor",
+          "contents": 1.0,
+          "dtype": "torch.float32",
+          "shape": []
+        }
+      },
+      "renderings": []
+    },
+    {
+      "stack": [
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 10,
+          "function_name": "main",
+          "code": "policy_gradient_enhancements()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 25,
+          "function_name": "policy_gradient_enhancements",
+          "code": "variance_reduction()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 88,
+          "function_name": "variance_reduction",
+          "code": "estimate = estimator2()  # @inspect estimate @stepover"
+        }
+      ],
+      "env": {
+        "estimate": {
+          "type": "torch.Tensor",
+          "contents": 7.0,
+          "dtype": "torch.float32",
+          "shape": []
+        }
+      },
+      "renderings": []
+    },
+    {
+      "stack": [
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 10,
+          "function_name": "main",
+          "code": "policy_gradient_enhancements()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 25,
+          "function_name": "policy_gradient_enhancements",
+          "code": "variance_reduction()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 89,
+          "function_name": "variance_reduction",
+          "code": "result2 = evaluate_estimator(estimator2)  # @inspect result2 @stepover"
+        }
+      ],
+      "env": {
+        "result2": {
+          "type": "dict",
+          "contents": {
+            "mean": {
+              "type": "torch.Tensor",
+              "contents": 0.4399999976158142,
+              "dtype": "torch.float32",
+              "shape": []
+            },
+            "variance": {
+              "type": "torch.Tensor",
+              "contents": 15.622626304626465,
+              "dtype": "torch.float32",
+              "shape": []
+            }
+          },
+          "dtype": null,
+          "shape": null
+        }
+      },
+      "renderings": []
+    },
+    {
+      "stack": [
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 10,
+          "function_name": "main",
+          "code": "policy_gradient_enhancements()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 25,
+          "function_name": "policy_gradient_enhancements",
+          "code": "variance_reduction()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 91,
+          "function_name": "variance_reduction",
+          "code": "text(\"A worse estimator is to add noise, but it's still unbiased:\")"
+        }
+      ],
+      "env": {},
+      "renderings": [
+        {
+          "type": "markdown",
+          "data": "A worse estimator is to add noise, but it's still unbiased:",
+          "style": {},
+          "external_link": null,
+          "internal_link": null,
+          "animate": false
+        }
+      ]
+    },
+    {
+      "stack": [
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 10,
+          "function_name": "main",
+          "code": "policy_gradient_enhancements()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 25,
+          "function_name": "policy_gradient_enhancements",
+          "code": "variance_reduction()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 92,
+          "function_name": "variance_reduction",
+          "code": "def estimator3():"
+        }
+      ],
+      "env": {},
+      "renderings": []
+    },
+    {
+      "stack": [
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 10,
+          "function_name": "main",
+          "code": "policy_gradient_enhancements()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 25,
+          "function_name": "policy_gradient_enhancements",
+          "code": "variance_reduction()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 98,
+          "function_name": "variance_reduction",
+          "code": "estimate = estimator3()  # @inspect estimate"
+        }
+      ],
+      "env": {},
+      "renderings": []
+    },
+    {
+      "stack": [
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 10,
+          "function_name": "main",
+          "code": "policy_gradient_enhancements()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 25,
+          "function_name": "policy_gradient_enhancements",
+          "code": "variance_reduction()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 98,
+          "function_name": "variance_reduction",
+          "code": "estimate = estimator3()  # @inspect estimate"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 92,
+          "function_name": "estimator3",
+          "code": "def estimator3():"
+        }
+      ],
+      "env": {},
+      "renderings": []
+    },
+    {
+      "stack": [
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 10,
+          "function_name": "main",
+          "code": "policy_gradient_enhancements()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 25,
+          "function_name": "policy_gradient_enhancements",
+          "code": "variance_reduction()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 98,
+          "function_name": "variance_reduction",
+          "code": "estimate = estimator3()  # @inspect estimate"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 94,
+          "function_name": "estimator3",
+          "code": "index = torch.multinomial(probs, num_samples=1)  # @inspect index"
+        }
+      ],
+      "env": {
+        "index": {
+          "type": "torch.Tensor",
+          "contents": [
+            2
+          ],
+          "dtype": "torch.int64",
+          "shape": [
+            1
+          ]
+        }
+      },
+      "renderings": []
+    },
+    {
+      "stack": [
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 10,
+          "function_name": "main",
+          "code": "policy_gradient_enhancements()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 25,
+          "function_name": "policy_gradient_enhancements",
+          "code": "variance_reduction()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 98,
+          "function_name": "variance_reduction",
+          "code": "estimate = estimator3()  # @inspect estimate"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 95,
+          "function_name": "estimator3",
+          "code": "noise = torch.randn(1)  # @inspect noise"
+        }
+      ],
+      "env": {
+        "noise": {
+          "type": "torch.Tensor",
+          "contents": [
+            -0.33537057042121887
+          ],
+          "dtype": "torch.float32",
+          "shape": [
+            1
+          ]
+        }
+      },
+      "renderings": []
+    },
+    {
+      "stack": [
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 10,
+          "function_name": "main",
+          "code": "policy_gradient_enhancements()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 25,
+          "function_name": "policy_gradient_enhancements",
+          "code": "variance_reduction()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 98,
+          "function_name": "variance_reduction",
+          "code": "estimate = estimator3()  # @inspect estimate"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 96,
+          "function_name": "estimator3",
+          "code": "estimate = points[index] + noise  # @inspect estimate"
+        }
+      ],
+      "env": {
+        "estimate": {
+          "type": "torch.Tensor",
+          "contents": [
+            5.6646294593811035
+          ],
+          "dtype": "torch.float32",
+          "shape": [
+            1
+          ]
+        }
+      },
+      "renderings": []
+    },
+    {
+      "stack": [
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 10,
+          "function_name": "main",
+          "code": "policy_gradient_enhancements()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 25,
+          "function_name": "policy_gradient_enhancements",
+          "code": "variance_reduction()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 98,
+          "function_name": "variance_reduction",
+          "code": "estimate = estimator3()  # @inspect estimate"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 97,
+          "function_name": "estimator3",
+          "code": "return estimate"
+        }
+      ],
+      "env": {},
+      "renderings": []
+    },
+    {
+      "stack": [
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 10,
+          "function_name": "main",
+          "code": "policy_gradient_enhancements()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 25,
+          "function_name": "policy_gradient_enhancements",
+          "code": "variance_reduction()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 98,
+          "function_name": "variance_reduction",
+          "code": "estimate = estimator3()  # @inspect estimate"
+        }
+      ],
+      "env": {
+        "estimate": {
+          "type": "torch.Tensor",
+          "contents": [
+            5.6646294593811035
+          ],
+          "dtype": "torch.float32",
+          "shape": [
+            1
+          ]
+        }
+      },
+      "renderings": []
+    },
+    {
+      "stack": [
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 10,
+          "function_name": "main",
+          "code": "policy_gradient_enhancements()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 25,
+          "function_name": "policy_gradient_enhancements",
+          "code": "variance_reduction()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 99,
+          "function_name": "variance_reduction",
+          "code": "estimate = estimator3()  # @inspect estimate @stepover"
+        }
+      ],
+      "env": {
+        "estimate": {
+          "type": "torch.Tensor",
+          "contents": [
+            6.702248573303223
+          ],
+          "dtype": "torch.float32",
+          "shape": [
+            1
+          ]
+        }
+      },
+      "renderings": []
+    },
+    {
+      "stack": [
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 10,
+          "function_name": "main",
+          "code": "policy_gradient_enhancements()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 25,
+          "function_name": "policy_gradient_enhancements",
+          "code": "variance_reduction()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 100,
+          "function_name": "variance_reduction",
+          "code": "estimate = estimator3()  # @inspect estimate @stepover"
+        }
+      ],
+      "env": {
+        "estimate": {
+          "type": "torch.Tensor",
+          "contents": [
+            -3.212223768234253
+          ],
+          "dtype": "torch.float32",
+          "shape": [
+            1
+          ]
+        }
+      },
+      "renderings": []
+    },
+    {
+      "stack": [
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 10,
+          "function_name": "main",
+          "code": "policy_gradient_enhancements()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 25,
+          "function_name": "policy_gradient_enhancements",
+          "code": "variance_reduction()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 101,
+          "function_name": "variance_reduction",
+          "code": "result3 = evaluate_estimator(estimator3)  # @inspect result3 @stepover"
+        }
+      ],
+      "env": {
+        "result3": {
+          "type": "dict",
+          "contents": {
+            "mean": {
+              "type": "torch.Tensor",
+              "contents": 0.6552951335906982,
+              "dtype": "torch.float32",
+              "shape": []
+            },
+            "variance": {
+              "type": "torch.Tensor",
+              "contents": 44.57126235961914,
+              "dtype": "torch.float32",
+              "shape": []
+            }
+          },
+          "dtype": null,
+          "shape": null
+        }
+      },
+      "renderings": []
+    },
+    {
+      "stack": [
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 10,
+          "function_name": "main",
+          "code": "policy_gradient_enhancements()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 25,
+          "function_name": "policy_gradient_enhancements",
+          "code": "variance_reduction()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 103,
+          "function_name": "variance_reduction",
+          "code": "text(r\"Suppose we have a magic function $\\text{offset}(i)$ that has mean 0: $\\mathbb E_{i \\sim p}[\\text{offset}(i)] = 0$.\")"
+        }
+      ],
+      "env": {},
+      "renderings": [
+        {
+          "type": "markdown",
+          "data": "Suppose we have a magic function $\\text{offset}(i)$ that has mean 0: $\\mathbb E_{i \\sim p}[\\text{offset}(i)] = 0$.",
+          "style": {},
+          "external_link": null,
+          "internal_link": null,
+          "animate": false
+        }
+      ]
+    },
+    {
+      "stack": [
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 10,
+          "function_name": "main",
+          "code": "policy_gradient_enhancements()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 25,
+          "function_name": "policy_gradient_enhancements",
+          "code": "variance_reduction()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 104,
+          "function_name": "variance_reduction",
+          "code": "text(r\"Then $\\mathbb E[f(i) - \\text{offset}(i)] = \\mathbb E[f(i)] - \\mathbb E[\\text{offset}(i)] = \\mathbb E[f(i)]$, so $f(i) - \\text{offset}(i)$ is also unbiased.\")"
+        }
+      ],
+      "env": {},
+      "renderings": [
+        {
+          "type": "markdown",
+          "data": "Then $\\mathbb E[f(i) - \\text{offset}(i)] = \\mathbb E[f(i)] - \\mathbb E[\\text{offset}(i)] = \\mathbb E[f(i)]$, so $f(i) - \\text{offset}(i)$ is also unbiased.",
+          "style": {},
+          "external_link": null,
+          "internal_link": null,
+          "animate": false
+        }
+      ]
+    },
+    {
+      "stack": [
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 10,
+          "function_name": "main",
+          "code": "policy_gradient_enhancements()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 25,
+          "function_name": "policy_gradient_enhancements",
+          "code": "variance_reduction()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 105,
+          "function_name": "variance_reduction",
+          "code": "def estimator4():"
+        }
+      ],
+      "env": {},
+      "renderings": []
+    },
+    {
+      "stack": [
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 10,
+          "function_name": "main",
+          "code": "policy_gradient_enhancements()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 25,
+          "function_name": "policy_gradient_enhancements",
+          "code": "variance_reduction()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 110,
+          "function_name": "variance_reduction",
+          "code": "estimate = estimator4()  # @inspect estimate"
+        }
+      ],
+      "env": {},
+      "renderings": []
+    },
+    {
+      "stack": [
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 10,
+          "function_name": "main",
+          "code": "policy_gradient_enhancements()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 25,
+          "function_name": "policy_gradient_enhancements",
+          "code": "variance_reduction()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 110,
+          "function_name": "variance_reduction",
+          "code": "estimate = estimator4()  # @inspect estimate"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 105,
+          "function_name": "estimator4",
+          "code": "def estimator4():"
+        }
+      ],
+      "env": {},
+      "renderings": []
+    },
+    {
+      "stack": [
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 10,
+          "function_name": "main",
+          "code": "policy_gradient_enhancements()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 25,
+          "function_name": "policy_gradient_enhancements",
+          "code": "variance_reduction()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 110,
+          "function_name": "variance_reduction",
+          "code": "estimate = estimator4()  # @inspect estimate"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 106,
+          "function_name": "estimator4",
+          "code": "offsets = torch.tensor([-6., -6., 6., 6.])"
+        }
+      ],
+      "env": {},
+      "renderings": []
+    },
+    {
+      "stack": [
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 10,
+          "function_name": "main",
+          "code": "policy_gradient_enhancements()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 25,
+          "function_name": "policy_gradient_enhancements",
+          "code": "variance_reduction()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 110,
+          "function_name": "variance_reduction",
+          "code": "estimate = estimator4()  # @inspect estimate"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 107,
+          "function_name": "estimator4",
+          "code": "index = torch.multinomial(probs, num_samples=1)  # @inspect index"
+        }
+      ],
+      "env": {
+        "index": {
+          "type": "torch.Tensor",
+          "contents": [
+            2
+          ],
+          "dtype": "torch.int64",
+          "shape": [
+            1
+          ]
+        }
+      },
+      "renderings": []
+    },
+    {
+      "stack": [
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 10,
+          "function_name": "main",
+          "code": "policy_gradient_enhancements()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 25,
+          "function_name": "policy_gradient_enhancements",
+          "code": "variance_reduction()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 110,
+          "function_name": "variance_reduction",
+          "code": "estimate = estimator4()  # @inspect estimate"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 108,
+          "function_name": "estimator4",
+          "code": "estimate = points[index] - offsets[index]  # @inspect estimate"
+        }
+      ],
+      "env": {
+        "estimate": {
+          "type": "torch.Tensor",
+          "contents": [
+            0.0
+          ],
+          "dtype": "torch.float32",
+          "shape": [
+            1
+          ]
+        }
+      },
+      "renderings": []
+    },
+    {
+      "stack": [
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 10,
+          "function_name": "main",
+          "code": "policy_gradient_enhancements()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 25,
+          "function_name": "policy_gradient_enhancements",
+          "code": "variance_reduction()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 110,
+          "function_name": "variance_reduction",
+          "code": "estimate = estimator4()  # @inspect estimate"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 109,
+          "function_name": "estimator4",
+          "code": "return estimate"
+        }
+      ],
+      "env": {},
+      "renderings": []
+    },
+    {
+      "stack": [
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 10,
+          "function_name": "main",
+          "code": "policy_gradient_enhancements()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 25,
+          "function_name": "policy_gradient_enhancements",
+          "code": "variance_reduction()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 110,
+          "function_name": "variance_reduction",
+          "code": "estimate = estimator4()  # @inspect estimate"
+        }
+      ],
+      "env": {
+        "estimate": {
+          "type": "torch.Tensor",
+          "contents": [
+            0.0
+          ],
+          "dtype": "torch.float32",
+          "shape": [
+            1
+          ]
+        }
+      },
+      "renderings": []
+    },
+    {
+      "stack": [
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 10,
+          "function_name": "main",
+          "code": "policy_gradient_enhancements()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 25,
+          "function_name": "policy_gradient_enhancements",
+          "code": "variance_reduction()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 111,
+          "function_name": "variance_reduction",
+          "code": "estimate = estimator4()  # @inspect estimate @stepover"
+        }
+      ],
+      "env": {
+        "estimate": {
+          "type": "torch.Tensor",
+          "contents": [
+            0.0
+          ],
+          "dtype": "torch.float32",
+          "shape": [
+            1
+          ]
+        }
+      },
+      "renderings": []
+    },
+    {
+      "stack": [
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 10,
+          "function_name": "main",
+          "code": "policy_gradient_enhancements()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 25,
+          "function_name": "policy_gradient_enhancements",
+          "code": "variance_reduction()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 112,
+          "function_name": "variance_reduction",
+          "code": "estimate = estimator4()  # @inspect estimate @stepover"
+        }
+      ],
+      "env": {
+        "estimate": {
+          "type": "torch.Tensor",
+          "contents": [
+            2.0
+          ],
+          "dtype": "torch.float32",
+          "shape": [
+            1
+          ]
+        }
+      },
+      "renderings": []
+    },
+    {
+      "stack": [
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 10,
+          "function_name": "main",
+          "code": "policy_gradient_enhancements()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 25,
+          "function_name": "policy_gradient_enhancements",
+          "code": "variance_reduction()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 113,
+          "function_name": "variance_reduction",
+          "code": "result4 = evaluate_estimator(estimator4)  # @inspect result4 @stepover"
+        }
+      ],
+      "env": {
+        "result4": {
+          "type": "dict",
+          "contents": {
+            "mean": {
+              "type": "torch.Tensor",
+              "contents": 0.8399999737739563,
+              "dtype": "torch.float32",
+              "shape": []
+            },
+            "variance": {
+              "type": "torch.Tensor",
+              "contents": 0.9842424392700195,
+              "dtype": "torch.float32",
+              "shape": []
+            }
+          },
+          "dtype": null,
+          "shape": null
+        }
+      },
+      "renderings": []
+    },
+    {
+      "stack": [
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 10,
+          "function_name": "main",
+          "code": "policy_gradient_enhancements()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 25,
+          "function_name": "policy_gradient_enhancements",
+          "code": "variance_reduction()"
+        }
+      ],
+      "env": {},
+      "renderings": []
+    },
+    {
+      "stack": [
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 10,
+          "function_name": "main",
+          "code": "policy_gradient_enhancements()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 27,
+          "function_name": "policy_gradient_enhancements",
+          "code": "text(\"So how do we find an offset with mean zero for the policy gradient?\")"
+        }
+      ],
+      "env": {},
+      "renderings": [
+        {
+          "type": "markdown",
+          "data": "So how do we find an offset with mean zero for the policy gradient?",
+          "style": {},
+          "external_link": null,
+          "internal_link": null,
+          "animate": false
+        }
+      ]
+    },
+    {
+      "stack": [
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 10,
+          "function_name": "main",
+          "code": "policy_gradient_enhancements()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 29,
+          "function_name": "policy_gradient_enhancements",
+          "code": "text(\"Key identity:\")"
+        }
+      ],
+      "env": {},
+      "renderings": [
+        {
+          "type": "markdown",
+          "data": "Key identity:",
+          "style": {},
+          "external_link": null,
+          "internal_link": null,
+          "animate": false
+        }
+      ]
+    },
+    {
+      "stack": [
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 10,
+          "function_name": "main",
+          "code": "policy_gradient_enhancements()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 30,
+          "function_name": "policy_gradient_enhancements",
+          "code": "text(r\"Let $b(s)$ be **any** function that only depends on the state $s$ (not the action $a$).\")"
+        }
+      ],
+      "env": {},
+      "renderings": [
+        {
+          "type": "markdown",
+          "data": "Let $b(s)$ be **any** function that only depends on the state $s$ (not the action $a$).",
+          "style": {},
+          "external_link": null,
+          "internal_link": null,
+          "animate": false
+        }
+      ]
+    },
+    {
+      "stack": [
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 10,
+          "function_name": "main",
+          "code": "policy_gradient_enhancements()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 31,
+          "function_name": "policy_gradient_enhancements",
+          "code": "text(r\"Then $\\mathbb E_{a \\sim \\pi_\\theta(\\cdot \\mid s)}[\\nabla_\\theta \\log \\pi_\\theta(a \\mid s) b(s)] = 0$ for every state $s$.\")"
+        }
+      ],
+      "env": {},
+      "renderings": [
+        {
+          "type": "markdown",
+          "data": "Then $\\mathbb E_{a \\sim \\pi_\\theta(\\cdot \\mid s)}[\\nabla_\\theta \\log \\pi_\\theta(a \\mid s) b(s)] = 0$ for every state $s$.",
+          "style": {},
+          "external_link": null,
+          "internal_link": null,
+          "animate": false
+        }
+      ]
+    },
+    {
+      "stack": [
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 10,
+          "function_name": "main",
+          "code": "policy_gradient_enhancements()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 32,
+          "function_name": "policy_gradient_enhancements",
+          "code": "text(\"Analogy: heuristics in A* search (use domain knowledge to improve the algorithm without changing the answer)\")"
+        }
+      ],
+      "env": {},
+      "renderings": [
+        {
+          "type": "markdown",
+          "data": "Analogy: heuristics in A* search (use domain knowledge to improve the algorithm without changing the answer)",
+          "style": {},
+          "external_link": null,
+          "internal_link": null,
+          "animate": false
+        }
+      ]
+    },
+    {
+      "stack": [
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 10,
+          "function_name": "main",
+          "code": "policy_gradient_enhancements()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 34,
+          "function_name": "policy_gradient_enhancements",
+          "code": "text(\"Proof:\")"
+        }
+      ],
+      "env": {},
+      "renderings": [
+        {
+          "type": "markdown",
+          "data": "Proof:",
+          "style": {},
+          "external_link": null,
+          "internal_link": null,
+          "animate": false
+        }
+      ]
+    },
+    {
+      "stack": [
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 10,
+          "function_name": "main",
+          "code": "policy_gradient_enhancements()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 35,
+          "function_name": "policy_gradient_enhancements",
+          "code": "text(r\"- $\\mathbb E_{a \\sim \\pi_\\theta(\\cdot \\mid s)}[b(s)] = b(s)$, which doesn't depend on $\\theta$\")"
+        }
+      ],
+      "env": {},
+      "renderings": [
+        {
+          "type": "markdown",
+          "data": "- $\\mathbb E_{a \\sim \\pi_\\theta(\\cdot \\mid s)}[b(s)] = b(s)$, which doesn't depend on $\\theta$",
+          "style": {},
+          "external_link": null,
+          "internal_link": null,
+          "animate": false
+        }
+      ]
+    },
+    {
+      "stack": [
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 10,
+          "function_name": "main",
+          "code": "policy_gradient_enhancements()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 36,
+          "function_name": "policy_gradient_enhancements",
+          "code": "text(r\"- $\\nabla_\\theta \\mathbb E_{a \\sim \\pi_\\theta(\\cdot \\mid s)}[b(s)] = 0$\")"
+        }
+      ],
+      "env": {},
+      "renderings": [
+        {
+          "type": "markdown",
+          "data": "- $\\nabla_\\theta \\mathbb E_{a \\sim \\pi_\\theta(\\cdot \\mid s)}[b(s)] = 0$",
+          "style": {},
+          "external_link": null,
+          "internal_link": null,
+          "animate": false
+        }
+      ]
+    },
+    {
+      "stack": [
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 10,
+          "function_name": "main",
+          "code": "policy_gradient_enhancements()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 37,
+          "function_name": "policy_gradient_enhancements",
+          "code": "text(r\"- $\\nabla_\\theta \\sum_a \\pi_\\theta(a \\mid s) b(s) = 0$\")"
+        }
+      ],
+      "env": {},
+      "renderings": [
+        {
+          "type": "markdown",
+          "data": "- $\\nabla_\\theta \\sum_a \\pi_\\theta(a \\mid s) b(s) = 0$",
+          "style": {},
+          "external_link": null,
+          "internal_link": null,
+          "animate": false
+        }
+      ]
+    },
+    {
+      "stack": [
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 10,
+          "function_name": "main",
+          "code": "policy_gradient_enhancements()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 38,
+          "function_name": "policy_gradient_enhancements",
+          "code": "text(r\"- $\\sum_a \\nabla_\\theta \\pi_\\theta(a \\mid s) b(s) = 0$\")"
+        }
+      ],
+      "env": {},
+      "renderings": [
+        {
+          "type": "markdown",
+          "data": "- $\\sum_a \\nabla_\\theta \\pi_\\theta(a \\mid s) b(s) = 0$",
+          "style": {},
+          "external_link": null,
+          "internal_link": null,
+          "animate": false
+        }
+      ]
+    },
+    {
+      "stack": [
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 10,
+          "function_name": "main",
+          "code": "policy_gradient_enhancements()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 39,
+          "function_name": "policy_gradient_enhancements",
+          "code": "text(r\"- $\\sum_a \\pi_\\theta(a \\mid s) \\nabla_\\theta \\log \\pi_\\theta(a \\mid s) b(s) = 0$\")"
+        }
+      ],
+      "env": {},
+      "renderings": [
+        {
+          "type": "markdown",
+          "data": "- $\\sum_a \\pi_\\theta(a \\mid s) \\nabla_\\theta \\log \\pi_\\theta(a \\mid s) b(s) = 0$",
+          "style": {},
+          "external_link": null,
+          "internal_link": null,
+          "animate": false
+        }
+      ]
+    },
+    {
+      "stack": [
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 10,
+          "function_name": "main",
+          "code": "policy_gradient_enhancements()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 40,
+          "function_name": "policy_gradient_enhancements",
+          "code": "text(r\"- $\\mathbb E_{a \\sim \\pi_\\theta(\\cdot \\mid s)}[\\nabla_\\theta \\log \\pi_\\theta(a \\mid s) b(s)] = 0$\")"
+        }
+      ],
+      "env": {},
+      "renderings": [
+        {
+          "type": "markdown",
+          "data": "- $\\mathbb E_{a \\sim \\pi_\\theta(\\cdot \\mid s)}[\\nabla_\\theta \\log \\pi_\\theta(a \\mid s) b(s)] = 0$",
+          "style": {},
+          "external_link": null,
+          "internal_link": null,
+          "animate": false
+        }
+      ]
+    },
+    {
+      "stack": [
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 10,
+          "function_name": "main",
+          "code": "policy_gradient_enhancements()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 41,
+          "function_name": "policy_gradient_enhancements",
+          "code": "text(\"This is basically the reverse direction of the policy gradient theorem.\")"
+        }
+      ],
+      "env": {},
+      "renderings": [
+        {
+          "type": "markdown",
+          "data": "This is basically the reverse direction of the policy gradient theorem.",
+          "style": {},
+          "external_link": null,
+          "internal_link": null,
+          "animate": false
+        }
+      ]
+    },
+    {
+      "stack": [
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 10,
+          "function_name": "main",
+          "code": "policy_gradient_enhancements()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 43,
+          "function_name": "policy_gradient_enhancements",
+          "code": "text(\"Enhancements to reduce variance:\")"
+        }
+      ],
+      "env": {},
+      "renderings": [
+        {
+          "type": "markdown",
+          "data": "Enhancements to reduce variance:",
+          "style": {},
+          "external_link": null,
+          "internal_link": null,
+          "animate": false
+        }
+      ]
+    },
+    {
+      "stack": [
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 10,
+          "function_name": "main",
+          "code": "policy_gradient_enhancements()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 44,
+          "function_name": "policy_gradient_enhancements",
+          "code": "text(r\"1. Baselines: subtract a baseline $b(s_t)$ from the utility\")"
+        }
+      ],
+      "env": {},
+      "renderings": [
+        {
+          "type": "markdown",
+          "data": "1. Baselines: subtract a baseline $b(s_t)$ from the utility",
+          "style": {},
+          "external_link": null,
+          "internal_link": null,
+          "animate": false
+        }
+      ]
+    },
+    {
+      "stack": [
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 10,
+          "function_name": "main",
+          "code": "policy_gradient_enhancements()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 45,
+          "function_name": "policy_gradient_enhancements",
+          "code": "text(r\"$\\displaystyle J(\\theta, \\tau) = \\sum_t \\log \\pi_\\theta(a_t \\mid s_t) (u(\\tau) - b(s_t))$\")"
+        }
+      ],
+      "env": {},
+      "renderings": [
+        {
+          "type": "markdown",
+          "data": "$\\displaystyle J(\\theta, \\tau) = \\sum_t \\log \\pi_\\theta(a_t \\mid s_t) (u(\\tau) - b(s_t))$",
+          "style": {},
+          "external_link": null,
+          "internal_link": null,
+          "animate": false
+        }
+      ]
+    },
+    {
+      "stack": [
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 10,
+          "function_name": "main",
+          "code": "policy_gradient_enhancements()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 46,
+          "function_name": "policy_gradient_enhancements",
+          "code": "text(r\"2. Use the utility from step $t$ on (rewards before step $t$ don't depend on $a_t$)\")"
+        }
+      ],
+      "env": {},
+      "renderings": [
+        {
+          "type": "markdown",
+          "data": "2. Use the utility from step $t$ on (rewards before step $t$ don't depend on $a_t$)",
+          "style": {},
+          "external_link": null,
+          "internal_link": null,
+          "animate": false
+        }
+      ]
+    },
+    {
+      "stack": [
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 10,
+          "function_name": "main",
+          "code": "policy_gradient_enhancements()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 47,
+          "function_name": "policy_gradient_enhancements",
+          "code": "text(r\"$\\displaystyle J(\\theta, \\tau) = \\sum_t \\log \\pi_\\theta(a_t \\mid s_t) (\\underbrace{r_t + \\gamma r_{t+1} + \\gamma^2 r_{t+2} + \\cdots}_{u_t} - b(s_t))$\")"
+        }
+      ],
+      "env": {},
+      "renderings": [
+        {
+          "type": "markdown",
+          "data": "$\\displaystyle J(\\theta, \\tau) = \\sum_t \\log \\pi_\\theta(a_t \\mid s_t) (\\underbrace{r_t + \\gamma r_{t+1} + \\gamma^2 r_{t+2} + \\cdots}_{u_t} - b(s_t))$",
+          "style": {},
+          "external_link": null,
+          "internal_link": null,
+          "animate": false
+        }
+      ]
+    },
+    {
+      "stack": [
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 10,
+          "function_name": "main",
+          "code": "policy_gradient_enhancements()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 48,
+          "function_name": "policy_gradient_enhancements",
+          "code": "text(r\"3. Use a (**biased**) estimate of the Q-value $\\hat Q(s_t, a_t)$ instead of the utility (bootstrapping)\")"
+        }
+      ],
+      "env": {},
+      "renderings": [
+        {
+          "type": "markdown",
+          "data": "3. Use a (**biased**) estimate of the Q-value $\\hat Q(s_t, a_t)$ instead of the utility (bootstrapping)",
+          "style": {},
+          "external_link": null,
+          "internal_link": null,
+          "animate": false
+        }
+      ]
+    },
+    {
+      "stack": [
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 10,
+          "function_name": "main",
+          "code": "policy_gradient_enhancements()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 49,
+          "function_name": "policy_gradient_enhancements",
+          "code": "text(r\"$\\displaystyle J(\\theta, \\tau) = \\sum_t \\log \\pi_\\theta(a_t \\mid s_t) (\\hat Q(s_t, a_t) - b(s_t))$\")"
+        }
+      ],
+      "env": {},
+      "renderings": [
+        {
+          "type": "markdown",
+          "data": "$\\displaystyle J(\\theta, \\tau) = \\sum_t \\log \\pi_\\theta(a_t \\mid s_t) (\\hat Q(s_t, a_t) - b(s_t))$",
+          "style": {},
+          "external_link": null,
+          "internal_link": null,
+          "animate": false
+        }
+      ]
+    },
+    {
+      "stack": [
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 10,
+          "function_name": "main",
+          "code": "policy_gradient_enhancements()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 51,
+          "function_name": "policy_gradient_enhancements",
+          "code": "text(\"Summary:\")"
+        }
+      ],
+      "env": {},
+      "renderings": [
+        {
+          "type": "markdown",
+          "data": "Summary:",
+          "style": {},
+          "external_link": null,
+          "internal_link": null,
+          "animate": false
+        }
+      ]
+    },
+    {
+      "stack": [
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 10,
+          "function_name": "main",
+          "code": "policy_gradient_enhancements()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 52,
+          "function_name": "policy_gradient_enhancements",
+          "code": "text(r\"- The game: find a low-bias, low-variance estimate of $\\mathbb E_{\\tau \\sim p_\\theta}[\\nabla_\\theta \\log p_\\theta(\\tau) u(\\tau)]$\")"
+        }
+      ],
+      "env": {},
+      "renderings": [
+        {
+          "type": "markdown",
+          "data": "- The game: find a low-bias, low-variance estimate of $\\mathbb E_{\\tau \\sim p_\\theta}[\\nabla_\\theta \\log p_\\theta(\\tau) u(\\tau)]$",
+          "style": {},
+          "external_link": null,
+          "internal_link": null,
+          "animate": false
+        }
+      ]
+    },
+    {
+      "stack": [
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 10,
+          "function_name": "main",
+          "code": "policy_gradient_enhancements()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 53,
+          "function_name": "policy_gradient_enhancements",
+          "code": "text(\"- Baselines: a general-purpose strategy to reduce variance while remaining unbiased\")"
+        }
+      ],
+      "env": {},
+      "renderings": [
+        {
+          "type": "markdown",
+          "data": "- Baselines: a general-purpose strategy to reduce variance while remaining unbiased",
+          "style": {},
+          "external_link": null,
+          "internal_link": null,
+          "animate": false
+        }
+      ]
+    },
+    {
+      "stack": [
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 10,
+          "function_name": "main",
+          "code": "policy_gradient_enhancements()"
+        },
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 54,
+          "function_name": "policy_gradient_enhancements",
+          "code": "text(\"- Bootstrapping: reduces variance but introduces a bit of bias\")"
+        }
+      ],
+      "env": {},
+      "renderings": [
+        {
+          "type": "markdown",
+          "data": "- Bootstrapping: reduces variance but introduces a bit of bias",
+          "style": {},
+          "external_link": null,
+          "internal_link": null,
+          "animate": false
+        }
+      ]
+    },
+    {
+      "stack": [
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 10,
+          "function_name": "main",
+          "code": "policy_gradient_enhancements()"
+        }
+      ],
+      "env": {},
+      "renderings": []
+    },
+    {
+      "stack": [
+        {
+          "path": "rl_enhancements.py",
+          "line_number": 12,
+          "function_name": "main",
+          "code": "text(\"Next time: what if there are adversaries in the environment?\")"
+        }
+      ],
+      "env": {},
+      "renderings": [
+        {
+          "type": "markdown",
+          "data": "Next time: what if there are adversaries in the environment?",
+          "style": {},
+          "external_link": null,
+          "internal_link": null,
+          "animate": false
+        }
+      ]
+    }
+  ]
+}

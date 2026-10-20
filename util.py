@@ -2,7 +2,14 @@ from edtrace import link, make_graph
 from typing import Callable, Any
 import altair as alt
 from altair import Chart, Data
+import base64
 import functools
+import hashlib
+import inspect
+import json
+import os
+import pickle
+import types
 import numpy as np
 import random
 import torch
@@ -155,6 +162,123 @@ class Vocabulary:
             "index_to_string": self.index_to_string,
             "string_to_index": self.string_to_index,
         }
+
+
+def cached(func: Callable) -> Callable:
+    """
+    Wrap `func` so that calls are cached in var/func_cache/<caller>-<hash>.json (<caller> is the calling file, e.g., function_approximation), e.g., `cached(generate_rollouts_rl)(mdp, agent, num_trials=50)`.
+    The hash covers the source code of `func` and of the arguments' classes, the full state of the arguments, and the random number generator states.
+    Since `func` might mutate its arguments (e.g., the agent learns) and consumes randomness,
+    the cache also stores the arguments' state and the random number generator states after the call, and restores them on a cache hit.
+    Caveat: changes to other code that `func` calls aren't detected (delete var/func_cache to reset).
+    """
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        objects = [x for x in list(args) + list(kwargs.values()) if has_state(x)]  # Arguments that might be mutated
+        key = {
+            "function": f"{func.__module__}.{func.__qualname__}",
+            "source": [inspect.getsource(func)] + [get_class_source(type(x)) for x in objects],
+            "args": fingerprint(args),
+            "kwargs": fingerprint(kwargs),
+            "rng": fingerprint(get_rng_states()),
+        }
+        hash = hashlib.sha256(json.dumps(key).encode()).hexdigest()[:16]
+        caller = os.path.splitext(os.path.basename(inspect.currentframe().f_back.f_code.co_filename))[0]  # e.g., function_approximation
+        path = os.path.join("var", "func_cache", f"{caller}-{hash}.json")
+
+        if os.path.exists(path):
+            # Cache hit: restore the result, the arguments' state, and the random number generator states
+            with open(path) as f:
+                state = pickle.loads(base64.b64decode(json.load(f)["state"]))
+            for x, x_dict in zip(objects, state["objects"]):
+                x.__dict__.clear()
+                x.__dict__.update(x_dict)
+            set_rng_states(state["rng"])
+            return state["result"]
+
+        # Cache miss: call the function and save everything
+        result = func(*args, **kwargs)
+        state = {"result": result, "objects": [x.__dict__ for x in objects], "rng": get_rng_states()}
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        with open(path, "w") as f:
+            json.dump({
+                "function": key["function"],
+                "result": result if is_json_serializable(result) else repr(result),  # For human inspection
+                "state": base64.b64encode(pickle.dumps(state)).decode(),
+            }, f)
+        return result
+    return wrapper
+
+
+def has_state(x: Any) -> bool:
+    """Whether `x` is an object with mutable state (attributes)."""
+    return hasattr(x, "__dict__") and not isinstance(x, (type, types.ModuleType, types.FunctionType, types.MethodType, functools.partial))
+
+
+def get_class_source(cls: type) -> str:
+    """Return the source code of `cls` and its base classes (if available)."""
+    sources = []
+    for c in cls.__mro__:
+        try:
+            sources.append(inspect.getsource(c))
+        except (TypeError, OSError):
+            pass  # Built-in classes have no source
+    return "\n".join(sources)
+
+
+def get_rng_states() -> dict:
+    return {"random": random.getstate(), "numpy": np.random.get_state(), "torch": torch.get_rng_state()}
+
+
+def set_rng_states(states: dict):
+    random.setstate(states["random"])
+    np.random.set_state(states["numpy"])
+    torch.set_rng_state(states["torch"])
+
+
+def is_json_serializable(x: Any) -> bool:
+    try:
+        json.dumps(x)
+        return True
+    except TypeError:
+        return False
+
+
+def fingerprint(x: Any, seen: set | None = None) -> Any:
+    """Return a deterministic JSON-serializable representation of `x` (for hashing)."""
+    seen = set() if seen is None else seen
+    if x is None or isinstance(x, (bool, int, str)):
+        return x
+    if isinstance(x, float):
+        return repr(x)
+    if id(x) in seen:  # Avoid infinite recursion on cycles
+        return ["cycle", type(x).__qualname__]
+    seen = seen | {id(x)}
+    if isinstance(x, torch.Tensor):
+        return ["tensor", str(x.dtype), x.tolist()]
+    if isinstance(x, np.ndarray):
+        return ["ndarray", str(x.dtype), x.tolist()]
+    if isinstance(x, np.generic):
+        return fingerprint(x.item(), seen)
+    if isinstance(x, (list, tuple)):
+        return [type(x).__qualname__, [fingerprint(y, seen) for y in x]]
+    if isinstance(x, (set, frozenset)):
+        return [type(x).__qualname__, sorted(json.dumps(fingerprint(y, seen)) for y in x)]
+    if isinstance(x, dict):  # Keep the order (it can matter, e.g., for breaking ties)
+        return [type(x).__qualname__, [[fingerprint(k, seen), fingerprint(v, seen)] for k, v in x.items()]]
+    if isinstance(x, functools.partial):
+        return ["partial", fingerprint(x.func, seen), fingerprint(x.args, seen), fingerprint(x.keywords, seen)]
+    if isinstance(x, types.MethodType):
+        return ["method", x.__func__.__qualname__, fingerprint(x.__self__, seen)]
+    if isinstance(x, (types.FunctionType, types.BuiltinFunctionType, type)):
+        return ["function", x.__module__, x.__qualname__]
+    if isinstance(x, torch.nn.Module):
+        return ["module", type(x).__qualname__, fingerprint(dict(x.state_dict()), seen)]
+    if isinstance(x, torch.optim.Optimizer):
+        return ["optimizer", type(x).__qualname__, fingerprint(x.state_dict(), seen)]
+    if hasattr(x, "__dict__"):
+        return ["object", type(x).__module__, type(x).__qualname__, fingerprint(vars(x), seen)]
+    return ["repr", repr(x)]
 
 
 def set_random_seed(seed: int):
