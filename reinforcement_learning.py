@@ -76,7 +76,7 @@ def review_mdp():
     text(r"- $Q_\pi(s, a)$ (Q-value): expected utility of taking action $a$ in state $s$, and then following policy $\pi$")
 
     text("Recurrence:")
-    text(r"- $\displaystyle V_\pi(s) = \begin{cases} 0 & \text{if } \text{IsEnd}(s) \\\\ Q_\pi(s, \pi(s)) & \text{otherwise} \end{cases}$")
+    text(r"- $\displaystyle V_\pi(s) = \begin{cases} 0 & \text{if } \text{IsEnd}(s) \\ Q_\pi(s, \pi(s)) & \text{otherwise} \end{cases}$")
     text(r"- $\displaystyle Q_\pi(s, a) = \sum_{s'} T(s, a, s') [\text{Reward}(s, a, s') + \gamma V_\pi(s')]$")
     image("images/q-value.svg", width=560)
 
@@ -89,7 +89,7 @@ def review_mdp():
     text(r"- $Q_\text{opt}(s, a)$ (optimal Q-value): expected utility of taking action $a$ in state $s$, and then following the optimal policy")
 
     text("Recurrence:")
-    text(r"- $\displaystyle V_\text{opt}(s) = \begin{cases} 0 & \text{if } \text{IsEnd}(s) \\\\ \max_{a \in \text{Actions}(s)} Q_\text{opt}(s, a) & \text{otherwise} \end{cases}$")
+    text(r"- $\displaystyle V_\text{opt}(s) = \begin{cases} 0 & \text{if } \text{IsEnd}(s) \\ \max_{a \in \text{Actions}(s)} Q_\text{opt}(s, a) & \text{otherwise} \end{cases}$")
     text(r"- $\displaystyle Q_\text{opt}(s, a) = \sum_{s'} T(s, a, s') [\text{Reward}(s, a, s') + \gamma V_\text{opt}(s')]$")
 
     text("Optimal policy: take the action with the highest Q-value")

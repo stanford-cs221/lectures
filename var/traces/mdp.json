@@ -1,6 +1,6 @@
 {
   "files": {
-    "mdp.py": "from edtrace import text, link, image, note, plot, graph, make_graph\nfrom typing import Any\nfrom dataclasses import dataclass\nfrom collections import defaultdict\nimport numpy as np\nimport random\nfrom functools import partial\nfrom fractions import Fraction\nfrom typing import Callable\nfrom search import TravelSearchProblem, draw_travel_graph\nfrom util import Vocabulary, make_plot, search_graph_stylesheet\n\nPolicy = Callable[[Any], Any]\n\n\ndef main():\n    text(\"# Markov Decision Processes (MDPs)\")\n    text(\"Last week: **search**\")\n    text(\"- Search problem:\")\n    text(r\"  * $s_\\text{start} \\in \\text{States}$: where we start\")\n    text(r\"  * $\\text{Actions}(s)$: the actions we can take in state $s$\")\n    text(r\"  * $\\text{Succ}(s, a)$: the state we **deterministically** end up in if we take action $a$ in state $s$\")\n    text(r\"  * $\\text{Cost}(s, a)$: the cost of taking action $a$ in state $s$\")\n    text(r\"  * $\\text{IsEnd}(s)$: whether $s$ is an end state\")\n    problem = TravelSearchProblem(num_locs=10)  # @stepover\n    state = problem.start_state()  # @inspect state\n    successors = problem.successors(state)  # @inspect successors\n    is_end = problem.is_end(state)  # @inspect is_end\n    graph(draw_travel_graph(problem))  # @stepover\n\n    text(\"This week: **Markov Decision Processes (MDPs)**\")\n    text(\"- MDPs generalize search problems\")\n    text(\"- Key difference: actions may have stochastic outcomes (e.g., rolling a die \ud83c\udfb2)\")\n\n    text(\"Motivating example: How would you go to the grocery store \ud83d\uded2: walk \ud83d\udeb6, bike \ud83d\udeb2, or drive \ud83d\ude97?\")\n    text(\"Key: need to take into account uncertainty (traffic \ud83d\udea6, time finding parking \ud83c\udd7f\ufe0f, etc.)\")\n\n    introduce_mdp()\n    introduce_policies()\n    introduce_monte_carlo_policy_evaluation()\n    introduce_policy_evaluation()\n    introduce_value_iteration()\n\n    text(\"Summary:\")\n    text(\"- MDPs: generalize search problems (actions result in a distribution over next states)\")\n    text(r\"- Policy $\\pi$ (solution): maps each state to an action\")\n    text(\"- MDP + policy \u2192 rollout \u2192 utility\")\n    text(\"- Value of policy = expected utility of policy\")\n    text(\"- Policy evaluation: computes value of a given policy\")\n    text(\"- Value iteration: computes value of the optimal policy\")\n\n\ndef introduce_mdp():\n    text(\"Origins of MDPs:\")\n    text(\"- Developed in operations research in the 1950s \ud83c\udfed\")\n    text(\"- \\\"Markov\\\" comes from Markov chains, where the past and future are independent given the state\")\n    text(\"- \\\"decision\\\" means an agent taking actions\")\n    text(\"- \\\"process\\\" means things happen sequentially over time\")\n\n    text(\"**Example**: dice game \ud83c\udfb2\")\n    text(\"For each round:\")\n    text(\"- You choose quit \ud83d\uded1 or stay \ud83d\udd01.\")\n    text(\"- If quit, you get $10 \ud83d\udcb5 and we end the game.\")\n    text(\"- If stay, you get $4 \ud83d\udcb5 and then I roll a 6-sided die \ud83c\udfb2.\")\n    text(\"- If the die shows \u2680 or \u2681, we end the game \ud83c\udfc1.\")\n    text(\"- Otherwise (\u2682 \u2683 \u2684 \u2685), continue to the next round.\")\n    mdp = DiceGameMDP()  # @stepover\n    state = mdp.start_state()  # @inspect state\n    successors = mdp.successors(state)  # @inspect successors\n    is_end = mdp.is_end(state)  # @inspect is_end\n\n    text(\"We can visualize an MDP as a graph, which has two types of nodes:\")\n    text(\"- State nodes: same as a search problem\")\n    text(\"- Action nodes: represent taking a particular action from a state\")\n    graph(draw_mdp_graph(mdp))  # @stepover\n\n    text(\"Formally:\")\n    text(r\"- $s_\\text{start} \\in \\text{States}$: where we start\")\n    text(r\"- $\\text{Actions}(s)$: all possible actions from state $s$\")\n    text(r\"- $T(s, a, s')$: probability of ending up in state $s'$ after taking action $a$ from state $s$\")\n    text(r\"  * Note: for each $(s, a)$: $\\displaystyle \\sum_{s'} T(s, a, s') = 1$.\")\n    text(r\"- $\\text{Reward}(s, a, s')$: reward we get if we take action $a$ in state $s$ and end up in state $s'$\")\n    text(r\"- $\\text{IsEnd}(s)$: whether $s$ is an end state\")\n    text(r\"- $0 \\le \\gamma \\le 1$: discount factor (more on this later)\")\n\n    text(\"**Example**: flaky tram problem \ud83d\ude8b:\")\n    text(r\"- Locations $1$ to $n$\")\n    text(r\"- Walking \ud83d\udeb6 from $i$ to $i+1$ takes 1 minute\")\n    text(r\"- Taking a tram \ud83d\ude8b from $i$ to $2i$ takes 2 minutes\")\n    text(r\"- But the tram breaks down \ud83d\udca5 with probability $p$ (NEW!)\")\n    text(r\"- Goal \ud83c\udfc1: get from $1$ to $n$ in the least time \u23f1\ufe0f in expectation (on average)\")\n    mdp = FlakyTramMDP(num_locs=10, failure_prob=0.4)  # @stepover @clear state successors is_end\n    state = mdp.start_state()  # @inspect state @stepover\n    successors = mdp.successors(state)  # @inspect successors\n    is_end = mdp.is_end(state)  # @inspect is_end\n    graph(draw_mdp_graph(mdp))  # @stepover\n\n    text(\"Comparison between search problems and MDPs:\")\n    text(\"- Both have `start_state` and `is_end` functions\")\n    text(\"- Both have a `successors` function that returns a list of possible actions and their consequences\")\n    text(\"- Superficial difference: search problems use costs, MDPs use rewards\")\n    text(\"- Deep difference: in search problems, each action has one next state; in MDPs, each action has a distribution over next states\")\n\n\n@dataclass(frozen=True)\nclass Step:\n    action: Any\n    prob: float  # New: the probability that we ended up here\n    reward: float\n    state: Any\n\n\nclass MDP:\n    def start_state(self) -> Any:\n        raise NotImplementedError\n\n    def successors(self, state: Any) -> list[Step]:\n        raise NotImplementedError\n\n    def is_end(self, state: Any) -> bool:\n        raise NotImplementedError\n\n    def discount(self) -> float:\n        raise NotImplementedError\n\n    def actions(self, state: Any) -> list[Any]:\n        \"\"\"Return the actions available in `state` (the actions of its successors).\"\"\"\n        return list(dict.fromkeys(step.action for step in self.successors(state)))\n\n\nclass FlakyTramMDP(MDP):\n    def __init__(self, num_locs: int, failure_prob: float):\n        self.num_locs = num_locs\n        self.failure_prob = failure_prob\n\n    def start_state(self) -> Any:\n        return 1\n\n    def successors(self, state: Any) -> list[Step]:  # @inspect state\n        successors = []\n\n        # Walk\n        if state + 1 <= self.num_locs:\n            successors.append(Step(action=\"walk\", prob=1, reward=-1, state=state + 1))  # @inspect successors\n\n        # Tram (only if it doesn't go past the end)\n        if 2 * state <= self.num_locs:\n            # Success: move to desired state\n            successors.append(Step(action=\"tram\", prob=1 - self.failure_prob, reward=-2, state=2 * state))  # @inspect successors\n            # Failure: stay in the same state\n            successors.append(Step(action=\"tram\", prob=self.failure_prob, reward=-2, state=state))  # @inspect successors\n\n        return successors\n\n    def is_end(self, state: Any) -> bool:\n        return state == self.num_locs\n\n    def discount(self) -> float:\n        # No discounting for now\n        return 1\n\n\ndef introduce_policies():\n    mdp = FlakyTramMDP(num_locs=10, failure_prob=0.4)  # @stepover\n    graph(draw_mdp_graph(mdp))  # @stepover\n\n    text(\"What does a **solution** to an MDP look like?\")\n    text(\"- In a search problem, a solution was a sequence of actions.\")\n    text(\"- This won't work for MDPs because actions have uncertain outcomes.\")\n    text(\"- So subsequent actions need to depend on the outcome of the previous action.\")\n    text(r\"- In an MDP, a solution is a **policy** $\\pi$: a function that maps each state $s$ to an action $\\pi(s)$.\")\n    text(r\"- No matter what state $s$ you're in, the policy $\\pi$ tells you what to do.\")\n\n    # Policy that always walks\n    policy = always_walk_policy\n    action = policy(state=3)  # @inspect action\n\n    # Policy that takes the tram if possible\n    policy = partial(tram_if_possible_policy, mdp)\n    action = policy(state=3)  # @inspect action\n\n    text(\"How do you evaluate a policy?\") # @clear action\n    text(\"A **rollout** (a.k.a. episode, trajectory) \ud83c\udfac of a policy in an MDP produces\")\n    text(r\"...a sequence of states, actions, and rewards: $s_0, a_0, r_0, s_1, a_1, r_1, s_2, \\dots$\")\n    text(\"Let's generate a rollout of the policy that always walks:\")\n    np.random.seed(1)\n    rollout = generate_rollout(mdp, always_walk_policy)  # @inspect rollout\n    graph(draw_mdp_graph(mdp, rollout))  # @stepover\n\n    text(\"Each rollout generates a **utility** \ud83d\udcb0, which is a discounted sum of rewards.\")\n    text(\"**Discounting** \u23f3: how important is the future?\")\n    text(r\"- Represented by a discount factor $0 \\le \\gamma \\le 1$\")\n    text(r\"- Suppose $r_0, r_1, r_2, \\dots$ are the rewards of the rollout\")\n    text(r\"- $\\text{utility} = r_0 + \\gamma r_1 + \\gamma^2 r_2 + \\cdots = \\sum_t \\gamma^t r_t$\")\n\n    text(r\"- $\\gamma = 1$ (no discounting): the future is just as important as the present\")\n    utility_1 = compute_utility(rollout.steps, discount=1)  # @inspect utility_1\n    text(r\"- $\\gamma = 0$ (full discounting): the future doesn't matter at all\")\n    utility_0 = compute_utility(rollout.steps, discount=0)  # @inspect utility_0\n    text(r\"- $\\gamma = 0.5$ (half discounting): the next step matters half as much as the present step\")\n    utility_0_5 = compute_utility(rollout.steps, discount=0.5)  # @inspect utility_0_5\n\n    text(\"Let's roll out the policy that always takes the tram:\") # @clear utility_1 utility_0 utility_0_5\n    policy = partial(tram_if_possible_policy, mdp)\n    rollout = generate_rollout(mdp, policy)  # @inspect rollout @stepover\n    graph(draw_mdp_graph(mdp, rollout))  # @stepover\n    rollout = generate_rollout(mdp, policy)  # @inspect rollout @stepover\n    graph(draw_mdp_graph(mdp, rollout))  # @stepover\n    rollout = generate_rollout(mdp, policy)  # @inspect rollout @stepover\n    graph(draw_mdp_graph(mdp, rollout))  # @stepover\n    rollout = generate_rollout(mdp, policy)  # @inspect rollout @stepover\n    graph(draw_mdp_graph(mdp, rollout))  # @stepover\n    text(\"Note that the same policy yields different rollouts (even though the policy is deterministic).\")\n\n    text(\"So then how do we evaluate a policy, i.e., how good is it?\")\n\n    text(r\"$V_\\pi(s)$: **value of a policy** $\\pi$ is the expected utility of starting in state $s$ and following policy $\\pi$.\")\n    text(\"Conceptually, roll out an infinite number of times and take the average of the utilities.\")\n\n    text(\"How do you (approximately) compute this?\")\n\n\ndef introduce_monte_carlo_policy_evaluation():\n    mdp = FlakyTramMDP(num_locs=10, failure_prob=0.4)  # @stepover\n    graph(draw_mdp_graph(mdp))  # @stepover\n\n    text(r\"Recall that the value $V_\\pi(s)$ of a policy $\\pi$ is the expected utility of starting in state $s$ and following policy $\\pi$.\")\n    text(r\"How to compute $V_\\pi(s_\\text{start})$?\")\n\n    text(\"Key idea: **Monte Carlo** \ud83c\udfb0\")\n    monte_carlo_example()\n\n    text(\"Apply Monte Carlo to policy evaluation:\")\n    text(\"- Roll out the policy $n$ times.\")\n    text(\"- Average the utilities.\")\n    text(\"This average utility is an approximation of the expected utility (**value**) of the policy.\")\n\n    # Only need one rollout since walking is deterministic\n    walk_value = monte_carlo_policy_evaluation(mdp, always_walk_policy, num_rollouts=1)  # @inspect walk_value\n\n    # Tram is stochastic, so need many rollouts\n    tram_value = monte_carlo_policy_evaluation(mdp, partial(tram_if_possible_policy, mdp), num_rollouts=20)  # @inspect tram_value\n\n    text(\"It's better to walk than to take the tram (since the tram is flaky)!\")\n\n    text(\"Let's try the dice game:\")  # @clear rollout walk_value tram_value\n    mdp = DiceGameMDP()  # @stepover\n    quit_value = monte_carlo_policy_evaluation(mdp, always_quit_policy, num_rollouts=1)  # @inspect quit_value\n    stay_value = monte_carlo_policy_evaluation(mdp, always_stay_policy, num_rollouts=20)  # @inspect stay_value\n\n    text(\"It is better to stay than to quit!\")\n\n    text(\"Can we (approximately) compute the value of a policy more efficiently?\")\n\n\ndef monte_carlo_example():\n    text(\"Monte Carlo: estimate an expectation by averaging random samples\")\n    text(\"Setup:\")\n    text(r\"- We have a random variable $X \\in \\\\{0, 1\\\\}$\")\n    text(r\"- ...whose distribution is given by $p(X = 1) = 0.8, p(X = 0) = 0.2$.\")\n    text(r\"- Define a function $f(x) = \\begin{cases} 5 & \\text{if } x = 1 \\\\\\\\ 1 & \\text{if } x = 0 \\end{cases}$\")\n    text(r\"- ...and we want to compute its expected value $\\mathbb E[f(X)]$.\")\n\n    n = 50  # Number of samples (controls the quality of the approximation) @inspect n\n\n    random.seed(4)\n    x = random.choices([5, 1], weights=[0.8, 0.2], k=n)  # Samples of f(X) @inspect x\n    estimate = sum(x) / n  # Monte Carlo estimate @inspect estimate\n    exact = 0.8 * 5 + 0.2 * 1  # Exact answer @inspect exact\n\n\ndef always_stay_policy(state: int) -> str:\n    return \"stay\"\n\n\ndef always_quit_policy(state: int) -> str:\n    return \"quit\"\n\n\ndef always_walk_policy(state: int) -> str:\n    return \"walk\"\n\n\ndef tram_if_possible_policy(mdp: MDP, state: int) -> str:\n    \"\"\"Need the MDP to know the number of locations to make sure we can take the tram.\"\"\"\n    if state * 2 <= mdp.num_locs:  # @inspect state mdp.num_locs\n        return \"tram\"\n    else:\n        return \"walk\"\n\n\n@dataclass\nclass Rollout:\n    \"\"\"Represents a rollout of an MDP (sequence of actions that produces a utility).\"\"\"\n    steps: list[Step]\n    discount: float\n    utility: float  # Discounted sum of rewards\n\n    def __init__(self, steps: list[Step], discount: float):\n        self.steps = steps  # @inspect self.steps\n        self.discount = discount  # @inspect self.discount\n        self.utility = compute_utility(steps, discount)  # @inspect self.utility\n\n\ndef compute_utility(steps: list[Step], discount: float) -> float:\n    \"\"\"Computes the utility (discounted sum of rewards) of a rollout.\"\"\"\n    rewards = [step.reward * discount ** t for t, step in enumerate(steps)]  # @inspect rewards\n    utility = sum(rewards)  # @inspect utility\n    return utility\n\n\ndef generate_rollout(mdp: MDP, policy: Policy) -> Rollout:\n    \"\"\"Run the `policy` in the `mdp` and return the rollout.\"\"\"\n    steps = []  # @inspect steps\n    state = mdp.start_state()  # @inspect state @stepover\n\n    while not mdp.is_end(state):  # @stepover\n        # Policy: choose an action\n        action = policy(state)  # @inspect action @stepover\n\n        # MDP: choose a successor according to that action\n        successors = [successor for successor in mdp.successors(state) if successor.action == action]  # @inspect successors @stepover\n        probs = [successor.prob for successor in successors]  # @inspect probs\n        choice = np.random.choice(len(successors), p=probs)  # @inspect choice\n        step = successors[choice]  # @inspect step\n        steps.append(step)  # @inspect steps\n\n        # Advance to the next state\n        state = step.state  # @inspect state @clear successors probs choice step\n\n    return Rollout(steps=steps, discount=mdp.discount())\n\n\ndef monte_carlo_policy_evaluation(mdp: MDP, policy: Policy, num_rollouts: int) -> float:\n    \"\"\"Evaluate the policy and return the expected utility.\"\"\"\n    utilities = [generate_rollout(mdp, policy).utility for _ in range(num_rollouts)]  # @inspect utilities @stepover\n    average_utility = np.mean(utilities)  # @inspect average_utility\n    return average_utility\n\n\ndef introduce_policy_evaluation():\n    text(r\"So far: we can perform many rollouts and average them to estimate the value of a policy $V_\\pi(s)$.\")\n    text(r\"Is there a way to compute the value $V_\\pi(s)$ more efficiently?\")\n    text(\"Yes! \ud83c\udf89\")\n    text(\"Key: compute the recurrences (recall dynamic programming for search problems).\")\n\n    introduce_policy_evaluation_recurrence()\n    introduce_convergence()\n\n    text(\"The resulting algorithm is called **policy evaluation**.\")\n    text(\"Let's try the dice game:\")\n    mdp = DiceGameMDP()  # @stepover\n    result = policy_evaluation(mdp, always_stay_policy)  # @inspect result\n    plot(make_distance_plot(\"policy evaluation\", result.distances))  # @stepover\n\n    text(\"Let's try the flaky tram problem:\")  # @clear result\n    mdp = FlakyTramMDP(num_locs=10, failure_prob=0.4)  # @stepover\n    policy = partial(tram_if_possible_policy, mdp)\n    result = policy_evaluation(mdp, policy)  # @inspect result\n    tram_value = result.values[mdp.start_state()]  # @inspect tram_value @stepover\n    plot(make_distance_plot(\"policy evaluation\", result.distances))  # @stepover\n    text(\"Distance curve has two phases:\")\n    text(\"1. Trying to reach all the states (number of steps), distance is flat\")\n    text(\"2. Refining values across all states, distance decreases exponentially\")\n\n    text(\"Summary:\")\n    text(\"- Policy evaluation: computes value of a given policy\")\n    text(r\"- Key quantities:\")\n    text(r\"  * Value $V_\\pi(s)$ = expected utility of following policy $\\pi$ from state $s$\")\n    text(r\"  * Q-value $Q_\\pi(s, a)$ = expected utility of taking action $a$ in state $s$, and then following policy $\\pi$\")\n    text(\"- Bootstrapping: use values to compute new values using recurrence\")\n\n\ndef make_distance_plot(name: str, distances: list[float]) -> dict:\n    points = [{\"iteration\": i, \"distance\": distance, \"color\": \"blue\"} for i, distance in enumerate(distances)]\n    return make_plot(name, \"iteration\", \"distance\", f=None, points=points)\n\n\ndef introduce_policy_evaluation_recurrence():\n    text(\"Let's consider our dice game example again:\")\n    mdp = DiceGameMDP()  # @stepover\n    graph(draw_mdp_graph(mdp))  # @stepover\n\n    text(r\"And the policy $\\pi$ that always stays:\")\n    policy = always_stay_policy\n\n    text(r\"In addition to the value of a policy $V_\\pi$, define Q-values $Q_\\pi$:\")\n    text(r\"- $V_\\pi(s)$ (value): expected utility of starting in state $s$ and following policy $\\pi$.\")\n    text(r\"- $Q_\\pi(s, a)$ (Q-value): expected utility of taking action $a$ in state $s$, and then following policy $\\pi$.\")\n    text(r\"Values ($V_\\pi(s)$) sit on state nodes and Q-values ($Q_\\pi(s, a)$) sit on action nodes.\")\n\n    text(\"We define the following recurrence:\")\n    text(r\"- $\\displaystyle V_\\pi(s) = \\begin{cases} 0 & \\text{if } \\text{IsEnd}(s) \\\\\\\\ Q_\\pi(s, \\pi(s)) & \\text{otherwise} \\end{cases}$\")\n    text(r\"- $\\displaystyle Q_\\pi(s, a) = \\sum_{s'} T(s, a, s') [\\text{Reward}(s, a, s') + \\gamma V_\\pi(s')]$\")\n    image(\"images/q-value.svg\", width=560)\n\n    text(\"For the dice example:\")\n    text(r\"- $V_\\pi(\\text{end}) = 0$\")\n    text(r\"- $V_\\pi(\\text{in}) = Q_\\pi(\\text{in}, \\text{stay})$\")\n    text(r\"- $Q_\\pi(\\text{in}, \\text{stay}) = \\frac{1}{3} [4 + V_\\pi(\\text{end})] + \\frac{2}{3} [4 + V_\\pi(\\text{in})]$\")\n\n    text(\"Recurrences...let's solve them using dynamic programming!\")\n    text(\"But it has cycles! \ud83d\udd04 (e.g., when we stay and the die shows \u2682 \u2683 \u2684 \u2685, we're back in the same state)\")\n    text(\"What should we do? \ud83e\udd14\")\n\n    text(\"Idea: **bootstrapping** \ud83e\udd7e\")\n    text(r\"Define $V_\\pi^{(t)}(s)$ to be the value of following policy $\\pi$ from state $s$ for at most $t$ steps (and then terminating).\")\n    text(r\"- $V_\\pi^{(0)}$: value of terminating immediately\")\n    text(r\"- $V_\\pi^{(1)}$: value of following the policy for at most 1 step, then terminating\")\n    text(r\"- $V_\\pi^{(2)}$: value of following the policy for at most 2 steps, then terminating\")\n    text(\"- ... and so on.\")\n\n    text(\"**Base case**:\")\n    text(r\"- We start with $V_\\pi^{(0)}$:\")\n    V0 = get_initial_values(mdp)  # @inspect V0 @stepover\n    graph(draw_mdp_graph(mdp, values=V0))  # @stepover\n    text(r\"- Terminating right away gives no reward, so $V_\\pi^{(0)}(s) = 0$ for all states $s$.\")\n\n    text(\"**Recursive case**:\")\n    text(r\"$\\displaystyle V_\\pi^{(t)}(s) = \\sum_{s'} T(s, \\pi(s), s') [\\text{Reward}(s, \\pi(s), s') + \\gamma V_\\pi^{(t-1)}(s')]$ for $t \\ge 1$ and non-end states $s$\")\n    V1 = policy_evaluation_step(mdp, policy, V0)  # @inspect V1\n    graph(draw_mdp_graph(mdp, values=V1))  # @stepover\n\n    text(r\"Keep on iterating to compute $V_\\pi^{(2)}, V_\\pi^{(3)}, \\dots$\")\n\n\ndef introduce_convergence():\n    text(\"How do we know when an iterative algorithm is done? \ud83d\uded1\")\n    text(r\"$V^{(0)} \\to V^{(1)} \\to V^{(2)} \\to V^{(3)} \\to V^{(4)} \\to \\cdots$ (where $V^{(t)}$ are the values after $t$ iterations)\")\n\n    text(\"We look at the maximum change between iterations.\")\n    values = {1: 0.2, 2: 1.0, 3: -1.0}  # @inspect values\n    new_values = {1: 0.2, 2: 1.1, 3: 1.0}  # @inspect new_values\n    distance = compute_distance(values, new_values)  # @inspect distance\n\n    text(r\"When the distance is less than some tolerance (say $10^{-3}$), we terminate.\")\n    text(\"This will be used for policy evaluation and value iteration.\")\n\n\ndef get_initial_values(mdp: MDP) -> dict[Any, float]:\n    \"\"\"\n    Return the values obtained by just terminating.\n    This is used to initialize policy evaluation and value iteration.\n    Returns:\n    - values: dict[Any, float]: state -> value of that state\n    \"\"\"\n    # Get all the states in the MDP (needed for iterative algorithms)\n    states = get_states(mdp)  # @inspect states @stepover\n\n    # Terminating right away gives no reward\n    values = {state: 0 for state in states}  # @inspect values @stepover\n\n    return values\n\n\ndef get_action_successors(mdp: MDP, state: Any) -> dict[str, list[Step]]:\n    \"\"\"\n    Get the successors for each action from a state.\n    Returns:\n    - action_to_successors: dict[str, list[Step]]: action -> list of successors for that action\n    \"\"\"\n    # Get a flat list of successors for all actions\n    successors = mdp.successors(state)  # @stepover\n\n    # Group successors by action\n    action_to_successors = defaultdict(list)\n    for step in successors:\n        action_to_successors[step.action].append(step)\n\n    return action_to_successors\n\n\ndef compute_q_value(successors: list[Step], discount: float, values: dict[Any, float]) -> float:  # @inspect successors values\n    \"\"\"Compute the Q-value for a list of `successors` (possible transitions) given the `values`.\"\"\"\n    weighted_utilities = []  # @inspect weighted_utilities\n\n    for step in successors:  # @inspect step\n        utility = step.reward + discount * values[step.state]  # @inspect utility\n        weighted_utilities.append(step.prob * utility)  # @inspect weighted_utilities\n\n    value = sum(weighted_utilities)  # @inspect value\n    return value\n\n\ndef compute_distance(values: dict[Any, float], new_values: dict[Any, float]) -> float:\n    \"\"\"Compute the distance between two sets of values.\"\"\"\n    # Compute distances for each state\n    distances = [abs(values[state] - new_values[state]) for state in values]  # @inspect distances\n\n    # Take the max\n    max_distance = max(distances)  # @inspect max_distance\n\n    return max_distance\n\n\n@dataclass(frozen=True)\nclass PolicyEvaluationResult:\n    values: dict[Any, float]  # state -> value of that state\n    distances: list[float]  # iteration -> change in value that iteration\n\n\ndef policy_evaluation(mdp: MDP, policy: Policy, max_iters: int = 100, tolerance: float = 1e-3) -> PolicyEvaluationResult:\n    \"\"\"\n    Evaluates the `policy` on the `mdp` by computing the recurrence.\n    Returns:\n    - values: dict[Any, float]: state -> value of the policy from that state\n    - distances: list[float]: iteration -> maximum change in values that iteration (for debugging)\n    \"\"\"\n    values = get_initial_values(mdp)  # @stepover @inspect values\n    graph(draw_mdp_graph(mdp, values=values))  # @stepover\n\n    distances = []\n    for iter in range(max_iters):  # @inspect iter\n        # Compute the values after one more step\n        new_values = policy_evaluation_step(mdp, policy, values)  # @inspect new_values @stepover\n        graph(draw_mdp_graph(mdp, values=new_values))  # @stepover\n\n        # Check for convergence\n        distance = compute_distance(values, new_values)  # @inspect distance @stepover\n        distances.append(distance)\n        if distance < tolerance:\n            break\n\n        # Update values to the next iteration\n        values = new_values\n\n    return PolicyEvaluationResult(values=values, distances=distances)\n\n\ndef policy_evaluation_step(mdp: MDP, policy: Policy, values: dict[Any, float]) -> dict[Any, float]:  # @inspect values\n    \"\"\"Compute the new values (state -> V(state)) from following `policy` for one step, then the current `values`.\"\"\"\n    new_values = {}  # state -> V(state)\n    for state in values:  # @inspect state\n        if mdp.is_end(state):  # @stepover\n            new_values[state] = 0\n        else:\n            new_values[state] = policy_evaluation_for_state(mdp, policy, state, values)  # @inspect new_values\n    return new_values\n\n\ndef policy_evaluation_for_state(mdp: MDP, policy: Policy, state: Any, values: dict[Any, float]) -> float:  # @inspect state values\n    \"\"\"Compute the value of following `policy` from `state` (one step, then the current `values`).\"\"\"\n    # Only consider the policy action \u03c0(s)\n    action = policy(state)  # @inspect action @stepover\n\n    # Compute possible successors for that action\n    successors = get_action_successors(mdp, state)[action]  # @inspect successors @stepover\n\n    # Compute the value of the policy from that state\n    value = compute_q_value(successors, mdp.discount(), values)  # @inspect value\n    return value\n\n\ndef get_states(mdp: MDP) -> list[Any]:\n    \"\"\"Get all the states by traversing all successors starting from the start state.\"\"\"\n    states = set()\n    def recurse(state: Any):\n        if state in states:\n            return\n        states.add(state)\n        for step in mdp.successors(state):\n            recurse(step.state)\n    recurse(mdp.start_state())\n    return list(states)\n\n\ndef introduce_value_iteration():\n    text(r\"Policy evaluation: computes value $V_\\pi$ of a given policy $\\pi$\")\n\n    text(\"We now turn to computing the optimal policy.\")\n    text(r\"We could try different policies $\\pi$, evaluate them, and choose the best one\")\n    text(\"...but there are an exponential number of policies to consider.\")\n    text(\"Is there a faster way?\")\n\n    text(r\"**Value iteration**: computes value $V_\\text{opt}$ of the optimal policy $\\pi_\\text{opt}$\")\n    text(\"...and in the process, constructs the optimal policy!\")\n\n    text(\"Finding the optimal policy might seem much harder than computing the value of a policy...\")\n    text(r\"...(think: computing $f(x)$ versus $\\min_x f(x)$)\")\n    text(\"...but the two are actually quite similar! \ud83e\udd2f\")\n\n    text(\"History \ud83d\udcdc: Richard Bellman's work on dynamic programming \"), link(\"https://gwern.net/doc/statistics/decision/1957-bellman-dynamicprogramming.pdf\", title=\"Bellman, 1957\")\n\n    text(\"Policy evaluation recurrence:\")\n    text(r\"$\\displaystyle V_\\pi(s) = \\sum_{s'} T(s, \\pi(s), s') [\\text{Reward}(s, \\pi(s), s') + \\gamma V_\\pi(s')]$\")\n    text(\"Value iteration recurrence:\")\n    text(r\"$\\displaystyle V_\\text{opt}(s) = \\max_{a \\in \\text{Actions}(s)} \\sum_{s'} T(s, a, s') [\\text{Reward}(s, a, s') + \\gamma V_\\text{opt}(s')]$\")\n    image(\"images/q-value-opt.svg\", width=600)\n\n    text(r\"Key difference: maximize over actions $a$ instead of taking the policy's action $\\pi(s)$.\")\n\n    text(\"Let's try the dice game example:\")\n    mdp = DiceGameMDP()  # @stepover\n    graph(draw_mdp_graph(mdp))  # @stepover\n\n    V0 = get_initial_values(mdp)  # @inspect V0 @stepover\n    graph(draw_mdp_graph(mdp, values=V0))  # @stepover\n    # Compute V_opt^{(1)} from V_opt^{(0)} (and the best action in each state)\n    V1, pi = value_iteration_step(mdp, V0)  # @inspect V1 pi\n    graph(draw_mdp_graph(mdp, values=V1))  # @stepover\n\n    text(\"Let's now run value iteration:\")  # @clear V0 V1 pi\n    result = value_iteration(mdp)  # @inspect result\n    plot(make_distance_plot(\"value iteration\", result.distances))  # @stepover\n\n    text(\"Let's try the flaky tram problem:\")  # @clear result\n    mdp = FlakyTramMDP(num_locs=10, failure_prob=0.4)  # @stepover\n    graph(draw_mdp_graph(mdp))  # @stepover\n    result = value_iteration(mdp)  # @inspect result\n    plot(make_distance_plot(\"value iteration\", result.distances))  # @stepover\n\n    text(\"Summary:\")\n    text(\"- Value iteration: computes value of the optimal policy\")\n    text(\"- Takes the max over actions (whereas policy evaluation takes the policy's action)\")\n    text(\"- Bootstrapping: use values to compute new values using recurrence (same)\")\n\n\n@dataclass(frozen=True)\nclass ValueIterationResult:\n    values: dict[Any, float]  # state -> value of that state\n    pi: dict[Any, Any]  # state -> action for that state\n    distances: list[float]  # iteration -> change in value that iteration\n\n\ndef value_iteration(mdp: MDP, max_iters: int = 100, tolerance: float = 1e-3, show: bool = True) -> ValueIterationResult:\n    \"\"\"\n    Compute the value of the optimal policy (showing the graph at each iteration if `show`).\n    Returns:\n    - values: dict[Any, float]: state -> optimal value of that state\n    - pi: dict[Any, Any]: state -> optimal action for that state\n    - distances: list[float]: distance between values and new values at each iteration\n    \"\"\"\n    # Initialize values of each state\n    values = get_initial_values(mdp)  # @stepover @inspect values\n    if show:\n        graph(draw_mdp_graph(mdp, values=values))  # @stepover\n    # Initialize the policy (state -> action)\n    pi = {state: None for state in values}  # @inspect pi @stepover\n\n    distances = []\n    for iter in range(max_iters):  # @inspect iter\n        # Compute the values (and best actions) after one more step\n        new_values, pi = value_iteration_step(mdp, values)  # @inspect new_values pi @stepover\n        if show:\n            graph(draw_mdp_graph(mdp, values=new_values, pi=pi))  # @stepover\n\n        # Check for convergence\n        distance = compute_distance(values, new_values)  # @inspect distance @stepover\n        distances.append(distance)\n        if distance < tolerance:\n            break\n\n        # Update values to the next iteration\n        values = new_values  # @inspect values\n\n    return ValueIterationResult(values=values, pi=pi, distances=distances)\n\n\ndef value_iteration_step(mdp: MDP, values: dict[Any, float]) -> tuple[dict[Any, float], dict[Any, Any]]:  # @inspect values\n    \"\"\"\n    Compute the new values (state -> V_opt(state)) from taking the best action for one step, then the current `values`.\n    Also return the best action for each state (state -> action).\n    \"\"\"\n    new_values = {}  # state -> V_opt(state)\n    pi = {}  # state -> best action\n    for state in values:  # @inspect state\n        if mdp.is_end(state):  # @stepover\n            new_values[state] = 0\n            pi[state] = None\n        else:\n            new_values[state], pi[state] = value_iteration_for_state(mdp, state, values)  # @inspect new_values pi @stepover\n    return new_values, pi\n\n\ndef value_iteration_for_state(mdp: MDP, state: Any, values: dict[Any, float]) -> tuple[float, Any]:  # @inspect state values\n    \"\"\"Compute the optimal value V_opt(state) and optimal policy \u03c0_opt(state).\"\"\"\n    # V_opt(s) = max_a Q(s, a, V_opt)\n    # For each action, compute its Q-value\n    actions = []  # @inspect actions\n    q_values = []  # @inspect q_values\n\n    # Look at all actions from state\n    for action, successors in get_action_successors(mdp, state).items():  # @stepover @inspect action successors\n        actions.append(action)  # @inspect actions\n        q_values.append(compute_q_value(successors, mdp.discount(), values))  # @stepover @inspect q_values\n\n    # Take the best action\n    value = np.max(q_values)  # @inspect value\n    action = actions[np.argmax(q_values)]  # @inspect action\n\n    return value, action\n\n\nclass DiceGameMDP(MDP):\n    def start_state(self) -> Any:\n        return \"in\"\n\n    def successors(self, state: Any) -> list[Step]:\n        return [\n            Step(action=\"quit\", prob=1, reward=10, state=\"end\"),\n            Step(action=\"stay\", prob=1/3, reward=4, state=\"end\"),\n            Step(action=\"stay\", prob=2/3, reward=4, state=\"in\"),\n        ]\n\n    def is_end(self, state: Any) -> bool:  # @inspect state\n        return state == \"end\"\n\n    def discount(self) -> float:\n        return 1\n\n\ndef draw_mdp_graph(mdp: MDP, rollout: \"Rollout | None\" = None, values: dict[Any, float] | None = None,\n                   pi: dict[Any, Any] | None = None, layout: MDP | None = None) -> dict | None:\n    \"\"\"\n    Return the graph of `mdp` (to show with `graph`): states as circles (end states as double circles),\n    a small chance node for each (state, action) colored by the action, and an edge from it to each\n    possible next state labeled with the probability and reward.\n    If `rollout` is given, highlight its path (in orange): the action taken in each state and the resulting next state.\n    If `values` is given, show the value of each state (in orange, outside the node).\n    If `pi` is given, highlight the action that the policy takes in each state (in orange).\n    If `layout` is given, lay out the states like that MDP (e.g., draw an estimated MDP like the true one).\n    Return None if we don't know how to lay out `mdp` (which `graph` shows as nothing).\n    \"\"\"\n    layout = layout or mdp\n    if isinstance(layout, FlakyTramMDP):\n        spacing = 80\n        position = lambda state: (spacing * (state - 1), 0)\n        # Chance nodes: walk above the line (toward the next state), tram below\n        chance_offsets = {\"walk\": (spacing / 2, -50), \"tram\": (spacing / 2, 55)}\n        # Trams arc below the line (more for longer trips), except the shortest (1 -> 2, which has no room to arc)\n        curve = lambda state, step: 45 + 17 * (step.state - state) if step.action == \"tram\" and step.state == 2 * state and step.state - state > 1 else None\n        # Label the straight tram near its start (so it doesn't run into the next state's labels)\n        label_at_source = lambda state, step: step.action == \"tram\" and step.state > state and curve(state, step) is None\n        # Label walks right next to their chance node (leaving room above the next state for its value)\n        label_near_chance = lambda state, step: step.action == \"walk\"\n        width, height = spacing * (layout.num_locs - 1) + 80, 300\n    elif isinstance(layout, DiceGameMDP):\n        position = {\"in\": (0, 0), \"end\": (280, 0)}.get\n        chance_offsets = {\"quit\": (140, -60), \"stay\": (140, 60)}\n        curve = lambda state, step: None\n        label_at_source = lambda state, step: False\n        label_near_chance = lambda state, step: False\n        width, height = 360, 210\n    else:\n        return None\n\n    # Edges along the rollout: (state, chance node) for the action taken, (chance node, next state) for the outcome\n    path = set()\n    if rollout is not None:\n        state = mdp.start_state()\n        for step in rollout.steps:\n            chance = f\"{state}-{step.action}\"\n            path |= {(str(state), chance), (chance, str(step.state))}\n            state = step.state\n    on_path = lambda source, target: \" path\" if (str(source), str(target)) in path else \"\"\n\n    action_colors = [\"#2a9d8f\", \"#9b72cf\"]  # Teal, purple (in order of first appearance)\n    action_index = {}\n    nodes, edges = [], []\n    for state in sorted(get_states(mdp), key=str):\n        x, y = position(state)\n        nodes.append({\"id\": state, \"x\": x, \"y\": y, \"classes\": \"end\" if mdp.is_end(state) else \"\"})\n        if values is not None and state in values:\n            # Directly above the node (between the edges to and from the actions above it)\n            nodes.append({\"id\": f\"{state}-value\", \"label\": format_number(round(values[state], 2)), \"x\": x, \"y\": y - 27,\n                          \"classes\": \"annotation\"})\n        if mdp.is_end(state):\n            continue\n        for action, successors in get_action_successors(mdp, state).items():\n            i = action_index.setdefault(action, len(action_index))\n            dx, dy = chance_offsets[action]\n            chance = f\"{state}-{action}\"\n            # The action's name goes on the far side of its chance node (away from the state)\n            nodes.append({\"id\": chance, \"label\": action, \"x\": x + dx, \"y\": y + dy,\n                          \"classes\": f\"chance action-{i} {'above' if dy < 0 else 'below'}\"})\n            chosen = \" policy\" if pi is not None and pi.get(state) == action else \"\"\n            edges.append({\"source\": state, \"target\": chance, \"classes\": f\"action-{i} choose\" + chosen + on_path(state, chance)})\n            for step in successors:\n                edge = {\"source\": chance, \"target\": step.state, \"label\": f\"{format_prob(step.prob)}: {format_number(step.reward)}\",\n                        \"classes\": f\"action-{i}\" + (\" label-at-source\" if label_at_source(state, step) else \"\") +\n                                   (\" label-near-chance\" if label_near_chance(state, step) else \"\") + on_path(chance, step.state)}\n                if curve(state, step) is not None:\n                    edge[\"curve\"] = curve(state, step)\n                edges.append(edge)\n\n    stylesheet = search_graph_stylesheet() + [\n        {\"selector\": \"node.chance\", \"style\": {\"width\": 12, \"height\": 12, \"border-width\": 0, \"font-size\": 11, \"font-style\": \"italic\"}},\n        {\"selector\": \"node.chance.above\", \"style\": {\"text-valign\": \"top\", \"text-margin-y\": -3}},\n        {\"selector\": \"node.chance.below\", \"style\": {\"text-valign\": \"center\", \"text-halign\": \"left\", \"text-margin-x\": -3}},\n        {\"selector\": \"edge\", \"style\": {\"font-size\": 10, \"arrow-scale\": 0.8}},\n        {\"selector\": \"edge.choose\", \"style\": {\"target-arrow-shape\": \"none\"}},\n        {\"selector\": \"edge.label-at-source\", \"style\": {\"label\": \"\", \"source-label\": \"data(label)\", \"source-text-offset\": 30}},\n        {\"selector\": \"edge.label-near-chance\", \"style\": {\"label\": \"\", \"source-label\": \"data(label)\", \"source-text-offset\": 14}},\n    ]\n    for action, i in action_index.items():\n        color = action_colors[i % len(action_colors)]\n        stylesheet += [\n            {\"selector\": f\"node.action-{i}\", \"style\": {\"background-color\": color, \"color\": color}},\n            {\"selector\": f\"edge.action-{i}\", \"style\": {\"line-color\": color, \"target-arrow-color\": color, \"color\": color}},\n        ]\n    # Policy: thicker, orange like the values (after the action colors so that it takes precedence)\n    stylesheet.append({\"selector\": \"edge.policy\", \"style\": {\"width\": 5, \"line-color\": \"#f77f00\", \"z-index\": 5}})\n    # Rollout path: thicker, bright orange, drawn on top (after the action colors so that it takes precedence)\n    stylesheet.append({\"selector\": \"edge.path\", \"style\": {\"width\": 4, \"line-color\": \"#f77f00\", \"target-arrow-color\": \"#f77f00\",\n                                                          \"color\": \"#f77f00\", \"z-index\": 10}})\n    return make_graph(nodes, edges, stylesheet=stylesheet, width=width, height=height)\n\n\n\ndef draw_rollout_graph(mdp: MDP, rollout: Rollout) -> dict:\n    \"\"\"\n    Return the graph of `rollout` (to show with `graph`) as a chain: the states visited (in order, starting from the\n    start state of `mdp`), with an edge for each step labeled with the action (colored by the action) and the reward.\n    \"\"\"\n    spacing = 85\n    action_colors = [\"#2a9d8f\", \"#9b72cf\"]  # Teal, purple (in order of first appearance, as in `draw_mdp_graph`)\n    action_index = {}\n    # States can repeat (e.g., when the tram fails), so identify nodes by their position in the chain\n    states = [mdp.start_state()] + [step.state for step in rollout.steps]\n    nodes = [{\"id\": t, \"label\": str(state), \"x\": spacing * t, \"y\": 0, \"classes\": \"end\" if mdp.is_end(state) else \"\"}\n             for t, state in enumerate(states)]\n    edges = []\n    for t, step in enumerate(rollout.steps):\n        i = action_index.setdefault(step.action, len(action_index))\n        edges.append({\"source\": t, \"target\": t + 1, \"label\": f\"{step.action}: {format_number(step.reward)}\", \"classes\": f\"action-{i}\"})\n\n    stylesheet = search_graph_stylesheet() + [\n        {\"selector\": \"edge\", \"style\": {\"font-size\": 11, \"arrow-scale\": 0.8, \"text-margin-y\": -10}},\n    ]\n    for action, i in action_index.items():\n        color = action_colors[i % len(action_colors)]\n        stylesheet.append({\"selector\": f\"edge.action-{i}\", \"style\": {\"line-color\": color, \"target-arrow-color\": color, \"color\": color}})\n    return make_graph(nodes, edges, stylesheet=stylesheet, width=spacing * len(rollout.steps) + 80, height=100)\n\ndef format_prob(prob: float) -> str:\n    \"\"\"Show a probability as a decimal if it has at most 2 digits (e.g., 0.6), otherwise as a fraction (e.g., 1/3).\"\"\"\n    if abs(prob - round(prob, 2)) < 1e-9:\n        return f\"{prob:g}\"\n    return str(Fraction(prob).limit_denominator(100))\n\n\ndef format_number(x: float) -> str:\n    \"\"\"Show a number with a proper minus sign.\"\"\"\n    return f\"{x:g}\".replace(\"-\", \"\u2212\")\n\n\ndef get_state_vocab(mdp: MDP) -> Vocabulary:\n    \"\"\"Traverse the entire MDP to map states to integers using the `Vocabulary` class.\"\"\"\n    states = Vocabulary()\n    def recurse(state: Any):\n        if state in states:\n            return\n        # Add the state to the vocabulary\n        states.get_index(state)\n        for step in mdp.successors(state):\n            recurse(step.state)\n    recurse(mdp.start_state())\n    return states\n\n\n\nif __name__ == \"__main__\":\n    main()\n"
+    "mdp.py": "from edtrace import text, link, image, note, plot, graph, make_graph\nfrom typing import Any\nfrom dataclasses import dataclass\nfrom collections import defaultdict\nimport numpy as np\nimport random\nfrom functools import partial\nfrom fractions import Fraction\nfrom typing import Callable\nfrom search import TravelSearchProblem, draw_travel_graph\nfrom util import Vocabulary, make_plot, search_graph_stylesheet\n\nPolicy = Callable[[Any], Any]\n\n\ndef main():\n    text(\"# Markov Decision Processes (MDPs)\")\n    text(\"Last week: **search**\")\n    text(\"- Search problem:\")\n    text(r\"  * $s_\\text{start} \\in \\text{States}$: where we start\")\n    text(r\"  * $\\text{Actions}(s)$: the actions we can take in state $s$\")\n    text(r\"  * $\\text{Succ}(s, a)$: the state we **deterministically** end up in if we take action $a$ in state $s$\")\n    text(r\"  * $\\text{Cost}(s, a)$: the cost of taking action $a$ in state $s$\")\n    text(r\"  * $\\text{IsEnd}(s)$: whether $s$ is an end state\")\n    problem = TravelSearchProblem(num_locs=10)  # @stepover\n    state = problem.start_state()  # @inspect state\n    successors = problem.successors(state)  # @inspect successors\n    is_end = problem.is_end(state)  # @inspect is_end\n    graph(draw_travel_graph(problem))  # @stepover\n\n    text(\"This week: **Markov Decision Processes (MDPs)**\")\n    text(\"- MDPs generalize search problems\")\n    text(\"- Key difference: actions may have stochastic outcomes (e.g., rolling a die \ud83c\udfb2)\")\n\n    text(\"Motivating example: How would you go to the grocery store \ud83d\uded2: walk \ud83d\udeb6, bike \ud83d\udeb2, or drive \ud83d\ude97?\")\n    text(\"Key: need to take into account uncertainty (traffic \ud83d\udea6, time finding parking \ud83c\udd7f\ufe0f, etc.)\")\n\n    introduce_mdp()\n    introduce_policies()\n    introduce_monte_carlo_policy_evaluation()\n    introduce_policy_evaluation()\n    introduce_value_iteration()\n\n    text(\"Summary:\")\n    text(\"- MDPs: generalize search problems (actions result in a distribution over next states)\")\n    text(r\"- Policy $\\pi$ (solution): maps each state to an action\")\n    text(\"- MDP + policy \u2192 rollout \u2192 utility\")\n    text(\"- Value of policy = expected utility of policy\")\n    text(\"- Policy evaluation: computes value of a given policy\")\n    text(\"- Value iteration: computes value of the optimal policy\")\n\n\ndef introduce_mdp():\n    text(\"Origins of MDPs:\")\n    text(\"- Developed in operations research in the 1950s \ud83c\udfed\")\n    text(\"- \\\"Markov\\\" comes from Markov chains, where the past and future are independent given the state\")\n    text(\"- \\\"decision\\\" means an agent taking actions\")\n    text(\"- \\\"process\\\" means things happen sequentially over time\")\n\n    text(\"**Example**: dice game \ud83c\udfb2\")\n    text(\"For each round:\")\n    text(\"- You choose quit \ud83d\uded1 or stay \ud83d\udd01.\")\n    text(\"- If quit, you get $10 \ud83d\udcb5 and we end the game.\")\n    text(\"- If stay, you get $4 \ud83d\udcb5 and then I roll a 6-sided die \ud83c\udfb2.\")\n    text(\"- If the die shows \u2680 or \u2681, we end the game \ud83c\udfc1.\")\n    text(\"- Otherwise (\u2682 \u2683 \u2684 \u2685), continue to the next round.\")\n    mdp = DiceGameMDP()  # @stepover\n    state = mdp.start_state()  # @inspect state\n    successors = mdp.successors(state)  # @inspect successors\n    is_end = mdp.is_end(state)  # @inspect is_end\n\n    text(\"We can visualize an MDP as a graph, which has two types of nodes:\")\n    text(\"- State nodes: same as a search problem\")\n    text(\"- Action nodes: represent taking a particular action from a state\")\n    graph(draw_mdp_graph(mdp))  # @stepover\n\n    text(\"Formally:\")\n    text(r\"- $s_\\text{start} \\in \\text{States}$: where we start\")\n    text(r\"- $\\text{Actions}(s)$: all possible actions from state $s$\")\n    text(r\"- $T(s, a, s')$: probability of ending up in state $s'$ after taking action $a$ from state $s$\")\n    text(r\"  * Note: for each $(s, a)$: $\\displaystyle \\sum_{s'} T(s, a, s') = 1$.\")\n    text(r\"- $\\text{Reward}(s, a, s')$: reward we get if we take action $a$ in state $s$ and end up in state $s'$\")\n    text(r\"- $\\text{IsEnd}(s)$: whether $s$ is an end state\")\n    text(r\"- $0 \\le \\gamma \\le 1$: discount factor (more on this later)\")\n\n    text(\"**Example**: flaky tram problem \ud83d\ude8b:\")\n    text(r\"- Locations $1$ to $n$\")\n    text(r\"- Walking \ud83d\udeb6 from $i$ to $i+1$ takes 1 minute\")\n    text(r\"- Taking a tram \ud83d\ude8b from $i$ to $2i$ takes 2 minutes\")\n    text(r\"- But the tram breaks down \ud83d\udca5 with probability $p$ (NEW!)\")\n    text(r\"- Goal \ud83c\udfc1: get from $1$ to $n$ in the least time \u23f1\ufe0f in expectation (on average)\")\n    mdp = FlakyTramMDP(num_locs=10, failure_prob=0.4)  # @stepover @clear state successors is_end\n    state = mdp.start_state()  # @inspect state @stepover\n    successors = mdp.successors(state)  # @inspect successors\n    is_end = mdp.is_end(state)  # @inspect is_end\n    graph(draw_mdp_graph(mdp))  # @stepover\n\n    text(\"Comparison between search problems and MDPs:\")\n    text(\"- Both have `start_state` and `is_end` functions\")\n    text(\"- Both have a `successors` function that returns a list of possible actions and their consequences\")\n    text(\"- Superficial difference: search problems use costs, MDPs use rewards\")\n    text(\"- Deep difference: in search problems, each action has one next state; in MDPs, each action has a distribution over next states\")\n\n\n@dataclass(frozen=True)\nclass Step:\n    action: Any\n    prob: float  # New: the probability that we ended up here\n    reward: float\n    state: Any\n\n\nclass MDP:\n    def start_state(self) -> Any:\n        raise NotImplementedError\n\n    def successors(self, state: Any) -> list[Step]:\n        raise NotImplementedError\n\n    def is_end(self, state: Any) -> bool:\n        raise NotImplementedError\n\n    def discount(self) -> float:\n        raise NotImplementedError\n\n    def actions(self, state: Any) -> list[Any]:\n        \"\"\"Return the actions available in `state` (the actions of its successors).\"\"\"\n        return list(dict.fromkeys(step.action for step in self.successors(state)))\n\n\nclass FlakyTramMDP(MDP):\n    def __init__(self, num_locs: int, failure_prob: float):\n        self.num_locs = num_locs\n        self.failure_prob = failure_prob\n\n    def start_state(self) -> Any:\n        return 1\n\n    def successors(self, state: Any) -> list[Step]:  # @inspect state\n        successors = []\n\n        # Walk\n        if state + 1 <= self.num_locs:\n            successors.append(Step(action=\"walk\", prob=1, reward=-1, state=state + 1))  # @inspect successors\n\n        # Tram (only if it doesn't go past the end)\n        if 2 * state <= self.num_locs:\n            # Success: move to desired state\n            successors.append(Step(action=\"tram\", prob=1 - self.failure_prob, reward=-2, state=2 * state))  # @inspect successors\n            # Failure: stay in the same state\n            successors.append(Step(action=\"tram\", prob=self.failure_prob, reward=-2, state=state))  # @inspect successors\n\n        return successors\n\n    def is_end(self, state: Any) -> bool:\n        return state == self.num_locs\n\n    def discount(self) -> float:\n        # No discounting for now\n        return 1\n\n\ndef introduce_policies():\n    mdp = FlakyTramMDP(num_locs=10, failure_prob=0.4)  # @stepover\n    graph(draw_mdp_graph(mdp))  # @stepover\n\n    text(\"What does a **solution** to an MDP look like?\")\n    text(\"- In a search problem, a solution was a sequence of actions.\")\n    text(\"- This won't work for MDPs because actions have uncertain outcomes.\")\n    text(\"- So subsequent actions need to depend on the outcome of the previous action.\")\n    text(r\"- In an MDP, a solution is a **policy** $\\pi$: a function that maps each state $s$ to an action $\\pi(s)$.\")\n    text(r\"- No matter what state $s$ you're in, the policy $\\pi$ tells you what to do.\")\n\n    # Policy that always walks\n    policy = always_walk_policy\n    action = policy(state=3)  # @inspect action\n\n    # Policy that takes the tram if possible\n    policy = partial(tram_if_possible_policy, mdp)\n    action = policy(state=3)  # @inspect action\n\n    text(\"How do you evaluate a policy?\") # @clear action\n    text(\"A **rollout** (a.k.a. episode, trajectory) \ud83c\udfac of a policy in an MDP produces\")\n    text(r\"...a sequence of states, actions, and rewards: $s_0, a_0, r_0, s_1, a_1, r_1, s_2, \\dots$\")\n    text(\"Let's generate a rollout of the policy that always walks:\")\n    np.random.seed(1)\n    rollout = generate_rollout(mdp, always_walk_policy)  # @inspect rollout\n    graph(draw_mdp_graph(mdp, rollout))  # @stepover\n\n    text(\"Each rollout generates a **utility** \ud83d\udcb0, which is a discounted sum of rewards.\")\n    text(\"**Discounting** \u23f3: how important is the future?\")\n    text(r\"- Represented by a discount factor $0 \\le \\gamma \\le 1$\")\n    text(r\"- Suppose $r_0, r_1, r_2, \\dots$ are the rewards of the rollout\")\n    text(r\"- $\\text{utility} = r_0 + \\gamma r_1 + \\gamma^2 r_2 + \\cdots = \\sum_t \\gamma^t r_t$\")\n\n    text(r\"- $\\gamma = 1$ (no discounting): the future is just as important as the present\")\n    utility_1 = compute_utility(rollout.steps, discount=1)  # @inspect utility_1\n    text(r\"- $\\gamma = 0$ (full discounting): the future doesn't matter at all\")\n    utility_0 = compute_utility(rollout.steps, discount=0)  # @inspect utility_0\n    text(r\"- $\\gamma = 0.5$ (half discounting): the next step matters half as much as the present step\")\n    utility_0_5 = compute_utility(rollout.steps, discount=0.5)  # @inspect utility_0_5\n\n    text(\"Let's roll out the policy that always takes the tram:\") # @clear utility_1 utility_0 utility_0_5\n    policy = partial(tram_if_possible_policy, mdp)\n    rollout = generate_rollout(mdp, policy)  # @inspect rollout @stepover\n    graph(draw_mdp_graph(mdp, rollout))  # @stepover\n    rollout = generate_rollout(mdp, policy)  # @inspect rollout @stepover\n    graph(draw_mdp_graph(mdp, rollout))  # @stepover\n    rollout = generate_rollout(mdp, policy)  # @inspect rollout @stepover\n    graph(draw_mdp_graph(mdp, rollout))  # @stepover\n    rollout = generate_rollout(mdp, policy)  # @inspect rollout @stepover\n    graph(draw_mdp_graph(mdp, rollout))  # @stepover\n    text(\"Note that the same policy yields different rollouts (even though the policy is deterministic).\")\n\n    text(\"So then how do we evaluate a policy, i.e., how good is it?\")\n\n    text(r\"$V_\\pi(s)$: **value of a policy** $\\pi$ is the expected utility of starting in state $s$ and following policy $\\pi$.\")\n    text(\"Conceptually, roll out an infinite number of times and take the average of the utilities.\")\n\n    text(\"How do you (approximately) compute this?\")\n\n\ndef introduce_monte_carlo_policy_evaluation():\n    mdp = FlakyTramMDP(num_locs=10, failure_prob=0.4)  # @stepover\n    graph(draw_mdp_graph(mdp))  # @stepover\n\n    text(r\"Recall that the value $V_\\pi(s)$ of a policy $\\pi$ is the expected utility of starting in state $s$ and following policy $\\pi$.\")\n    text(r\"How to compute $V_\\pi(s_\\text{start})$?\")\n\n    text(\"Key idea: **Monte Carlo** \ud83c\udfb0\")\n    monte_carlo_example()\n\n    text(\"Apply Monte Carlo to policy evaluation:\")\n    text(\"- Roll out the policy $n$ times.\")\n    text(\"- Average the utilities.\")\n    text(\"This average utility is an approximation of the expected utility (**value**) of the policy.\")\n\n    # Only need one rollout since walking is deterministic\n    walk_value = monte_carlo_policy_evaluation(mdp, always_walk_policy, num_rollouts=1)  # @inspect walk_value\n\n    # Tram is stochastic, so need many rollouts\n    tram_value = monte_carlo_policy_evaluation(mdp, partial(tram_if_possible_policy, mdp), num_rollouts=20)  # @inspect tram_value\n\n    text(\"It's better to walk than to take the tram (since the tram is flaky)!\")\n\n    text(\"Let's try the dice game:\")  # @clear rollout walk_value tram_value\n    mdp = DiceGameMDP()  # @stepover\n    quit_value = monte_carlo_policy_evaluation(mdp, always_quit_policy, num_rollouts=1)  # @inspect quit_value\n    stay_value = monte_carlo_policy_evaluation(mdp, always_stay_policy, num_rollouts=20)  # @inspect stay_value\n\n    text(\"It is better to stay than to quit!\")\n\n    text(\"Can we (approximately) compute the value of a policy more efficiently?\")\n\n\ndef monte_carlo_example():\n    text(\"Monte Carlo: estimate an expectation by averaging random samples\")\n    text(\"Setup:\")\n    text(r\"- We have a random variable $X \\in \\{0, 1\\}$\")\n    text(r\"- ...whose distribution is given by $p(X = 1) = 0.8, p(X = 0) = 0.2$.\")\n    text(r\"- Define a function $f(x) = \\begin{cases} 5 & \\text{if } x = 1 \\\\ 1 & \\text{if } x = 0 \\end{cases}$\")\n    text(r\"- ...and we want to compute its expected value $\\mathbb E[f(X)]$.\")\n\n    n = 50  # Number of samples (controls the quality of the approximation) @inspect n\n\n    random.seed(4)\n    x = random.choices([5, 1], weights=[0.8, 0.2], k=n)  # Samples of f(X) @inspect x\n    estimate = sum(x) / n  # Monte Carlo estimate @inspect estimate\n    exact = 0.8 * 5 + 0.2 * 1  # Exact answer @inspect exact\n\n\ndef always_stay_policy(state: int) -> str:\n    return \"stay\"\n\n\ndef always_quit_policy(state: int) -> str:\n    return \"quit\"\n\n\ndef always_walk_policy(state: int) -> str:\n    return \"walk\"\n\n\ndef tram_if_possible_policy(mdp: MDP, state: int) -> str:\n    \"\"\"Need the MDP to know the number of locations to make sure we can take the tram.\"\"\"\n    if state * 2 <= mdp.num_locs:  # @inspect state mdp.num_locs\n        return \"tram\"\n    else:\n        return \"walk\"\n\n\n@dataclass\nclass Rollout:\n    \"\"\"Represents a rollout of an MDP (sequence of actions that produces a utility).\"\"\"\n    steps: list[Step]\n    discount: float\n    utility: float  # Discounted sum of rewards\n\n    def __init__(self, steps: list[Step], discount: float):\n        self.steps = steps  # @inspect self.steps\n        self.discount = discount  # @inspect self.discount\n        self.utility = compute_utility(steps, discount)  # @inspect self.utility\n\n\ndef compute_utility(steps: list[Step], discount: float) -> float:\n    \"\"\"Computes the utility (discounted sum of rewards) of a rollout.\"\"\"\n    rewards = [step.reward * discount ** t for t, step in enumerate(steps)]  # @inspect rewards\n    utility = sum(rewards)  # @inspect utility\n    return utility\n\n\ndef generate_rollout(mdp: MDP, policy: Policy) -> Rollout:\n    \"\"\"Run the `policy` in the `mdp` and return the rollout.\"\"\"\n    steps = []  # @inspect steps\n    state = mdp.start_state()  # @inspect state @stepover\n\n    while not mdp.is_end(state):  # @stepover\n        # Policy: choose an action\n        action = policy(state)  # @inspect action @stepover\n\n        # MDP: choose a successor according to that action\n        successors = [successor for successor in mdp.successors(state) if successor.action == action]  # @inspect successors @stepover\n        probs = [successor.prob for successor in successors]  # @inspect probs\n        choice = np.random.choice(len(successors), p=probs)  # @inspect choice\n        step = successors[choice]  # @inspect step\n        steps.append(step)  # @inspect steps\n\n        # Advance to the next state\n        state = step.state  # @inspect state @clear successors probs choice step\n\n    return Rollout(steps=steps, discount=mdp.discount())\n\n\ndef monte_carlo_policy_evaluation(mdp: MDP, policy: Policy, num_rollouts: int) -> float:\n    \"\"\"Evaluate the policy and return the expected utility.\"\"\"\n    utilities = [generate_rollout(mdp, policy).utility for _ in range(num_rollouts)]  # @inspect utilities @stepover\n    average_utility = np.mean(utilities)  # @inspect average_utility\n    return average_utility\n\n\ndef introduce_policy_evaluation():\n    text(r\"So far: we can perform many rollouts and average them to estimate the value of a policy $V_\\pi(s)$.\")\n    text(r\"Is there a way to compute the value $V_\\pi(s)$ more efficiently?\")\n    text(\"Yes! \ud83c\udf89\")\n    text(\"Key: compute the recurrences (recall dynamic programming for search problems).\")\n\n    introduce_policy_evaluation_recurrence()\n    introduce_convergence()\n\n    text(\"The resulting algorithm is called **policy evaluation**.\")\n    text(\"Let's try the dice game:\")\n    mdp = DiceGameMDP()  # @stepover\n    result = policy_evaluation(mdp, always_stay_policy)  # @inspect result\n    plot(make_distance_plot(\"policy evaluation\", result.distances))  # @stepover\n\n    text(\"Let's try the flaky tram problem:\")  # @clear result\n    mdp = FlakyTramMDP(num_locs=10, failure_prob=0.4)  # @stepover\n    policy = partial(tram_if_possible_policy, mdp)\n    result = policy_evaluation(mdp, policy)  # @inspect result\n    tram_value = result.values[mdp.start_state()]  # @inspect tram_value @stepover\n    plot(make_distance_plot(\"policy evaluation\", result.distances))  # @stepover\n    text(\"Distance curve has two phases:\")\n    text(\"1. Trying to reach all the states (number of steps), distance is flat\")\n    text(\"2. Refining values across all states, distance decreases exponentially\")\n\n    text(\"Summary:\")\n    text(\"- Policy evaluation: computes value of a given policy\")\n    text(r\"- Key quantities:\")\n    text(r\"  * Value $V_\\pi(s)$ = expected utility of following policy $\\pi$ from state $s$\")\n    text(r\"  * Q-value $Q_\\pi(s, a)$ = expected utility of taking action $a$ in state $s$, and then following policy $\\pi$\")\n    text(\"- Bootstrapping: use values to compute new values using recurrence\")\n\n\ndef make_distance_plot(name: str, distances: list[float]) -> dict:\n    points = [{\"iteration\": i, \"distance\": distance, \"color\": \"blue\"} for i, distance in enumerate(distances)]\n    return make_plot(name, \"iteration\", \"distance\", f=None, points=points)\n\n\ndef introduce_policy_evaluation_recurrence():\n    text(\"Let's consider our dice game example again:\")\n    mdp = DiceGameMDP()  # @stepover\n    graph(draw_mdp_graph(mdp))  # @stepover\n\n    text(r\"And the policy $\\pi$ that always stays:\")\n    policy = always_stay_policy\n\n    text(r\"In addition to the value of a policy $V_\\pi$, define Q-values $Q_\\pi$:\")\n    text(r\"- $V_\\pi(s)$ (value): expected utility of starting in state $s$ and following policy $\\pi$.\")\n    text(r\"- $Q_\\pi(s, a)$ (Q-value): expected utility of taking action $a$ in state $s$, and then following policy $\\pi$.\")\n    text(r\"Values ($V_\\pi(s)$) sit on state nodes and Q-values ($Q_\\pi(s, a)$) sit on action nodes.\")\n\n    text(\"We define the following recurrence:\")\n    text(r\"- $\\displaystyle V_\\pi(s) = \\begin{cases} 0 & \\text{if } \\text{IsEnd}(s) \\\\ Q_\\pi(s, \\pi(s)) & \\text{otherwise} \\end{cases}$\")\n    text(r\"- $\\displaystyle Q_\\pi(s, a) = \\sum_{s'} T(s, a, s') [\\text{Reward}(s, a, s') + \\gamma V_\\pi(s')]$\")\n    image(\"images/q-value.svg\", width=560)\n\n    text(\"For the dice example:\")\n    text(r\"- $V_\\pi(\\text{end}) = 0$\")\n    text(r\"- $V_\\pi(\\text{in}) = Q_\\pi(\\text{in}, \\text{stay})$\")\n    text(r\"- $Q_\\pi(\\text{in}, \\text{stay}) = \\frac{1}{3} [4 + V_\\pi(\\text{end})] + \\frac{2}{3} [4 + V_\\pi(\\text{in})]$\")\n\n    text(\"Recurrences...let's solve them using dynamic programming!\")\n    text(\"But it has cycles! \ud83d\udd04 (e.g., when we stay and the die shows \u2682 \u2683 \u2684 \u2685, we're back in the same state)\")\n    text(\"What should we do? \ud83e\udd14\")\n\n    text(\"Idea: **bootstrapping** \ud83e\udd7e\")\n    text(r\"Define $V_\\pi^{(t)}(s)$ to be the value of following policy $\\pi$ from state $s$ for at most $t$ steps (and then terminating).\")\n    text(r\"- $V_\\pi^{(0)}$: value of terminating immediately\")\n    text(r\"- $V_\\pi^{(1)}$: value of following the policy for at most 1 step, then terminating\")\n    text(r\"- $V_\\pi^{(2)}$: value of following the policy for at most 2 steps, then terminating\")\n    text(\"- ... and so on.\")\n\n    text(\"**Base case**:\")\n    text(r\"- We start with $V_\\pi^{(0)}$:\")\n    V0 = get_initial_values(mdp)  # @inspect V0 @stepover\n    graph(draw_mdp_graph(mdp, values=V0))  # @stepover\n    text(r\"- Terminating right away gives no reward, so $V_\\pi^{(0)}(s) = 0$ for all states $s$.\")\n\n    text(\"**Recursive case**:\")\n    text(r\"$\\displaystyle V_\\pi^{(t)}(s) = \\sum_{s'} T(s, \\pi(s), s') [\\text{Reward}(s, \\pi(s), s') + \\gamma V_\\pi^{(t-1)}(s')]$ for $t \\ge 1$ and non-end states $s$\")\n    V1 = policy_evaluation_step(mdp, policy, V0)  # @inspect V1\n    graph(draw_mdp_graph(mdp, values=V1))  # @stepover\n\n    text(r\"Keep on iterating to compute $V_\\pi^{(2)}, V_\\pi^{(3)}, \\dots$\")\n\n\ndef introduce_convergence():\n    text(\"How do we know when an iterative algorithm is done? \ud83d\uded1\")\n    text(r\"$V^{(0)} \\to V^{(1)} \\to V^{(2)} \\to V^{(3)} \\to V^{(4)} \\to \\cdots$ (where $V^{(t)}$ are the values after $t$ iterations)\")\n\n    text(\"We look at the maximum change between iterations.\")\n    values = {1: 0.2, 2: 1.0, 3: -1.0}  # @inspect values\n    new_values = {1: 0.2, 2: 1.1, 3: 1.0}  # @inspect new_values\n    distance = compute_distance(values, new_values)  # @inspect distance\n\n    text(r\"When the distance is less than some tolerance (say $10^{-3}$), we terminate.\")\n    text(\"This will be used for policy evaluation and value iteration.\")\n\n\ndef get_initial_values(mdp: MDP) -> dict[Any, float]:\n    \"\"\"\n    Return the values obtained by just terminating.\n    This is used to initialize policy evaluation and value iteration.\n    Returns:\n    - values: dict[Any, float]: state -> value of that state\n    \"\"\"\n    # Get all the states in the MDP (needed for iterative algorithms)\n    states = get_states(mdp)  # @inspect states @stepover\n\n    # Terminating right away gives no reward\n    values = {state: 0 for state in states}  # @inspect values @stepover\n\n    return values\n\n\ndef get_action_successors(mdp: MDP, state: Any) -> dict[str, list[Step]]:\n    \"\"\"\n    Get the successors for each action from a state.\n    Returns:\n    - action_to_successors: dict[str, list[Step]]: action -> list of successors for that action\n    \"\"\"\n    # Get a flat list of successors for all actions\n    successors = mdp.successors(state)  # @stepover\n\n    # Group successors by action\n    action_to_successors = defaultdict(list)\n    for step in successors:\n        action_to_successors[step.action].append(step)\n\n    return action_to_successors\n\n\ndef compute_q_value(successors: list[Step], discount: float, values: dict[Any, float]) -> float:  # @inspect successors values\n    \"\"\"Compute the Q-value for a list of `successors` (possible transitions) given the `values`.\"\"\"\n    weighted_utilities = []  # @inspect weighted_utilities\n\n    for step in successors:  # @inspect step\n        utility = step.reward + discount * values[step.state]  # @inspect utility\n        weighted_utilities.append(step.prob * utility)  # @inspect weighted_utilities\n\n    value = sum(weighted_utilities)  # @inspect value\n    return value\n\n\ndef compute_distance(values: dict[Any, float], new_values: dict[Any, float]) -> float:\n    \"\"\"Compute the distance between two sets of values.\"\"\"\n    # Compute distances for each state\n    distances = [abs(values[state] - new_values[state]) for state in values]  # @inspect distances\n\n    # Take the max\n    max_distance = max(distances)  # @inspect max_distance\n\n    return max_distance\n\n\n@dataclass(frozen=True)\nclass PolicyEvaluationResult:\n    values: dict[Any, float]  # state -> value of that state\n    distances: list[float]  # iteration -> change in value that iteration\n\n\ndef policy_evaluation(mdp: MDP, policy: Policy, max_iters: int = 100, tolerance: float = 1e-3) -> PolicyEvaluationResult:\n    \"\"\"\n    Evaluates the `policy` on the `mdp` by computing the recurrence.\n    Returns:\n    - values: dict[Any, float]: state -> value of the policy from that state\n    - distances: list[float]: iteration -> maximum change in values that iteration (for debugging)\n    \"\"\"\n    values = get_initial_values(mdp)  # @stepover @inspect values\n    graph(draw_mdp_graph(mdp, values=values))  # @stepover\n\n    distances = []\n    for iter in range(max_iters):  # @inspect iter\n        # Compute the values after one more step\n        new_values = policy_evaluation_step(mdp, policy, values)  # @inspect new_values @stepover\n        graph(draw_mdp_graph(mdp, values=new_values))  # @stepover\n\n        # Check for convergence\n        distance = compute_distance(values, new_values)  # @inspect distance @stepover\n        distances.append(distance)\n        if distance < tolerance:\n            break\n\n        # Update values to the next iteration\n        values = new_values\n\n    return PolicyEvaluationResult(values=values, distances=distances)\n\n\ndef policy_evaluation_step(mdp: MDP, policy: Policy, values: dict[Any, float]) -> dict[Any, float]:  # @inspect values\n    \"\"\"Compute the new values (state -> V(state)) from following `policy` for one step, then the current `values`.\"\"\"\n    new_values = {}  # state -> V(state)\n    for state in values:  # @inspect state\n        if mdp.is_end(state):  # @stepover\n            new_values[state] = 0\n        else:\n            new_values[state] = policy_evaluation_for_state(mdp, policy, state, values)  # @inspect new_values\n    return new_values\n\n\ndef policy_evaluation_for_state(mdp: MDP, policy: Policy, state: Any, values: dict[Any, float]) -> float:  # @inspect state values\n    \"\"\"Compute the value of following `policy` from `state` (one step, then the current `values`).\"\"\"\n    # Only consider the policy action \u03c0(s)\n    action = policy(state)  # @inspect action @stepover\n\n    # Compute possible successors for that action\n    successors = get_action_successors(mdp, state)[action]  # @inspect successors @stepover\n\n    # Compute the value of the policy from that state\n    value = compute_q_value(successors, mdp.discount(), values)  # @inspect value\n    return value\n\n\ndef get_states(mdp: MDP) -> list[Any]:\n    \"\"\"Get all the states by traversing all successors starting from the start state.\"\"\"\n    states = set()\n    def recurse(state: Any):\n        if state in states:\n            return\n        states.add(state)\n        for step in mdp.successors(state):\n            recurse(step.state)\n    recurse(mdp.start_state())\n    return list(states)\n\n\ndef introduce_value_iteration():\n    text(r\"Policy evaluation: computes value $V_\\pi$ of a given policy $\\pi$\")\n\n    text(\"We now turn to computing the optimal policy.\")\n    text(r\"We could try different policies $\\pi$, evaluate them, and choose the best one\")\n    text(\"...but there are an exponential number of policies to consider.\")\n    text(\"Is there a faster way?\")\n\n    text(r\"**Value iteration**: computes value $V_\\text{opt}$ of the optimal policy $\\pi_\\text{opt}$\")\n    text(\"...and in the process, constructs the optimal policy!\")\n\n    text(\"Finding the optimal policy might seem much harder than computing the value of a policy...\")\n    text(r\"...(think: computing $f(x)$ versus $\\min_x f(x)$)\")\n    text(\"...but the two are actually quite similar! \ud83e\udd2f\")\n\n    text(\"History \ud83d\udcdc: Richard Bellman's work on dynamic programming \"), link(\"https://gwern.net/doc/statistics/decision/1957-bellman-dynamicprogramming.pdf\", title=\"Bellman, 1957\")\n\n    text(\"Policy evaluation recurrence:\")\n    text(r\"$\\displaystyle V_\\pi(s) = \\sum_{s'} T(s, \\pi(s), s') [\\text{Reward}(s, \\pi(s), s') + \\gamma V_\\pi(s')]$\")\n    text(\"Value iteration recurrence:\")\n    text(r\"$\\displaystyle V_\\text{opt}(s) = \\max_{a \\in \\text{Actions}(s)} \\sum_{s'} T(s, a, s') [\\text{Reward}(s, a, s') + \\gamma V_\\text{opt}(s')]$\")\n    image(\"images/q-value-opt.svg\", width=600)\n\n    text(r\"Key difference: maximize over actions $a$ instead of taking the policy's action $\\pi(s)$.\")\n\n    text(\"Let's try the dice game example:\")\n    mdp = DiceGameMDP()  # @stepover\n    graph(draw_mdp_graph(mdp))  # @stepover\n\n    V0 = get_initial_values(mdp)  # @inspect V0 @stepover\n    graph(draw_mdp_graph(mdp, values=V0))  # @stepover\n    # Compute V_opt^{(1)} from V_opt^{(0)} (and the best action in each state)\n    V1, pi = value_iteration_step(mdp, V0)  # @inspect V1 pi\n    graph(draw_mdp_graph(mdp, values=V1))  # @stepover\n\n    text(\"Let's now run value iteration:\")  # @clear V0 V1 pi\n    result = value_iteration(mdp)  # @inspect result\n    plot(make_distance_plot(\"value iteration\", result.distances))  # @stepover\n\n    text(\"Let's try the flaky tram problem:\")  # @clear result\n    mdp = FlakyTramMDP(num_locs=10, failure_prob=0.4)  # @stepover\n    graph(draw_mdp_graph(mdp))  # @stepover\n    result = value_iteration(mdp)  # @inspect result\n    plot(make_distance_plot(\"value iteration\", result.distances))  # @stepover\n\n    text(\"Summary:\")\n    text(\"- Value iteration: computes value of the optimal policy\")\n    text(\"- Takes the max over actions (whereas policy evaluation takes the policy's action)\")\n    text(\"- Bootstrapping: use values to compute new values using recurrence (same)\")\n\n\n@dataclass(frozen=True)\nclass ValueIterationResult:\n    values: dict[Any, float]  # state -> value of that state\n    pi: dict[Any, Any]  # state -> action for that state\n    distances: list[float]  # iteration -> change in value that iteration\n\n\ndef value_iteration(mdp: MDP, max_iters: int = 100, tolerance: float = 1e-3, show: bool = True) -> ValueIterationResult:\n    \"\"\"\n    Compute the value of the optimal policy (showing the graph at each iteration if `show`).\n    Returns:\n    - values: dict[Any, float]: state -> optimal value of that state\n    - pi: dict[Any, Any]: state -> optimal action for that state\n    - distances: list[float]: distance between values and new values at each iteration\n    \"\"\"\n    # Initialize values of each state\n    values = get_initial_values(mdp)  # @stepover @inspect values\n    if show:\n        graph(draw_mdp_graph(mdp, values=values))  # @stepover\n    # Initialize the policy (state -> action)\n    pi = {state: None for state in values}  # @inspect pi @stepover\n\n    distances = []\n    for iter in range(max_iters):  # @inspect iter\n        # Compute the values (and best actions) after one more step\n        new_values, pi = value_iteration_step(mdp, values)  # @inspect new_values pi @stepover\n        if show:\n            graph(draw_mdp_graph(mdp, values=new_values, pi=pi))  # @stepover\n\n        # Check for convergence\n        distance = compute_distance(values, new_values)  # @inspect distance @stepover\n        distances.append(distance)\n        if distance < tolerance:\n            break\n\n        # Update values to the next iteration\n        values = new_values  # @inspect values\n\n    return ValueIterationResult(values=values, pi=pi, distances=distances)\n\n\ndef value_iteration_step(mdp: MDP, values: dict[Any, float]) -> tuple[dict[Any, float], dict[Any, Any]]:  # @inspect values\n    \"\"\"\n    Compute the new values (state -> V_opt(state)) from taking the best action for one step, then the current `values`.\n    Also return the best action for each state (state -> action).\n    \"\"\"\n    new_values = {}  # state -> V_opt(state)\n    pi = {}  # state -> best action\n    for state in values:  # @inspect state\n        if mdp.is_end(state):  # @stepover\n            new_values[state] = 0\n            pi[state] = None\n        else:\n            new_values[state], pi[state] = value_iteration_for_state(mdp, state, values)  # @inspect new_values pi @stepover\n    return new_values, pi\n\n\ndef value_iteration_for_state(mdp: MDP, state: Any, values: dict[Any, float]) -> tuple[float, Any]:  # @inspect state values\n    \"\"\"Compute the optimal value V_opt(state) and optimal policy \u03c0_opt(state).\"\"\"\n    # V_opt(s) = max_a Q(s, a, V_opt)\n    # For each action, compute its Q-value\n    actions = []  # @inspect actions\n    q_values = []  # @inspect q_values\n\n    # Look at all actions from state\n    for action, successors in get_action_successors(mdp, state).items():  # @stepover @inspect action successors\n        actions.append(action)  # @inspect actions\n        q_values.append(compute_q_value(successors, mdp.discount(), values))  # @stepover @inspect q_values\n\n    # Take the best action\n    value = np.max(q_values)  # @inspect value\n    action = actions[np.argmax(q_values)]  # @inspect action\n\n    return value, action\n\n\nclass DiceGameMDP(MDP):\n    def start_state(self) -> Any:\n        return \"in\"\n\n    def successors(self, state: Any) -> list[Step]:\n        return [\n            Step(action=\"quit\", prob=1, reward=10, state=\"end\"),\n            Step(action=\"stay\", prob=1/3, reward=4, state=\"end\"),\n            Step(action=\"stay\", prob=2/3, reward=4, state=\"in\"),\n        ]\n\n    def is_end(self, state: Any) -> bool:  # @inspect state\n        return state == \"end\"\n\n    def discount(self) -> float:\n        return 1\n\n\ndef draw_mdp_graph(mdp: MDP, rollout: \"Rollout | None\" = None, values: dict[Any, float] | None = None,\n                   pi: dict[Any, Any] | None = None, layout: MDP | None = None) -> dict | None:\n    \"\"\"\n    Return the graph of `mdp` (to show with `graph`): states as circles (end states as double circles),\n    a small chance node for each (state, action) colored by the action, and an edge from it to each\n    possible next state labeled with the probability and reward.\n    If `rollout` is given, highlight its path (in orange): the action taken in each state and the resulting next state.\n    If `values` is given, show the value of each state (in orange, outside the node).\n    If `pi` is given, highlight the action that the policy takes in each state (in orange).\n    If `layout` is given, lay out the states like that MDP (e.g., draw an estimated MDP like the true one).\n    Return None if we don't know how to lay out `mdp` (which `graph` shows as nothing).\n    \"\"\"\n    layout = layout or mdp\n    if isinstance(layout, FlakyTramMDP):\n        spacing = 80\n        position = lambda state: (spacing * (state - 1), 0)\n        # Chance nodes: walk above the line (toward the next state), tram below\n        chance_offsets = {\"walk\": (spacing / 2, -50), \"tram\": (spacing / 2, 55)}\n        # Trams arc below the line (more for longer trips), except the shortest (1 -> 2, which has no room to arc)\n        curve = lambda state, step: 45 + 17 * (step.state - state) if step.action == \"tram\" and step.state == 2 * state and step.state - state > 1 else None\n        # Label the straight tram near its start (so it doesn't run into the next state's labels)\n        label_at_source = lambda state, step: step.action == \"tram\" and step.state > state and curve(state, step) is None\n        # Label walks right next to their chance node (leaving room above the next state for its value)\n        label_near_chance = lambda state, step: step.action == \"walk\"\n        width, height = spacing * (layout.num_locs - 1) + 80, 300\n    elif isinstance(layout, DiceGameMDP):\n        position = {\"in\": (0, 0), \"end\": (280, 0)}.get\n        chance_offsets = {\"quit\": (140, -60), \"stay\": (140, 60)}\n        curve = lambda state, step: None\n        label_at_source = lambda state, step: False\n        label_near_chance = lambda state, step: False\n        width, height = 360, 210\n    elif hasattr(layout, \"graph_layout\"):\n        # MDPs defined elsewhere (e.g., in a lecture) provide their own layout\n        g = layout.graph_layout()\n        position, chance_offsets, curve = g[\"position\"], g[\"chance_offsets\"], g[\"curve\"]\n        label_at_source = lambda state, step: False\n        label_near_chance = lambda state, step: False\n        width, height = g[\"width\"], g[\"height\"]\n    else:\n        return None\n\n    # Edges along the rollout: (state, chance node) for the action taken, (chance node, next state) for the outcome\n    path = set()\n    if rollout is not None:\n        state = mdp.start_state()\n        for step in rollout.steps:\n            chance = f\"{state}-{step.action}\"\n            path |= {(str(state), chance), (chance, str(step.state))}\n            state = step.state\n    on_path = lambda source, target: \" path\" if (str(source), str(target)) in path else \"\"\n\n    action_colors = [\"#2a9d8f\", \"#9b72cf\", \"#457b9d\"]  # Teal, purple, blue (in order of first appearance)\n    action_index = {}\n    nodes, edges = [], []\n    for state in sorted(get_states(mdp), key=str):\n        x, y = position(state)\n        nodes.append({\"id\": state, \"x\": x, \"y\": y, \"classes\": \"end\" if mdp.is_end(state) else \"\"})\n        if values is not None and state in values:\n            # Directly above the node (between the edges to and from the actions above it)\n            nodes.append({\"id\": f\"{state}-value\", \"label\": format_number(round(values[state], 2)), \"x\": x, \"y\": y - 27,\n                          \"classes\": \"annotation\"})\n        if mdp.is_end(state):\n            continue\n        for action, successors in get_action_successors(mdp, state).items():\n            i = action_index.setdefault(action, len(action_index))\n            dx, dy = chance_offsets[action]\n            chance = f\"{state}-{action}\"\n            # The action's name goes on the far side of its chance node (away from the state)\n            nodes.append({\"id\": chance, \"label\": action, \"x\": x + dx, \"y\": y + dy,\n                          \"classes\": f\"chance action-{i} {'above' if dy < 0 else 'below'}\"})\n            chosen = \" policy\" if pi is not None and pi.get(state) == action else \"\"\n            edges.append({\"source\": state, \"target\": chance, \"classes\": f\"action-{i} choose\" + chosen + on_path(state, chance)})\n            for step in successors:\n                edge = {\"source\": chance, \"target\": step.state, \"label\": f\"{format_prob(step.prob)}: {format_number(step.reward)}\",\n                        \"classes\": f\"action-{i}\" + (\" label-at-source\" if label_at_source(state, step) else \"\") +\n                                   (\" label-near-chance\" if label_near_chance(state, step) else \"\") + on_path(chance, step.state)}\n                if curve(state, step) is not None:\n                    edge[\"curve\"] = curve(state, step)\n                edges.append(edge)\n\n    stylesheet = search_graph_stylesheet() + [\n        {\"selector\": \"node.chance\", \"style\": {\"width\": 12, \"height\": 12, \"border-width\": 0, \"font-size\": 11, \"font-style\": \"italic\"}},\n        {\"selector\": \"node.chance.above\", \"style\": {\"text-valign\": \"top\", \"text-margin-y\": -3}},\n        {\"selector\": \"node.chance.below\", \"style\": {\"text-valign\": \"center\", \"text-halign\": \"left\", \"text-margin-x\": -3}},\n        {\"selector\": \"edge\", \"style\": {\"font-size\": 10, \"arrow-scale\": 0.8}},\n        {\"selector\": \"edge.choose\", \"style\": {\"target-arrow-shape\": \"none\"}},\n        {\"selector\": \"edge.label-at-source\", \"style\": {\"label\": \"\", \"source-label\": \"data(label)\", \"source-text-offset\": 30}},\n        {\"selector\": \"edge.label-near-chance\", \"style\": {\"label\": \"\", \"source-label\": \"data(label)\", \"source-text-offset\": 14}},\n    ]\n    for action, i in action_index.items():\n        color = action_colors[i % len(action_colors)]\n        stylesheet += [\n            {\"selector\": f\"node.action-{i}\", \"style\": {\"background-color\": color, \"color\": color}},\n            {\"selector\": f\"edge.action-{i}\", \"style\": {\"line-color\": color, \"target-arrow-color\": color, \"color\": color}},\n        ]\n    # Policy: thicker, orange like the values (after the action colors so that it takes precedence)\n    stylesheet.append({\"selector\": \"edge.policy\", \"style\": {\"width\": 5, \"line-color\": \"#f77f00\", \"z-index\": 5}})\n    # Rollout path: thicker, bright orange, drawn on top (after the action colors so that it takes precedence)\n    stylesheet.append({\"selector\": \"edge.path\", \"style\": {\"width\": 4, \"line-color\": \"#f77f00\", \"target-arrow-color\": \"#f77f00\",\n                                                          \"color\": \"#f77f00\", \"z-index\": 10}})\n    return make_graph(nodes, edges, stylesheet=stylesheet, width=width, height=height)\n\n\n\ndef draw_rollout_graph(mdp: MDP, rollout: Rollout, show_utility: bool = False) -> dict:\n    \"\"\"\n    Return the graph of `rollout` (to show with `graph`) as a chain: the states visited (in order, starting from the\n    start state of `mdp`), with an edge for each step labeled with the action (colored by the action) and the reward.\n    If `show_utility` is set, show the utility of the rollout (in orange) after the last state.\n    \"\"\"\n    spacing = 85\n    action_colors = [\"#2a9d8f\", \"#9b72cf\"]  # Teal, purple (in order of first appearance, as in `draw_mdp_graph`)\n    action_index = {}\n    # States can repeat (e.g., when the tram fails), so identify nodes by their position in the chain\n    states = [mdp.start_state()] + [step.state for step in rollout.steps]\n    nodes = [{\"id\": t, \"label\": str(state), \"x\": spacing * t, \"y\": 0, \"classes\": \"end\" if mdp.is_end(state) else \"\"}\n             for t, state in enumerate(states)]\n    edges = []\n    for t, step in enumerate(rollout.steps):\n        i = action_index.setdefault(step.action, len(action_index))\n        edges.append({\"source\": t, \"target\": t + 1, \"label\": f\"{step.action}: {format_number(step.reward)}\", \"classes\": f\"action-{i}\"})\n\n    stylesheet = search_graph_stylesheet() + [\n        {\"selector\": \"edge\", \"style\": {\"font-size\": 11, \"arrow-scale\": 0.8, \"text-margin-y\": -10}},\n    ]\n    for action, i in action_index.items():\n        color = action_colors[i % len(action_colors)]\n        stylesheet.append({\"selector\": f\"edge.action-{i}\", \"style\": {\"line-color\": color, \"target-arrow-color\": color, \"color\": color}})\n    width = spacing * len(rollout.steps) + 80\n    if show_utility:\n        nodes.append({\"id\": \"utility\", \"label\": f\"utility = {format_number(rollout.utility)}\",\n                      \"x\": spacing * len(rollout.steps) + 70, \"y\": 0, \"classes\": \"annotation\"})\n        width += 110\n    return make_graph(nodes, edges, stylesheet=stylesheet, width=width, height=100)\n\ndef format_prob(prob: float) -> str:\n    \"\"\"Show a probability as a decimal if it has at most 2 digits (e.g., 0.6), otherwise as a fraction (e.g., 1/3).\"\"\"\n    if abs(prob - round(prob, 2)) < 1e-9:\n        return f\"{prob:g}\"\n    return str(Fraction(prob).limit_denominator(100))\n\n\ndef format_number(x: float) -> str:\n    \"\"\"Show a number with a proper minus sign.\"\"\"\n    return f\"{x:g}\".replace(\"-\", \"\u2212\")\n\n\ndef get_state_vocab(mdp: MDP) -> Vocabulary:\n    \"\"\"Traverse the entire MDP to map states to integers using the `Vocabulary` class.\"\"\"\n    states = Vocabulary()\n    def recurse(state: Any):\n        if state in states:\n            return\n        # Add the state to the vocabulary\n        states.get_index(state)\n        for step in mdp.successors(state):\n            recurse(step.state)\n    recurse(mdp.start_state())\n    return states\n\n\n\nif __name__ == \"__main__\":\n    main()\n"
   },
   "hidden_line_numbers": {
     "mdp.py": []
@@ -17114,14 +17114,14 @@
           "path": "mdp.py",
           "line_number": 259,
           "function_name": "monte_carlo_example",
-          "code": "text(r\"- We have a random variable $X \\in \\\\{0, 1\\\\}$\")"
+          "code": "text(r\"- We have a random variable $X \\in \\{0, 1\\}$\")"
         }
       ],
       "env": {},
       "renderings": [
         {
           "type": "markdown",
-          "data": "- We have a random variable $X \\in \\\\{0, 1\\\\}$",
+          "data": "- We have a random variable $X \\in \\{0, 1\\}$",
           "style": {},
           "external_link": null,
           "internal_link": null,
@@ -17180,14 +17180,14 @@
           "path": "mdp.py",
           "line_number": 261,
           "function_name": "monte_carlo_example",
-          "code": "text(r\"- Define a function $f(x) = \\begin{cases} 5 & \\text{if } x = 1 \\\\\\\\ 1 & \\text{if } x = 0 \\end{cases}$\")"
+          "code": "text(r\"- Define a function $f(x) = \\begin{cases} 5 & \\text{if } x = 1 \\\\ 1 & \\text{if } x = 0 \\end{cases}$\")"
         }
       ],
       "env": {},
       "renderings": [
         {
           "type": "markdown",
-          "data": "- Define a function $f(x) = \\begin{cases} 5 & \\text{if } x = 1 \\\\\\\\ 1 & \\text{if } x = 0 \\end{cases}$",
+          "data": "- Define a function $f(x) = \\begin{cases} 5 & \\text{if } x = 1 \\\\ 1 & \\text{if } x = 0 \\end{cases}$",
           "style": {},
           "external_link": null,
           "internal_link": null,
@@ -19572,14 +19572,14 @@
           "path": "mdp.py",
           "line_number": 393,
           "function_name": "introduce_policy_evaluation_recurrence",
-          "code": "text(r\"- $\\displaystyle V_\\pi(s) = \\begin{cases} 0 & \\text{if } \\text{IsEnd}(s) \\\\\\\\ Q_\\pi(s, \\pi(s)) & \\text{otherwise} \\end{cases}$\")"
+          "code": "text(r\"- $\\displaystyle V_\\pi(s) = \\begin{cases} 0 & \\text{if } \\text{IsEnd}(s) \\\\ Q_\\pi(s, \\pi(s)) & \\text{otherwise} \\end{cases}$\")"
         }
       ],
       "env": {},
       "renderings": [
         {
           "type": "markdown",
-          "data": "- $\\displaystyle V_\\pi(s) = \\begin{cases} 0 & \\text{if } \\text{IsEnd}(s) \\\\\\\\ Q_\\pi(s, \\pi(s)) & \\text{otherwise} \\end{cases}$",
+          "data": "- $\\displaystyle V_\\pi(s) = \\begin{cases} 0 & \\text{if } \\text{IsEnd}(s) \\\\ Q_\\pi(s, \\pi(s)) & \\text{otherwise} \\end{cases}$",
           "style": {},
           "external_link": null,
           "internal_link": null,
@@ -20175,13 +20175,13 @@
         "V0": {
           "type": "dict",
           "contents": {
-            "in": {
+            "end": {
               "type": "int",
               "contents": 0,
               "dtype": null,
               "shape": null
             },
-            "end": {
+            "in": {
               "type": "int",
               "contents": 0,
               "dtype": null,
@@ -20652,13 +20652,13 @@
         "values": {
           "type": "dict",
           "contents": {
-            "in": {
+            "end": {
               "type": "int",
               "contents": 0,
               "dtype": null,
               "shape": null
             },
-            "end": {
+            "in": {
               "type": "int",
               "contents": 0,
               "dtype": null,
@@ -20696,6 +20696,103 @@
           "line_number": 532,
           "function_name": "policy_evaluation_step",
           "code": "new_values = {}  # state -> V(state)"
+        }
+      ],
+      "env": {},
+      "renderings": []
+    },
+    {
+      "stack": [
+        {
+          "path": "mdp.py",
+          "line_number": 41,
+          "function_name": "main",
+          "code": "introduce_policy_evaluation()"
+        },
+        {
+          "path": "mdp.py",
+          "line_number": 347,
+          "function_name": "introduce_policy_evaluation",
+          "code": "introduce_policy_evaluation_recurrence()"
+        },
+        {
+          "path": "mdp.py",
+          "line_number": 421,
+          "function_name": "introduce_policy_evaluation_recurrence",
+          "code": "V1 = policy_evaluation_step(mdp, policy, V0)  # @inspect V1"
+        },
+        {
+          "path": "mdp.py",
+          "line_number": 533,
+          "function_name": "policy_evaluation_step",
+          "code": "for state in values:  # @inspect state"
+        }
+      ],
+      "env": {
+        "state": {
+          "type": "str",
+          "contents": "end",
+          "dtype": null,
+          "shape": null
+        }
+      },
+      "renderings": []
+    },
+    {
+      "stack": [
+        {
+          "path": "mdp.py",
+          "line_number": 41,
+          "function_name": "main",
+          "code": "introduce_policy_evaluation()"
+        },
+        {
+          "path": "mdp.py",
+          "line_number": 347,
+          "function_name": "introduce_policy_evaluation",
+          "code": "introduce_policy_evaluation_recurrence()"
+        },
+        {
+          "path": "mdp.py",
+          "line_number": 421,
+          "function_name": "introduce_policy_evaluation_recurrence",
+          "code": "V1 = policy_evaluation_step(mdp, policy, V0)  # @inspect V1"
+        },
+        {
+          "path": "mdp.py",
+          "line_number": 534,
+          "function_name": "policy_evaluation_step",
+          "code": "if mdp.is_end(state):  # @stepover"
+        }
+      ],
+      "env": {},
+      "renderings": []
+    },
+    {
+      "stack": [
+        {
+          "path": "mdp.py",
+          "line_number": 41,
+          "function_name": "main",
+          "code": "introduce_policy_evaluation()"
+        },
+        {
+          "path": "mdp.py",
+          "line_number": 347,
+          "function_name": "introduce_policy_evaluation",
+          "code": "introduce_policy_evaluation_recurrence()"
+        },
+        {
+          "path": "mdp.py",
+          "line_number": 421,
+          "function_name": "introduce_policy_evaluation_recurrence",
+          "code": "V1 = policy_evaluation_step(mdp, policy, V0)  # @inspect V1"
+        },
+        {
+          "path": "mdp.py",
+          "line_number": 535,
+          "function_name": "policy_evaluation_step",
+          "code": "new_values[state] = 0"
         }
       ],
       "env": {},
@@ -20841,13 +20938,13 @@
         "values": {
           "type": "dict",
           "contents": {
-            "in": {
+            "end": {
               "type": "int",
               "contents": 0,
               "dtype": null,
               "shape": null
             },
-            "end": {
+            "in": {
               "type": "int",
               "contents": 0,
               "dtype": null,
@@ -21241,13 +21338,13 @@
         "values": {
           "type": "dict",
           "contents": {
-            "in": {
+            "end": {
               "type": "int",
               "contents": 0,
               "dtype": null,
               "shape": null
             },
-            "end": {
+            "in": {
               "type": "int",
               "contents": 0,
               "dtype": null,
@@ -21948,6 +22045,12 @@
         "new_values": {
           "type": "dict",
           "contents": {
+            "end": {
+              "type": "int",
+              "contents": 0,
+              "dtype": null,
+              "shape": null
+            },
             "in": {
               "type": "float",
               "contents": 4.0,
@@ -21991,104 +22094,7 @@
       "env": {
         "state": {
           "type": "str",
-          "contents": "end",
-          "dtype": null,
-          "shape": null
-        }
-      },
-      "renderings": []
-    },
-    {
-      "stack": [
-        {
-          "path": "mdp.py",
-          "line_number": 41,
-          "function_name": "main",
-          "code": "introduce_policy_evaluation()"
-        },
-        {
-          "path": "mdp.py",
-          "line_number": 347,
-          "function_name": "introduce_policy_evaluation",
-          "code": "introduce_policy_evaluation_recurrence()"
-        },
-        {
-          "path": "mdp.py",
-          "line_number": 421,
-          "function_name": "introduce_policy_evaluation_recurrence",
-          "code": "V1 = policy_evaluation_step(mdp, policy, V0)  # @inspect V1"
-        },
-        {
-          "path": "mdp.py",
-          "line_number": 534,
-          "function_name": "policy_evaluation_step",
-          "code": "if mdp.is_end(state):  # @stepover"
-        }
-      ],
-      "env": {},
-      "renderings": []
-    },
-    {
-      "stack": [
-        {
-          "path": "mdp.py",
-          "line_number": 41,
-          "function_name": "main",
-          "code": "introduce_policy_evaluation()"
-        },
-        {
-          "path": "mdp.py",
-          "line_number": 347,
-          "function_name": "introduce_policy_evaluation",
-          "code": "introduce_policy_evaluation_recurrence()"
-        },
-        {
-          "path": "mdp.py",
-          "line_number": 421,
-          "function_name": "introduce_policy_evaluation_recurrence",
-          "code": "V1 = policy_evaluation_step(mdp, policy, V0)  # @inspect V1"
-        },
-        {
-          "path": "mdp.py",
-          "line_number": 535,
-          "function_name": "policy_evaluation_step",
-          "code": "new_values[state] = 0"
-        }
-      ],
-      "env": {},
-      "renderings": []
-    },
-    {
-      "stack": [
-        {
-          "path": "mdp.py",
-          "line_number": 41,
-          "function_name": "main",
-          "code": "introduce_policy_evaluation()"
-        },
-        {
-          "path": "mdp.py",
-          "line_number": 347,
-          "function_name": "introduce_policy_evaluation",
-          "code": "introduce_policy_evaluation_recurrence()"
-        },
-        {
-          "path": "mdp.py",
-          "line_number": 421,
-          "function_name": "introduce_policy_evaluation_recurrence",
-          "code": "V1 = policy_evaluation_step(mdp, policy, V0)  # @inspect V1"
-        },
-        {
-          "path": "mdp.py",
-          "line_number": 533,
-          "function_name": "policy_evaluation_step",
-          "code": "for state in values:  # @inspect state"
-        }
-      ],
-      "env": {
-        "state": {
-          "type": "str",
-          "contents": "end",
+          "contents": "in",
           "dtype": null,
           "shape": null
         }
@@ -22150,15 +22156,15 @@
         "V1": {
           "type": "dict",
           "contents": {
-            "in": {
-              "type": "float",
-              "contents": 4.0,
-              "dtype": null,
-              "shape": null
-            },
             "end": {
               "type": "int",
               "contents": 0,
+              "dtype": null,
+              "shape": null
+            },
+            "in": {
+              "type": "float",
+              "contents": 4.0,
               "dtype": null,
               "shape": null
             }
@@ -23196,13 +23202,13 @@
         "values": {
           "type": "dict",
           "contents": {
-            "in": {
+            "end": {
               "type": "int",
               "contents": 0,
               "dtype": null,
               "shape": null
             },
-            "end": {
+            "in": {
               "type": "int",
               "contents": 0,
               "dtype": null,
@@ -23599,15 +23605,15 @@
         "new_values": {
           "type": "dict",
           "contents": {
-            "in": {
-              "type": "float",
-              "contents": 4.0,
-              "dtype": null,
-              "shape": null
-            },
             "end": {
               "type": "int",
               "contents": 0,
+              "dtype": null,
+              "shape": null
+            },
+            "in": {
+              "type": "float",
+              "contents": 4.0,
               "dtype": null,
               "shape": null
             }
@@ -24081,15 +24087,15 @@
         "new_values": {
           "type": "dict",
           "contents": {
-            "in": {
-              "type": "float",
-              "contents": 6.666666666666666,
-              "dtype": null,
-              "shape": null
-            },
             "end": {
               "type": "int",
               "contents": 0,
+              "dtype": null,
+              "shape": null
+            },
+            "in": {
+              "type": "float",
+              "contents": 6.666666666666666,
               "dtype": null,
               "shape": null
             }
@@ -24563,15 +24569,15 @@
         "new_values": {
           "type": "dict",
           "contents": {
-            "in": {
-              "type": "float",
-              "contents": 8.444444444444445,
-              "dtype": null,
-              "shape": null
-            },
             "end": {
               "type": "int",
               "contents": 0,
+              "dtype": null,
+              "shape": null
+            },
+            "in": {
+              "type": "float",
+              "contents": 8.444444444444445,
               "dtype": null,
               "shape": null
             }
@@ -25045,15 +25051,15 @@
         "new_values": {
           "type": "dict",
           "contents": {
-            "in": {
-              "type": "float",
-              "contents": 9.62962962962963,
-              "dtype": null,
-              "shape": null
-            },
             "end": {
               "type": "int",
               "contents": 0,
+              "dtype": null,
+              "shape": null
+            },
+            "in": {
+              "type": "float",
+              "contents": 9.62962962962963,
               "dtype": null,
               "shape": null
             }
@@ -25527,15 +25533,15 @@
         "new_values": {
           "type": "dict",
           "contents": {
-            "in": {
-              "type": "float",
-              "contents": 10.419753086419753,
-              "dtype": null,
-              "shape": null
-            },
             "end": {
               "type": "int",
               "contents": 0,
+              "dtype": null,
+              "shape": null
+            },
+            "in": {
+              "type": "float",
+              "contents": 10.419753086419753,
               "dtype": null,
               "shape": null
             }
@@ -26009,15 +26015,15 @@
         "new_values": {
           "type": "dict",
           "contents": {
-            "in": {
-              "type": "float",
-              "contents": 10.946502057613168,
-              "dtype": null,
-              "shape": null
-            },
             "end": {
               "type": "int",
               "contents": 0,
+              "dtype": null,
+              "shape": null
+            },
+            "in": {
+              "type": "float",
+              "contents": 10.946502057613168,
               "dtype": null,
               "shape": null
             }
@@ -26491,15 +26497,15 @@
         "new_values": {
           "type": "dict",
           "contents": {
-            "in": {
-              "type": "float",
-              "contents": 11.297668038408778,
-              "dtype": null,
-              "shape": null
-            },
             "end": {
               "type": "int",
               "contents": 0,
+              "dtype": null,
+              "shape": null
+            },
+            "in": {
+              "type": "float",
+              "contents": 11.297668038408778,
               "dtype": null,
               "shape": null
             }
@@ -26973,15 +26979,15 @@
         "new_values": {
           "type": "dict",
           "contents": {
-            "in": {
-              "type": "float",
-              "contents": 11.53177869227252,
-              "dtype": null,
-              "shape": null
-            },
             "end": {
               "type": "int",
               "contents": 0,
+              "dtype": null,
+              "shape": null
+            },
+            "in": {
+              "type": "float",
+              "contents": 11.53177869227252,
               "dtype": null,
               "shape": null
             }
@@ -27455,15 +27461,15 @@
         "new_values": {
           "type": "dict",
           "contents": {
-            "in": {
-              "type": "float",
-              "contents": 11.687852461515012,
-              "dtype": null,
-              "shape": null
-            },
             "end": {
               "type": "int",
               "contents": 0,
+              "dtype": null,
+              "shape": null
+            },
+            "in": {
+              "type": "float",
+              "contents": 11.687852461515012,
               "dtype": null,
               "shape": null
             }
@@ -27937,15 +27943,15 @@
         "new_values": {
           "type": "dict",
           "contents": {
-            "in": {
-              "type": "float",
-              "contents": 11.791901641010009,
-              "dtype": null,
-              "shape": null
-            },
             "end": {
               "type": "int",
               "contents": 0,
+              "dtype": null,
+              "shape": null
+            },
+            "in": {
+              "type": "float",
+              "contents": 11.791901641010009,
               "dtype": null,
               "shape": null
             }
@@ -28419,15 +28425,15 @@
         "new_values": {
           "type": "dict",
           "contents": {
-            "in": {
-              "type": "float",
-              "contents": 11.86126776067334,
-              "dtype": null,
-              "shape": null
-            },
             "end": {
               "type": "int",
               "contents": 0,
+              "dtype": null,
+              "shape": null
+            },
+            "in": {
+              "type": "float",
+              "contents": 11.86126776067334,
               "dtype": null,
               "shape": null
             }
@@ -28901,15 +28907,15 @@
         "new_values": {
           "type": "dict",
           "contents": {
-            "in": {
-              "type": "float",
-              "contents": 11.907511840448892,
-              "dtype": null,
-              "shape": null
-            },
             "end": {
               "type": "int",
               "contents": 0,
+              "dtype": null,
+              "shape": null
+            },
+            "in": {
+              "type": "float",
+              "contents": 11.907511840448892,
               "dtype": null,
               "shape": null
             }
@@ -29383,15 +29389,15 @@
         "new_values": {
           "type": "dict",
           "contents": {
-            "in": {
-              "type": "float",
-              "contents": 11.938341226965928,
-              "dtype": null,
-              "shape": null
-            },
             "end": {
               "type": "int",
               "contents": 0,
+              "dtype": null,
+              "shape": null
+            },
+            "in": {
+              "type": "float",
+              "contents": 11.938341226965928,
               "dtype": null,
               "shape": null
             }
@@ -29865,15 +29871,15 @@
         "new_values": {
           "type": "dict",
           "contents": {
-            "in": {
-              "type": "float",
-              "contents": 11.958894151310618,
-              "dtype": null,
-              "shape": null
-            },
             "end": {
               "type": "int",
               "contents": 0,
+              "dtype": null,
+              "shape": null
+            },
+            "in": {
+              "type": "float",
+              "contents": 11.958894151310618,
               "dtype": null,
               "shape": null
             }
@@ -30347,15 +30353,15 @@
         "new_values": {
           "type": "dict",
           "contents": {
-            "in": {
-              "type": "float",
-              "contents": 11.972596100873746,
-              "dtype": null,
-              "shape": null
-            },
             "end": {
               "type": "int",
               "contents": 0,
+              "dtype": null,
+              "shape": null
+            },
+            "in": {
+              "type": "float",
+              "contents": 11.972596100873746,
               "dtype": null,
               "shape": null
             }
@@ -30829,15 +30835,15 @@
         "new_values": {
           "type": "dict",
           "contents": {
-            "in": {
-              "type": "float",
-              "contents": 11.98173073391583,
-              "dtype": null,
-              "shape": null
-            },
             "end": {
               "type": "int",
               "contents": 0,
+              "dtype": null,
+              "shape": null
+            },
+            "in": {
+              "type": "float",
+              "contents": 11.98173073391583,
               "dtype": null,
               "shape": null
             }
@@ -31311,15 +31317,15 @@
         "new_values": {
           "type": "dict",
           "contents": {
-            "in": {
-              "type": "float",
-              "contents": 11.98782048927722,
-              "dtype": null,
-              "shape": null
-            },
             "end": {
               "type": "int",
               "contents": 0,
+              "dtype": null,
+              "shape": null
+            },
+            "in": {
+              "type": "float",
+              "contents": 11.98782048927722,
               "dtype": null,
               "shape": null
             }
@@ -31793,15 +31799,15 @@
         "new_values": {
           "type": "dict",
           "contents": {
-            "in": {
-              "type": "float",
-              "contents": 11.991880326184814,
-              "dtype": null,
-              "shape": null
-            },
             "end": {
               "type": "int",
               "contents": 0,
+              "dtype": null,
+              "shape": null
+            },
+            "in": {
+              "type": "float",
+              "contents": 11.991880326184814,
               "dtype": null,
               "shape": null
             }
@@ -32275,15 +32281,15 @@
         "new_values": {
           "type": "dict",
           "contents": {
-            "in": {
-              "type": "float",
-              "contents": 11.99458688412321,
-              "dtype": null,
-              "shape": null
-            },
             "end": {
               "type": "int",
               "contents": 0,
+              "dtype": null,
+              "shape": null
+            },
+            "in": {
+              "type": "float",
+              "contents": 11.99458688412321,
               "dtype": null,
               "shape": null
             }
@@ -32757,15 +32763,15 @@
         "new_values": {
           "type": "dict",
           "contents": {
-            "in": {
-              "type": "float",
-              "contents": 11.99639125608214,
-              "dtype": null,
-              "shape": null
-            },
             "end": {
               "type": "int",
               "contents": 0,
+              "dtype": null,
+              "shape": null
+            },
+            "in": {
+              "type": "float",
+              "contents": 11.99639125608214,
               "dtype": null,
               "shape": null
             }
@@ -33239,15 +33245,15 @@
         "new_values": {
           "type": "dict",
           "contents": {
-            "in": {
-              "type": "float",
-              "contents": 11.997594170721426,
-              "dtype": null,
-              "shape": null
-            },
             "end": {
               "type": "int",
               "contents": 0,
+              "dtype": null,
+              "shape": null
+            },
+            "in": {
+              "type": "float",
+              "contents": 11.997594170721426,
               "dtype": null,
               "shape": null
             }
@@ -33721,15 +33727,15 @@
         "new_values": {
           "type": "dict",
           "contents": {
-            "in": {
-              "type": "float",
-              "contents": 11.998396113814284,
-              "dtype": null,
-              "shape": null
-            },
             "end": {
               "type": "int",
               "contents": 0,
+              "dtype": null,
+              "shape": null
+            },
+            "in": {
+              "type": "float",
+              "contents": 11.998396113814284,
               "dtype": null,
               "shape": null
             }
@@ -34193,15 +34199,15 @@
             "values": {
               "type": "dict",
               "contents": {
-                "in": {
-                  "type": "float",
-                  "contents": 11.997594170721426,
-                  "dtype": null,
-                  "shape": null
-                },
                 "end": {
                   "type": "int",
                   "contents": 0,
+                  "dtype": null,
+                  "shape": null
+                },
+                "in": {
+                  "type": "float",
+                  "contents": 11.997594170721426,
                   "dtype": null,
                   "shape": null
                 }
@@ -55018,13 +55024,13 @@
         "V0": {
           "type": "dict",
           "contents": {
-            "in": {
+            "end": {
               "type": "int",
               "contents": 0,
               "dtype": null,
               "shape": null
             },
-            "end": {
+            "in": {
               "type": "int",
               "contents": 0,
               "dtype": null,
@@ -55378,13 +55384,13 @@
         "values": {
           "type": "dict",
           "contents": {
-            "in": {
+            "end": {
               "type": "int",
               "contents": 0,
               "dtype": null,
               "shape": null
             },
-            "end": {
+            "in": {
               "type": "int",
               "contents": 0,
               "dtype": null,
@@ -55443,112 +55449,6 @@
         }
       ],
       "env": {},
-      "renderings": []
-    },
-    {
-      "stack": [
-        {
-          "path": "mdp.py",
-          "line_number": 42,
-          "function_name": "main",
-          "code": "introduce_value_iteration()"
-        },
-        {
-          "path": "mdp.py",
-          "line_number": 599,
-          "function_name": "introduce_value_iteration",
-          "code": "V1, pi = value_iteration_step(mdp, V0)  # @inspect V1 pi"
-        },
-        {
-          "path": "mdp.py",
-          "line_number": 666,
-          "function_name": "value_iteration_step",
-          "code": "for state in values:  # @inspect state"
-        }
-      ],
-      "env": {
-        "state": {
-          "type": "str",
-          "contents": "in",
-          "dtype": null,
-          "shape": null
-        }
-      },
-      "renderings": []
-    },
-    {
-      "stack": [
-        {
-          "path": "mdp.py",
-          "line_number": 42,
-          "function_name": "main",
-          "code": "introduce_value_iteration()"
-        },
-        {
-          "path": "mdp.py",
-          "line_number": 599,
-          "function_name": "introduce_value_iteration",
-          "code": "V1, pi = value_iteration_step(mdp, V0)  # @inspect V1 pi"
-        },
-        {
-          "path": "mdp.py",
-          "line_number": 667,
-          "function_name": "value_iteration_step",
-          "code": "if mdp.is_end(state):  # @stepover"
-        }
-      ],
-      "env": {},
-      "renderings": []
-    },
-    {
-      "stack": [
-        {
-          "path": "mdp.py",
-          "line_number": 42,
-          "function_name": "main",
-          "code": "introduce_value_iteration()"
-        },
-        {
-          "path": "mdp.py",
-          "line_number": 599,
-          "function_name": "introduce_value_iteration",
-          "code": "V1, pi = value_iteration_step(mdp, V0)  # @inspect V1 pi"
-        },
-        {
-          "path": "mdp.py",
-          "line_number": 671,
-          "function_name": "value_iteration_step",
-          "code": "new_values[state], pi[state] = value_iteration_for_state(mdp, state, values)  # @inspect new_values pi @stepover"
-        }
-      ],
-      "env": {
-        "new_values": {
-          "type": "dict",
-          "contents": {
-            "in": {
-              "type": "numpy.float64",
-              "contents": 10.0,
-              "dtype": null,
-              "shape": null
-            }
-          },
-          "dtype": null,
-          "shape": null
-        },
-        "pi": {
-          "type": "dict",
-          "contents": {
-            "in": {
-              "type": "str",
-              "contents": "quit",
-              "dtype": null,
-              "shape": null
-            }
-          },
-          "dtype": null,
-          "shape": null
-        }
-      },
       "renderings": []
     },
     {
@@ -55678,7 +55578,125 @@
       "env": {
         "state": {
           "type": "str",
-          "contents": "end",
+          "contents": "in",
+          "dtype": null,
+          "shape": null
+        }
+      },
+      "renderings": []
+    },
+    {
+      "stack": [
+        {
+          "path": "mdp.py",
+          "line_number": 42,
+          "function_name": "main",
+          "code": "introduce_value_iteration()"
+        },
+        {
+          "path": "mdp.py",
+          "line_number": 599,
+          "function_name": "introduce_value_iteration",
+          "code": "V1, pi = value_iteration_step(mdp, V0)  # @inspect V1 pi"
+        },
+        {
+          "path": "mdp.py",
+          "line_number": 667,
+          "function_name": "value_iteration_step",
+          "code": "if mdp.is_end(state):  # @stepover"
+        }
+      ],
+      "env": {},
+      "renderings": []
+    },
+    {
+      "stack": [
+        {
+          "path": "mdp.py",
+          "line_number": 42,
+          "function_name": "main",
+          "code": "introduce_value_iteration()"
+        },
+        {
+          "path": "mdp.py",
+          "line_number": 599,
+          "function_name": "introduce_value_iteration",
+          "code": "V1, pi = value_iteration_step(mdp, V0)  # @inspect V1 pi"
+        },
+        {
+          "path": "mdp.py",
+          "line_number": 671,
+          "function_name": "value_iteration_step",
+          "code": "new_values[state], pi[state] = value_iteration_for_state(mdp, state, values)  # @inspect new_values pi @stepover"
+        }
+      ],
+      "env": {
+        "new_values": {
+          "type": "dict",
+          "contents": {
+            "end": {
+              "type": "int",
+              "contents": 0,
+              "dtype": null,
+              "shape": null
+            },
+            "in": {
+              "type": "numpy.float64",
+              "contents": 10.0,
+              "dtype": null,
+              "shape": null
+            }
+          },
+          "dtype": null,
+          "shape": null
+        },
+        "pi": {
+          "type": "dict",
+          "contents": {
+            "end": {
+              "type": "NoneType",
+              "contents": "None",
+              "dtype": null,
+              "shape": null
+            },
+            "in": {
+              "type": "str",
+              "contents": "quit",
+              "dtype": null,
+              "shape": null
+            }
+          },
+          "dtype": null,
+          "shape": null
+        }
+      },
+      "renderings": []
+    },
+    {
+      "stack": [
+        {
+          "path": "mdp.py",
+          "line_number": 42,
+          "function_name": "main",
+          "code": "introduce_value_iteration()"
+        },
+        {
+          "path": "mdp.py",
+          "line_number": 599,
+          "function_name": "introduce_value_iteration",
+          "code": "V1, pi = value_iteration_step(mdp, V0)  # @inspect V1 pi"
+        },
+        {
+          "path": "mdp.py",
+          "line_number": 666,
+          "function_name": "value_iteration_step",
+          "code": "for state in values:  # @inspect state"
+        }
+      ],
+      "env": {
+        "state": {
+          "type": "str",
+          "contents": "in",
           "dtype": null,
           "shape": null
         }
@@ -55728,15 +55746,15 @@
         "V1": {
           "type": "dict",
           "contents": {
-            "in": {
-              "type": "numpy.float64",
-              "contents": 10.0,
-              "dtype": null,
-              "shape": null
-            },
             "end": {
               "type": "int",
               "contents": 0,
+              "dtype": null,
+              "shape": null
+            },
+            "in": {
+              "type": "numpy.float64",
+              "contents": 10.0,
               "dtype": null,
               "shape": null
             }
@@ -55747,15 +55765,15 @@
         "pi": {
           "type": "dict",
           "contents": {
-            "in": {
-              "type": "str",
-              "contents": "quit",
-              "dtype": null,
-              "shape": null
-            },
             "end": {
               "type": "NoneType",
               "contents": "None",
+              "dtype": null,
+              "shape": null
+            },
+            "in": {
+              "type": "str",
+              "contents": "quit",
               "dtype": null,
               "shape": null
             }
@@ -56162,13 +56180,13 @@
         "values": {
           "type": "dict",
           "contents": {
-            "in": {
+            "end": {
               "type": "int",
               "contents": 0,
               "dtype": null,
               "shape": null
             },
-            "end": {
+            "in": {
               "type": "int",
               "contents": 0,
               "dtype": null,
@@ -56534,13 +56552,13 @@
         "pi": {
           "type": "dict",
           "contents": {
-            "in": {
+            "end": {
               "type": "NoneType",
               "contents": "None",
               "dtype": null,
               "shape": null
             },
-            "end": {
+            "in": {
               "type": "NoneType",
               "contents": "None",
               "dtype": null,
@@ -56633,15 +56651,15 @@
         "new_values": {
           "type": "dict",
           "contents": {
-            "in": {
-              "type": "numpy.float64",
-              "contents": 10.0,
-              "dtype": null,
-              "shape": null
-            },
             "end": {
               "type": "int",
               "contents": 0,
+              "dtype": null,
+              "shape": null
+            },
+            "in": {
+              "type": "numpy.float64",
+              "contents": 10.0,
               "dtype": null,
               "shape": null
             }
@@ -56652,15 +56670,15 @@
         "pi": {
           "type": "dict",
           "contents": {
-            "in": {
-              "type": "str",
-              "contents": "quit",
-              "dtype": null,
-              "shape": null
-            },
             "end": {
               "type": "NoneType",
               "contents": "None",
+              "dtype": null,
+              "shape": null
+            },
+            "in": {
+              "type": "str",
+              "contents": "quit",
               "dtype": null,
               "shape": null
             }
@@ -57103,15 +57121,15 @@
         "values": {
           "type": "dict",
           "contents": {
-            "in": {
-              "type": "numpy.float64",
-              "contents": 10.0,
-              "dtype": null,
-              "shape": null
-            },
             "end": {
               "type": "int",
               "contents": 0,
+              "dtype": null,
+              "shape": null
+            },
+            "in": {
+              "type": "numpy.float64",
+              "contents": 10.0,
               "dtype": null,
               "shape": null
             }
@@ -57178,15 +57196,15 @@
         "new_values": {
           "type": "dict",
           "contents": {
-            "in": {
-              "type": "numpy.float64",
-              "contents": 10.666666666666666,
-              "dtype": null,
-              "shape": null
-            },
             "end": {
               "type": "int",
               "contents": 0,
+              "dtype": null,
+              "shape": null
+            },
+            "in": {
+              "type": "numpy.float64",
+              "contents": 10.666666666666666,
               "dtype": null,
               "shape": null
             }
@@ -57197,15 +57215,15 @@
         "pi": {
           "type": "dict",
           "contents": {
-            "in": {
-              "type": "str",
-              "contents": "stay",
-              "dtype": null,
-              "shape": null
-            },
             "end": {
               "type": "NoneType",
               "contents": "None",
+              "dtype": null,
+              "shape": null
+            },
+            "in": {
+              "type": "str",
+              "contents": "stay",
               "dtype": null,
               "shape": null
             }
@@ -57648,15 +57666,15 @@
         "values": {
           "type": "dict",
           "contents": {
-            "in": {
-              "type": "numpy.float64",
-              "contents": 10.666666666666666,
-              "dtype": null,
-              "shape": null
-            },
             "end": {
               "type": "int",
               "contents": 0,
+              "dtype": null,
+              "shape": null
+            },
+            "in": {
+              "type": "numpy.float64",
+              "contents": 10.666666666666666,
               "dtype": null,
               "shape": null
             }
@@ -57723,15 +57741,15 @@
         "new_values": {
           "type": "dict",
           "contents": {
-            "in": {
-              "type": "numpy.float64",
-              "contents": 11.11111111111111,
-              "dtype": null,
-              "shape": null
-            },
             "end": {
               "type": "int",
               "contents": 0,
+              "dtype": null,
+              "shape": null
+            },
+            "in": {
+              "type": "numpy.float64",
+              "contents": 11.11111111111111,
               "dtype": null,
               "shape": null
             }
@@ -57742,15 +57760,15 @@
         "pi": {
           "type": "dict",
           "contents": {
-            "in": {
-              "type": "str",
-              "contents": "stay",
-              "dtype": null,
-              "shape": null
-            },
             "end": {
               "type": "NoneType",
               "contents": "None",
+              "dtype": null,
+              "shape": null
+            },
+            "in": {
+              "type": "str",
+              "contents": "stay",
               "dtype": null,
               "shape": null
             }
@@ -58193,15 +58211,15 @@
         "values": {
           "type": "dict",
           "contents": {
-            "in": {
-              "type": "numpy.float64",
-              "contents": 11.11111111111111,
-              "dtype": null,
-              "shape": null
-            },
             "end": {
               "type": "int",
               "contents": 0,
+              "dtype": null,
+              "shape": null
+            },
+            "in": {
+              "type": "numpy.float64",
+              "contents": 11.11111111111111,
               "dtype": null,
               "shape": null
             }
@@ -58268,15 +58286,15 @@
         "new_values": {
           "type": "dict",
           "contents": {
-            "in": {
-              "type": "numpy.float64",
-              "contents": 11.407407407407407,
-              "dtype": null,
-              "shape": null
-            },
             "end": {
               "type": "int",
               "contents": 0,
+              "dtype": null,
+              "shape": null
+            },
+            "in": {
+              "type": "numpy.float64",
+              "contents": 11.407407407407407,
               "dtype": null,
               "shape": null
             }
@@ -58287,15 +58305,15 @@
         "pi": {
           "type": "dict",
           "contents": {
-            "in": {
-              "type": "str",
-              "contents": "stay",
-              "dtype": null,
-              "shape": null
-            },
             "end": {
               "type": "NoneType",
               "contents": "None",
+              "dtype": null,
+              "shape": null
+            },
+            "in": {
+              "type": "str",
+              "contents": "stay",
               "dtype": null,
               "shape": null
             }
@@ -58738,15 +58756,15 @@
         "values": {
           "type": "dict",
           "contents": {
-            "in": {
-              "type": "numpy.float64",
-              "contents": 11.407407407407407,
-              "dtype": null,
-              "shape": null
-            },
             "end": {
               "type": "int",
               "contents": 0,
+              "dtype": null,
+              "shape": null
+            },
+            "in": {
+              "type": "numpy.float64",
+              "contents": 11.407407407407407,
               "dtype": null,
               "shape": null
             }
@@ -58813,15 +58831,15 @@
         "new_values": {
           "type": "dict",
           "contents": {
-            "in": {
-              "type": "numpy.float64",
-              "contents": 11.604938271604938,
-              "dtype": null,
-              "shape": null
-            },
             "end": {
               "type": "int",
               "contents": 0,
+              "dtype": null,
+              "shape": null
+            },
+            "in": {
+              "type": "numpy.float64",
+              "contents": 11.604938271604938,
               "dtype": null,
               "shape": null
             }
@@ -58832,15 +58850,15 @@
         "pi": {
           "type": "dict",
           "contents": {
-            "in": {
-              "type": "str",
-              "contents": "stay",
-              "dtype": null,
-              "shape": null
-            },
             "end": {
               "type": "NoneType",
               "contents": "None",
+              "dtype": null,
+              "shape": null
+            },
+            "in": {
+              "type": "str",
+              "contents": "stay",
               "dtype": null,
               "shape": null
             }
@@ -59283,15 +59301,15 @@
         "values": {
           "type": "dict",
           "contents": {
-            "in": {
-              "type": "numpy.float64",
-              "contents": 11.604938271604938,
-              "dtype": null,
-              "shape": null
-            },
             "end": {
               "type": "int",
               "contents": 0,
+              "dtype": null,
+              "shape": null
+            },
+            "in": {
+              "type": "numpy.float64",
+              "contents": 11.604938271604938,
               "dtype": null,
               "shape": null
             }
@@ -59358,15 +59376,15 @@
         "new_values": {
           "type": "dict",
           "contents": {
-            "in": {
-              "type": "numpy.float64",
-              "contents": 11.736625514403292,
-              "dtype": null,
-              "shape": null
-            },
             "end": {
               "type": "int",
               "contents": 0,
+              "dtype": null,
+              "shape": null
+            },
+            "in": {
+              "type": "numpy.float64",
+              "contents": 11.736625514403292,
               "dtype": null,
               "shape": null
             }
@@ -59377,15 +59395,15 @@
         "pi": {
           "type": "dict",
           "contents": {
-            "in": {
-              "type": "str",
-              "contents": "stay",
-              "dtype": null,
-              "shape": null
-            },
             "end": {
               "type": "NoneType",
               "contents": "None",
+              "dtype": null,
+              "shape": null
+            },
+            "in": {
+              "type": "str",
+              "contents": "stay",
               "dtype": null,
               "shape": null
             }
@@ -59828,15 +59846,15 @@
         "values": {
           "type": "dict",
           "contents": {
-            "in": {
-              "type": "numpy.float64",
-              "contents": 11.736625514403292,
-              "dtype": null,
-              "shape": null
-            },
             "end": {
               "type": "int",
               "contents": 0,
+              "dtype": null,
+              "shape": null
+            },
+            "in": {
+              "type": "numpy.float64",
+              "contents": 11.736625514403292,
               "dtype": null,
               "shape": null
             }
@@ -59903,15 +59921,15 @@
         "new_values": {
           "type": "dict",
           "contents": {
-            "in": {
-              "type": "numpy.float64",
-              "contents": 11.824417009602195,
-              "dtype": null,
-              "shape": null
-            },
             "end": {
               "type": "int",
               "contents": 0,
+              "dtype": null,
+              "shape": null
+            },
+            "in": {
+              "type": "numpy.float64",
+              "contents": 11.824417009602195,
               "dtype": null,
               "shape": null
             }
@@ -59922,15 +59940,15 @@
         "pi": {
           "type": "dict",
           "contents": {
-            "in": {
-              "type": "str",
-              "contents": "stay",
-              "dtype": null,
-              "shape": null
-            },
             "end": {
               "type": "NoneType",
               "contents": "None",
+              "dtype": null,
+              "shape": null
+            },
+            "in": {
+              "type": "str",
+              "contents": "stay",
               "dtype": null,
               "shape": null
             }
@@ -60373,15 +60391,15 @@
         "values": {
           "type": "dict",
           "contents": {
-            "in": {
-              "type": "numpy.float64",
-              "contents": 11.824417009602195,
-              "dtype": null,
-              "shape": null
-            },
             "end": {
               "type": "int",
               "contents": 0,
+              "dtype": null,
+              "shape": null
+            },
+            "in": {
+              "type": "numpy.float64",
+              "contents": 11.824417009602195,
               "dtype": null,
               "shape": null
             }
@@ -60448,15 +60466,15 @@
         "new_values": {
           "type": "dict",
           "contents": {
-            "in": {
-              "type": "numpy.float64",
-              "contents": 11.88294467306813,
-              "dtype": null,
-              "shape": null
-            },
             "end": {
               "type": "int",
               "contents": 0,
+              "dtype": null,
+              "shape": null
+            },
+            "in": {
+              "type": "numpy.float64",
+              "contents": 11.88294467306813,
               "dtype": null,
               "shape": null
             }
@@ -60467,15 +60485,15 @@
         "pi": {
           "type": "dict",
           "contents": {
-            "in": {
-              "type": "str",
-              "contents": "stay",
-              "dtype": null,
-              "shape": null
-            },
             "end": {
               "type": "NoneType",
               "contents": "None",
+              "dtype": null,
+              "shape": null
+            },
+            "in": {
+              "type": "str",
+              "contents": "stay",
               "dtype": null,
               "shape": null
             }
@@ -60918,15 +60936,15 @@
         "values": {
           "type": "dict",
           "contents": {
-            "in": {
-              "type": "numpy.float64",
-              "contents": 11.88294467306813,
-              "dtype": null,
-              "shape": null
-            },
             "end": {
               "type": "int",
               "contents": 0,
+              "dtype": null,
+              "shape": null
+            },
+            "in": {
+              "type": "numpy.float64",
+              "contents": 11.88294467306813,
               "dtype": null,
               "shape": null
             }
@@ -60993,15 +61011,15 @@
         "new_values": {
           "type": "dict",
           "contents": {
-            "in": {
-              "type": "numpy.float64",
-              "contents": 11.921963115378754,
-              "dtype": null,
-              "shape": null
-            },
             "end": {
               "type": "int",
               "contents": 0,
+              "dtype": null,
+              "shape": null
+            },
+            "in": {
+              "type": "numpy.float64",
+              "contents": 11.921963115378754,
               "dtype": null,
               "shape": null
             }
@@ -61012,15 +61030,15 @@
         "pi": {
           "type": "dict",
           "contents": {
-            "in": {
-              "type": "str",
-              "contents": "stay",
-              "dtype": null,
-              "shape": null
-            },
             "end": {
               "type": "NoneType",
               "contents": "None",
+              "dtype": null,
+              "shape": null
+            },
+            "in": {
+              "type": "str",
+              "contents": "stay",
               "dtype": null,
               "shape": null
             }
@@ -61463,15 +61481,15 @@
         "values": {
           "type": "dict",
           "contents": {
-            "in": {
-              "type": "numpy.float64",
-              "contents": 11.921963115378754,
-              "dtype": null,
-              "shape": null
-            },
             "end": {
               "type": "int",
               "contents": 0,
+              "dtype": null,
+              "shape": null
+            },
+            "in": {
+              "type": "numpy.float64",
+              "contents": 11.921963115378754,
               "dtype": null,
               "shape": null
             }
@@ -61538,15 +61556,15 @@
         "new_values": {
           "type": "dict",
           "contents": {
-            "in": {
-              "type": "numpy.float64",
-              "contents": 11.947975410252502,
-              "dtype": null,
-              "shape": null
-            },
             "end": {
               "type": "int",
               "contents": 0,
+              "dtype": null,
+              "shape": null
+            },
+            "in": {
+              "type": "numpy.float64",
+              "contents": 11.947975410252502,
               "dtype": null,
               "shape": null
             }
@@ -61557,15 +61575,15 @@
         "pi": {
           "type": "dict",
           "contents": {
-            "in": {
-              "type": "str",
-              "contents": "stay",
-              "dtype": null,
-              "shape": null
-            },
             "end": {
               "type": "NoneType",
               "contents": "None",
+              "dtype": null,
+              "shape": null
+            },
+            "in": {
+              "type": "str",
+              "contents": "stay",
               "dtype": null,
               "shape": null
             }
@@ -62008,15 +62026,15 @@
         "values": {
           "type": "dict",
           "contents": {
-            "in": {
-              "type": "numpy.float64",
-              "contents": 11.947975410252502,
-              "dtype": null,
-              "shape": null
-            },
             "end": {
               "type": "int",
               "contents": 0,
+              "dtype": null,
+              "shape": null
+            },
+            "in": {
+              "type": "numpy.float64",
+              "contents": 11.947975410252502,
               "dtype": null,
               "shape": null
             }
@@ -62083,15 +62101,15 @@
         "new_values": {
           "type": "dict",
           "contents": {
-            "in": {
-              "type": "numpy.float64",
-              "contents": 11.965316940168334,
-              "dtype": null,
-              "shape": null
-            },
             "end": {
               "type": "int",
               "contents": 0,
+              "dtype": null,
+              "shape": null
+            },
+            "in": {
+              "type": "numpy.float64",
+              "contents": 11.965316940168334,
               "dtype": null,
               "shape": null
             }
@@ -62102,15 +62120,15 @@
         "pi": {
           "type": "dict",
           "contents": {
-            "in": {
-              "type": "str",
-              "contents": "stay",
-              "dtype": null,
-              "shape": null
-            },
             "end": {
               "type": "NoneType",
               "contents": "None",
+              "dtype": null,
+              "shape": null
+            },
+            "in": {
+              "type": "str",
+              "contents": "stay",
               "dtype": null,
               "shape": null
             }
@@ -62553,15 +62571,15 @@
         "values": {
           "type": "dict",
           "contents": {
-            "in": {
-              "type": "numpy.float64",
-              "contents": 11.965316940168334,
-              "dtype": null,
-              "shape": null
-            },
             "end": {
               "type": "int",
               "contents": 0,
+              "dtype": null,
+              "shape": null
+            },
+            "in": {
+              "type": "numpy.float64",
+              "contents": 11.965316940168334,
               "dtype": null,
               "shape": null
             }
@@ -62628,15 +62646,15 @@
         "new_values": {
           "type": "dict",
           "contents": {
-            "in": {
-              "type": "numpy.float64",
-              "contents": 11.976877960112223,
-              "dtype": null,
-              "shape": null
-            },
             "end": {
               "type": "int",
               "contents": 0,
+              "dtype": null,
+              "shape": null
+            },
+            "in": {
+              "type": "numpy.float64",
+              "contents": 11.976877960112223,
               "dtype": null,
               "shape": null
             }
@@ -62647,15 +62665,15 @@
         "pi": {
           "type": "dict",
           "contents": {
-            "in": {
-              "type": "str",
-              "contents": "stay",
-              "dtype": null,
-              "shape": null
-            },
             "end": {
               "type": "NoneType",
               "contents": "None",
+              "dtype": null,
+              "shape": null
+            },
+            "in": {
+              "type": "str",
+              "contents": "stay",
               "dtype": null,
               "shape": null
             }
@@ -63098,15 +63116,15 @@
         "values": {
           "type": "dict",
           "contents": {
-            "in": {
-              "type": "numpy.float64",
-              "contents": 11.976877960112223,
-              "dtype": null,
-              "shape": null
-            },
             "end": {
               "type": "int",
               "contents": 0,
+              "dtype": null,
+              "shape": null
+            },
+            "in": {
+              "type": "numpy.float64",
+              "contents": 11.976877960112223,
               "dtype": null,
               "shape": null
             }
@@ -63173,15 +63191,15 @@
         "new_values": {
           "type": "dict",
           "contents": {
-            "in": {
-              "type": "numpy.float64",
-              "contents": 11.984585306741481,
-              "dtype": null,
-              "shape": null
-            },
             "end": {
               "type": "int",
               "contents": 0,
+              "dtype": null,
+              "shape": null
+            },
+            "in": {
+              "type": "numpy.float64",
+              "contents": 11.984585306741481,
               "dtype": null,
               "shape": null
             }
@@ -63192,15 +63210,15 @@
         "pi": {
           "type": "dict",
           "contents": {
-            "in": {
-              "type": "str",
-              "contents": "stay",
-              "dtype": null,
-              "shape": null
-            },
             "end": {
               "type": "NoneType",
               "contents": "None",
+              "dtype": null,
+              "shape": null
+            },
+            "in": {
+              "type": "str",
+              "contents": "stay",
               "dtype": null,
               "shape": null
             }
@@ -63643,15 +63661,15 @@
         "values": {
           "type": "dict",
           "contents": {
-            "in": {
-              "type": "numpy.float64",
-              "contents": 11.984585306741481,
-              "dtype": null,
-              "shape": null
-            },
             "end": {
               "type": "int",
               "contents": 0,
+              "dtype": null,
+              "shape": null
+            },
+            "in": {
+              "type": "numpy.float64",
+              "contents": 11.984585306741481,
               "dtype": null,
               "shape": null
             }
@@ -63718,15 +63736,15 @@
         "new_values": {
           "type": "dict",
           "contents": {
-            "in": {
-              "type": "numpy.float64",
-              "contents": 11.989723537827654,
-              "dtype": null,
-              "shape": null
-            },
             "end": {
               "type": "int",
               "contents": 0,
+              "dtype": null,
+              "shape": null
+            },
+            "in": {
+              "type": "numpy.float64",
+              "contents": 11.989723537827654,
               "dtype": null,
               "shape": null
             }
@@ -63737,15 +63755,15 @@
         "pi": {
           "type": "dict",
           "contents": {
-            "in": {
-              "type": "str",
-              "contents": "stay",
-              "dtype": null,
-              "shape": null
-            },
             "end": {
               "type": "NoneType",
               "contents": "None",
+              "dtype": null,
+              "shape": null
+            },
+            "in": {
+              "type": "str",
+              "contents": "stay",
               "dtype": null,
               "shape": null
             }
@@ -64188,15 +64206,15 @@
         "values": {
           "type": "dict",
           "contents": {
-            "in": {
-              "type": "numpy.float64",
-              "contents": 11.989723537827654,
-              "dtype": null,
-              "shape": null
-            },
             "end": {
               "type": "int",
               "contents": 0,
+              "dtype": null,
+              "shape": null
+            },
+            "in": {
+              "type": "numpy.float64",
+              "contents": 11.989723537827654,
               "dtype": null,
               "shape": null
             }
@@ -64263,15 +64281,15 @@
         "new_values": {
           "type": "dict",
           "contents": {
-            "in": {
-              "type": "numpy.float64",
-              "contents": 11.993149025218436,
-              "dtype": null,
-              "shape": null
-            },
             "end": {
               "type": "int",
               "contents": 0,
+              "dtype": null,
+              "shape": null
+            },
+            "in": {
+              "type": "numpy.float64",
+              "contents": 11.993149025218436,
               "dtype": null,
               "shape": null
             }
@@ -64282,15 +64300,15 @@
         "pi": {
           "type": "dict",
           "contents": {
-            "in": {
-              "type": "str",
-              "contents": "stay",
-              "dtype": null,
-              "shape": null
-            },
             "end": {
               "type": "NoneType",
               "contents": "None",
+              "dtype": null,
+              "shape": null
+            },
+            "in": {
+              "type": "str",
+              "contents": "stay",
               "dtype": null,
               "shape": null
             }
@@ -64733,15 +64751,15 @@
         "values": {
           "type": "dict",
           "contents": {
-            "in": {
-              "type": "numpy.float64",
-              "contents": 11.993149025218436,
-              "dtype": null,
-              "shape": null
-            },
             "end": {
               "type": "int",
               "contents": 0,
+              "dtype": null,
+              "shape": null
+            },
+            "in": {
+              "type": "numpy.float64",
+              "contents": 11.993149025218436,
               "dtype": null,
               "shape": null
             }
@@ -64808,15 +64826,15 @@
         "new_values": {
           "type": "dict",
           "contents": {
-            "in": {
-              "type": "numpy.float64",
-              "contents": 11.995432683478958,
-              "dtype": null,
-              "shape": null
-            },
             "end": {
               "type": "int",
               "contents": 0,
+              "dtype": null,
+              "shape": null
+            },
+            "in": {
+              "type": "numpy.float64",
+              "contents": 11.995432683478958,
               "dtype": null,
               "shape": null
             }
@@ -64827,15 +64845,15 @@
         "pi": {
           "type": "dict",
           "contents": {
-            "in": {
-              "type": "str",
-              "contents": "stay",
-              "dtype": null,
-              "shape": null
-            },
             "end": {
               "type": "NoneType",
               "contents": "None",
+              "dtype": null,
+              "shape": null
+            },
+            "in": {
+              "type": "str",
+              "contents": "stay",
               "dtype": null,
               "shape": null
             }
@@ -65278,15 +65296,15 @@
         "values": {
           "type": "dict",
           "contents": {
-            "in": {
-              "type": "numpy.float64",
-              "contents": 11.995432683478958,
-              "dtype": null,
-              "shape": null
-            },
             "end": {
               "type": "int",
               "contents": 0,
+              "dtype": null,
+              "shape": null
+            },
+            "in": {
+              "type": "numpy.float64",
+              "contents": 11.995432683478958,
               "dtype": null,
               "shape": null
             }
@@ -65353,15 +65371,15 @@
         "new_values": {
           "type": "dict",
           "contents": {
-            "in": {
-              "type": "numpy.float64",
-              "contents": 11.996955122319305,
-              "dtype": null,
-              "shape": null
-            },
             "end": {
               "type": "int",
               "contents": 0,
+              "dtype": null,
+              "shape": null
+            },
+            "in": {
+              "type": "numpy.float64",
+              "contents": 11.996955122319305,
               "dtype": null,
               "shape": null
             }
@@ -65372,15 +65390,15 @@
         "pi": {
           "type": "dict",
           "contents": {
-            "in": {
-              "type": "str",
-              "contents": "stay",
-              "dtype": null,
-              "shape": null
-            },
             "end": {
               "type": "NoneType",
               "contents": "None",
+              "dtype": null,
+              "shape": null
+            },
+            "in": {
+              "type": "str",
+              "contents": "stay",
               "dtype": null,
               "shape": null
             }
@@ -65823,15 +65841,15 @@
         "values": {
           "type": "dict",
           "contents": {
-            "in": {
-              "type": "numpy.float64",
-              "contents": 11.996955122319305,
-              "dtype": null,
-              "shape": null
-            },
             "end": {
               "type": "int",
               "contents": 0,
+              "dtype": null,
+              "shape": null
+            },
+            "in": {
+              "type": "numpy.float64",
+              "contents": 11.996955122319305,
               "dtype": null,
               "shape": null
             }
@@ -65898,15 +65916,15 @@
         "new_values": {
           "type": "dict",
           "contents": {
-            "in": {
-              "type": "numpy.float64",
-              "contents": 11.997970081546203,
-              "dtype": null,
-              "shape": null
-            },
             "end": {
               "type": "int",
               "contents": 0,
+              "dtype": null,
+              "shape": null
+            },
+            "in": {
+              "type": "numpy.float64",
+              "contents": 11.997970081546203,
               "dtype": null,
               "shape": null
             }
@@ -65917,15 +65935,15 @@
         "pi": {
           "type": "dict",
           "contents": {
-            "in": {
-              "type": "str",
-              "contents": "stay",
-              "dtype": null,
-              "shape": null
-            },
             "end": {
               "type": "NoneType",
               "contents": "None",
+              "dtype": null,
+              "shape": null
+            },
+            "in": {
+              "type": "str",
+              "contents": "stay",
               "dtype": null,
               "shape": null
             }
@@ -66368,15 +66386,15 @@
         "values": {
           "type": "dict",
           "contents": {
-            "in": {
-              "type": "numpy.float64",
-              "contents": 11.997970081546203,
-              "dtype": null,
-              "shape": null
-            },
             "end": {
               "type": "int",
               "contents": 0,
+              "dtype": null,
+              "shape": null
+            },
+            "in": {
+              "type": "numpy.float64",
+              "contents": 11.997970081546203,
               "dtype": null,
               "shape": null
             }
@@ -66443,15 +66461,15 @@
         "new_values": {
           "type": "dict",
           "contents": {
-            "in": {
-              "type": "numpy.float64",
-              "contents": 11.998646721030802,
-              "dtype": null,
-              "shape": null
-            },
             "end": {
               "type": "int",
               "contents": 0,
+              "dtype": null,
+              "shape": null
+            },
+            "in": {
+              "type": "numpy.float64",
+              "contents": 11.998646721030802,
               "dtype": null,
               "shape": null
             }
@@ -66462,15 +66480,15 @@
         "pi": {
           "type": "dict",
           "contents": {
-            "in": {
-              "type": "str",
-              "contents": "stay",
-              "dtype": null,
-              "shape": null
-            },
             "end": {
               "type": "NoneType",
               "contents": "None",
+              "dtype": null,
+              "shape": null
+            },
+            "in": {
+              "type": "str",
+              "contents": "stay",
               "dtype": null,
               "shape": null
             }
@@ -66958,15 +66976,15 @@
             "values": {
               "type": "dict",
               "contents": {
-                "in": {
-                  "type": "numpy.float64",
-                  "contents": 11.997970081546203,
-                  "dtype": null,
-                  "shape": null
-                },
                 "end": {
                   "type": "int",
                   "contents": 0,
+                  "dtype": null,
+                  "shape": null
+                },
+                "in": {
+                  "type": "numpy.float64",
+                  "contents": 11.997970081546203,
                   "dtype": null,
                   "shape": null
                 }
@@ -66977,15 +66995,15 @@
             "pi": {
               "type": "dict",
               "contents": {
-                "in": {
-                  "type": "str",
-                  "contents": "stay",
-                  "dtype": null,
-                  "shape": null
-                },
                 "end": {
                   "type": "NoneType",
                   "contents": "None",
+                  "dtype": null,
+                  "shape": null
+                },
+                "in": {
+                  "type": "str",
+                  "contents": "stay",
                   "dtype": null,
                   "shape": null
                 }

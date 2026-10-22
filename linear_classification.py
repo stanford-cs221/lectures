@@ -60,12 +60,12 @@ def prediction_task():
     text(r"- Text: $x \in \text{Strings}$ is a string (hmm, not a tensor...we'll come back to this later)")
 
     text("What's the type of the **output**?")
-    text(r"- Binary classification (two choices): usually $y \in \\{-1, +1\\}$")
-    text(r"- Multiclass classification ($K$ choices): usually $y \in \\{0, 1, \dots, K-1\\}$")
+    text(r"- Binary classification (two choices): usually $y \in \{-1, +1\}$")
+    text(r"- Multiclass classification ($K$ choices): usually $y \in \{0, 1, \dots, K-1\}$")
 
     text("A **predictor** is a function that takes an input and produces a predicted output.")
     text(r"In math: predictor $f : \mathcal X \to \mathcal Y$ maps an input $x \in \mathcal X$ to a predicted output $f(x) \in \mathcal Y$")
-    text(r"Here's an example predictor for binary classification ($x \in \mathbb R^d$, $y \in \\{-1, +1\\}$):")
+    text(r"Here's an example predictor for binary classification ($x \in \mathbb R^d$, $y \in \{-1, +1\}$):")
     def simple_binary_classifier(x: np.ndarray) -> int:  # @inspect x
         # logit represents the raw score encoding the prediction
         logit = x[0] - x[1] - 1  # @inspect logit
@@ -97,7 +97,7 @@ def prediction_task():
 
 def machine_learning_problem():
     text(r"The **training data** $\mathcal D$ is a set of examples that demonstrate the task.")
-    text(r"Each **example** $(x, y)$ consists of an input $x \in \mathbb R^d$ and a target output $y \in \\{-1, +1\\}$.")
+    text(r"Each **example** $(x, y)$ consists of an input $x \in \mathbb R^d$ and a target output $y \in \{-1, +1\}$.")
     training_data = get_training_data()  # @inspect training_data @stepover
 
     data = [example_to_point(example) for example in training_data]  # @stepover @hide
@@ -139,7 +139,7 @@ def hypothesis_class():
 
     text(r"We make a prediction by first computing the **logit**: $\mathbf w \cdot x + b$")
     text("Then the classifier is defined by the sign of the logit:")
-    text(r"**Linear classifier**: $f_\theta(x) = \text{sign}(\mathbf w \cdot x + b) = \begin{cases} +1 & \text{if } \mathbf w \cdot x + b > 0 \\\\ -1 & \text{if } \mathbf w \cdot x + b \le 0 \end{cases}$")
+    text(r"**Linear classifier**: $f_\theta(x) = \text{sign}(\mathbf w \cdot x + b) = \begin{cases} +1 & \text{if } \mathbf w \cdot x + b > 0 \\ -1 & \text{if } \mathbf w \cdot x + b \le 0 \end{cases}$")
     predicted_y = binary_classifier(params, x)  # @inspect predicted_y
     plot(make_plot("binary classifier", "x0", "x1", lambda x0: x0 - 1, points=[example_to_point(Example(x=x, target_y=predicted_y))], line_color=DECISION_BOUNDARY_COLOR, above_color="blue", below_color="red", arrow=((0, params.bias), (params.weight[0], params.weight[1] + params.bias)), domain=(-4, 4)))  # @stepover
 
@@ -149,11 +149,11 @@ def hypothesis_class():
     predicted_y = binary_classifier(params, x)  # @inspect predicted_y
     plot(make_plot("binary classifier", "x0", "x1", lambda x0: -(params.weight[0] * x0 + params.bias) / params.weight[1], points=[example_to_point(Example(x=x, target_y=predicted_y))], line_color=DECISION_BOUNDARY_COLOR, above_color="red" if params.weight[1] > 0 else "blue", below_color="blue" if params.weight[1] > 0 else "red", arrow=((0, -params.bias / params.weight[1]), (params.weight[0], params.weight[1] - params.bias / params.weight[1])), domain=(-4, 4)))  # @stepover
 
-    text(r"The **hypothesis class** $\mathcal F = \\{ f_\theta \\}$ is the set of all predictors you can get by choosing parameters.")
-    text(r"For linear classification: $\mathcal F = \\{f_\theta : \mathbf w \in \mathbb R^d, b \in \mathbb R\\}$")
+    text(r"The **hypothesis class** $\mathcal F = \{ f_\theta \}$ is the set of all predictors you can get by choosing parameters.")
+    text(r"For linear classification: $\mathcal F = \{f_\theta : \mathbf w \in \mathbb R^d, b \in \mathbb R\}$")
 
     text(r"**Decision boundary** of $f_\theta$ is the set of points that are infinitesimally close to more than one label.")
-    text(r"For linear classification, decision boundary of $f_\theta$ is $\\{x : \mathbf w \cdot x + b = 0\\}$.")
+    text(r"For linear classification, decision boundary of $f_\theta$ is $\{x : \mathbf w \cdot x + b = 0\}$.")
     text("This is a \"straight cut\" but the boundary could be curved or disconnected in general.")
 
 
@@ -198,7 +198,7 @@ def zero_one_loss_function():
 
     text("For binary classification, we use the **zero-one loss**.")  # @clear loss
     text("Intuition: whether the prediction has the same sign as the target.")
-    text(r"In math: $\text{Loss}\_{0\text{-}1}(x, y, \theta) = \mathbf 1[f\_\theta(x) \neq y]$")
+    text(r"In math: $\text{Loss}_{0\text{-}1}(x, y, \theta) = \mathbf 1[f_\theta(x) \neq y]$")
     loss = zero_one_loss(Example(x=np.array([1, 2]), target_y=-1), params)  # @inspect loss
     loss = zero_one_loss(Example(x=np.array([2, 0]), target_y=1), params)  # @inspect loss
 
@@ -355,7 +355,7 @@ def logistic_loss_function():
 
     text("Instead, let us make things continuous by having a classifier output")
     text("...a probability distribution (continuous) over labels.")
-    text(r"$[1, 2] \mapsto \\{ +1: 0.88, -1: 0.12 \\}$")
+    text(r"$[1, 2] \mapsto \{ +1: 0.88, -1: 0.12 \}$")
 
     text("The key to doing this will be the **logistic** function.")
     text("The logistic function was used in statistics in **logistic regression** [Berkson, 1944].")
@@ -486,8 +486,8 @@ def gradient_descent():
 
 
 def multiclass_classification():
-    text(r"Binary classification (output $y \in \\{-1, +1\\}$)")
-    text(r"Multiclass classification (output $y \in \\{0, 1, \dots, K-1\\}$)")
+    text(r"Binary classification (output $y \in \{-1, +1\}$)")
+    text(r"Multiclass classification (output $y \in \{0, 1, \dots, K-1\}$)")
 
     text("For binary classification, we compute a single logit for each input.")
     text("Sign of logit is the predicted class.")
@@ -534,7 +534,7 @@ def introduce_softmax():
 
     text("The softmax function generalizes this to multiple classes.")
     text(r"Let $\mathbf z = (z_0, \dots, z_{K-1})$ be the logits for the $K$ classes.")
-    text(r"Define $\displaystyle \text{softmax}(\mathbf z)\_k = \frac{e^{z\_k}}{\sum\_{j=0}^{K-1} e^{z\_j}}$")
+    text(r"Define $\displaystyle \text{softmax}(\mathbf z)_k = \frac{e^{z_k}}{\sum_{j=0}^{K-1} e^{z_j}}$")
 
     logits = np.array([1, -1, 0])  # @inspect logits
     probs = softmax(logits)  # @inspect probs
@@ -594,7 +594,7 @@ def representing_text():
 
     text("### Interpretation")
     text("Represent each index as a one-hot vector.")
-    text(r"In math: index $i$ is represented by $\mathbf e_i \in \\{0, 1\\}^V$ (1 in position $i$, 0 elsewhere), where $V$ is the vocabulary size.")
+    text(r"In math: index $i$ is represented by $\mathbf e_i \in \{0, 1\}^V$ (1 in position $i$, 0 elsewhere), where $V$ is the vocabulary size.")
     index = indices[4]  # @inspect index
     vector = np.eye(len(vocab))[index]  # @inspect vector @stepover
 

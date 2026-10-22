@@ -126,7 +126,7 @@ def policy_gradient_math():
 
     text("Intuition:")
     text("- Imitation learning on the agent's own rollouts, weighted by their utility.")
-    text(r"- If $u(\tau) \in \\{0, 1\\}$ (failure/success), then this is just imitation learning on the agent's own successful rollouts.")
+    text(r"- If $u(\tau) \in \{0, 1\}$ (failure/success), then this is just imitation learning on the agent's own successful rollouts.")
 
     text("For the example rollout:")
     mdp = FlakyTramMDP(num_locs=6, failure_prob=0.1)  # @stepover

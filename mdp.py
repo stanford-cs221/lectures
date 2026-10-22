@@ -256,9 +256,9 @@ def introduce_monte_carlo_policy_evaluation():
 def monte_carlo_example():
     text("Monte Carlo: estimate an expectation by averaging random samples")
     text("Setup:")
-    text(r"- We have a random variable $X \in \\{0, 1\\}$")
+    text(r"- We have a random variable $X \in \{0, 1\}$")
     text(r"- ...whose distribution is given by $p(X = 1) = 0.8, p(X = 0) = 0.2$.")
-    text(r"- Define a function $f(x) = \begin{cases} 5 & \text{if } x = 1 \\\\ 1 & \text{if } x = 0 \end{cases}$")
+    text(r"- Define a function $f(x) = \begin{cases} 5 & \text{if } x = 1 \\ 1 & \text{if } x = 0 \end{cases}$")
     text(r"- ...and we want to compute its expected value $\mathbb E[f(X)]$.")
 
     n = 50  # Number of samples (controls the quality of the approximation) @inspect n
@@ -390,7 +390,7 @@ def introduce_policy_evaluation_recurrence():
     text(r"Values ($V_\pi(s)$) sit on state nodes and Q-values ($Q_\pi(s, a)$) sit on action nodes.")
 
     text("We define the following recurrence:")
-    text(r"- $\displaystyle V_\pi(s) = \begin{cases} 0 & \text{if } \text{IsEnd}(s) \\\\ Q_\pi(s, \pi(s)) & \text{otherwise} \end{cases}$")
+    text(r"- $\displaystyle V_\pi(s) = \begin{cases} 0 & \text{if } \text{IsEnd}(s) \\ Q_\pi(s, \pi(s)) & \text{otherwise} \end{cases}$")
     text(r"- $\displaystyle Q_\pi(s, a) = \sum_{s'} T(s, a, s') [\text{Reward}(s, a, s') + \gamma V_\pi(s')]$")
     image("images/q-value.svg", width=560)
 
@@ -741,6 +741,13 @@ def draw_mdp_graph(mdp: MDP, rollout: "Rollout | None" = None, values: dict[Any,
         label_at_source = lambda state, step: False
         label_near_chance = lambda state, step: False
         width, height = 360, 210
+    elif hasattr(layout, "graph_layout"):
+        # MDPs defined elsewhere (e.g., in a lecture) provide their own layout
+        g = layout.graph_layout()
+        position, chance_offsets, curve = g["position"], g["chance_offsets"], g["curve"]
+        label_at_source = lambda state, step: False
+        label_near_chance = lambda state, step: False
+        width, height = g["width"], g["height"]
     else:
         return None
 
@@ -754,7 +761,7 @@ def draw_mdp_graph(mdp: MDP, rollout: "Rollout | None" = None, values: dict[Any,
             state = step.state
     on_path = lambda source, target: " path" if (str(source), str(target)) in path else ""
 
-    action_colors = ["#2a9d8f", "#9b72cf"]  # Teal, purple (in order of first appearance)
+    action_colors = ["#2a9d8f", "#9b72cf", "#457b9d"]  # Teal, purple, blue (in order of first appearance)
     action_index = {}
     nodes, edges = [], []
     for state in sorted(get_states(mdp), key=str):
@@ -807,10 +814,11 @@ def draw_mdp_graph(mdp: MDP, rollout: "Rollout | None" = None, values: dict[Any,
 
 
 
-def draw_rollout_graph(mdp: MDP, rollout: Rollout) -> dict:
+def draw_rollout_graph(mdp: MDP, rollout: Rollout, show_utility: bool = False) -> dict:
     """
     Return the graph of `rollout` (to show with `graph`) as a chain: the states visited (in order, starting from the
     start state of `mdp`), with an edge for each step labeled with the action (colored by the action) and the reward.
+    If `show_utility` is set, show the utility of the rollout (in orange) after the last state.
     """
     spacing = 85
     action_colors = ["#2a9d8f", "#9b72cf"]  # Teal, purple (in order of first appearance, as in `draw_mdp_graph`)
@@ -830,7 +838,12 @@ def draw_rollout_graph(mdp: MDP, rollout: Rollout) -> dict:
     for action, i in action_index.items():
         color = action_colors[i % len(action_colors)]
         stylesheet.append({"selector": f"edge.action-{i}", "style": {"line-color": color, "target-arrow-color": color, "color": color}})
-    return make_graph(nodes, edges, stylesheet=stylesheet, width=spacing * len(rollout.steps) + 80, height=100)
+    width = spacing * len(rollout.steps) + 80
+    if show_utility:
+        nodes.append({"id": "utility", "label": f"utility = {format_number(rollout.utility)}",
+                      "x": spacing * len(rollout.steps) + 70, "y": 0, "classes": "annotation"})
+        width += 110
+    return make_graph(nodes, edges, stylesheet=stylesheet, width=width, height=100)
 
 def format_prob(prob: float) -> str:
     """Show a probability as a decimal if it has at most 2 digits (e.g., 0.6), otherwise as a fraction (e.g., 1/3)."""

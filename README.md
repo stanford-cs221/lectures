@@ -61,7 +61,7 @@ To run locally:
 
 ### Lecture 10 (Thu Oct 22): RL IV
 
-- [rl_enhancements](https://stanford-cs221.github.io/lectures/?trace=rl_enhancements)
+- [improved_policy_gradient](https://stanford-cs221.github.io/lectures/?trace=improved_policy_gradient)
 
 ### Lecture 11 (Tue Oct 27): Games I
 

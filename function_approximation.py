@@ -42,11 +42,11 @@ def review_rl():
     agent = QLearning(exploration_policy=policy, epsilon=0.4, discount=1)
 
     text("An example rollout (what the agent experiences):")
-    action = agent.get_action(state=1)  # @inspect action
+    action = agent.get_action(state=1)
     agent.incorporate_feedback(state=1, action="walk", reward=-1, next_state=2, is_end=False)
-    action = agent.get_action(state=2)  # @inspect action
+    action = agent.get_action(state=2)
     agent.incorporate_feedback(state=2, action="walk", reward=-1, next_state=3, is_end=False)
-    action = agent.get_action(state=3)  # @inspect action
+    action = agent.get_action(state=3)
     agent.incorporate_feedback(state=3, action="tram", reward=-2, next_state=6, is_end=True)
     text(r"Each rollout has a utility $u = r_0 + \gamma r_1 + \gamma^2 r_2 + \cdots$ (discounted sum of rewards).")  # @clear action
 
@@ -80,7 +80,7 @@ def review_rl():
 
     text("What to use as targets?")
     text(r"- Full rollouts: use the actual utility $u_t = r_t + \gamma r_{t+1} + \gamma^2 r_{t+2} + \cdots$")
-    text(r"- Bootstrapping: $r_t + \gamma \text{model-quantity}$")
+    text(r"- Bootstrapping: $r_t + \gamma \, \text{model-quantity}$")
 
     text("Model-free algorithms:")
     text(r"- Model-free Monte Carlo: estimate $\hat Q_\text{act}(s, a)$ from full rollouts (on-policy); $\text{target} = u_t$")

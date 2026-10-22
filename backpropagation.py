@@ -133,7 +133,7 @@ def motivation():
     def objective(w: np.ndarray) -> float:
         loss = np.sum((einsum(x, w, "n d, d -> n") - y) ** 2)  # @inspect loss
         return loss
-    text(r"In math: $\mathcal{O}(\mathbf w) = \\|\mathbf X \mathbf w - \mathbf y\\|_2^2$")
+    text(r"In math: $\mathcal{O}(\mathbf w) = \|\mathbf X \mathbf w - \mathbf y\|_2^2$")
     text("For each value of `w`, we can compute the objective.")
     loss = objective(w=np.array([1, 0, 1]))  # @inspect loss @stepover
     loss = objective(w=np.array([1, 0, -1]))  # @inspect loss @stepover

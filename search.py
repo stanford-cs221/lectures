@@ -17,7 +17,7 @@ def main():
     image("images/learning-algorithm.svg", width=560)
     text(r"- Predictor: $f_\theta$ maps input $x$ to predicted output $y = f_\theta(x)$")
     text(r"  * $y \in \mathbb R$ for regression")
-    text(r"  * $y \in \\{0, \dots, K-1\\}$ for classification")
+    text(r"  * $y \in \{0, \dots, K-1\}$ for classification")
 
     text("Stepping back, recall the ingredients of intelligence:")
     image("images/perceive-reason-act-learn.svg", width=560)
@@ -296,7 +296,7 @@ def introduce_exhaustive_search():
     text(r"- Then there is the optimal rest of the solution: $\text{FutureCost}(\text{Succ}(s, a))$")
     text(r"- Minimize over all possible actions $a \in \text{Actions}(s)$")
     text("Recurrence:")
-    text(r"$\displaystyle \text{FutureCost}(s) = \begin{cases} 0 & \text{if } \text{IsEnd}(s) \\\\ \min_{a \in \text{Actions}(s)} \left[\text{Cost}(s, a) + \text{FutureCost}(\text{Succ}(s, a))\right] & \text{otherwise} \end{cases}$")
+    text(r"$\displaystyle \text{FutureCost}(s) = \begin{cases} 0 & \text{if } \text{IsEnd}(s) \\ \min_{a \in \text{Actions}(s)} \left[\text{Cost}(s, a) + \text{FutureCost}(\text{Succ}(s, a))\right] & \text{otherwise} \end{cases}$")
 
     text("Let's do an example.")
     problem = TravelSearchProblem(num_locs=4)  # @stepover
