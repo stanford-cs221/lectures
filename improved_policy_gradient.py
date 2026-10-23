@@ -539,9 +539,9 @@ def bootstrapping():
     bootstrapping_example()
 
     text("**Proximal Policy Optimization (PPO)** "), link("https://arxiv.org/abs/1707.06347")
-    text("- An actor-critic method: the advantages $\\hat A_t$ come from a learned critic $\\hat V$")
+    text("- An actor-critic method with multiple bells and whistles")
     text("- Generating rollouts is expensive, so reuse each batch of rollouts for several gradient steps")
-    text(r"- But then the rollouts come from an older policy $\pi_{\theta_\text{old}}$, so reweight by the ratio $\rho_t = \frac{\pi_\theta(a_t \mid s_t)}{\pi_{\theta_\text{old}}(a_t \mid s_t)}$")
+    text(r"- But then the rollouts come from an different policy $\pi_{\theta_\text{old}}$ (off policy), so reweight by the ratio $\rho_t = \frac{\pi_\theta(a_t \mid s_t)}{\pi_{\theta_\text{old}}(a_t \mid s_t)}$")
     text(r"- Clip the ratio so the policy doesn't move too far from the one that generated the data: $\displaystyle \min\big(\rho_t \hat A_t, \text{clip}(\rho_t, 1 - \epsilon, 1 + \epsilon) \hat A_t\big)$")
     text("- Widely used (e.g., games, robotics, and RLHF for language models)")
 
@@ -556,7 +556,7 @@ def bootstrapping_example():
     true_gradient = p * (1 - p) * torch.tensor([1.])  # Left is 1 point better @inspect true_gradient
 
     text("Values (computed exactly here; in practice, a critic learns them):")
-    value_a = sum(step.prob * step.reward for step in mdp.successors("A"))  # V(A): expected spin @inspect value_a
+    value_a = sum(step.prob * step.reward for step in mdp.successors("A"))  # V(A): expected spin @inspect value_a @stepover
     q_left = 1 + value_a  # Q(S, left) @inspect q_left
     q_right = 0 + value_a  # Q(S, right) @inspect q_right
     value_s = p * q_left + (1 - p) * q_right  # V(S) @inspect value_s
@@ -762,11 +762,11 @@ def critic_free():
     image("images/rl-policy-gradient.svg", width=600)
 
     text("**REINFORCE Leave-One-Out (RLOO)** "), link("https://arxiv.org/abs/2402.14740")
-    text(r"For a prompt $x$, sample $G$ responses $y_1, \dots, y_G$ and compute their utilities $u_1, \dots, u_G$.")
-    text(r"Baseline for response $i$: the average utility of the **other** $G - 1$ responses (an estimate of $V(x)$)")
-    text(r"Advantage of response $i$: $\displaystyle \hat A_i = u_i - \frac{1}{G - 1} \sum_{j \neq i} u_j$")
+    text(r"- For a prompt $x$, sample $G$ responses $y_1, \dots, y_G$ and compute their utilities $u_1, \dots, u_G$.")
+    text(r"- Baseline for response $i$: the average utility of the **other** $G - 1$ responses")
+    text(r"  * Leave out response $i$ so that the baseline doesn't depend on its own action (unbiased).")
+    text(r"- Advantage of response $i$: $\displaystyle \hat A_i = u_i - \frac{1}{G - 1} \sum_{j \neq i} u_j$")
     text(r"- Update: $\displaystyle \nabla_\theta J(\theta) = \frac{1}{G} \sum_{i=1}^G \hat A_i \sum_t \nabla_\theta \log \pi_\theta(y_{i,t} \mid x, y_{i,<t})$")
-    text("Leave out response $i$ so that the baseline doesn't depend on its own action (unbiased).")
     rewards = torch.tensor([1., 0., 0., 1., 0., 0., 0., 0.])  # 2 out of 8 correct @inspect rewards
     num_responses = len(rewards)  # G @inspect num_responses
     baselines = (torch.sum(rewards) - rewards) / (num_responses - 1)  # Average of the other responses @inspect baselines
@@ -774,26 +774,14 @@ def critic_free():
     text("Then apply REINFORCE: every token in response $i$ gets credit $\\hat A_i$.")
 
     text("**Group Relative Policy Optimization (GRPO)** "), link("https://arxiv.org/abs/2402.03300")
-
-    text("Idea: use a baseline computed from other responses to the same prompt (no learned critic).")
-    text(r"- For a prompt $x$, sample a group of $G$ responses and check which are correct:")
+    text(r"- For a prompt $x$, sample $G$ responses $y_1, \dots, y_G$ and compute their utilities $u_1, \dots, u_G$.")
+    text(r"- Advantage of response $i$: $\displaystyle \hat A_i = \frac{u_i - \text{mean}(u_1, \dots, u_G)}{\text{std}(u_1, \dots, u_G)}$")
+    text(r"  * Normalize by the standard deviation of the group (normalize across difficulty)")
+    text(r"- Update: $\displaystyle \nabla_\theta J(\theta) = \frac{1}{G} \sum_{i=1}^G \hat A_i \sum_t \nabla_\theta \log \pi_\theta(y_{i,t} \mid x, y_{i,<t})$")
+    text("- Full GRPO also clips the update (like PPO) and adds a KL penalty to stay close to the original model.")
     rewards = torch.tensor([1., 0., 0., 1., 0., 0., 0., 0.])  # @inspect rewards
     baseline = torch.mean(rewards)  # Estimate of V(x): how hard is this prompt? @inspect baseline
     advantages = rewards - baseline  # @inspect advantages
-    text("- Normalize by the standard deviation of the group")
-
-    text("Formally, for a prompt $x$:")
-    text(r"- Sample $G$ responses $y_1, \dots, y_G$ from $\pi_\theta(\cdot \mid x)$ and compute their utilities $u_1, \dots, u_G$")
-    text(r"- Advantage of response $i$: $\displaystyle \hat A_i = \frac{u_i - \text{mean}(u_1, \dots, u_G)}{\text{std}(u_1, \dots, u_G)}$")
-    text(r"- Update: $\displaystyle \nabla_\theta J(\theta) = \frac{1}{G} \sum_{i=1}^G \hat A_i \sum_t \nabla_\theta \log \pi_\theta(y_{i,t} \mid x, y_{i,<t})$")
-    text("The full GRPO objective also clips the update (like PPO) and adds a KL penalty to stay close to the original model.")
-
-    text("What if the prompt is too easy or too hard?")
-    rewards = torch.tensor([1., 1., 1., 1., 1., 1., 1., 1.])  # @inspect rewards
-    advantages = rewards - torch.mean(rewards)  # @inspect advantages
-    rewards = torch.tensor([0., 0., 0., 0., 0., 0., 0., 0.])  # @inspect rewards
-    advantages = rewards - torch.mean(rewards)  # @inspect advantages
-    text("All advantages are zero: no learning signal (so choose prompts of the right difficulty).")
 
 
 if __name__ == "__main__":

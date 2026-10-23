@@ -1,6 +1,6 @@
 {
   "files": {
-    "improved_policy_gradient.py": "from edtrace import text, image, link, graph, plot\nfrom mdp import MDP, FlakyTramMDP, Step, Rollout, draw_mdp_graph, draw_rollout_graph\nfrom reinforcement_learning import generate_rollout_rl\nfrom policy_gradient import Reinforce\nfrom typing import Any\nimport altair as alt\nfrom altair import Chart, Data\nimport numpy as np\nimport torch\nimport torch.nn as nn\nfrom util import set_random_seed, one_hot, cached\n\n\ndef main():\n    text(\"# Improved policy gradient\")\n    text(r\"Last unit: policy gradient (REINFORCE) optimizes the policy $\\pi_\\theta(a \\mid s)$ directly\")\n    text(\"This unit: better policy gradient methods\")\n\n    review_policy_gradient()\n    credit_assignment()\n    variance_reduction()\n\n    future_utility()\n    baselines()\n    bootstrapping()\n    critic_free()\n\n    text(\"Summary:\")\n    text(r\"- The game: find a low-bias, low-variance estimate of $\\mathbb E_{\\tau \\sim p_\\theta}[\\nabla_\\theta \\log p_\\theta(\\tau) u(\\tau)]$\")\n    text(\"- Variance reduction = better credit assignment\")\n    text(\"- Idea 1: use future utility $u_t$ instead of utility of entire rollout\")\n    text(\"- Idea 2: use baselines (is this action good relative to other actions?)\")\n    text(\"- Idea 3: use bootstrapping (use $\\hat Q(s_t, a_t)$ instead of $u_t$)\")\n\n    text(\"Next time: what if there are adversaries in the environment?\")\n\n\ndef review_policy_gradient():\n    text(\"Three ways to get a policy:\")\n    text(r\"- Model-based: estimate the MDP $\\to$ $\\hat Q(s, a)$ $\\to$ policy $\\pi(s)$\")\n    image(\"images/rl-model-based.svg\", width=600)\n    text(r\"- Value-based: estimate Q-values $\\hat Q(s, a)$ $\\to$ policy $\\pi(s)$\")\n    image(\"images/rl-q-learning.svg\", width=600)\n    text(r\"- Policy-based: estimate the policy $\\pi_\\theta(a \\mid s)$ directly\")\n    image(\"images/rl-policy-gradient.svg\", width=600)\n\n    text(r\"Think of the policy as a probabilistic classifier (input $s$ $\\to$ distribution over actions $a$).\")\n\n    text(r\"**Imitation learning**: given an expert demonstration $(s_0, a_0, s_1, a_1, \\dots)$\")\n    text(r\"- Maximize $\\displaystyle \\sum_t \\log \\pi_\\theta(a_t \\mid s_t)$\")\n\n    text(r\"**Reinforcement learning**: we don't have demonstrations!\")\n    text(\"- Agent has to actively collect its own data\")\n    text(\"- Only get rewards (could be delayed!)\")\n\n    text(r\"Given a fixed policy $\\pi_\\theta$\")\n    text(r\"...we can sample a rollout $\\tau = (s_0, a_0, r_0, s_1, a_1, r_1, \\dots)$\")\n    text(r\"...with utility $u(\\tau) = r_0 + \\gamma r_1 + \\gamma^2 r_2 + \\cdots$\")\n    text(r\"...and probability $\\displaystyle p_\\theta(\\tau) = \\prod_t \\underbrace{\\pi_\\theta(a_t \\mid s_t)}_\\text{policy} \\, \\underbrace{T(s_t, a_t, s_{t+1})}_\\text{transitions}$\")\n\n    text(r\"Objective: find the policy $\\pi_\\theta$ that maximizes expected utility\")\n    text(r\"$\\displaystyle V(\\theta) = \\mathbb E_{\\tau \\sim p_\\theta}[u(\\tau)] = \\sum_\\tau p_\\theta(\\tau) u(\\tau)$\")\n\n    text(r\"To optimize $V(\\theta)$, we need to take the gradient.\")\n    text(r\"We can't compute $V(\\theta)$ or $\\nabla V(\\theta)$ exactly because of the sum over exponentially many rollouts $\\tau$.\")\n\n    text(r\"**Policy gradient theorem**: $\\nabla_\\theta V(\\theta) = \\mathbb E_{\\tau \\sim p_\\theta}[u(\\tau) \\nabla_\\theta \\log p_\\theta(\\tau)]$\")\n\n    text(\"This shows a natural way to estimate the gradient (REINFORCE):\")\n    text(r\"1. Sample rollout $\\tau \\sim p_\\theta$ given current policy $\\pi_\\theta$\")\n    text(r\"2. Compute $\\nabla_\\theta J(\\theta, \\tau) = u(\\tau) \\nabla_\\theta \\log p_\\theta(\\tau)$\")\n    text(r\"3. Update policy $\\pi_\\theta$ using gradient: $\\theta \\leftarrow \\theta + \\eta \\nabla_\\theta J(\\theta, \\tau)$ (gradient ascent)\")\n\n    text(\"REINFORCE provides an unbiased estimate of the policy gradient:\")\n    text(r\"- $\\mathbb E_{\\tau \\sim p_\\theta}[\\nabla_\\theta J(\\theta, \\tau)] = \\nabla_\\theta V(\\theta)$\")\n    text(r\"- Note: this only applies to the gradient, not the function: $\\mathbb E_{\\tau \\sim p_\\theta}[J(\\theta, \\tau)] \\neq V(\\theta)$\")\n\n    text(r\"The transitions $T$ don't depend on $\\theta$, so we don't need to know the MDP:\")\n    text(r\"$\\displaystyle \\nabla_\\theta J(\\theta, \\tau) = u(\\tau) \\nabla_\\theta \\log p_\\theta(\\tau) = u(\\tau) \\sum_t \\nabla_\\theta \\log \\pi_\\theta(a_t \\mid s_t)$\")\n\n    text(\"Interpretation: imitation learning on the agent's own rollouts, weighted by their utility.\")\n\n    text(\"**Example**: flaky tram MDP\")\n    mdp = FlakyTramMDP(num_locs=6, failure_prob=0.1)  # @stepover\n    rollout = Rollout(steps=[  # @inspect rollout\n        Step(action=\"walk\", prob=1, reward=-1, state=2),\n        Step(action=\"walk\", prob=1, reward=-1, state=3),\n        Step(action=\"tram\", prob=1, reward=-2, state=6),\n    ], discount=1)\n    graph(draw_rollout_graph(mdp, rollout))  # @stepover\n    text(r\"$\\displaystyle \\nabla_\\theta J(\\theta, \\tau) = -4 \\big(\\nabla_\\theta \\log \\pi_\\theta(\\text{walk} \\mid 1) + \\nabla_\\theta \\log \\pi_\\theta(\\text{walk} \\mid 2) + \\nabla_\\theta \\log \\pi_\\theta(\\text{tram} \\mid 3)\\big)$\")\n\n    text(\"REINFORCE is the simplest policy gradient method.\")\n    text(\"How can we improve on REINFORCE?\")\n\n\nclass GameShow1MDP(MDP):\n    \"\"\"\n    Choose a door twice (no luck): in step 1, left is worth 10 points and right 1;\n    in step 2, left is worth 2 points and right 1.\n    Illustrates using the future utility: step 2 shouldn't get credit for the points from step 1.\n    \"\"\"\n    def start_state(self) -> Any:\n        return \"S\"\n\n    def successors(self, state: Any) -> list[Step]:\n        if state == \"S\":  # Step 1: left is worth 9 points more than right\n            return [\n                Step(action=\"left\", prob=1, reward=10, state=\"A\"),\n                Step(action=\"right\", prob=1, reward=1, state=\"A\"),\n            ]\n        if state == \"A\":  # Step 2: left is worth 1 point more than right\n            return [\n                Step(action=\"left\", prob=1, reward=2, state=\"E\"),\n                Step(action=\"right\", prob=1, reward=1, state=\"E\"),\n            ]\n        return []\n\n    def is_end(self, state: Any) -> bool:\n        return state == \"E\"\n\n    def discount(self) -> float:\n        return 1\n\n    def graph_layout(self) -> dict:\n        return game_show_layout([\"S\", \"A\", \"E\"])\n\n\nclass GameShow2MDP(MDP):\n    \"\"\"\n    Choose a room (no points): left (A) or right (B). Then choose a door: in the left room, left is worth 11 points and right 10;\n    in the right room, left is worth 2 points and right 1.\n    Illustrates baselines: in both rooms, left is 1 point better, but the rooms are worth very different amounts.\n    \"\"\"\n    def start_state(self) -> Any:\n        return \"S\"\n\n    def successors(self, state: Any) -> list[Step]:\n        if state == \"S\":  # Choose a room (no points)\n            return [\n                Step(action=\"left\", prob=1, reward=0, state=\"A\"),\n                Step(action=\"right\", prob=1, reward=0, state=\"B\"),\n            ]\n        if state == \"A\":  # Left room: left is worth 1 point more than right\n            return [\n                Step(action=\"left\", prob=1, reward=11, state=\"E\"),\n                Step(action=\"right\", prob=1, reward=10, state=\"E\"),\n            ]\n        if state == \"B\":  # Right room: left is worth 1 point more than right\n            return [\n                Step(action=\"left\", prob=1, reward=2, state=\"E\"),\n                Step(action=\"right\", prob=1, reward=1, state=\"E\"),\n            ]\n        return []\n\n    def is_end(self, state: Any) -> bool:\n        return state == \"E\"\n\n    def discount(self) -> float:\n        return 1\n\n    def graph_layout(self) -> dict:\n        \"\"\"How to draw this MDP (used by `draw_mdp_graph`): the left room above, the right room below.\"\"\"\n        spacing = 160\n        return {\n            \"position\": {\"S\": (0, 0), \"A\": (spacing, -80), \"B\": (spacing, 80), \"E\": (2 * spacing, 0)}.get,\n            \"chance_offsets\": {\"left\": (spacing / 2, -45), \"right\": (spacing / 2, 45)},\n            \"curve\": lambda state, step: None,\n            \"width\": 2 * spacing + 80,\n            \"height\": 340,\n        }\n\n\nclass GameShow3MDP(MDP):\n    \"\"\"\n    Choose a door (left is worth 1 point, right 0), then spin a wheel (0 or 20 points, luck).\n    Illustrates critics: the door shouldn't get credit (or blame) for the luck of the spin.\n    \"\"\"\n    def start_state(self) -> Any:\n        return \"S\"\n\n    def successors(self, state: Any) -> list[Step]:\n        if state == \"S\":  # Door: left is worth 1 point more than right\n            return [\n                Step(action=\"left\", prob=1, reward=1, state=\"A\"),\n                Step(action=\"right\", prob=1, reward=0, state=\"A\"),\n            ]\n        if state == \"A\":  # Spin a wheel: 0 or 20 points\n            return [\n                Step(action=\"spin\", prob=0.5, reward=0, state=\"E\"),\n                Step(action=\"spin\", prob=0.5, reward=20, state=\"E\"),\n            ]\n        return []\n\n    def is_end(self, state: Any) -> bool:\n        return state == \"E\"\n\n    def discount(self) -> float:\n        return 1\n\n    def graph_layout(self) -> dict:\n        return game_show_layout([\"S\", \"A\", \"E\"])\n\n\ndef game_show_layout(states: list[str]) -> dict:\n    \"\"\"How to draw a game show (used by `draw_mdp_graph`): states on a line, left and spin above, right below.\"\"\"\n    spacing = 160\n    return {\n        \"position\": lambda state: (spacing * states.index(state), 0),\n        \"chance_offsets\": {\"left\": (spacing / 2, -50), \"spin\": (spacing / 2, -50), \"right\": (spacing / 2, 50)},\n        # The two outcomes of a spin go to the same state, so bend them apart\n        \"curve\": lambda state, step: (20 if step.reward > 0 else -20) if step.action == \"spin\" else None,\n        \"width\": spacing * (len(states) - 1) + 80,\n        \"height\": 210,\n    }\n\n\ndef credit_assignment():\n    text(\"Reinforcement learning is hard because:\")\n    text(\"1. Agent has to collect its own data (rollouts)\")\n    text(\"2. Rewards can be delayed\")\n\n    text(\"The immediate reward doesn't tell you how good the last action was!\")\n\n    text(\"**Example** (robotics):\")\n    image(\"https://rail.eecs.berkeley.edu/datasets/bridge_release/raw/bridge_data_v1/berkeley/toykitchen2/put_potato_in_pot_cardboard_fence/2022-01-28_11-25-48/raw/traj_group0/traj13/images0/im_0.jpg\", width=200)\n    text(\"- Task: put the potato in the pot\")\n    text(\"- States: camera image + positions of the robot's joints\")\n    text(\"- Actions: small motions of the gripper (move, rotate, open, close)\")\n    text(\"- Reward: 1 if the potato ends up in the pot (after hundreds of actions), 0 otherwise\")\n    text(\"- If the potato slips out at the end, was it the approach, the grasp, or the release?\")\n\n    text(\"**Example** (math):\")\n    text(\"- States: problem + solution generated so far\")\n    text(\"- Actions: generate next token\")\n    text(\"- Reward: 1 if the final answer is correct, 0 otherwise\")\n    text(\"Problem: *What is the sum of the first 100 positive integers?*\")\n    text(r\"Solution: *Pair up the numbers: $1 + 100 = 2 + 99 = \\cdots = 101$. There are $100$ pairs, so the sum is $100 \\cdot 101 = 10100$.*\")\n    text(\"- Reward: 0 (the answer is 5050)\")\n    text(\"- The idea of pairing up the numbers was great; the mistake is \\\"100 pairs\\\" (should be 50)\")\n    text(\"- Which tokens are to blame?\")\n\n    text(\"Examine the REINFORCE gradient:\")\n    text(r\"$\\displaystyle \\nabla_\\theta J(\\theta, \\tau) = \\underbrace{u(\\tau)}_\\text{same for every $t$} \\sum_t \\nabla_\\theta \\log \\pi_\\theta(a_t \\mid s_t)$\")\n    text(r\"REINFORCE gives **every** action $a_t$ in the rollout the same credit (or blame) $u(\\tau)$.\")\n\n    text(\"Mathematically sound: it's still an unbiased estimate of the policy gradient!\")\n    text(\"After averaging over many rollouts, the good actions do come out ahead.\")\n\n    text(\"**Credit assignment problem**: which actions are responsible for the outcome?\")\n\n    text(\"**Example** (game show):\")\n    mdp = GameShow1MDP()  # @stepover\n    graph(draw_mdp_graph(mdp))  # @stepover\n    text(\"1. Choose a door: `left` (10 points) or `right` (1 point)\")\n    text(\"2. Choose a door: `left` (2 points) or `right` (1 point)\")\n\n    rollout = Rollout(steps=[Step(action=\"left\", prob=1, reward=10, state=\"A\"), Step(action=\"right\", prob=1, reward=1, state=\"E\")], discount=1)\n    graph(draw_rollout_graph(mdp, rollout, show_utility=True))  # @stepover\n    rollout = Rollout(steps=[Step(action=\"right\", prob=1, reward=1, state=\"A\"), Step(action=\"left\", prob=1, reward=2, state=\"E\")], discount=1)\n    graph(draw_rollout_graph(mdp, rollout, show_utility=True))  # @stepover\n    text(\"Step 2: from A, `right` (utility 11) looks better than `left` (utility 3)\")\n\n    text(r\"Policy:\")\n    text(r\"- $\\pi_\\theta(\\text{left} \\mid S) = \\sigma(\\theta_S)$\")\n    text(r\"- $\\pi_\\theta(\\text{left} \\mid A) = \\sigma(\\theta_A)$\")\n    text(r\"- $\\sigma(\\theta) = (1 + e^{-\\theta})^{-1}$ is the logistic function\")\n    text(r\"- Initialize $\\theta = 0$, which gives a uniform distribution over $\\{\\text{left}, \\text{right}\\}$\")\n\n    text(\"Let's run REINFORCE (from last time) on this game show.\")\n    text(\"We train 10 times (with different random seeds) and average:\")\n    set_random_seed(0)  # So that the cache key is deterministic (run_rl seeds each trial itself)\n    learning_curves[\"REINFORCE\"] = cached(run_rl)(mdp, GameShowReinforce)  # @stepover\n    text(r\"Expected utility $V(\\theta)$ of the policy after each rollout (the best possible is 12):\")\n    plot_learning_curves(\"utility\", \"expected utility\")  # @stepover\n    text(r\"Probability of choosing `left` in step 2 (the better choice):\")\n    plot_learning_curves(\"pi_left_A\", \"\u03c0(left | A)\")  # @stepover\n    text(\"REINFORCE can get stuck choosing `right` in step 2:\")\n    text(\"- Once step 1 always chooses `left`, every rollout has utility 11 or 12\")\n    text(\"- So whatever step 2 chooses gets pushed up by about 11\")\n    text(\"- If `right` gets ahead early, it keeps getting pushed up\")\n\n    text(\"How do we fix this?\")\n\n\ndef variance_reduction():\n    text(\"We can understand improvements to REINFORCE through the lens of variance reduction.\")\n\n    text(\"Consider the simple mean estimation problem:\")\n    text(r\"$\\displaystyle \\mu = \\mathbb E_{i \\sim p}[f(i)] = \\sum_i p(i) f(i)$\")\n    set_random_seed(3)\n    probs = torch.tensor([0.1, 0.4, 0.2, 0.3])  # p(0), p(1), ... @inspect probs\n    points = torch.tensor([-4., -6., 6., 8.])  # f(0), f(1), ... @inspect points\n\n    text(r\"This is the true mean $\\mu$ that we want to estimate (in general, unknown):\")\n    mu = probs @ points  # @inspect mu\n\n    text(r\"An **estimator** is any random variable that tries to get close to $\\mu$.\")\n    text(\"Each estimator has a **bias** and a **variance** (and a cost).\")\n\n    text(r\"**Estimator 1** (one sample)\")\n    text(r\"The simplest estimator of $\\mu$:\")\n    text(r\"Sample a single $i \\sim p$ and return $f(i)$.\")\n    def estimator1():\n        index = torch.multinomial(probs, num_samples=1)  # @inspect index\n        estimate = points[index]  # @inspect estimate\n        return estimate\n    estimate = estimator1()  # @inspect estimate\n    estimate = estimator1()  # @inspect estimate @stepover\n    estimate = estimator1()  # @inspect estimate @stepover\n    running_means = evaluate_estimator(estimator1)  # @stepover\n    plot_running_means(running_means, mu, title=\"one sample\")  # @stepover\n    text(r\"Each line is an independent run: the average of the first $n$ estimates (the dashed line is $\\mu$).\")\n    text(\"All runs converge to the true mean (the estimator is unbiased); how fast depends on the variance.\")\n\n    text(r\"**Estimator 2** (average of 5 samples)\")\n    text(\"A more expensive estimator is to sample 5 points and average them:\")\n    def estimator2():\n        indices = torch.multinomial(probs, num_samples=5, replacement=True)  # @inspect indices\n        values = points[indices]  # @inspect values\n        estimate = torch.mean(values)  # @inspect estimate\n        return estimate\n    estimate = estimator2()  # @inspect estimate\n    estimate = estimator2()  # @inspect estimate @stepover\n    estimate = estimator2()  # @inspect estimate @stepover\n    running_means = evaluate_estimator(estimator2)  # @stepover\n    plot_running_means(running_means, mu, title=\"average of 5 samples\")  # @stepover\n\n    text(r\"**Estimator 3** (one sample + noise)\")\n    text(\"A worse estimator is to add noise, but it's still unbiased:\")\n    def estimator3():\n        # Add noise\n        index = torch.multinomial(probs, num_samples=1)  # @inspect index\n        noise = 10 * torch.randn(1)  # @inspect noise\n        estimate = points[index] + noise  # @inspect estimate\n        return estimate\n    estimate = estimator3()  # @inspect estimate\n    estimate = estimator3()  # @inspect estimate @stepover\n    estimate = estimator3()  # @inspect estimate @stepover\n    running_means = evaluate_estimator(estimator3)  # @stepover\n    plot_running_means(running_means, mu, title=\"one sample + noise\")  # @stepover\n\n    text(r\"**Estimator 4** (one sample with offset)\")\n    text(r\"Suppose we have a magic function $\\text{offset}(i)$ that has mean 0: $\\mathbb E_{i \\sim p}[\\text{offset}(i)] = 0$.\")\n    text(r\"Then $\\mathbb E[f(i) - \\text{offset}(i)] = \\mathbb E[f(i)] - \\mathbb E[\\text{offset}(i)] = \\mathbb E[f(i)]$, so $f(i) - \\text{offset}(i)$ is also unbiased.\")\n    def estimator4():\n        offsets = torch.tensor([-6., -6., 6., 6.])\n        index = torch.multinomial(probs, num_samples=1)  # @inspect index\n        estimate = points[index] - offsets[index]  # @inspect estimate\n        return estimate\n    estimate = estimator4()  # @inspect estimate\n    estimate = estimator4()  # @inspect estimate @stepover\n    estimate = estimator4()  # @inspect estimate @stepover\n    running_means = evaluate_estimator(estimator4)  # @stepover\n    plot_running_means(running_means, mu, title=\"one sample with offset\")  # @stepover\n    text(\"Same cost as the simplest estimator, but much lower variance.\")\n\n\ndef future_utility():\n    text(r\"Policy gradient goal: estimate $\\nabla_\\theta V(\\theta)$, where $V(\\theta) = \\mathbb E_{\\tau \\sim p_\\theta}[u(\\tau)]$\")\n\n    text(\"REINFORCE is just one way to do it:\")\n    text(r\"- Sample rollout $\\tau \\sim p_\\theta$\")\n    text(r\"- Compute $\\displaystyle \\nabla_\\theta J(\\theta, \\tau) = \\sum_t u(\\tau) \\nabla_\\theta \\log \\pi_\\theta(a_t \\mid s_t)$\")\n    text(\"Problem: utility of entire rollout is applied to every action\")\n    text(\"Can we find a better estimate?\")\n\n    text(\"Recall the two-step game show:\")\n    mdp = GameShow1MDP()  # @stepover\n    graph(draw_mdp_graph(mdp))  # @stepover\n    graph(draw_rollout_graph(mdp, Rollout(steps=[Step(action=\"left\", prob=1, reward=10, state=\"A\"), Step(action=\"right\", prob=1, reward=1, state=\"E\")], discount=1), show_utility=True))  # @stepover\n    text(r\"$\\displaystyle \\nabla_\\theta J(\\theta, \\tau) = 11 \\nabla_\\theta \\log \\pi_\\theta(\\text{left} \\mid S) + 11 \\nabla_\\theta \\log \\pi_\\theta(\\text{right} \\mid A)$\")\n    text(\"Intuitively, `right` shouldn't get credit for the 10 that came before it.\")\n\n    text(\"General observation: $a_t$ doesn't affect rewards before step $t$, so it shouldn't take credit for them.\")\n    text(r\"Key idea \ud83d\udca1: use the **future utility** from step $t$ on:\")\n    text(r\"- $u_t = r_t + \\gamma r_{t+1} + \\gamma^2 r_{t+2} + \\cdots$\")\n    text(r\"- $\\displaystyle \\nabla_\\theta J(\\theta, \\tau) = \\sum_t u_t \\nabla_\\theta \\log \\pi_\\theta(a_t \\mid s_t)$\")\n\n    text(r\"Revisit example:\")\n    text(\"- Rewards: $r_0 = 10, r_1 = 1$\")\n    text(\"- Future utilities: $u_0 = 10 + 1 = 11, u_1 = 1$\")\n    text(r\"$\\displaystyle \\nabla_\\theta J(\\theta, \\tau) = 11 \\nabla_\\theta \\log \\pi_\\theta(\\text{left} \\mid S) + 1 \\nabla_\\theta \\log \\pi_\\theta(\\text{right} \\mid A)$\")\n    text(\"Now `right` in step 2 gets credit 1 (only for what happened after it).\")\n\n    text(\"Let's implement this by changing how REINFORCE computes the loss:\")\n    agent = FutureUtility(num_locs=2, actions=[\"left\", \"right\"], valid_actions=mdp.actions, discount=1, learning_rate=0.05)\n    agent.incorporate_feedback(state=\"S\", action=\"left\", reward=10, next_state=\"A\", is_end=False)\n    agent.incorporate_feedback(state=\"A\", action=\"right\", reward=1, next_state=\"E\", is_end=True)\n\n    text(\"Now let's train it like we trained REINFORCE:\")\n    set_random_seed(0)  # So that the cache key is deterministic (run_rl seeds each trial itself)\n    learning_curves[\"future utility\"] = cached(run_rl)(mdp, FutureUtility)  # @stepover\n    plot_learning_curves(\"utility\", \"expected utility\")  # @stepover\n    plot_learning_curves(\"pi_left_A\", \"\u03c0(left | A)\")  # @stepover\n    text(\"Using the future utility learns to choose `left` in step 2 much more reliably.\")\n\n    text(\"Let's examine the gradients of all rollouts.\")\n    p = torch.sigmoid(torch.tensor(0.))  # \u03c0(left | s) at the start of training (\u03b8 = 0) @inspect p\n    rollouts = enumerate_rollouts(mdp, door_policy(p))  # All 4 rollouts with their probabilities @stepover @inspect rollouts\n    def reinforce_estimator(rollout: Rollout) -> torch.Tensor:\n        return door_scores(rollout, p) * rollout.utility\n    def future_utility_estimator(rollout: Rollout) -> torch.Tensor:\n        return door_scores(rollout, p) * utilities_from_each_step(rollout)\n\n    text(r\"Gradient $(\\partial / \\partial \\theta_S, \\partial / \\partial \\theta_A)$ for each rollout:\")\n    text(make_gradient_table(rollouts, {\"REINFORCE\": reinforce_estimator, \"future utility\": future_utility_estimator}))  # @stepover\n    text(\"For step 2:\")\n    text(\"- REINFORCE's gradient is between -5.5 and 6\")\n    text(\"- Future utility's gradient is between -0.5 and 1 (much better)\")\n\n    text(r\"Mean and variance of each estimator:\")\n    result1 = evaluate_gradient_estimator(reinforce_estimator, rollouts)  # @inspect result1\n    result2 = evaluate_gradient_estimator(future_utility_estimator, rollouts)  # @inspect result2 @stepover\n    text(\"Both are unbiased, but the variance for step 2 drops (step 1 is unchanged).\")\n\n    text(\"Note that this doesn't help when the reward is delayed.\")\n    text(\"Recall the math example: the only reward is at the end (1 if the final answer is correct).\")\n    text(r\"In this case, $u_t = u(\\tau)$ for every token $t$: every token still gets the same credit.\")\n\n\ndef baselines():\n    text(\"Here's another game show.\")\n    mdp = GameShow2MDP()  # @stepover\n    graph(draw_mdp_graph(mdp))  # @stepover\n    text(\"1. Choose a room: `left` (room A) or `right` (room B), 0 points\")\n    text(\"2. In room A: `left` (11 points) or `right` (10 points)\")\n    text(\"   In room B: `left` (2 points) or `right` (1 point)\")\n    graph(draw_rollout_graph(mdp, Rollout(steps=[Step(action=\"left\", prob=1, reward=0, state=\"A\"), Step(action=\"right\", prob=1, reward=10, state=\"E\")], discount=1), show_utility=True))  # @stepover\n    graph(draw_rollout_graph(mdp, Rollout(steps=[Step(action=\"right\", prob=1, reward=0, state=\"B\"), Step(action=\"left\", prob=1, reward=2, state=\"E\")], discount=1), show_utility=True))  # @stepover\n    text(\"Step 2: `right` in room A gets credit 10, but `left` in room B only gets credit 2.\")\n\n    text(\"Note that future utility doesn't help here: all the reward comes in the final step anyway.\")\n\n    text(\"But in both rooms, `left` is better by 1 point!\")\n    text(\"We should ask: was the outcome better or worse than usual **for this room**?\")\n\n    text(\"Recall the offset trick: subtract something with mean zero to reduce variance without adding bias.\")\n    text(\"So how do we find an offset with mean zero for the policy gradient?\")\n\n    text(\"Key identity:\")\n    text(r\"Let $b(s)$ be **any** function that only depends on the state $s$ (not the action $a$).\")\n    text(r\"Then $\\mathbb E_{a \\sim \\pi_\\theta(\\cdot \\mid s)}[\\nabla_\\theta \\log \\pi_\\theta(a \\mid s) b(s)] = 0$ for every state $s$.\")\n    text(\"Analogy: heuristics in A* search (use domain knowledge to improve the algorithm without changing the answer)\")\n\n    text(\"Proof:\")\n    text(r\"- $\\mathbb E_{a \\sim \\pi_\\theta(\\cdot \\mid s)}[b(s)] = b(s)$, which doesn't depend on $\\theta$\")\n    text(r\"- $\\nabla_\\theta \\mathbb E_{a \\sim \\pi_\\theta(\\cdot \\mid s)}[b(s)] = 0$\")\n    text(r\"- $\\nabla_\\theta \\sum_a \\pi_\\theta(a \\mid s) b(s) = 0$\")\n    text(r\"- $\\sum_a \\nabla_\\theta \\pi_\\theta(a \\mid s) b(s) = 0$\")\n    text(r\"- $\\sum_a \\pi_\\theta(a \\mid s) \\nabla_\\theta \\log \\pi_\\theta(a \\mid s) b(s) = 0$\")\n    text(r\"- $\\mathbb E_{a \\sim \\pi_\\theta(\\cdot \\mid s)}[\\nabla_\\theta \\log \\pi_\\theta(a \\mid s) b(s)] = 0$\")\n    text(\"This is basically the reverse direction of the policy gradient theorem.\")\n\n    text(r\"Key idea \ud83d\udca1: subtract a baseline $b(s_t)$ from the utility\")\n    text(r\"$\\displaystyle \\nabla_\\theta J(\\theta, \\tau) = \\sum_t \\nabla_\\theta \\log \\pi_\\theta(a_t \\mid s_t) (u_t - b(s_t))$\")\n\n    text(\"Definition (**advantage**): how much better is a particular action than the policy's average action?\")\n    text(\"- $A(s, a) = Q(s, a) - V(s)$\")\n\n    text(\"Monte Carlo approximation of the advantage:\")\n    text(r\"- $\\hat A_t = u_t - b(s_t)$\")\n    text(r\"- Here, the baseline $b(s) = \\hat V(s)$ is an estimate of the value of the current policy (e.g., from TD learning)\")\n\n    image(\"images/rl-policy-gradient-baseline.svg\", width=600)\n\n    baseline_example()\n\n\ndef baseline_example():\n    text(\"Recall the game show with two rooms:\")\n    mdp = GameShow2MDP()  # @stepover\n    graph(draw_mdp_graph(mdp))  # @stepover\n    text(r\"Policy: $\\pi_\\theta(\\text{left} \\mid s) = \\sigma(\\theta_s)$ for each state $s \\in \\{S, A, B\\}$, starting with $\\theta = 0$\")\n    p = torch.sigmoid(torch.tensor(0.))  # \u03c0(left | s) @inspect p\n    pi = door_policy(p)\n    rollouts = enumerate_rollouts(mdp, pi)  # @stepover @inspect rollouts\n\n    text(\"Values (computed exactly here; in practice, they are estimated):\")\n    value_a = p * 11 + (1 - p) * 10  # V(A): room A @inspect value_a\n    value_b = p * 2 + (1 - p) * 1  # V(B): room B @inspect value_b\n    value_s = p * value_a + (1 - p) * value_b  # V(S) @inspect value_s\n    values = {\"S\": value_s, \"A\": value_a, \"B\": value_b}\n\n    text(r\"Future utility: step $t$ gets credit $u_t$\")\n    def future_utility_estimator(rollout: Rollout) -> torch.Tensor:\n        return gradient_by_state(mdp, rollout, p, utilities_from_each_step(rollout))\n\n    text(r\"Constant baseline: step $t$ gets credit $u_t - V(S)$ (the same baseline in every state)\")\n    def constant_baseline_estimator(rollout: Rollout) -> torch.Tensor:\n        return gradient_by_state(mdp, rollout, p, utilities_from_each_step(rollout) - value_s)\n\n    text(r\"State-dependent baseline: step $t$ gets credit $u_t - V(s_t)$\")\n    def baseline_estimator(rollout: Rollout) -> torch.Tensor:\n        baselines = torch.stack([values[state] for state in rollout_states(mdp, rollout)])  # V(s_t) @inspect baselines\n        return gradient_by_state(mdp, rollout, p, utilities_from_each_step(rollout) - baselines)\n\n    text(r\"Gradient $(\\partial / \\partial \\theta_S, \\partial / \\partial \\theta_A, \\partial / \\partial \\theta_B)$ for each rollout:\")\n    text(make_gradient_table(rollouts, {  # @stepover\n        \"future utility\": future_utility_estimator,\n        \"constant baseline\": constant_baseline_estimator,\n        \"state-dependent baseline\": baseline_estimator,\n    }))\n    text(\"Ideally, all numbers would be positive (`left` is just universally good).\")\n    text(\"- Future utility: not the case; whichever action we sample gets pushed up (all rewards are positive)\")\n    text(\"- Constant baseline: `left` is pushed up in state S, but not always in A and B\")\n    text(\"- State-dependent baseline: `left` is pushed up in all states\")\n\n    text(\"Mean and variance of each estimator:\")\n    result1 = evaluate_gradient_estimator(future_utility_estimator, rollouts)  # @inspect result1 @stepover\n    result2 = evaluate_gradient_estimator(constant_baseline_estimator, rollouts)  # @inspect result2 @stepover\n    result3 = evaluate_gradient_estimator(baseline_estimator, rollouts)  # @inspect result3 @stepover\n    text(\"All are unbiased, but:\")\n    text(\"- The constant baseline (6) helps in room A (worth about 10.5) but hurts in room B (worth about 1.5)\")\n    text(\"- The state-dependent baseline helps in both rooms: the baseline needs to depend on the state\")\n\n\ndef bootstrapping():\n    text(\"Policy gradient update with baseline:\")\n    text(r\"$\\displaystyle \\nabla_\\theta J(\\theta, \\tau) = \\sum_t \\nabla_\\theta \\log \\pi_\\theta(a_t \\mid s_t) (u_t - \\hat V(s_t))$\")\n    text(r\"...where $u_t = r_t + \\gamma r_{t+1} + \\gamma^2 r_{t+2} + \\cdots$\")\n\n    text(r\"Disadvantage: have to wait until the end of the rollout to compute $u_t$ and update parameters.\")\n\n    text(\"In value-based RL:\")\n    text(\"- Model-free Monte Carlo uses $u_t$\")\n    text(r\"- SARSA uses $r_t + \\gamma \\hat Q(s_{t+1}, a_{t+1})$\")\n\n    text(r\"Key idea \ud83d\udca1: **bootstrapping**\")\n\n    text(r\"In the context of policy gradient, replace $u_t$ with $\\hat Q(s_t, a_t)$.\")\n    text(r\"$\\displaystyle \\nabla_\\theta J(\\theta, \\tau) = \\sum_t \\nabla_\\theta \\log \\pi_\\theta(a_t \\mid s_t) (\\hat Q(s_t, a_t) - \\hat V(s_t))$\")\n\n    text(r\"**Actor-critic** methods simultaneously learn\")\n    text(r\"- **Actor**: the policy $\\pi_\\theta$ that we care about\")\n    text(r\"- **Critic**: the values $\\hat Q, \\hat V$ that tell us how well we're doing\")\n    image(\"images/rl-actor-critic.svg\", width=600)\n\n    bootstrapping_example()\n\n    text(\"**Proximal Policy Optimization (PPO)** \"), link(\"https://arxiv.org/abs/1707.06347\")\n    text(\"- An actor-critic method: the advantages $\\\\hat A_t$ come from a learned critic $\\\\hat V$\")\n    text(\"- Generating rollouts is expensive, so reuse each batch of rollouts for several gradient steps\")\n    text(r\"- But then the rollouts come from an older policy $\\pi_{\\theta_\\text{old}}$, so reweight by the ratio $\\rho_t = \\frac{\\pi_\\theta(a_t \\mid s_t)}{\\pi_{\\theta_\\text{old}}(a_t \\mid s_t)}$\")\n    text(r\"- Clip the ratio so the policy doesn't move too far from the one that generated the data: $\\displaystyle \\min\\big(\\rho_t \\hat A_t, \\text{clip}(\\rho_t, 1 - \\epsilon, 1 + \\epsilon) \\hat A_t\\big)$\")\n    text(\"- Widely used (e.g., games, robotics, and RLHF for language models)\")\n\n\ndef bootstrapping_example():\n    text(\"Example: a game show with a door and then a spin of a wheel\")\n    mdp = GameShow3MDP()  # @stepover\n    graph(draw_mdp_graph(mdp))  # @stepover\n    p = torch.sigmoid(torch.tensor(0.))  # \u03c0(left | S) @inspect p\n    pi = door_policy(p)\n    rollouts = enumerate_rollouts(mdp, pi)  # @stepover\n    true_gradient = p * (1 - p) * torch.tensor([1.])  # Left is 1 point better @inspect true_gradient\n\n    text(\"Values (computed exactly here; in practice, a critic learns them):\")\n    value_a = sum(step.prob * step.reward for step in mdp.successors(\"A\"))  # V(A): expected spin @inspect value_a\n    q_left = 1 + value_a  # Q(S, left) @inspect q_left\n    q_right = 0 + value_a  # Q(S, right) @inspect q_right\n    value_s = p * q_left + (1 - p) * q_right  # V(S) @inspect value_s\n\n    text(r\"Baseline: the door gets credit $u_0 - V(S)$, which includes the luck of the spin\")\n    def baseline_estimator(rollout: Rollout) -> torch.Tensor:\n        return door_scores(rollout, p) * (rollout.utility - value_s)\n    result1 = evaluate_gradient_estimator(baseline_estimator, rollouts)  # @inspect result1 @stepover\n\n    text(r\"Critic: the door gets credit $A(S, a_0) = Q(S, a_0) - V(S)$ (averages over the spin)\")\n    def critic_estimator(rollout: Rollout) -> torch.Tensor:\n        q = q_left if rollout.steps[0].action == \"left\" else q_right  # @inspect q\n        return door_scores(rollout, p) * (q - value_s)\n    result2 = evaluate_gradient_estimator(critic_estimator, rollouts)  # @inspect result2 @stepover\n\n    text(\"The critic has zero variance here: the door is judged only by its own effect.\")\n    text(r\"Caveat: we used the true $Q$ and $V$; in practice, they are learned (biased) estimates $\\hat Q$ and $\\hat V$.\")\n\n\ndef evaluate_estimator(estimator, num_traces: int = 5, num_samples: int = 200) -> torch.Tensor:\n    \"\"\"\n    Run `num_traces` independent traces; in each, draw `num_samples` estimates and average the first n for each n.\n    Return the running averages [num_traces, num_samples] (each row converges to the true mean if the estimator is unbiased).\n    \"\"\"\n    samples = torch.tensor([[float(estimator()) for _ in range(num_samples)] for _ in range(num_traces)])  # @stepover\n    running_means = torch.cumsum(samples, dim=1) / torch.arange(1, num_samples + 1)  # [num_traces, num_samples]\n    return running_means\n\n\ndef plot_running_means(running_means: torch.Tensor, mu: torch.Tensor, title: str):\n    \"\"\"Plot each trace of `running_means` against the number of samples, with the true mean `mu` as a dashed line.\"\"\"\n    values = [{\"trace\": k, \"n\": n + 1, \"estimate\": value}\n              for k, row in enumerate(running_means.tolist()) for n, value in enumerate(row)]\n    traces = Chart(Data(values=values)).mark_line(clip=True, opacity=0.8).encode(\n        x=alt.X(\"n:Q\", title=\"number of samples\"),\n        y=alt.Y(\"estimate:Q\", title=\"average of the estimates\").scale(domain=[-3, 5]),  # Same scale for all estimators (the first few samples go off the chart)\n        color=alt.Color(\"trace:N\").legend(None),\n    )\n    truth = Chart(Data(values=[{\"mu\": mu.item()}])).mark_rule(strokeDash=[4, 4], color=\"black\").encode(y=\"mu:Q\")\n    plot(alt.layer(traces, truth).properties(title=title).to_dict())\n\n\ndef rollout_states(mdp: MDP, rollout: Rollout) -> list[Any]:\n    \"\"\"Return the state s_t that each action a_t in the rollout was taken in.\"\"\"\n    return [mdp.start_state()] + [step.state for step in rollout.steps[:-1]]\n\n\ndef gradient_by_state(mdp: MDP, rollout: Rollout, p: torch.Tensor, credits: torch.Tensor) -> torch.Tensor:\n    \"\"\"Return the gradient for each parameter \u03b8_s (states S, A, B): the sum of score \u00d7 credit over the steps taken in s.\"\"\"\n    gradient = torch.zeros(3)\n    for state, score, credit in zip(rollout_states(mdp, rollout), door_scores(rollout, p), credits):\n        i = \"SAB\".index(state)\n        gradient[i] = gradient[i] + score * credit\n    return gradient\n\n\ndef door_policy(p: torch.Tensor):\n    \"\"\"Return pi(state, action) = \u03c0_\u03b8(action | state), where every door has \u03c0_\u03b8(left | s) = p (spins have only one action).\"\"\"\n    def pi(state: Any, action: str) -> torch.Tensor:\n        if action == \"left\":\n            return p\n        if action == \"right\":\n            return 1 - p\n        return torch.tensor(1.)\n    return pi\n\n\ndef door_scores(rollout: Rollout, p: torch.Tensor) -> torch.Tensor:\n    \"\"\"For each door in the rollout, \u2207_{\u03b8_s} log \u03c0_\u03b8(a | s) = 1[a = left] - p (spins have no parameters).\"\"\"\n    return torch.stack([float(step.action == \"left\") - p for step in rollout.steps if step.action != \"spin\"])\n\n\ndef utilities_from_each_step(rollout: Rollout) -> torch.Tensor:\n    \"\"\"For each step t, return u_t = r_t + r_{t+1} + ... (no discounting).\"\"\"\n    rewards = torch.tensor([float(step.reward) for step in rollout.steps])\n    return torch.flip(torch.cumsum(torch.flip(rewards, dims=[0]), dim=0), dims=[0])\n\n\ndef make_gradient_table(rollouts: list[tuple[torch.Tensor, Rollout]], estimators: dict) -> str:\n    \"\"\"Return a markdown table with a row for each rollout (actions, probability) and a column for each estimator's gradient.\"\"\"\n    lines = [\n        \"| rollout | probability | \" + \" | \".join(estimators) + \" |\",\n        \"|---\" * (2 + len(estimators)) + \"|\",\n    ]\n    for prob, rollout in rollouts:\n        actions = \", \".join(f\"`{step.action}`\" for step in rollout.steps)\n        gradients = [\"(\" + \", \".join(f\"{g + 0:g}\" for g in estimator(rollout).tolist()) + \")\" for estimator in estimators.values()]  # + 0 turns -0 into 0\n        lines.append(f\"| {actions} | {prob.item():g} | \" + \" | \".join(gradients) + \" |\")\n    return \"\\n\".join(lines)\n\n\nclass GameShowReinforce(Reinforce):\n    \"\"\"REINFORCE (from last time), with one-hot features for the game show's states (S, A, ...) instead of locations 1, 2, ...\"\"\"\n    def phi(self, state: str) -> torch.Tensor:\n        return one_hot(\"SAB\".index(state), self.num_locs)\n\n\nclass FutureUtility(GameShowReinforce):\n    \"\"\"REINFORCE, except that each action a_t gets credit u_t (the utility from step t on) instead of u(\u03c4).\"\"\"\n    def incorporate_feedback(self, state: str, action: str, reward: float, next_state: str, is_end: bool) -> None:\n        \"\"\"Update the policy parameters.\"\"\"\n        # Remember the rollout\n        if self.start_state is None:\n            self.start_state = state\n        self.rollout.append(Step(action=action, prob=1, reward=reward, state=next_state))  # @inspect self.rollout\n\n        if is_end:\n            # Compute the loss, going backwards so that we can accumulate the future utility\n            loss = 0  # @inspect loss\n            utilities = [None] * len(self.rollout) + [0]  # @inspect utilities\n            for t in reversed(range(len(self.rollout))):\n                state = self.start_state if t == 0 else self.rollout[t - 1].state  # @inspect state\n                action = self.rollout[t].action  # @inspect action\n                reward = self.rollout[t].reward  # @inspect reward\n                utilities[t] = reward + self.discount * utilities[t + 1]  # u_t = r_t + \u03b3 u_{t+1} @inspect utilities\n\n                # Compute cross-entropy loss for state -> action (= -log \u03c0_\u03b8(a_t | s_t))\n                phi = self.phi(state)  # @inspect phi @stepover\n                logits = self.mask_invalid_actions(state, self.model(phi))  # @inspect logits @stepover\n                cross_entropy = nn.CrossEntropyLoss()\n                target = one_hot(self.actions.index(action), len(self.actions))  # @inspect target\n                loss += utilities[t] * cross_entropy(logits, target)  # Weight by u_t instead of u(\u03c4) @inspect loss\n\n            # Update parameters\n            self.optimizer.zero_grad()\n            loss.backward()\n            self.optimizer.step()  # @inspect self\n\n            # Reset the rollout\n            self.start_state = None\n            self.rollout = []\n            self.utility = 0\n\n\nlearning_curves: dict[str, dict[str, list[float]]] = {}  # method -> quantity -> value after each rollout\n\n\ndef run_rl(mdp: MDP, agent_class: type, num_trials: int = 10, num_rollouts: int = 200, learning_rate: float = 0.05) -> dict[str, list[float]]:\n    \"\"\"\n    Train `num_trials` agents of `agent_class` on `mdp` (each with a different random seed) for `num_rollouts` rollouts.\n    Return the expected utility of the policy and \u03c0(left | A) after each rollout, averaged over the trials.\n    \"\"\"\n    utilities = np.zeros(num_rollouts + 1)\n    probs = np.zeros(num_rollouts + 1)\n    for trial in range(num_trials):\n        set_random_seed(trial)\n        agent = agent_class(num_locs=2, actions=[\"left\", \"right\"], valid_actions=mdp.actions, discount=1, learning_rate=learning_rate)\n        for i in range(num_rollouts + 1):\n            if i > 0:\n                generate_rollout_rl(mdp, agent)\n            pi = lambda state, action: torch.tensor(agent.pi(state)[action])\n            utilities[i] += sum(prob.item() * rollout.utility for prob, rollout in enumerate_rollouts(mdp, pi)) / num_trials\n            probs[i] += agent.pi(\"A\")[\"left\"] / num_trials\n    return {\"utility\": utilities.tolist(), \"pi_left_A\": probs.tolist()}\n\n\ndef plot_learning_curves(quantity: str, title: str):\n    \"\"\"Plot `quantity` after each rollout, one line per method trained so far.\"\"\"\n    values = [{\"method\": name, \"rollout\": i, \"value\": value}\n              for name, curves in learning_curves.items() for i, value in enumerate(curves[quantity])]\n    plot(Chart(Data(values=values)).mark_line().encode(\n        x=\"rollout:Q\",\n        y=alt.Y(\"value:Q\", title=title).scale(zero=False),\n        color=alt.Color(\"method:N\").sort(list(learning_curves.keys())),\n    ).properties(title=title).to_dict())\n\n\ndef enumerate_rollouts(mdp: MDP, pi) -> list[tuple[torch.Tensor, Rollout]]:\n    \"\"\"Return all (probability, rollout) pairs, where `pi(state, action)` is the probability of taking `action` in `state`.\"\"\"\n    def recurse(state: Any, steps: list[Step], prob: torch.Tensor) -> list[tuple[torch.Tensor, Rollout]]:\n        if mdp.is_end(state):\n            return [(prob, Rollout(steps=steps, discount=1))]\n        result = []\n        for step in mdp.successors(state):\n            result += recurse(step.state, steps + [step], prob * pi(state, step.action) * step.prob)\n        return result\n    return recurse(mdp.start_state(), [], torch.tensor(1.))\n\n\ndef evaluate_gradient_estimator(estimator, rollouts: list[tuple[torch.Tensor, Rollout]]):\n    # Exact mean and variance over all rollouts (weighted by their probabilities)\n    probs = torch.stack([prob for prob, _ in rollouts])  # @inspect probs\n    estimates = torch.stack([torch.as_tensor(estimator(rollout)) for _, rollout in rollouts])  # @inspect estimates @stepover\n    mean = probs @ estimates  # Compare with the true gradient @inspect mean\n    variance = probs @ (estimates - mean) ** 2  # @inspect variance\n    return {\n        \"mean\": mean,\n        \"variance\": variance,\n    }\n\n\ndef critic_free():\n    text(r\"Actor-critic methods require estimating value functions $\\hat Q, \\hat V$, which are generally neural networks too.\")\n\n    text(\"Motivation: large language models\")\n    text(\"- State: the prompt plus the tokens generated so far\")\n    text(\"- Action: the next token\")\n    text(\"- Transition: deterministic (append the token to the state)\")\n    text(\"- Reward: only at the end (e.g., 1 if the final answer is correct according to a verifier, 0 otherwise)\")\n\n    text(\"Key structure \ud83d\udd01: can reset the environment to the same state (usually can't in robotics)\")\n    text(\"Key idea \ud83d\udca1: estimate the advantages from rollouts\")\n    image(\"images/rl-policy-gradient.svg\", width=600)\n\n    text(\"**REINFORCE Leave-One-Out (RLOO)** \"), link(\"https://arxiv.org/abs/2402.14740\")\n    text(r\"For a prompt $x$, sample $G$ responses $y_1, \\dots, y_G$ and compute their utilities $u_1, \\dots, u_G$.\")\n    text(r\"Baseline for response $i$: the average utility of the **other** $G - 1$ responses (an estimate of $V(x)$)\")\n    text(r\"Advantage of response $i$: $\\displaystyle \\hat A_i = u_i - \\frac{1}{G - 1} \\sum_{j \\neq i} u_j$\")\n    text(r\"- Update: $\\displaystyle \\nabla_\\theta J(\\theta) = \\frac{1}{G} \\sum_{i=1}^G \\hat A_i \\sum_t \\nabla_\\theta \\log \\pi_\\theta(y_{i,t} \\mid x, y_{i,<t})$\")\n    text(\"Leave out response $i$ so that the baseline doesn't depend on its own action (unbiased).\")\n    rewards = torch.tensor([1., 0., 0., 1., 0., 0., 0., 0.])  # 2 out of 8 correct @inspect rewards\n    num_responses = len(rewards)  # G @inspect num_responses\n    baselines = (torch.sum(rewards) - rewards) / (num_responses - 1)  # Average of the other responses @inspect baselines\n    advantages = rewards - baselines  # @inspect advantages\n    text(\"Then apply REINFORCE: every token in response $i$ gets credit $\\\\hat A_i$.\")\n\n    text(\"**Group Relative Policy Optimization (GRPO)** \"), link(\"https://arxiv.org/abs/2402.03300\")\n\n    text(\"Idea: use a baseline computed from other responses to the same prompt (no learned critic).\")\n    text(r\"- For a prompt $x$, sample a group of $G$ responses and check which are correct:\")\n    rewards = torch.tensor([1., 0., 0., 1., 0., 0., 0., 0.])  # @inspect rewards\n    baseline = torch.mean(rewards)  # Estimate of V(x): how hard is this prompt? @inspect baseline\n    advantages = rewards - baseline  # @inspect advantages\n    text(\"- Normalize by the standard deviation of the group\")\n\n    text(\"Formally, for a prompt $x$:\")\n    text(r\"- Sample $G$ responses $y_1, \\dots, y_G$ from $\\pi_\\theta(\\cdot \\mid x)$ and compute their utilities $u_1, \\dots, u_G$\")\n    text(r\"- Advantage of response $i$: $\\displaystyle \\hat A_i = \\frac{u_i - \\text{mean}(u_1, \\dots, u_G)}{\\text{std}(u_1, \\dots, u_G)}$\")\n    text(r\"- Update: $\\displaystyle \\nabla_\\theta J(\\theta) = \\frac{1}{G} \\sum_{i=1}^G \\hat A_i \\sum_t \\nabla_\\theta \\log \\pi_\\theta(y_{i,t} \\mid x, y_{i,<t})$\")\n    text(\"The full GRPO objective also clips the update (like PPO) and adds a KL penalty to stay close to the original model.\")\n\n    text(\"What if the prompt is too easy or too hard?\")\n    rewards = torch.tensor([1., 1., 1., 1., 1., 1., 1., 1.])  # @inspect rewards\n    advantages = rewards - torch.mean(rewards)  # @inspect advantages\n    rewards = torch.tensor([0., 0., 0., 0., 0., 0., 0., 0.])  # @inspect rewards\n    advantages = rewards - torch.mean(rewards)  # @inspect advantages\n    text(\"All advantages are zero: no learning signal (so choose prompts of the right difficulty).\")\n\n\nif __name__ == \"__main__\":\n    main()\n"
+    "improved_policy_gradient.py": "from edtrace import text, image, link, graph, plot\nfrom mdp import MDP, FlakyTramMDP, Step, Rollout, draw_mdp_graph, draw_rollout_graph\nfrom reinforcement_learning import generate_rollout_rl\nfrom policy_gradient import Reinforce\nfrom typing import Any\nimport altair as alt\nfrom altair import Chart, Data\nimport numpy as np\nimport torch\nimport torch.nn as nn\nfrom util import set_random_seed, one_hot, cached\n\n\ndef main():\n    text(\"# Improved policy gradient\")\n    text(r\"Last unit: policy gradient (REINFORCE) optimizes the policy $\\pi_\\theta(a \\mid s)$ directly\")\n    text(\"This unit: better policy gradient methods\")\n\n    review_policy_gradient()\n    credit_assignment()\n    variance_reduction()\n\n    future_utility()\n    baselines()\n    bootstrapping()\n    critic_free()\n\n    text(\"Summary:\")\n    text(r\"- The game: find a low-bias, low-variance estimate of $\\mathbb E_{\\tau \\sim p_\\theta}[\\nabla_\\theta \\log p_\\theta(\\tau) u(\\tau)]$\")\n    text(\"- Variance reduction = better credit assignment\")\n    text(\"- Idea 1: use future utility $u_t$ instead of utility of entire rollout\")\n    text(\"- Idea 2: use baselines (is this action good relative to other actions?)\")\n    text(\"- Idea 3: use bootstrapping (use $\\hat Q(s_t, a_t)$ instead of $u_t$)\")\n\n    text(\"Next time: what if there are adversaries in the environment?\")\n\n\ndef review_policy_gradient():\n    text(\"Three ways to get a policy:\")\n    text(r\"- Model-based: estimate the MDP $\\to$ $\\hat Q(s, a)$ $\\to$ policy $\\pi(s)$\")\n    image(\"images/rl-model-based.svg\", width=600)\n    text(r\"- Value-based: estimate Q-values $\\hat Q(s, a)$ $\\to$ policy $\\pi(s)$\")\n    image(\"images/rl-q-learning.svg\", width=600)\n    text(r\"- Policy-based: estimate the policy $\\pi_\\theta(a \\mid s)$ directly\")\n    image(\"images/rl-policy-gradient.svg\", width=600)\n\n    text(r\"Think of the policy as a probabilistic classifier (input $s$ $\\to$ distribution over actions $a$).\")\n\n    text(r\"**Imitation learning**: given an expert demonstration $(s_0, a_0, s_1, a_1, \\dots)$\")\n    text(r\"- Maximize $\\displaystyle \\sum_t \\log \\pi_\\theta(a_t \\mid s_t)$\")\n\n    text(r\"**Reinforcement learning**: we don't have demonstrations!\")\n    text(\"- Agent has to actively collect its own data\")\n    text(\"- Only get rewards (could be delayed!)\")\n\n    text(r\"Given a fixed policy $\\pi_\\theta$\")\n    text(r\"...we can sample a rollout $\\tau = (s_0, a_0, r_0, s_1, a_1, r_1, \\dots)$\")\n    text(r\"...with utility $u(\\tau) = r_0 + \\gamma r_1 + \\gamma^2 r_2 + \\cdots$\")\n    text(r\"...and probability $\\displaystyle p_\\theta(\\tau) = \\prod_t \\underbrace{\\pi_\\theta(a_t \\mid s_t)}_\\text{policy} \\, \\underbrace{T(s_t, a_t, s_{t+1})}_\\text{transitions}$\")\n\n    text(r\"Objective: find the policy $\\pi_\\theta$ that maximizes expected utility\")\n    text(r\"$\\displaystyle V(\\theta) = \\mathbb E_{\\tau \\sim p_\\theta}[u(\\tau)] = \\sum_\\tau p_\\theta(\\tau) u(\\tau)$\")\n\n    text(r\"To optimize $V(\\theta)$, we need to take the gradient.\")\n    text(r\"We can't compute $V(\\theta)$ or $\\nabla V(\\theta)$ exactly because of the sum over exponentially many rollouts $\\tau$.\")\n\n    text(r\"**Policy gradient theorem**: $\\nabla_\\theta V(\\theta) = \\mathbb E_{\\tau \\sim p_\\theta}[u(\\tau) \\nabla_\\theta \\log p_\\theta(\\tau)]$\")\n\n    text(\"This shows a natural way to estimate the gradient (REINFORCE):\")\n    text(r\"1. Sample rollout $\\tau \\sim p_\\theta$ given current policy $\\pi_\\theta$\")\n    text(r\"2. Compute $\\nabla_\\theta J(\\theta, \\tau) = u(\\tau) \\nabla_\\theta \\log p_\\theta(\\tau)$\")\n    text(r\"3. Update policy $\\pi_\\theta$ using gradient: $\\theta \\leftarrow \\theta + \\eta \\nabla_\\theta J(\\theta, \\tau)$ (gradient ascent)\")\n\n    text(\"REINFORCE provides an unbiased estimate of the policy gradient:\")\n    text(r\"- $\\mathbb E_{\\tau \\sim p_\\theta}[\\nabla_\\theta J(\\theta, \\tau)] = \\nabla_\\theta V(\\theta)$\")\n    text(r\"- Note: this only applies to the gradient, not the function: $\\mathbb E_{\\tau \\sim p_\\theta}[J(\\theta, \\tau)] \\neq V(\\theta)$\")\n\n    text(r\"The transitions $T$ don't depend on $\\theta$, so we don't need to know the MDP:\")\n    text(r\"$\\displaystyle \\nabla_\\theta J(\\theta, \\tau) = u(\\tau) \\nabla_\\theta \\log p_\\theta(\\tau) = u(\\tau) \\sum_t \\nabla_\\theta \\log \\pi_\\theta(a_t \\mid s_t)$\")\n\n    text(\"Interpretation: imitation learning on the agent's own rollouts, weighted by their utility.\")\n\n    text(\"**Example**: flaky tram MDP\")\n    mdp = FlakyTramMDP(num_locs=6, failure_prob=0.1)  # @stepover\n    rollout = Rollout(steps=[  # @inspect rollout\n        Step(action=\"walk\", prob=1, reward=-1, state=2),\n        Step(action=\"walk\", prob=1, reward=-1, state=3),\n        Step(action=\"tram\", prob=1, reward=-2, state=6),\n    ], discount=1)\n    graph(draw_rollout_graph(mdp, rollout))  # @stepover\n    text(r\"$\\displaystyle \\nabla_\\theta J(\\theta, \\tau) = -4 \\big(\\nabla_\\theta \\log \\pi_\\theta(\\text{walk} \\mid 1) + \\nabla_\\theta \\log \\pi_\\theta(\\text{walk} \\mid 2) + \\nabla_\\theta \\log \\pi_\\theta(\\text{tram} \\mid 3)\\big)$\")\n\n    text(\"REINFORCE is the simplest policy gradient method.\")\n    text(\"How can we improve on REINFORCE?\")\n\n\nclass GameShow1MDP(MDP):\n    \"\"\"\n    Choose a door twice (no luck): in step 1, left is worth 10 points and right 1;\n    in step 2, left is worth 2 points and right 1.\n    Illustrates using the future utility: step 2 shouldn't get credit for the points from step 1.\n    \"\"\"\n    def start_state(self) -> Any:\n        return \"S\"\n\n    def successors(self, state: Any) -> list[Step]:\n        if state == \"S\":  # Step 1: left is worth 9 points more than right\n            return [\n                Step(action=\"left\", prob=1, reward=10, state=\"A\"),\n                Step(action=\"right\", prob=1, reward=1, state=\"A\"),\n            ]\n        if state == \"A\":  # Step 2: left is worth 1 point more than right\n            return [\n                Step(action=\"left\", prob=1, reward=2, state=\"E\"),\n                Step(action=\"right\", prob=1, reward=1, state=\"E\"),\n            ]\n        return []\n\n    def is_end(self, state: Any) -> bool:\n        return state == \"E\"\n\n    def discount(self) -> float:\n        return 1\n\n    def graph_layout(self) -> dict:\n        return game_show_layout([\"S\", \"A\", \"E\"])\n\n\nclass GameShow2MDP(MDP):\n    \"\"\"\n    Choose a room (no points): left (A) or right (B). Then choose a door: in the left room, left is worth 11 points and right 10;\n    in the right room, left is worth 2 points and right 1.\n    Illustrates baselines: in both rooms, left is 1 point better, but the rooms are worth very different amounts.\n    \"\"\"\n    def start_state(self) -> Any:\n        return \"S\"\n\n    def successors(self, state: Any) -> list[Step]:\n        if state == \"S\":  # Choose a room (no points)\n            return [\n                Step(action=\"left\", prob=1, reward=0, state=\"A\"),\n                Step(action=\"right\", prob=1, reward=0, state=\"B\"),\n            ]\n        if state == \"A\":  # Left room: left is worth 1 point more than right\n            return [\n                Step(action=\"left\", prob=1, reward=11, state=\"E\"),\n                Step(action=\"right\", prob=1, reward=10, state=\"E\"),\n            ]\n        if state == \"B\":  # Right room: left is worth 1 point more than right\n            return [\n                Step(action=\"left\", prob=1, reward=2, state=\"E\"),\n                Step(action=\"right\", prob=1, reward=1, state=\"E\"),\n            ]\n        return []\n\n    def is_end(self, state: Any) -> bool:\n        return state == \"E\"\n\n    def discount(self) -> float:\n        return 1\n\n    def graph_layout(self) -> dict:\n        \"\"\"How to draw this MDP (used by `draw_mdp_graph`): the left room above, the right room below.\"\"\"\n        spacing = 160\n        return {\n            \"position\": {\"S\": (0, 0), \"A\": (spacing, -80), \"B\": (spacing, 80), \"E\": (2 * spacing, 0)}.get,\n            \"chance_offsets\": {\"left\": (spacing / 2, -45), \"right\": (spacing / 2, 45)},\n            \"curve\": lambda state, step: None,\n            \"width\": 2 * spacing + 80,\n            \"height\": 340,\n        }\n\n\nclass GameShow3MDP(MDP):\n    \"\"\"\n    Choose a door (left is worth 1 point, right 0), then spin a wheel (0 or 20 points, luck).\n    Illustrates critics: the door shouldn't get credit (or blame) for the luck of the spin.\n    \"\"\"\n    def start_state(self) -> Any:\n        return \"S\"\n\n    def successors(self, state: Any) -> list[Step]:\n        if state == \"S\":  # Door: left is worth 1 point more than right\n            return [\n                Step(action=\"left\", prob=1, reward=1, state=\"A\"),\n                Step(action=\"right\", prob=1, reward=0, state=\"A\"),\n            ]\n        if state == \"A\":  # Spin a wheel: 0 or 20 points\n            return [\n                Step(action=\"spin\", prob=0.5, reward=0, state=\"E\"),\n                Step(action=\"spin\", prob=0.5, reward=20, state=\"E\"),\n            ]\n        return []\n\n    def is_end(self, state: Any) -> bool:\n        return state == \"E\"\n\n    def discount(self) -> float:\n        return 1\n\n    def graph_layout(self) -> dict:\n        return game_show_layout([\"S\", \"A\", \"E\"])\n\n\ndef game_show_layout(states: list[str]) -> dict:\n    \"\"\"How to draw a game show (used by `draw_mdp_graph`): states on a line, left and spin above, right below.\"\"\"\n    spacing = 160\n    return {\n        \"position\": lambda state: (spacing * states.index(state), 0),\n        \"chance_offsets\": {\"left\": (spacing / 2, -50), \"spin\": (spacing / 2, -50), \"right\": (spacing / 2, 50)},\n        # The two outcomes of a spin go to the same state, so bend them apart\n        \"curve\": lambda state, step: (20 if step.reward > 0 else -20) if step.action == \"spin\" else None,\n        \"width\": spacing * (len(states) - 1) + 80,\n        \"height\": 210,\n    }\n\n\ndef credit_assignment():\n    text(\"Reinforcement learning is hard because:\")\n    text(\"1. Agent has to collect its own data (rollouts)\")\n    text(\"2. Rewards can be delayed\")\n\n    text(\"The immediate reward doesn't tell you how good the last action was!\")\n\n    text(\"**Example** (robotics):\")\n    image(\"https://rail.eecs.berkeley.edu/datasets/bridge_release/raw/bridge_data_v1/berkeley/toykitchen2/put_potato_in_pot_cardboard_fence/2022-01-28_11-25-48/raw/traj_group0/traj13/images0/im_0.jpg\", width=200)\n    text(\"- Task: put the potato in the pot\")\n    text(\"- States: camera image + positions of the robot's joints\")\n    text(\"- Actions: small motions of the gripper (move, rotate, open, close)\")\n    text(\"- Reward: 1 if the potato ends up in the pot (after hundreds of actions), 0 otherwise\")\n    text(\"- If the potato slips out at the end, was it the approach, the grasp, or the release?\")\n\n    text(\"**Example** (math):\")\n    text(\"- States: problem + solution generated so far\")\n    text(\"- Actions: generate next token\")\n    text(\"- Reward: 1 if the final answer is correct, 0 otherwise\")\n    text(\"Problem: *What is the sum of the first 100 positive integers?*\")\n    text(r\"Solution: *Pair up the numbers: $1 + 100 = 2 + 99 = \\cdots = 101$. There are $100$ pairs, so the sum is $100 \\cdot 101 = 10100$.*\")\n    text(\"- Reward: 0 (the answer is 5050)\")\n    text(\"- The idea of pairing up the numbers was great; the mistake is \\\"100 pairs\\\" (should be 50)\")\n    text(\"- Which tokens are to blame?\")\n\n    text(\"Examine the REINFORCE gradient:\")\n    text(r\"$\\displaystyle \\nabla_\\theta J(\\theta, \\tau) = \\underbrace{u(\\tau)}_\\text{same for every $t$} \\sum_t \\nabla_\\theta \\log \\pi_\\theta(a_t \\mid s_t)$\")\n    text(r\"REINFORCE gives **every** action $a_t$ in the rollout the same credit (or blame) $u(\\tau)$.\")\n\n    text(\"Mathematically sound: it's still an unbiased estimate of the policy gradient!\")\n    text(\"After averaging over many rollouts, the good actions do come out ahead.\")\n\n    text(\"**Credit assignment problem**: which actions are responsible for the outcome?\")\n\n    text(\"**Example** (game show):\")\n    mdp = GameShow1MDP()  # @stepover\n    graph(draw_mdp_graph(mdp))  # @stepover\n    text(\"1. Choose a door: `left` (10 points) or `right` (1 point)\")\n    text(\"2. Choose a door: `left` (2 points) or `right` (1 point)\")\n\n    rollout = Rollout(steps=[Step(action=\"left\", prob=1, reward=10, state=\"A\"), Step(action=\"right\", prob=1, reward=1, state=\"E\")], discount=1)\n    graph(draw_rollout_graph(mdp, rollout, show_utility=True))  # @stepover\n    rollout = Rollout(steps=[Step(action=\"right\", prob=1, reward=1, state=\"A\"), Step(action=\"left\", prob=1, reward=2, state=\"E\")], discount=1)\n    graph(draw_rollout_graph(mdp, rollout, show_utility=True))  # @stepover\n    text(\"Step 2: from A, `right` (utility 11) looks better than `left` (utility 3)\")\n\n    text(r\"Policy:\")\n    text(r\"- $\\pi_\\theta(\\text{left} \\mid S) = \\sigma(\\theta_S)$\")\n    text(r\"- $\\pi_\\theta(\\text{left} \\mid A) = \\sigma(\\theta_A)$\")\n    text(r\"- $\\sigma(\\theta) = (1 + e^{-\\theta})^{-1}$ is the logistic function\")\n    text(r\"- Initialize $\\theta = 0$, which gives a uniform distribution over $\\{\\text{left}, \\text{right}\\}$\")\n\n    text(\"Let's run REINFORCE (from last time) on this game show.\")\n    text(\"We train 10 times (with different random seeds) and average:\")\n    set_random_seed(0)  # So that the cache key is deterministic (run_rl seeds each trial itself)\n    learning_curves[\"REINFORCE\"] = cached(run_rl)(mdp, GameShowReinforce)  # @stepover\n    text(r\"Expected utility $V(\\theta)$ of the policy after each rollout (the best possible is 12):\")\n    plot_learning_curves(\"utility\", \"expected utility\")  # @stepover\n    text(r\"Probability of choosing `left` in step 2 (the better choice):\")\n    plot_learning_curves(\"pi_left_A\", \"\u03c0(left | A)\")  # @stepover\n    text(\"REINFORCE can get stuck choosing `right` in step 2:\")\n    text(\"- Once step 1 always chooses `left`, every rollout has utility 11 or 12\")\n    text(\"- So whatever step 2 chooses gets pushed up by about 11\")\n    text(\"- If `right` gets ahead early, it keeps getting pushed up\")\n\n    text(\"How do we fix this?\")\n\n\ndef variance_reduction():\n    text(\"We can understand improvements to REINFORCE through the lens of variance reduction.\")\n\n    text(\"Consider the simple mean estimation problem:\")\n    text(r\"$\\displaystyle \\mu = \\mathbb E_{i \\sim p}[f(i)] = \\sum_i p(i) f(i)$\")\n    set_random_seed(3)\n    probs = torch.tensor([0.1, 0.4, 0.2, 0.3])  # p(0), p(1), ... @inspect probs\n    points = torch.tensor([-4., -6., 6., 8.])  # f(0), f(1), ... @inspect points\n\n    text(r\"This is the true mean $\\mu$ that we want to estimate (in general, unknown):\")\n    mu = probs @ points  # @inspect mu\n\n    text(r\"An **estimator** is any random variable that tries to get close to $\\mu$.\")\n    text(\"Each estimator has a **bias** and a **variance** (and a cost).\")\n\n    text(r\"**Estimator 1** (one sample)\")\n    text(r\"The simplest estimator of $\\mu$:\")\n    text(r\"Sample a single $i \\sim p$ and return $f(i)$.\")\n    def estimator1():\n        index = torch.multinomial(probs, num_samples=1)  # @inspect index\n        estimate = points[index]  # @inspect estimate\n        return estimate\n    estimate = estimator1()  # @inspect estimate\n    estimate = estimator1()  # @inspect estimate @stepover\n    estimate = estimator1()  # @inspect estimate @stepover\n    running_means = evaluate_estimator(estimator1)  # @stepover\n    plot_running_means(running_means, mu, title=\"one sample\")  # @stepover\n    text(r\"Each line is an independent run: the average of the first $n$ estimates (the dashed line is $\\mu$).\")\n    text(\"All runs converge to the true mean (the estimator is unbiased); how fast depends on the variance.\")\n\n    text(r\"**Estimator 2** (average of 5 samples)\")\n    text(\"A more expensive estimator is to sample 5 points and average them:\")\n    def estimator2():\n        indices = torch.multinomial(probs, num_samples=5, replacement=True)  # @inspect indices\n        values = points[indices]  # @inspect values\n        estimate = torch.mean(values)  # @inspect estimate\n        return estimate\n    estimate = estimator2()  # @inspect estimate\n    estimate = estimator2()  # @inspect estimate @stepover\n    estimate = estimator2()  # @inspect estimate @stepover\n    running_means = evaluate_estimator(estimator2)  # @stepover\n    plot_running_means(running_means, mu, title=\"average of 5 samples\")  # @stepover\n\n    text(r\"**Estimator 3** (one sample + noise)\")\n    text(\"A worse estimator is to add noise, but it's still unbiased:\")\n    def estimator3():\n        # Add noise\n        index = torch.multinomial(probs, num_samples=1)  # @inspect index\n        noise = 10 * torch.randn(1)  # @inspect noise\n        estimate = points[index] + noise  # @inspect estimate\n        return estimate\n    estimate = estimator3()  # @inspect estimate\n    estimate = estimator3()  # @inspect estimate @stepover\n    estimate = estimator3()  # @inspect estimate @stepover\n    running_means = evaluate_estimator(estimator3)  # @stepover\n    plot_running_means(running_means, mu, title=\"one sample + noise\")  # @stepover\n\n    text(r\"**Estimator 4** (one sample with offset)\")\n    text(r\"Suppose we have a magic function $\\text{offset}(i)$ that has mean 0: $\\mathbb E_{i \\sim p}[\\text{offset}(i)] = 0$.\")\n    text(r\"Then $\\mathbb E[f(i) - \\text{offset}(i)] = \\mathbb E[f(i)] - \\mathbb E[\\text{offset}(i)] = \\mathbb E[f(i)]$, so $f(i) - \\text{offset}(i)$ is also unbiased.\")\n    def estimator4():\n        offsets = torch.tensor([-6., -6., 6., 6.])\n        index = torch.multinomial(probs, num_samples=1)  # @inspect index\n        estimate = points[index] - offsets[index]  # @inspect estimate\n        return estimate\n    estimate = estimator4()  # @inspect estimate\n    estimate = estimator4()  # @inspect estimate @stepover\n    estimate = estimator4()  # @inspect estimate @stepover\n    running_means = evaluate_estimator(estimator4)  # @stepover\n    plot_running_means(running_means, mu, title=\"one sample with offset\")  # @stepover\n    text(\"Same cost as the simplest estimator, but much lower variance.\")\n\n\ndef future_utility():\n    text(r\"Policy gradient goal: estimate $\\nabla_\\theta V(\\theta)$, where $V(\\theta) = \\mathbb E_{\\tau \\sim p_\\theta}[u(\\tau)]$\")\n\n    text(\"REINFORCE is just one way to do it:\")\n    text(r\"- Sample rollout $\\tau \\sim p_\\theta$\")\n    text(r\"- Compute $\\displaystyle \\nabla_\\theta J(\\theta, \\tau) = \\sum_t u(\\tau) \\nabla_\\theta \\log \\pi_\\theta(a_t \\mid s_t)$\")\n    text(\"Problem: utility of entire rollout is applied to every action\")\n    text(\"Can we find a better estimate?\")\n\n    text(\"Recall the two-step game show:\")\n    mdp = GameShow1MDP()  # @stepover\n    graph(draw_mdp_graph(mdp))  # @stepover\n    graph(draw_rollout_graph(mdp, Rollout(steps=[Step(action=\"left\", prob=1, reward=10, state=\"A\"), Step(action=\"right\", prob=1, reward=1, state=\"E\")], discount=1), show_utility=True))  # @stepover\n    text(r\"$\\displaystyle \\nabla_\\theta J(\\theta, \\tau) = 11 \\nabla_\\theta \\log \\pi_\\theta(\\text{left} \\mid S) + 11 \\nabla_\\theta \\log \\pi_\\theta(\\text{right} \\mid A)$\")\n    text(\"Intuitively, `right` shouldn't get credit for the 10 that came before it.\")\n\n    text(\"General observation: $a_t$ doesn't affect rewards before step $t$, so it shouldn't take credit for them.\")\n    text(r\"Key idea \ud83d\udca1: use the **future utility** from step $t$ on:\")\n    text(r\"- $u_t = r_t + \\gamma r_{t+1} + \\gamma^2 r_{t+2} + \\cdots$\")\n    text(r\"- $\\displaystyle \\nabla_\\theta J(\\theta, \\tau) = \\sum_t u_t \\nabla_\\theta \\log \\pi_\\theta(a_t \\mid s_t)$\")\n\n    text(r\"Revisit example:\")\n    text(\"- Rewards: $r_0 = 10, r_1 = 1$\")\n    text(\"- Future utilities: $u_0 = 10 + 1 = 11, u_1 = 1$\")\n    text(r\"$\\displaystyle \\nabla_\\theta J(\\theta, \\tau) = 11 \\nabla_\\theta \\log \\pi_\\theta(\\text{left} \\mid S) + 1 \\nabla_\\theta \\log \\pi_\\theta(\\text{right} \\mid A)$\")\n    text(\"Now `right` in step 2 gets credit 1 (only for what happened after it).\")\n\n    text(\"Let's implement this by changing how REINFORCE computes the loss:\")\n    agent = FutureUtility(num_locs=2, actions=[\"left\", \"right\"], valid_actions=mdp.actions, discount=1, learning_rate=0.05)\n    agent.incorporate_feedback(state=\"S\", action=\"left\", reward=10, next_state=\"A\", is_end=False)\n    agent.incorporate_feedback(state=\"A\", action=\"right\", reward=1, next_state=\"E\", is_end=True)\n\n    text(\"Now let's train it like we trained REINFORCE:\")\n    set_random_seed(0)  # So that the cache key is deterministic (run_rl seeds each trial itself)\n    learning_curves[\"future utility\"] = cached(run_rl)(mdp, FutureUtility)  # @stepover\n    plot_learning_curves(\"utility\", \"expected utility\")  # @stepover\n    plot_learning_curves(\"pi_left_A\", \"\u03c0(left | A)\")  # @stepover\n    text(\"Using the future utility learns to choose `left` in step 2 much more reliably.\")\n\n    text(\"Let's examine the gradients of all rollouts.\")\n    p = torch.sigmoid(torch.tensor(0.))  # \u03c0(left | s) at the start of training (\u03b8 = 0) @inspect p\n    rollouts = enumerate_rollouts(mdp, door_policy(p))  # All 4 rollouts with their probabilities @stepover @inspect rollouts\n    def reinforce_estimator(rollout: Rollout) -> torch.Tensor:\n        return door_scores(rollout, p) * rollout.utility\n    def future_utility_estimator(rollout: Rollout) -> torch.Tensor:\n        return door_scores(rollout, p) * utilities_from_each_step(rollout)\n\n    text(r\"Gradient $(\\partial / \\partial \\theta_S, \\partial / \\partial \\theta_A)$ for each rollout:\")\n    text(make_gradient_table(rollouts, {\"REINFORCE\": reinforce_estimator, \"future utility\": future_utility_estimator}))  # @stepover\n    text(\"For step 2:\")\n    text(\"- REINFORCE's gradient is between -5.5 and 6\")\n    text(\"- Future utility's gradient is between -0.5 and 1 (much better)\")\n\n    text(r\"Mean and variance of each estimator:\")\n    result1 = evaluate_gradient_estimator(reinforce_estimator, rollouts)  # @inspect result1\n    result2 = evaluate_gradient_estimator(future_utility_estimator, rollouts)  # @inspect result2 @stepover\n    text(\"Both are unbiased, but the variance for step 2 drops (step 1 is unchanged).\")\n\n    text(\"Note that this doesn't help when the reward is delayed.\")\n    text(\"Recall the math example: the only reward is at the end (1 if the final answer is correct).\")\n    text(r\"In this case, $u_t = u(\\tau)$ for every token $t$: every token still gets the same credit.\")\n\n\ndef baselines():\n    text(\"Here's another game show.\")\n    mdp = GameShow2MDP()  # @stepover\n    graph(draw_mdp_graph(mdp))  # @stepover\n    text(\"1. Choose a room: `left` (room A) or `right` (room B), 0 points\")\n    text(\"2. In room A: `left` (11 points) or `right` (10 points)\")\n    text(\"   In room B: `left` (2 points) or `right` (1 point)\")\n    graph(draw_rollout_graph(mdp, Rollout(steps=[Step(action=\"left\", prob=1, reward=0, state=\"A\"), Step(action=\"right\", prob=1, reward=10, state=\"E\")], discount=1), show_utility=True))  # @stepover\n    graph(draw_rollout_graph(mdp, Rollout(steps=[Step(action=\"right\", prob=1, reward=0, state=\"B\"), Step(action=\"left\", prob=1, reward=2, state=\"E\")], discount=1), show_utility=True))  # @stepover\n    text(\"Step 2: `right` in room A gets credit 10, but `left` in room B only gets credit 2.\")\n\n    text(\"Note that future utility doesn't help here: all the reward comes in the final step anyway.\")\n\n    text(\"But in both rooms, `left` is better by 1 point!\")\n    text(\"We should ask: was the outcome better or worse than usual **for this room**?\")\n\n    text(\"Recall the offset trick: subtract something with mean zero to reduce variance without adding bias.\")\n    text(\"So how do we find an offset with mean zero for the policy gradient?\")\n\n    text(\"Key identity:\")\n    text(r\"Let $b(s)$ be **any** function that only depends on the state $s$ (not the action $a$).\")\n    text(r\"Then $\\mathbb E_{a \\sim \\pi_\\theta(\\cdot \\mid s)}[\\nabla_\\theta \\log \\pi_\\theta(a \\mid s) b(s)] = 0$ for every state $s$.\")\n    text(\"Analogy: heuristics in A* search (use domain knowledge to improve the algorithm without changing the answer)\")\n\n    text(\"Proof:\")\n    text(r\"- $\\mathbb E_{a \\sim \\pi_\\theta(\\cdot \\mid s)}[b(s)] = b(s)$, which doesn't depend on $\\theta$\")\n    text(r\"- $\\nabla_\\theta \\mathbb E_{a \\sim \\pi_\\theta(\\cdot \\mid s)}[b(s)] = 0$\")\n    text(r\"- $\\nabla_\\theta \\sum_a \\pi_\\theta(a \\mid s) b(s) = 0$\")\n    text(r\"- $\\sum_a \\nabla_\\theta \\pi_\\theta(a \\mid s) b(s) = 0$\")\n    text(r\"- $\\sum_a \\pi_\\theta(a \\mid s) \\nabla_\\theta \\log \\pi_\\theta(a \\mid s) b(s) = 0$\")\n    text(r\"- $\\mathbb E_{a \\sim \\pi_\\theta(\\cdot \\mid s)}[\\nabla_\\theta \\log \\pi_\\theta(a \\mid s) b(s)] = 0$\")\n    text(\"This is basically the reverse direction of the policy gradient theorem.\")\n\n    text(r\"Key idea \ud83d\udca1: subtract a baseline $b(s_t)$ from the utility\")\n    text(r\"$\\displaystyle \\nabla_\\theta J(\\theta, \\tau) = \\sum_t \\nabla_\\theta \\log \\pi_\\theta(a_t \\mid s_t) (u_t - b(s_t))$\")\n\n    text(\"Definition (**advantage**): how much better is a particular action than the policy's average action?\")\n    text(\"- $A(s, a) = Q(s, a) - V(s)$\")\n\n    text(\"Monte Carlo approximation of the advantage:\")\n    text(r\"- $\\hat A_t = u_t - b(s_t)$\")\n    text(r\"- Here, the baseline $b(s) = \\hat V(s)$ is an estimate of the value of the current policy (e.g., from TD learning)\")\n\n    image(\"images/rl-policy-gradient-baseline.svg\", width=600)\n\n    baseline_example()\n\n\ndef baseline_example():\n    text(\"Recall the game show with two rooms:\")\n    mdp = GameShow2MDP()  # @stepover\n    graph(draw_mdp_graph(mdp))  # @stepover\n    text(r\"Policy: $\\pi_\\theta(\\text{left} \\mid s) = \\sigma(\\theta_s)$ for each state $s \\in \\{S, A, B\\}$, starting with $\\theta = 0$\")\n    p = torch.sigmoid(torch.tensor(0.))  # \u03c0(left | s) @inspect p\n    pi = door_policy(p)\n    rollouts = enumerate_rollouts(mdp, pi)  # @stepover @inspect rollouts\n\n    text(\"Values (computed exactly here; in practice, they are estimated):\")\n    value_a = p * 11 + (1 - p) * 10  # V(A): room A @inspect value_a\n    value_b = p * 2 + (1 - p) * 1  # V(B): room B @inspect value_b\n    value_s = p * value_a + (1 - p) * value_b  # V(S) @inspect value_s\n    values = {\"S\": value_s, \"A\": value_a, \"B\": value_b}\n\n    text(r\"Future utility: step $t$ gets credit $u_t$\")\n    def future_utility_estimator(rollout: Rollout) -> torch.Tensor:\n        return gradient_by_state(mdp, rollout, p, utilities_from_each_step(rollout))\n\n    text(r\"Constant baseline: step $t$ gets credit $u_t - V(S)$ (the same baseline in every state)\")\n    def constant_baseline_estimator(rollout: Rollout) -> torch.Tensor:\n        return gradient_by_state(mdp, rollout, p, utilities_from_each_step(rollout) - value_s)\n\n    text(r\"State-dependent baseline: step $t$ gets credit $u_t - V(s_t)$\")\n    def baseline_estimator(rollout: Rollout) -> torch.Tensor:\n        baselines = torch.stack([values[state] for state in rollout_states(mdp, rollout)])  # V(s_t) @inspect baselines\n        return gradient_by_state(mdp, rollout, p, utilities_from_each_step(rollout) - baselines)\n\n    text(r\"Gradient $(\\partial / \\partial \\theta_S, \\partial / \\partial \\theta_A, \\partial / \\partial \\theta_B)$ for each rollout:\")\n    text(make_gradient_table(rollouts, {  # @stepover\n        \"future utility\": future_utility_estimator,\n        \"constant baseline\": constant_baseline_estimator,\n        \"state-dependent baseline\": baseline_estimator,\n    }))\n    text(\"Ideally, all numbers would be positive (`left` is just universally good).\")\n    text(\"- Future utility: not the case; whichever action we sample gets pushed up (all rewards are positive)\")\n    text(\"- Constant baseline: `left` is pushed up in state S, but not always in A and B\")\n    text(\"- State-dependent baseline: `left` is pushed up in all states\")\n\n    text(\"Mean and variance of each estimator:\")\n    result1 = evaluate_gradient_estimator(future_utility_estimator, rollouts)  # @inspect result1 @stepover\n    result2 = evaluate_gradient_estimator(constant_baseline_estimator, rollouts)  # @inspect result2 @stepover\n    result3 = evaluate_gradient_estimator(baseline_estimator, rollouts)  # @inspect result3 @stepover\n    text(\"All are unbiased, but:\")\n    text(\"- The constant baseline (6) helps in room A (worth about 10.5) but hurts in room B (worth about 1.5)\")\n    text(\"- The state-dependent baseline helps in both rooms: the baseline needs to depend on the state\")\n\n\ndef bootstrapping():\n    text(\"Policy gradient update with baseline:\")\n    text(r\"$\\displaystyle \\nabla_\\theta J(\\theta, \\tau) = \\sum_t \\nabla_\\theta \\log \\pi_\\theta(a_t \\mid s_t) (u_t - \\hat V(s_t))$\")\n    text(r\"...where $u_t = r_t + \\gamma r_{t+1} + \\gamma^2 r_{t+2} + \\cdots$\")\n\n    text(r\"Disadvantage: have to wait until the end of the rollout to compute $u_t$ and update parameters.\")\n\n    text(\"In value-based RL:\")\n    text(\"- Model-free Monte Carlo uses $u_t$\")\n    text(r\"- SARSA uses $r_t + \\gamma \\hat Q(s_{t+1}, a_{t+1})$\")\n\n    text(r\"Key idea \ud83d\udca1: **bootstrapping**\")\n\n    text(r\"In the context of policy gradient, replace $u_t$ with $\\hat Q(s_t, a_t)$.\")\n    text(r\"$\\displaystyle \\nabla_\\theta J(\\theta, \\tau) = \\sum_t \\nabla_\\theta \\log \\pi_\\theta(a_t \\mid s_t) (\\hat Q(s_t, a_t) - \\hat V(s_t))$\")\n\n    text(r\"**Actor-critic** methods simultaneously learn\")\n    text(r\"- **Actor**: the policy $\\pi_\\theta$ that we care about\")\n    text(r\"- **Critic**: the values $\\hat Q, \\hat V$ that tell us how well we're doing\")\n    image(\"images/rl-actor-critic.svg\", width=600)\n\n    bootstrapping_example()\n\n    text(\"**Proximal Policy Optimization (PPO)** \"), link(\"https://arxiv.org/abs/1707.06347\")\n    text(\"- An actor-critic method with multiple bells and whistles\")\n    text(\"- Generating rollouts is expensive, so reuse each batch of rollouts for several gradient steps\")\n    text(r\"- But then the rollouts come from an different policy $\\pi_{\\theta_\\text{old}}$ (off policy), so reweight by the ratio $\\rho_t = \\frac{\\pi_\\theta(a_t \\mid s_t)}{\\pi_{\\theta_\\text{old}}(a_t \\mid s_t)}$\")\n    text(r\"- Clip the ratio so the policy doesn't move too far from the one that generated the data: $\\displaystyle \\min\\big(\\rho_t \\hat A_t, \\text{clip}(\\rho_t, 1 - \\epsilon, 1 + \\epsilon) \\hat A_t\\big)$\")\n    text(\"- Widely used (e.g., games, robotics, and RLHF for language models)\")\n\n\ndef bootstrapping_example():\n    text(\"Example: a game show with a door and then a spin of a wheel\")\n    mdp = GameShow3MDP()  # @stepover\n    graph(draw_mdp_graph(mdp))  # @stepover\n    p = torch.sigmoid(torch.tensor(0.))  # \u03c0(left | S) @inspect p\n    pi = door_policy(p)\n    rollouts = enumerate_rollouts(mdp, pi)  # @stepover\n    true_gradient = p * (1 - p) * torch.tensor([1.])  # Left is 1 point better @inspect true_gradient\n\n    text(\"Values (computed exactly here; in practice, a critic learns them):\")\n    value_a = sum(step.prob * step.reward for step in mdp.successors(\"A\"))  # V(A): expected spin @inspect value_a @stepover\n    q_left = 1 + value_a  # Q(S, left) @inspect q_left\n    q_right = 0 + value_a  # Q(S, right) @inspect q_right\n    value_s = p * q_left + (1 - p) * q_right  # V(S) @inspect value_s\n\n    text(r\"Baseline: the door gets credit $u_0 - V(S)$, which includes the luck of the spin\")\n    def baseline_estimator(rollout: Rollout) -> torch.Tensor:\n        return door_scores(rollout, p) * (rollout.utility - value_s)\n    result1 = evaluate_gradient_estimator(baseline_estimator, rollouts)  # @inspect result1 @stepover\n\n    text(r\"Critic: the door gets credit $A(S, a_0) = Q(S, a_0) - V(S)$ (averages over the spin)\")\n    def critic_estimator(rollout: Rollout) -> torch.Tensor:\n        q = q_left if rollout.steps[0].action == \"left\" else q_right  # @inspect q\n        return door_scores(rollout, p) * (q - value_s)\n    result2 = evaluate_gradient_estimator(critic_estimator, rollouts)  # @inspect result2 @stepover\n\n    text(\"The critic has zero variance here: the door is judged only by its own effect.\")\n    text(r\"Caveat: we used the true $Q$ and $V$; in practice, they are learned (biased) estimates $\\hat Q$ and $\\hat V$.\")\n\n\ndef evaluate_estimator(estimator, num_traces: int = 5, num_samples: int = 200) -> torch.Tensor:\n    \"\"\"\n    Run `num_traces` independent traces; in each, draw `num_samples` estimates and average the first n for each n.\n    Return the running averages [num_traces, num_samples] (each row converges to the true mean if the estimator is unbiased).\n    \"\"\"\n    samples = torch.tensor([[float(estimator()) for _ in range(num_samples)] for _ in range(num_traces)])  # @stepover\n    running_means = torch.cumsum(samples, dim=1) / torch.arange(1, num_samples + 1)  # [num_traces, num_samples]\n    return running_means\n\n\ndef plot_running_means(running_means: torch.Tensor, mu: torch.Tensor, title: str):\n    \"\"\"Plot each trace of `running_means` against the number of samples, with the true mean `mu` as a dashed line.\"\"\"\n    values = [{\"trace\": k, \"n\": n + 1, \"estimate\": value}\n              for k, row in enumerate(running_means.tolist()) for n, value in enumerate(row)]\n    traces = Chart(Data(values=values)).mark_line(clip=True, opacity=0.8).encode(\n        x=alt.X(\"n:Q\", title=\"number of samples\"),\n        y=alt.Y(\"estimate:Q\", title=\"average of the estimates\").scale(domain=[-3, 5]),  # Same scale for all estimators (the first few samples go off the chart)\n        color=alt.Color(\"trace:N\").legend(None),\n    )\n    truth = Chart(Data(values=[{\"mu\": mu.item()}])).mark_rule(strokeDash=[4, 4], color=\"black\").encode(y=\"mu:Q\")\n    plot(alt.layer(traces, truth).properties(title=title).to_dict())\n\n\ndef rollout_states(mdp: MDP, rollout: Rollout) -> list[Any]:\n    \"\"\"Return the state s_t that each action a_t in the rollout was taken in.\"\"\"\n    return [mdp.start_state()] + [step.state for step in rollout.steps[:-1]]\n\n\ndef gradient_by_state(mdp: MDP, rollout: Rollout, p: torch.Tensor, credits: torch.Tensor) -> torch.Tensor:\n    \"\"\"Return the gradient for each parameter \u03b8_s (states S, A, B): the sum of score \u00d7 credit over the steps taken in s.\"\"\"\n    gradient = torch.zeros(3)\n    for state, score, credit in zip(rollout_states(mdp, rollout), door_scores(rollout, p), credits):\n        i = \"SAB\".index(state)\n        gradient[i] = gradient[i] + score * credit\n    return gradient\n\n\ndef door_policy(p: torch.Tensor):\n    \"\"\"Return pi(state, action) = \u03c0_\u03b8(action | state), where every door has \u03c0_\u03b8(left | s) = p (spins have only one action).\"\"\"\n    def pi(state: Any, action: str) -> torch.Tensor:\n        if action == \"left\":\n            return p\n        if action == \"right\":\n            return 1 - p\n        return torch.tensor(1.)\n    return pi\n\n\ndef door_scores(rollout: Rollout, p: torch.Tensor) -> torch.Tensor:\n    \"\"\"For each door in the rollout, \u2207_{\u03b8_s} log \u03c0_\u03b8(a | s) = 1[a = left] - p (spins have no parameters).\"\"\"\n    return torch.stack([float(step.action == \"left\") - p for step in rollout.steps if step.action != \"spin\"])\n\n\ndef utilities_from_each_step(rollout: Rollout) -> torch.Tensor:\n    \"\"\"For each step t, return u_t = r_t + r_{t+1} + ... (no discounting).\"\"\"\n    rewards = torch.tensor([float(step.reward) for step in rollout.steps])\n    return torch.flip(torch.cumsum(torch.flip(rewards, dims=[0]), dim=0), dims=[0])\n\n\ndef make_gradient_table(rollouts: list[tuple[torch.Tensor, Rollout]], estimators: dict) -> str:\n    \"\"\"Return a markdown table with a row for each rollout (actions, probability) and a column for each estimator's gradient.\"\"\"\n    lines = [\n        \"| rollout | probability | \" + \" | \".join(estimators) + \" |\",\n        \"|---\" * (2 + len(estimators)) + \"|\",\n    ]\n    for prob, rollout in rollouts:\n        actions = \", \".join(f\"`{step.action}`\" for step in rollout.steps)\n        gradients = [\"(\" + \", \".join(f\"{g + 0:g}\" for g in estimator(rollout).tolist()) + \")\" for estimator in estimators.values()]  # + 0 turns -0 into 0\n        lines.append(f\"| {actions} | {prob.item():g} | \" + \" | \".join(gradients) + \" |\")\n    return \"\\n\".join(lines)\n\n\nclass GameShowReinforce(Reinforce):\n    \"\"\"REINFORCE (from last time), with one-hot features for the game show's states (S, A, ...) instead of locations 1, 2, ...\"\"\"\n    def phi(self, state: str) -> torch.Tensor:\n        return one_hot(\"SAB\".index(state), self.num_locs)\n\n\nclass FutureUtility(GameShowReinforce):\n    \"\"\"REINFORCE, except that each action a_t gets credit u_t (the utility from step t on) instead of u(\u03c4).\"\"\"\n    def incorporate_feedback(self, state: str, action: str, reward: float, next_state: str, is_end: bool) -> None:\n        \"\"\"Update the policy parameters.\"\"\"\n        # Remember the rollout\n        if self.start_state is None:\n            self.start_state = state\n        self.rollout.append(Step(action=action, prob=1, reward=reward, state=next_state))  # @inspect self.rollout\n\n        if is_end:\n            # Compute the loss, going backwards so that we can accumulate the future utility\n            loss = 0  # @inspect loss\n            utilities = [None] * len(self.rollout) + [0]  # @inspect utilities\n            for t in reversed(range(len(self.rollout))):\n                state = self.start_state if t == 0 else self.rollout[t - 1].state  # @inspect state\n                action = self.rollout[t].action  # @inspect action\n                reward = self.rollout[t].reward  # @inspect reward\n                utilities[t] = reward + self.discount * utilities[t + 1]  # u_t = r_t + \u03b3 u_{t+1} @inspect utilities\n\n                # Compute cross-entropy loss for state -> action (= -log \u03c0_\u03b8(a_t | s_t))\n                phi = self.phi(state)  # @inspect phi @stepover\n                logits = self.mask_invalid_actions(state, self.model(phi))  # @inspect logits @stepover\n                cross_entropy = nn.CrossEntropyLoss()\n                target = one_hot(self.actions.index(action), len(self.actions))  # @inspect target\n                loss += utilities[t] * cross_entropy(logits, target)  # Weight by u_t instead of u(\u03c4) @inspect loss\n\n            # Update parameters\n            self.optimizer.zero_grad()\n            loss.backward()\n            self.optimizer.step()  # @inspect self\n\n            # Reset the rollout\n            self.start_state = None\n            self.rollout = []\n            self.utility = 0\n\n\nlearning_curves: dict[str, dict[str, list[float]]] = {}  # method -> quantity -> value after each rollout\n\n\ndef run_rl(mdp: MDP, agent_class: type, num_trials: int = 10, num_rollouts: int = 200, learning_rate: float = 0.05) -> dict[str, list[float]]:\n    \"\"\"\n    Train `num_trials` agents of `agent_class` on `mdp` (each with a different random seed) for `num_rollouts` rollouts.\n    Return the expected utility of the policy and \u03c0(left | A) after each rollout, averaged over the trials.\n    \"\"\"\n    utilities = np.zeros(num_rollouts + 1)\n    probs = np.zeros(num_rollouts + 1)\n    for trial in range(num_trials):\n        set_random_seed(trial)\n        agent = agent_class(num_locs=2, actions=[\"left\", \"right\"], valid_actions=mdp.actions, discount=1, learning_rate=learning_rate)\n        for i in range(num_rollouts + 1):\n            if i > 0:\n                generate_rollout_rl(mdp, agent)\n            pi = lambda state, action: torch.tensor(agent.pi(state)[action])\n            utilities[i] += sum(prob.item() * rollout.utility for prob, rollout in enumerate_rollouts(mdp, pi)) / num_trials\n            probs[i] += agent.pi(\"A\")[\"left\"] / num_trials\n    return {\"utility\": utilities.tolist(), \"pi_left_A\": probs.tolist()}\n\n\ndef plot_learning_curves(quantity: str, title: str):\n    \"\"\"Plot `quantity` after each rollout, one line per method trained so far.\"\"\"\n    values = [{\"method\": name, \"rollout\": i, \"value\": value}\n              for name, curves in learning_curves.items() for i, value in enumerate(curves[quantity])]\n    plot(Chart(Data(values=values)).mark_line().encode(\n        x=\"rollout:Q\",\n        y=alt.Y(\"value:Q\", title=title).scale(zero=False),\n        color=alt.Color(\"method:N\").sort(list(learning_curves.keys())),\n    ).properties(title=title).to_dict())\n\n\ndef enumerate_rollouts(mdp: MDP, pi) -> list[tuple[torch.Tensor, Rollout]]:\n    \"\"\"Return all (probability, rollout) pairs, where `pi(state, action)` is the probability of taking `action` in `state`.\"\"\"\n    def recurse(state: Any, steps: list[Step], prob: torch.Tensor) -> list[tuple[torch.Tensor, Rollout]]:\n        if mdp.is_end(state):\n            return [(prob, Rollout(steps=steps, discount=1))]\n        result = []\n        for step in mdp.successors(state):\n            result += recurse(step.state, steps + [step], prob * pi(state, step.action) * step.prob)\n        return result\n    return recurse(mdp.start_state(), [], torch.tensor(1.))\n\n\ndef evaluate_gradient_estimator(estimator, rollouts: list[tuple[torch.Tensor, Rollout]]):\n    # Exact mean and variance over all rollouts (weighted by their probabilities)\n    probs = torch.stack([prob for prob, _ in rollouts])  # @inspect probs\n    estimates = torch.stack([torch.as_tensor(estimator(rollout)) for _, rollout in rollouts])  # @inspect estimates @stepover\n    mean = probs @ estimates  # Compare with the true gradient @inspect mean\n    variance = probs @ (estimates - mean) ** 2  # @inspect variance\n    return {\n        \"mean\": mean,\n        \"variance\": variance,\n    }\n\n\ndef critic_free():\n    text(r\"Actor-critic methods require estimating value functions $\\hat Q, \\hat V$, which are generally neural networks too.\")\n\n    text(\"Motivation: large language models\")\n    text(\"- State: the prompt plus the tokens generated so far\")\n    text(\"- Action: the next token\")\n    text(\"- Transition: deterministic (append the token to the state)\")\n    text(\"- Reward: only at the end (e.g., 1 if the final answer is correct according to a verifier, 0 otherwise)\")\n\n    text(\"Key structure \ud83d\udd01: can reset the environment to the same state (usually can't in robotics)\")\n    text(\"Key idea \ud83d\udca1: estimate the advantages from rollouts\")\n    image(\"images/rl-policy-gradient.svg\", width=600)\n\n    text(\"**REINFORCE Leave-One-Out (RLOO)** \"), link(\"https://arxiv.org/abs/2402.14740\")\n    text(r\"- For a prompt $x$, sample $G$ responses $y_1, \\dots, y_G$ and compute their utilities $u_1, \\dots, u_G$.\")\n    text(r\"- Baseline for response $i$: the average utility of the **other** $G - 1$ responses\")\n    text(r\"  * Leave out response $i$ so that the baseline doesn't depend on its own action (unbiased).\")\n    text(r\"- Advantage of response $i$: $\\displaystyle \\hat A_i = u_i - \\frac{1}{G - 1} \\sum_{j \\neq i} u_j$\")\n    text(r\"- Update: $\\displaystyle \\nabla_\\theta J(\\theta) = \\frac{1}{G} \\sum_{i=1}^G \\hat A_i \\sum_t \\nabla_\\theta \\log \\pi_\\theta(y_{i,t} \\mid x, y_{i,<t})$\")\n    rewards = torch.tensor([1., 0., 0., 1., 0., 0., 0., 0.])  # 2 out of 8 correct @inspect rewards\n    num_responses = len(rewards)  # G @inspect num_responses\n    baselines = (torch.sum(rewards) - rewards) / (num_responses - 1)  # Average of the other responses @inspect baselines\n    advantages = rewards - baselines  # @inspect advantages\n    text(\"Then apply REINFORCE: every token in response $i$ gets credit $\\\\hat A_i$.\")\n\n    text(\"**Group Relative Policy Optimization (GRPO)** \"), link(\"https://arxiv.org/abs/2402.03300\")\n    text(r\"- For a prompt $x$, sample $G$ responses $y_1, \\dots, y_G$ and compute their utilities $u_1, \\dots, u_G$.\")\n    text(r\"- Advantage of response $i$: $\\displaystyle \\hat A_i = \\frac{u_i - \\text{mean}(u_1, \\dots, u_G)}{\\text{std}(u_1, \\dots, u_G)}$\")\n    text(r\"  * Normalize by the standard deviation of the group (normalize across difficulty)\")\n    text(r\"- Update: $\\displaystyle \\nabla_\\theta J(\\theta) = \\frac{1}{G} \\sum_{i=1}^G \\hat A_i \\sum_t \\nabla_\\theta \\log \\pi_\\theta(y_{i,t} \\mid x, y_{i,<t})$\")\n    text(\"- Full GRPO also clips the update (like PPO) and adds a KL penalty to stay close to the original model.\")\n    rewards = torch.tensor([1., 0., 0., 1., 0., 0., 0., 0.])  # @inspect rewards\n    baseline = torch.mean(rewards)  # Estimate of V(x): how hard is this prompt? @inspect baseline\n    advantages = rewards - baseline  # @inspect advantages\n\n\nif __name__ == \"__main__\":\n    main()\n"
   },
   "hidden_line_numbers": {
     "improved_policy_gradient.py": []
@@ -40508,241 +40508,7 @@
           "path": "improved_policy_gradient.py",
           "line_number": 559,
           "function_name": "bootstrapping_example",
-          "code": "value_a = sum(step.prob * step.reward for step in mdp.successors(\"A\"))  # V(A): expected spin @inspect value_a"
-        }
-      ],
-      "env": {},
-      "renderings": []
-    },
-    {
-      "stack": [
-        {
-          "path": "improved_policy_gradient.py",
-          "line_number": 25,
-          "function_name": "main",
-          "code": "bootstrapping()"
-        },
-        {
-          "path": "improved_policy_gradient.py",
-          "line_number": 539,
-          "function_name": "bootstrapping",
-          "code": "bootstrapping_example()"
-        },
-        {
-          "path": "improved_policy_gradient.py",
-          "line_number": 559,
-          "function_name": "bootstrapping_example",
-          "code": "value_a = sum(step.prob * step.reward for step in mdp.successors(\"A\"))  # V(A): expected spin @inspect value_a"
-        },
-        {
-          "path": "improved_policy_gradient.py",
-          "line_number": 182,
-          "function_name": "successors",
-          "code": "def successors(self, state: Any) -> list[Step]:"
-        }
-      ],
-      "env": {},
-      "renderings": []
-    },
-    {
-      "stack": [
-        {
-          "path": "improved_policy_gradient.py",
-          "line_number": 25,
-          "function_name": "main",
-          "code": "bootstrapping()"
-        },
-        {
-          "path": "improved_policy_gradient.py",
-          "line_number": 539,
-          "function_name": "bootstrapping",
-          "code": "bootstrapping_example()"
-        },
-        {
-          "path": "improved_policy_gradient.py",
-          "line_number": 559,
-          "function_name": "bootstrapping_example",
-          "code": "value_a = sum(step.prob * step.reward for step in mdp.successors(\"A\"))  # V(A): expected spin @inspect value_a"
-        },
-        {
-          "path": "improved_policy_gradient.py",
-          "line_number": 183,
-          "function_name": "successors",
-          "code": "if state == \"S\":  # Door: left is worth 1 point more than right"
-        }
-      ],
-      "env": {},
-      "renderings": []
-    },
-    {
-      "stack": [
-        {
-          "path": "improved_policy_gradient.py",
-          "line_number": 25,
-          "function_name": "main",
-          "code": "bootstrapping()"
-        },
-        {
-          "path": "improved_policy_gradient.py",
-          "line_number": 539,
-          "function_name": "bootstrapping",
-          "code": "bootstrapping_example()"
-        },
-        {
-          "path": "improved_policy_gradient.py",
-          "line_number": 559,
-          "function_name": "bootstrapping_example",
-          "code": "value_a = sum(step.prob * step.reward for step in mdp.successors(\"A\"))  # V(A): expected spin @inspect value_a"
-        },
-        {
-          "path": "improved_policy_gradient.py",
-          "line_number": 188,
-          "function_name": "successors",
-          "code": "if state == \"A\":  # Spin a wheel: 0 or 20 points"
-        }
-      ],
-      "env": {},
-      "renderings": []
-    },
-    {
-      "stack": [
-        {
-          "path": "improved_policy_gradient.py",
-          "line_number": 25,
-          "function_name": "main",
-          "code": "bootstrapping()"
-        },
-        {
-          "path": "improved_policy_gradient.py",
-          "line_number": 539,
-          "function_name": "bootstrapping",
-          "code": "bootstrapping_example()"
-        },
-        {
-          "path": "improved_policy_gradient.py",
-          "line_number": 559,
-          "function_name": "bootstrapping_example",
-          "code": "value_a = sum(step.prob * step.reward for step in mdp.successors(\"A\"))  # V(A): expected spin @inspect value_a"
-        },
-        {
-          "path": "improved_policy_gradient.py",
-          "line_number": 190,
-          "function_name": "successors",
-          "code": "Step(action=\"spin\", prob=0.5, reward=0, state=\"E\"),"
-        }
-      ],
-      "env": {},
-      "renderings": []
-    },
-    {
-      "stack": [
-        {
-          "path": "improved_policy_gradient.py",
-          "line_number": 25,
-          "function_name": "main",
-          "code": "bootstrapping()"
-        },
-        {
-          "path": "improved_policy_gradient.py",
-          "line_number": 539,
-          "function_name": "bootstrapping",
-          "code": "bootstrapping_example()"
-        },
-        {
-          "path": "improved_policy_gradient.py",
-          "line_number": 559,
-          "function_name": "bootstrapping_example",
-          "code": "value_a = sum(step.prob * step.reward for step in mdp.successors(\"A\"))  # V(A): expected spin @inspect value_a"
-        },
-        {
-          "path": "improved_policy_gradient.py",
-          "line_number": 191,
-          "function_name": "successors",
-          "code": "Step(action=\"spin\", prob=0.5, reward=20, state=\"E\"),"
-        }
-      ],
-      "env": {},
-      "renderings": []
-    },
-    {
-      "stack": [
-        {
-          "path": "improved_policy_gradient.py",
-          "line_number": 25,
-          "function_name": "main",
-          "code": "bootstrapping()"
-        },
-        {
-          "path": "improved_policy_gradient.py",
-          "line_number": 539,
-          "function_name": "bootstrapping",
-          "code": "bootstrapping_example()"
-        },
-        {
-          "path": "improved_policy_gradient.py",
-          "line_number": 559,
-          "function_name": "bootstrapping_example",
-          "code": "value_a = sum(step.prob * step.reward for step in mdp.successors(\"A\"))  # V(A): expected spin @inspect value_a"
-        },
-        {
-          "path": "improved_policy_gradient.py",
-          "line_number": 189,
-          "function_name": "successors",
-          "code": "return ["
-        }
-      ],
-      "env": {},
-      "renderings": []
-    },
-    {
-      "stack": [
-        {
-          "path": "improved_policy_gradient.py",
-          "line_number": 25,
-          "function_name": "main",
-          "code": "bootstrapping()"
-        },
-        {
-          "path": "improved_policy_gradient.py",
-          "line_number": 539,
-          "function_name": "bootstrapping",
-          "code": "bootstrapping_example()"
-        },
-        {
-          "path": "improved_policy_gradient.py",
-          "line_number": 559,
-          "function_name": "bootstrapping_example",
-          "code": "value_a = sum(step.prob * step.reward for step in mdp.successors(\"A\"))  # V(A): expected spin @inspect value_a"
-        },
-        {
-          "path": "improved_policy_gradient.py",
-          "line_number": 559,
-          "function_name": "<genexpr>",
-          "code": "value_a = sum(step.prob * step.reward for step in mdp.successors(\"A\"))  # V(A): expected spin @inspect value_a"
-        }
-      ],
-      "env": {},
-      "renderings": []
-    },
-    {
-      "stack": [
-        {
-          "path": "improved_policy_gradient.py",
-          "line_number": 25,
-          "function_name": "main",
-          "code": "bootstrapping()"
-        },
-        {
-          "path": "improved_policy_gradient.py",
-          "line_number": 539,
-          "function_name": "bootstrapping",
-          "code": "bootstrapping_example()"
-        },
-        {
-          "path": "improved_policy_gradient.py",
-          "line_number": 559,
-          "function_name": "bootstrapping_example",
-          "code": "value_a = sum(step.prob * step.reward for step in mdp.successors(\"A\"))  # V(A): expected spin @inspect value_a"
+          "code": "value_a = sum(step.prob * step.reward for step in mdp.successors(\"A\"))  # V(A): expected spin @inspect value_a @stepover"
         }
       ],
       "env": {
@@ -41211,14 +40977,14 @@
           "path": "improved_policy_gradient.py",
           "line_number": 542,
           "function_name": "bootstrapping",
-          "code": "text(\"- An actor-critic method: the advantages $\\\\hat A_t$ come from a learned critic $\\\\hat V$\")"
+          "code": "text(\"- An actor-critic method with multiple bells and whistles\")"
         }
       ],
       "env": {},
       "renderings": [
         {
           "type": "markdown",
-          "data": "- An actor-critic method: the advantages $\\hat A_t$ come from a learned critic $\\hat V$",
+          "data": "- An actor-critic method with multiple bells and whistles",
           "style": {},
           "external_link": null,
           "internal_link": null,
@@ -41265,14 +41031,14 @@
           "path": "improved_policy_gradient.py",
           "line_number": 544,
           "function_name": "bootstrapping",
-          "code": "text(r\"- But then the rollouts come from an older policy $\\pi_{\\theta_\\text{old}}$, so reweight by the ratio $\\rho_t = \\frac{\\pi_\\theta(a_t \\mid s_t)}{\\pi_{\\theta_\\text{old}}(a_t \\mid s_t)}$\")"
+          "code": "text(r\"- But then the rollouts come from an different policy $\\pi_{\\theta_\\text{old}}$ (off policy), so reweight by the ratio $\\rho_t = \\frac{\\pi_\\theta(a_t \\mid s_t)}{\\pi_{\\theta_\\text{old}}(a_t \\mid s_t)}$\")"
         }
       ],
       "env": {},
       "renderings": [
         {
           "type": "markdown",
-          "data": "- But then the rollouts come from an older policy $\\pi_{\\theta_\\text{old}}$, so reweight by the ratio $\\rho_t = \\frac{\\pi_\\theta(a_t \\mid s_t)}{\\pi_{\\theta_\\text{old}}(a_t \\mid s_t)}$",
+          "data": "- But then the rollouts come from an different policy $\\pi_{\\theta_\\text{old}}$ (off policy), so reweight by the ratio $\\rho_t = \\frac{\\pi_\\theta(a_t \\mid s_t)}{\\pi_{\\theta_\\text{old}}(a_t \\mid s_t)}$",
           "style": {},
           "external_link": null,
           "internal_link": null,
@@ -41685,14 +41451,14 @@
           "path": "improved_policy_gradient.py",
           "line_number": 765,
           "function_name": "critic_free",
-          "code": "text(r\"For a prompt $x$, sample $G$ responses $y_1, \\dots, y_G$ and compute their utilities $u_1, \\dots, u_G$.\")"
+          "code": "text(r\"- For a prompt $x$, sample $G$ responses $y_1, \\dots, y_G$ and compute their utilities $u_1, \\dots, u_G$.\")"
         }
       ],
       "env": {},
       "renderings": [
         {
           "type": "markdown",
-          "data": "For a prompt $x$, sample $G$ responses $y_1, \\dots, y_G$ and compute their utilities $u_1, \\dots, u_G$.",
+          "data": "- For a prompt $x$, sample $G$ responses $y_1, \\dots, y_G$ and compute their utilities $u_1, \\dots, u_G$.",
           "style": {},
           "external_link": null,
           "internal_link": null,
@@ -41712,14 +41478,14 @@
           "path": "improved_policy_gradient.py",
           "line_number": 766,
           "function_name": "critic_free",
-          "code": "text(r\"Baseline for response $i$: the average utility of the **other** $G - 1$ responses (an estimate of $V(x)$)\")"
+          "code": "text(r\"- Baseline for response $i$: the average utility of the **other** $G - 1$ responses\")"
         }
       ],
       "env": {},
       "renderings": [
         {
           "type": "markdown",
-          "data": "Baseline for response $i$: the average utility of the **other** $G - 1$ responses (an estimate of $V(x)$)",
+          "data": "- Baseline for response $i$: the average utility of the **other** $G - 1$ responses",
           "style": {},
           "external_link": null,
           "internal_link": null,
@@ -41739,14 +41505,14 @@
           "path": "improved_policy_gradient.py",
           "line_number": 767,
           "function_name": "critic_free",
-          "code": "text(r\"Advantage of response $i$: $\\displaystyle \\hat A_i = u_i - \\frac{1}{G - 1} \\sum_{j \\neq i} u_j$\")"
+          "code": "text(r\"  * Leave out response $i$ so that the baseline doesn't depend on its own action (unbiased).\")"
         }
       ],
       "env": {},
       "renderings": [
         {
           "type": "markdown",
-          "data": "Advantage of response $i$: $\\displaystyle \\hat A_i = u_i - \\frac{1}{G - 1} \\sum_{j \\neq i} u_j$",
+          "data": "  * Leave out response $i$ so that the baseline doesn't depend on its own action (unbiased).",
           "style": {},
           "external_link": null,
           "internal_link": null,
@@ -41766,14 +41532,14 @@
           "path": "improved_policy_gradient.py",
           "line_number": 768,
           "function_name": "critic_free",
-          "code": "text(r\"- Update: $\\displaystyle \\nabla_\\theta J(\\theta) = \\frac{1}{G} \\sum_{i=1}^G \\hat A_i \\sum_t \\nabla_\\theta \\log \\pi_\\theta(y_{i,t} \\mid x, y_{i,<t})$\")"
+          "code": "text(r\"- Advantage of response $i$: $\\displaystyle \\hat A_i = u_i - \\frac{1}{G - 1} \\sum_{j \\neq i} u_j$\")"
         }
       ],
       "env": {},
       "renderings": [
         {
           "type": "markdown",
-          "data": "- Update: $\\displaystyle \\nabla_\\theta J(\\theta) = \\frac{1}{G} \\sum_{i=1}^G \\hat A_i \\sum_t \\nabla_\\theta \\log \\pi_\\theta(y_{i,t} \\mid x, y_{i,<t})$",
+          "data": "- Advantage of response $i$: $\\displaystyle \\hat A_i = u_i - \\frac{1}{G - 1} \\sum_{j \\neq i} u_j$",
           "style": {},
           "external_link": null,
           "internal_link": null,
@@ -41793,14 +41559,14 @@
           "path": "improved_policy_gradient.py",
           "line_number": 769,
           "function_name": "critic_free",
-          "code": "text(\"Leave out response $i$ so that the baseline doesn't depend on its own action (unbiased).\")"
+          "code": "text(r\"- Update: $\\displaystyle \\nabla_\\theta J(\\theta) = \\frac{1}{G} \\sum_{i=1}^G \\hat A_i \\sum_t \\nabla_\\theta \\log \\pi_\\theta(y_{i,t} \\mid x, y_{i,<t})$\")"
         }
       ],
       "env": {},
       "renderings": [
         {
           "type": "markdown",
-          "data": "Leave out response $i$ so that the baseline doesn't depend on its own action (unbiased).",
+          "data": "- Update: $\\displaystyle \\nabla_\\theta J(\\theta) = \\frac{1}{G} \\sum_{i=1}^G \\hat A_i \\sum_t \\nabla_\\theta \\log \\pi_\\theta(y_{i,t} \\mid x, y_{i,<t})$",
           "style": {},
           "external_link": null,
           "internal_link": null,
@@ -42033,16 +41799,43 @@
         },
         {
           "path": "improved_policy_gradient.py",
-          "line_number": 778,
+          "line_number": 777,
           "function_name": "critic_free",
-          "code": "text(\"Idea: use a baseline computed from other responses to the same prompt (no learned critic).\")"
+          "code": "text(r\"- For a prompt $x$, sample $G$ responses $y_1, \\dots, y_G$ and compute their utilities $u_1, \\dots, u_G$.\")"
         }
       ],
       "env": {},
       "renderings": [
         {
           "type": "markdown",
-          "data": "Idea: use a baseline computed from other responses to the same prompt (no learned critic).",
+          "data": "- For a prompt $x$, sample $G$ responses $y_1, \\dots, y_G$ and compute their utilities $u_1, \\dots, u_G$.",
+          "style": {},
+          "external_link": null,
+          "internal_link": null,
+          "animate": false
+        }
+      ]
+    },
+    {
+      "stack": [
+        {
+          "path": "improved_policy_gradient.py",
+          "line_number": 26,
+          "function_name": "main",
+          "code": "critic_free()"
+        },
+        {
+          "path": "improved_policy_gradient.py",
+          "line_number": 778,
+          "function_name": "critic_free",
+          "code": "text(r\"- Advantage of response $i$: $\\displaystyle \\hat A_i = \\frac{u_i - \\text{mean}(u_1, \\dots, u_G)}{\\text{std}(u_1, \\dots, u_G)}$\")"
+        }
+      ],
+      "env": {},
+      "renderings": [
+        {
+          "type": "markdown",
+          "data": "- Advantage of response $i$: $\\displaystyle \\hat A_i = \\frac{u_i - \\text{mean}(u_1, \\dots, u_G)}{\\text{std}(u_1, \\dots, u_G)}$",
           "style": {},
           "external_link": null,
           "internal_link": null,
@@ -42062,14 +41855,14 @@
           "path": "improved_policy_gradient.py",
           "line_number": 779,
           "function_name": "critic_free",
-          "code": "text(r\"- For a prompt $x$, sample a group of $G$ responses and check which are correct:\")"
+          "code": "text(r\"  * Normalize by the standard deviation of the group (normalize across difficulty)\")"
         }
       ],
       "env": {},
       "renderings": [
         {
           "type": "markdown",
-          "data": "- For a prompt $x$, sample a group of $G$ responses and check which are correct:",
+          "data": "  * Normalize by the standard deviation of the group (normalize across difficulty)",
           "style": {},
           "external_link": null,
           "internal_link": null,
@@ -42088,6 +41881,60 @@
         {
           "path": "improved_policy_gradient.py",
           "line_number": 780,
+          "function_name": "critic_free",
+          "code": "text(r\"- Update: $\\displaystyle \\nabla_\\theta J(\\theta) = \\frac{1}{G} \\sum_{i=1}^G \\hat A_i \\sum_t \\nabla_\\theta \\log \\pi_\\theta(y_{i,t} \\mid x, y_{i,<t})$\")"
+        }
+      ],
+      "env": {},
+      "renderings": [
+        {
+          "type": "markdown",
+          "data": "- Update: $\\displaystyle \\nabla_\\theta J(\\theta) = \\frac{1}{G} \\sum_{i=1}^G \\hat A_i \\sum_t \\nabla_\\theta \\log \\pi_\\theta(y_{i,t} \\mid x, y_{i,<t})$",
+          "style": {},
+          "external_link": null,
+          "internal_link": null,
+          "animate": false
+        }
+      ]
+    },
+    {
+      "stack": [
+        {
+          "path": "improved_policy_gradient.py",
+          "line_number": 26,
+          "function_name": "main",
+          "code": "critic_free()"
+        },
+        {
+          "path": "improved_policy_gradient.py",
+          "line_number": 781,
+          "function_name": "critic_free",
+          "code": "text(\"- Full GRPO also clips the update (like PPO) and adds a KL penalty to stay close to the original model.\")"
+        }
+      ],
+      "env": {},
+      "renderings": [
+        {
+          "type": "markdown",
+          "data": "- Full GRPO also clips the update (like PPO) and adds a KL penalty to stay close to the original model.",
+          "style": {},
+          "external_link": null,
+          "internal_link": null,
+          "animate": false
+        }
+      ]
+    },
+    {
+      "stack": [
+        {
+          "path": "improved_policy_gradient.py",
+          "line_number": 26,
+          "function_name": "main",
+          "code": "critic_free()"
+        },
+        {
+          "path": "improved_policy_gradient.py",
+          "line_number": 782,
           "function_name": "critic_free",
           "code": "rewards = torch.tensor([1., 0., 0., 1., 0., 0., 0., 0.])  # @inspect rewards"
         }
@@ -42123,7 +41970,7 @@
         },
         {
           "path": "improved_policy_gradient.py",
-          "line_number": 781,
+          "line_number": 783,
           "function_name": "critic_free",
           "code": "baseline = torch.mean(rewards)  # Estimate of V(x): how hard is this prompt? @inspect baseline"
         }
@@ -42148,7 +41995,7 @@
         },
         {
           "path": "improved_policy_gradient.py",
-          "line_number": 782,
+          "line_number": 784,
           "function_name": "critic_free",
           "code": "advantages = rewards - baseline  # @inspect advantages"
         }
@@ -42173,366 +42020,6 @@
         }
       },
       "renderings": []
-    },
-    {
-      "stack": [
-        {
-          "path": "improved_policy_gradient.py",
-          "line_number": 26,
-          "function_name": "main",
-          "code": "critic_free()"
-        },
-        {
-          "path": "improved_policy_gradient.py",
-          "line_number": 783,
-          "function_name": "critic_free",
-          "code": "text(\"- Normalize by the standard deviation of the group\")"
-        }
-      ],
-      "env": {},
-      "renderings": [
-        {
-          "type": "markdown",
-          "data": "- Normalize by the standard deviation of the group",
-          "style": {},
-          "external_link": null,
-          "internal_link": null,
-          "animate": false
-        }
-      ]
-    },
-    {
-      "stack": [
-        {
-          "path": "improved_policy_gradient.py",
-          "line_number": 26,
-          "function_name": "main",
-          "code": "critic_free()"
-        },
-        {
-          "path": "improved_policy_gradient.py",
-          "line_number": 785,
-          "function_name": "critic_free",
-          "code": "text(\"Formally, for a prompt $x$:\")"
-        }
-      ],
-      "env": {},
-      "renderings": [
-        {
-          "type": "markdown",
-          "data": "Formally, for a prompt $x$:",
-          "style": {},
-          "external_link": null,
-          "internal_link": null,
-          "animate": false
-        }
-      ]
-    },
-    {
-      "stack": [
-        {
-          "path": "improved_policy_gradient.py",
-          "line_number": 26,
-          "function_name": "main",
-          "code": "critic_free()"
-        },
-        {
-          "path": "improved_policy_gradient.py",
-          "line_number": 786,
-          "function_name": "critic_free",
-          "code": "text(r\"- Sample $G$ responses $y_1, \\dots, y_G$ from $\\pi_\\theta(\\cdot \\mid x)$ and compute their utilities $u_1, \\dots, u_G$\")"
-        }
-      ],
-      "env": {},
-      "renderings": [
-        {
-          "type": "markdown",
-          "data": "- Sample $G$ responses $y_1, \\dots, y_G$ from $\\pi_\\theta(\\cdot \\mid x)$ and compute their utilities $u_1, \\dots, u_G$",
-          "style": {},
-          "external_link": null,
-          "internal_link": null,
-          "animate": false
-        }
-      ]
-    },
-    {
-      "stack": [
-        {
-          "path": "improved_policy_gradient.py",
-          "line_number": 26,
-          "function_name": "main",
-          "code": "critic_free()"
-        },
-        {
-          "path": "improved_policy_gradient.py",
-          "line_number": 787,
-          "function_name": "critic_free",
-          "code": "text(r\"- Advantage of response $i$: $\\displaystyle \\hat A_i = \\frac{u_i - \\text{mean}(u_1, \\dots, u_G)}{\\text{std}(u_1, \\dots, u_G)}$\")"
-        }
-      ],
-      "env": {},
-      "renderings": [
-        {
-          "type": "markdown",
-          "data": "- Advantage of response $i$: $\\displaystyle \\hat A_i = \\frac{u_i - \\text{mean}(u_1, \\dots, u_G)}{\\text{std}(u_1, \\dots, u_G)}$",
-          "style": {},
-          "external_link": null,
-          "internal_link": null,
-          "animate": false
-        }
-      ]
-    },
-    {
-      "stack": [
-        {
-          "path": "improved_policy_gradient.py",
-          "line_number": 26,
-          "function_name": "main",
-          "code": "critic_free()"
-        },
-        {
-          "path": "improved_policy_gradient.py",
-          "line_number": 788,
-          "function_name": "critic_free",
-          "code": "text(r\"- Update: $\\displaystyle \\nabla_\\theta J(\\theta) = \\frac{1}{G} \\sum_{i=1}^G \\hat A_i \\sum_t \\nabla_\\theta \\log \\pi_\\theta(y_{i,t} \\mid x, y_{i,<t})$\")"
-        }
-      ],
-      "env": {},
-      "renderings": [
-        {
-          "type": "markdown",
-          "data": "- Update: $\\displaystyle \\nabla_\\theta J(\\theta) = \\frac{1}{G} \\sum_{i=1}^G \\hat A_i \\sum_t \\nabla_\\theta \\log \\pi_\\theta(y_{i,t} \\mid x, y_{i,<t})$",
-          "style": {},
-          "external_link": null,
-          "internal_link": null,
-          "animate": false
-        }
-      ]
-    },
-    {
-      "stack": [
-        {
-          "path": "improved_policy_gradient.py",
-          "line_number": 26,
-          "function_name": "main",
-          "code": "critic_free()"
-        },
-        {
-          "path": "improved_policy_gradient.py",
-          "line_number": 789,
-          "function_name": "critic_free",
-          "code": "text(\"The full GRPO objective also clips the update (like PPO) and adds a KL penalty to stay close to the original model.\")"
-        }
-      ],
-      "env": {},
-      "renderings": [
-        {
-          "type": "markdown",
-          "data": "The full GRPO objective also clips the update (like PPO) and adds a KL penalty to stay close to the original model.",
-          "style": {},
-          "external_link": null,
-          "internal_link": null,
-          "animate": false
-        }
-      ]
-    },
-    {
-      "stack": [
-        {
-          "path": "improved_policy_gradient.py",
-          "line_number": 26,
-          "function_name": "main",
-          "code": "critic_free()"
-        },
-        {
-          "path": "improved_policy_gradient.py",
-          "line_number": 791,
-          "function_name": "critic_free",
-          "code": "text(\"What if the prompt is too easy or too hard?\")"
-        }
-      ],
-      "env": {},
-      "renderings": [
-        {
-          "type": "markdown",
-          "data": "What if the prompt is too easy or too hard?",
-          "style": {},
-          "external_link": null,
-          "internal_link": null,
-          "animate": false
-        }
-      ]
-    },
-    {
-      "stack": [
-        {
-          "path": "improved_policy_gradient.py",
-          "line_number": 26,
-          "function_name": "main",
-          "code": "critic_free()"
-        },
-        {
-          "path": "improved_policy_gradient.py",
-          "line_number": 792,
-          "function_name": "critic_free",
-          "code": "rewards = torch.tensor([1., 1., 1., 1., 1., 1., 1., 1.])  # @inspect rewards"
-        }
-      ],
-      "env": {
-        "rewards": {
-          "type": "torch.Tensor",
-          "contents": [
-            1.0,
-            1.0,
-            1.0,
-            1.0,
-            1.0,
-            1.0,
-            1.0,
-            1.0
-          ],
-          "dtype": "torch.float32",
-          "shape": [
-            8
-          ]
-        }
-      },
-      "renderings": []
-    },
-    {
-      "stack": [
-        {
-          "path": "improved_policy_gradient.py",
-          "line_number": 26,
-          "function_name": "main",
-          "code": "critic_free()"
-        },
-        {
-          "path": "improved_policy_gradient.py",
-          "line_number": 793,
-          "function_name": "critic_free",
-          "code": "advantages = rewards - torch.mean(rewards)  # @inspect advantages"
-        }
-      ],
-      "env": {
-        "advantages": {
-          "type": "torch.Tensor",
-          "contents": [
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0
-          ],
-          "dtype": "torch.float32",
-          "shape": [
-            8
-          ]
-        }
-      },
-      "renderings": []
-    },
-    {
-      "stack": [
-        {
-          "path": "improved_policy_gradient.py",
-          "line_number": 26,
-          "function_name": "main",
-          "code": "critic_free()"
-        },
-        {
-          "path": "improved_policy_gradient.py",
-          "line_number": 794,
-          "function_name": "critic_free",
-          "code": "rewards = torch.tensor([0., 0., 0., 0., 0., 0., 0., 0.])  # @inspect rewards"
-        }
-      ],
-      "env": {
-        "rewards": {
-          "type": "torch.Tensor",
-          "contents": [
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0
-          ],
-          "dtype": "torch.float32",
-          "shape": [
-            8
-          ]
-        }
-      },
-      "renderings": []
-    },
-    {
-      "stack": [
-        {
-          "path": "improved_policy_gradient.py",
-          "line_number": 26,
-          "function_name": "main",
-          "code": "critic_free()"
-        },
-        {
-          "path": "improved_policy_gradient.py",
-          "line_number": 795,
-          "function_name": "critic_free",
-          "code": "advantages = rewards - torch.mean(rewards)  # @inspect advantages"
-        }
-      ],
-      "env": {
-        "advantages": {
-          "type": "torch.Tensor",
-          "contents": [
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0
-          ],
-          "dtype": "torch.float32",
-          "shape": [
-            8
-          ]
-        }
-      },
-      "renderings": []
-    },
-    {
-      "stack": [
-        {
-          "path": "improved_policy_gradient.py",
-          "line_number": 26,
-          "function_name": "main",
-          "code": "critic_free()"
-        },
-        {
-          "path": "improved_policy_gradient.py",
-          "line_number": 796,
-          "function_name": "critic_free",
-          "code": "text(\"All advantages are zero: no learning signal (so choose prompts of the right difficulty).\")"
-        }
-      ],
-      "env": {},
-      "renderings": [
-        {
-          "type": "markdown",
-          "data": "All advantages are zero: no learning signal (so choose prompts of the right difficulty).",
-          "style": {},
-          "external_link": null,
-          "internal_link": null,
-          "animate": false
-        }
-      ]
     },
     {
       "stack": [
