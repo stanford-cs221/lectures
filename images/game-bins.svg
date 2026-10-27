@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 560 150" width="560" height="150" font-family="Helvetica, Arial, sans-serif" font-size="14">
+<rect width="560" height="150" fill="white"/>
+<rect x="30" y="15" width="140" height="120" rx="14" fill="#f4f4f4" stroke="#555" stroke-width="2"/>
+<text x="100.0" y="52.0" text-anchor="middle" fill="#2a9d8f" font-size="28" font-weight="bold" font-family="Helvetica, Arial, sans-serif" font-style="normal">A</text>
+<text x="68.0" y="112.0" text-anchor="middle" fill="#222" font-size="24" font-weight="normal" font-family="Helvetica, Arial, sans-serif" font-style="normal">−50</text>
+<text x="132.0" y="112.0" text-anchor="middle" fill="#222" font-size="24" font-weight="normal" font-family="Helvetica, Arial, sans-serif" font-style="normal">50</text>
+<rect x="210" y="15" width="140" height="120" rx="14" fill="#f4f4f4" stroke="#555" stroke-width="2"/>
+<text x="280.0" y="52.0" text-anchor="middle" fill="#2a9d8f" font-size="28" font-weight="bold" font-family="Helvetica, Arial, sans-serif" font-style="normal">B</text>
+<text x="248.0" y="112.0" text-anchor="middle" fill="#222" font-size="24" font-weight="normal" font-family="Helvetica, Arial, sans-serif" font-style="normal">1</text>
+<text x="312.0" y="112.0" text-anchor="middle" fill="#222" font-size="24" font-weight="normal" font-family="Helvetica, Arial, sans-serif" font-style="normal">3</text>
+<rect x="390" y="15" width="140" height="120" rx="14" fill="#f4f4f4" stroke="#555" stroke-width="2"/>
+<text x="460.0" y="52.0" text-anchor="middle" fill="#2a9d8f" font-size="28" font-weight="bold" font-family="Helvetica, Arial, sans-serif" font-style="normal">C</text>
+<text x="428.0" y="112.0" text-anchor="middle" fill="#222" font-size="24" font-weight="normal" font-family="Helvetica, Arial, sans-serif" font-style="normal">−5</text>
+<text x="492.0" y="112.0" text-anchor="middle" fill="#222" font-size="24" font-weight="normal" font-family="Helvetica, Arial, sans-serif" font-style="normal">15</text>
+</svg>

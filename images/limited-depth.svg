@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 620 230" width="620" height="230" font-family="Helvetica, Arial, sans-serif" font-size="14">
+<rect width="620" height="230" fill="white"/>
+<path d="M310.0,25 L580.0,200 L40.0,200 Z" fill="#f4f4f4" stroke="#bbb" stroke-width="2" stroke-dasharray="7 5"/>
+<path d="M310.0,25 L410.2857142857143,90 L209.71428571428572,90 Z" fill="#2563eb" fill-opacity="0.18" stroke="#2563eb" stroke-width="2.5"/>
+<line x1="209.71428571428572" y1="90" x2="410.2857142857143" y2="90" stroke="#d62828" stroke-width="4"/>
+<text x="310.0" y="72.0" text-anchor="middle" fill="#2563eb" font-size="17" font-weight="bold" font-family="Helvetica, Arial, sans-serif" font-style="normal">search</text>
+<text x="422.3" y="96.0" text-anchor="start" fill="#d62828" font-size="18" font-weight="normal" font-family="Times New Roman, Times, serif" font-style="normal">Eval(<tspan font-style="italic">s</tspan>)</text>
+<text x="310.0" y="170.0" text-anchor="middle" fill="#999" font-size="16" font-weight="normal" font-family="Helvetica, Arial, sans-serif" font-style="italic">not explored</text>
+<line x1="40" y1="25" x2="40" y2="80" stroke="#555" stroke-width="2"/>
+<path d="M40,90 L35,79 L45,79 Z" fill="#555"/>
+<line x1="30" y1="25" x2="50" y2="25" stroke="#555" stroke-width="2"/>
+<text x="52.0" y="64.5" text-anchor="start" fill="#222" font-size="22" font-family="Times New Roman, Times, serif" font-style="italic">d<tspan font-style="normal" font-size="14" dy="6">max</tspan></text>
+</svg>
