@@ -658,9 +658,11 @@ def alpha_beta_pruning():
             Node("min", 3, children=[3, 5]),  # @hide
         ])  # @hide
     ))  # @hide
+    text("- When children are flipped, can't prune now!")
+
     text("In practice, use a heuristic (e.g., an evaluation function, coming up next) to order the children:")
-    text("- Decreasing for max nodes")
-    text("- Increasing for min nodes")
+    text("- Explore children of max nodes by decreasing heuristic")
+    text("- Explore children of min nodes by increasing heuristic")
 
     text("Summary:")
     text("- Alpha-beta pruning: speed up minimax search, exact computation")
