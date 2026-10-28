@@ -15,10 +15,10 @@ def main():
     text("This week: games")
 
     text("**Game 1** 🎮:")
+    image("images/game-bins.svg", width=450)
     text("- You choose one of the three bins.")
     text("- I choose a number from that bin.")
     text("- Your goal is to maximize the chosen number.")
-    image("images/game-bins.svg", width=450)
     text("What should your strategy be?")
     text("Note that it depends on your opponent's (my) strategy, which is unknown...")
 
@@ -556,7 +556,7 @@ def face_off():
 
     text("Summary:")
     text("- Always ask: optimal with respect to what?")
-    text("- Minimax provides both optimality and a lower bound against any (unknown) opponent")
+    text(r"- Minimax provides both optimality (against $\pi_\text{min}$) and a lower bound against any (unknown) opponent $\pi_\text{opp}$")
 
 
 def expectiminimax():
