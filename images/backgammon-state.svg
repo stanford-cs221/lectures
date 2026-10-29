@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 330 340" width="330" height="340" font-family="Helvetica, Arial, sans-serif" font-size="14">
+<rect width="330" height="340" fill="white"/>
+<!-- Board: two halves (columns 2/1 on the left, 3/0 on the right), the bar in the middle, and the tray for removed pieces on the right -->
+<rect x="20" y="40" width="250" height="260" fill="#f3e9d2" stroke="#555" stroke-width="2"/>
+<rect x="130" y="40" width="30" height="260" fill="#c9b78f" stroke="#555" stroke-width="1.5"/>
+<rect x="280" y="40" width="40" height="260" rx="6" fill="#c9b78f" stroke="#555" stroke-width="1.5"/>
+<!-- Points (columns): top ones point down, bottom ones point up -->
+<path d="M28,42 L122,42 L75,165 Z" fill="white" stroke="#999" stroke-width="1"/>
+<path d="M168,42 L262,42 L215,165 Z" fill="#a8d5ce" stroke="#999" stroke-width="1"/>
+<path d="M28,298 L122,298 L75,175 Z" fill="#a8d5ce" stroke="#999" stroke-width="1"/>
+<path d="M168,298 L262,298 L215,175 Z" fill="white" stroke="#999" stroke-width="1"/>
+<!-- Column numbers -->
+<text x="75" y="30" text-anchor="middle" fill="#222" font-size="17" font-weight="bold">2</text>
+<text x="215" y="30" text-anchor="middle" fill="#222" font-size="17" font-weight="bold">3</text>
+<text x="75" y="324" text-anchor="middle" fill="#222" font-size="17" font-weight="bold">1</text>
+<text x="215" y="324" text-anchor="middle" fill="#222" font-size="17" font-weight="bold">0</text>
+<text x="145" y="324" text-anchor="middle" fill="#555" font-size="13" font-style="italic">bar</text>
+<text x="300" y="30" text-anchor="middle" fill="#555" font-size="13" font-style="italic">off</text>
+<!-- x pieces (dark): 3 in column 3, 1 in column 1 -->
+<circle cx="215" cy="60" r="13" fill="#333" stroke="#111" stroke-width="1.5"/>
+<text x="215" y="65" text-anchor="middle" fill="white" font-size="15" font-weight="bold">x</text>
+<circle cx="215" cy="88" r="13" fill="#333" stroke="#111" stroke-width="1.5"/>
+<text x="215" y="93" text-anchor="middle" fill="white" font-size="15" font-weight="bold">x</text>
+<circle cx="215" cy="116" r="13" fill="#333" stroke="#111" stroke-width="1.5"/>
+<text x="215" y="121" text-anchor="middle" fill="white" font-size="15" font-weight="bold">x</text>
+<circle cx="75" cy="280" r="13" fill="#333" stroke="#111" stroke-width="1.5"/>
+<text x="75" y="285" text-anchor="middle" fill="white" font-size="15" font-weight="bold">x</text>
+<!-- o pieces (light): 1 in column 0, 1 on the bar, 2 removed (off the board) -->
+<circle cx="215" cy="280" r="13" fill="white" stroke="#333" stroke-width="2"/>
+<text x="215" y="285" text-anchor="middle" fill="#222" font-size="15" font-weight="bold">o</text>
+<circle cx="145" cy="170" r="13" fill="white" stroke="#333" stroke-width="2"/>
+<text x="145" y="175" text-anchor="middle" fill="#222" font-size="15" font-weight="bold">o</text>
+<circle cx="300" cy="252" r="13" fill="white" stroke="#333" stroke-width="2"/>
+<text x="300" y="257" text-anchor="middle" fill="#222" font-size="15" font-weight="bold">o</text>
+<circle cx="300" cy="280" r="13" fill="white" stroke="#333" stroke-width="2"/>
+<text x="300" y="285" text-anchor="middle" fill="#222" font-size="15" font-weight="bold">o</text>
+</svg>
