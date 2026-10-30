@@ -95,9 +95,9 @@ def td_learning_motivation():
 
     text(r"$\displaystyle \pi(s) = \arg\max_{a \in \text{Actions}(s)} \sum_{s'} T(s, a, s') [\text{Reward}(s, a, s') + \gamma V_\pi(s')]$")
     text(r"Note that this requires knowing the MDP (transitions $T$ and rewards $\text{Reward}$)")
-    text("...so the answer is no!")
+    text("...so the answer is: only if you know the MDP!")
 
-    text(r"However, for games, we do know $T$ and $\text{Reward}$!")
+    text(r"However, for games, we do know $T$ and $\text{Reward}$ (they're the rules of the game)!")
     text(r"- Transitions are deterministic ($s' = \text{Succ}(s, a)$)")
     text(r"- Rewards are captured by $\text{Utility}(s)$ of end states")
 

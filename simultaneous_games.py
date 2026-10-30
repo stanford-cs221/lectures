@@ -208,8 +208,8 @@ def minimax_theorem():
 
     text("### Mixed strategies, A goes first")
     text("Now, let's consider **mixed strategies**.")
-    text(r"Suppose player A plays the mixed strategy $\pi_\text{A} = [0.5, 0.5]$.")
-    text("What's the optimal strategy for player B?")
+    text(r"Suppose player A plays (reveals) the mixed strategy $\pi_\text{A} = [0.5, 0.5]$ first.")
+    text("What's the optimal strategy for player B then?")
     V = {1: {1: 2, 2: -3}, 2: {1: -3, 2: 4}}  # a -> b -> V(a, b)
     policy_a = {1: 0.5, 2: 0.5}
     text(make_game_table(V, policy_a))  # @stepover
@@ -257,7 +257,7 @@ def minimax_theorem():
     text(r"$\displaystyle \max_{0 \le p \le 1} \min\{5p - 3, -7p + 4\} = \boxed{-\frac{1}{12}}$ (with $p = \frac{7}{12}$)")
 
     text("### Mixed strategies, B goes first")
-    text(r"Now let player B go first with the mixed strategy $\pi_\text{B} = [p, 1 - p]$; then A picks an action:")
+    text(r"Now suppose player B goes first with (reveals) the mixed strategy $\pi_\text{B} = [p, 1 - p]$, and then A picks an action:")
     graph(draw_game_tree(  # @stepover
         Node("min", children={  # @hide
             "[p, 1 − p]": Node("max", children=["5p − 3", "−7p + 4"]),  # @hide
@@ -285,8 +285,8 @@ def minimax_theorem():
     text(r"$\displaystyle \min_{0 \le p \le 1} \max\{5p - 3, -7p + 4\} = \boxed{-\frac{1}{12}}$ (with $p = \frac{7}{12}$)")
 
     text("Findings:")
-    text(r"- If A goes first, the game value is $-\frac{1}{12}$")
-    text(r"- If B goes first, the game value is $-\frac{1}{12}$")
+    text(r"- If A goes first (reveals its mixed strategy), the game value is $-\frac{1}{12}$")
+    text(r"- If B goes first (reveals its mixed strategy), the game value is $-\frac{1}{12}$")
     text("It's not a coincidence...")
 
     text("### Minimax theorem")
