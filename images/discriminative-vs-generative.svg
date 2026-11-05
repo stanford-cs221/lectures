@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 215" width="720" height="215" font-family="Helvetica, Arial, sans-serif" font-size="14">
+<rect width="720" height="215" fill="white"/>
+<defs>
+  <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+    <path d="M0,0 L10,5 L0,10 Z" fill="#555"/>
+  </marker>
+  <marker id="arrow-orange" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+    <path d="M0,0 L10,5 L0,10 Z" fill="#f77f00"/>
+  </marker>
+</defs>
+
+<!-- Left: traditional machine learning (input -> output) -->
+<text x="150" y="28" text-anchor="middle" fill="#333" font-weight="bold" font-size="16">Traditional machine learning</text>
+<circle cx="45" cy="125" r="24" fill="#ccc" stroke="#555" stroke-width="2"/>
+<text x="45" y="133" text-anchor="middle" font-family="Times New Roman, serif" font-style="italic" font-size="22" fill="#222">H</text>
+<line x1="71" y1="125" x2="107" y2="125" stroke="#555" stroke-width="2" marker-end="url(#arrow)"/>
+<rect x="110" y="103" width="80" height="44" rx="8" fill="white" stroke="#555" stroke-width="2"/>
+<text x="150" y="130" text-anchor="middle" fill="#333" font-size="15">predictor</text>
+<line x1="192" y1="125" x2="226" y2="125" stroke="#555" stroke-width="2" marker-end="url(#arrow)"/>
+<circle cx="254" cy="125" r="24" fill="white" stroke="#555" stroke-width="2"/>
+<text x="254" y="133" text-anchor="middle" font-family="Times New Roman, serif" font-style="italic" font-size="22" fill="#222">C</text>
+<text x="45" y="170" text-anchor="middle" fill="#555">cough</text>
+<text x="45" y="188" text-anchor="middle" fill="#888" font-size="13">(input)</text>
+<text x="254" y="170" text-anchor="middle" fill="#555">cold</text>
+<text x="254" y="188" text-anchor="middle" fill="#888" font-size="13">(output)</text>
+
+<!-- Divider -->
+<line x1="320" y1="20" x2="320" y2="205" stroke="#ddd" stroke-width="2"/>
+
+<!-- Right: Bayesian network (output, hidden -> input), inference goes backwards (shifted right by 60) -->
+<g transform="translate(60, 0)">
+<text x="495" y="28" text-anchor="middle" fill="#333" font-weight="bold" font-size="16">Bayesian networks</text>
+<circle cx="420" cy="75" r="24" fill="white" stroke="#555" stroke-width="2"/>
+<text x="420" y="83" text-anchor="middle" font-family="Times New Roman, serif" font-style="italic" font-size="22" fill="#222">C</text>
+<circle cx="570" cy="75" r="24" fill="white" stroke="#555" stroke-width="2"/>
+<text x="570" y="83" text-anchor="middle" font-family="Times New Roman, serif" font-style="italic" font-size="22" fill="#222">A</text>
+<circle cx="495" cy="165" r="24" fill="#ccc" stroke="#555" stroke-width="2"/>
+<text x="495" y="173" text-anchor="middle" font-family="Times New Roman, serif" font-style="italic" font-size="22" fill="#222">H</text>
+<line x1="436" y1="94" x2="477" y2="144" stroke="#555" stroke-width="2" marker-end="url(#arrow)"/>
+<line x1="554" y1="94" x2="513" y2="144" stroke="#555" stroke-width="2" marker-end="url(#arrow)"/>
+<!-- Inference: from the observed input back to the output -->
+<path d="M 469 170 C 400 175, 375 130, 396 95" fill="none" stroke="#f77f00" stroke-width="2.5" stroke-dasharray="6 4" marker-end="url(#arrow-orange)"/>
+<text x="420" y="45" text-anchor="middle" fill="#555">cold <tspan fill="#888" font-size="13">(output)</tspan></text>
+<text x="570" y="45" text-anchor="middle" fill="#555">allergies <tspan fill="#888" font-size="13">(hidden)</tspan></text>
+<text x="495" y="207" text-anchor="middle" fill="#555">cough <tspan fill="#888" font-size="13">(input)</tspan></text>
+</g>
+<text x="438" y="142" text-anchor="end" fill="#f77f00" font-weight="bold"><tspan x="438">probabilistic</tspan><tspan x="438" dy="17">inference</tspan></text>
+</svg>

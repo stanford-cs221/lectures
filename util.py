@@ -440,3 +440,228 @@ def stack_graphs(specs: list[dict], spacing: float) -> dict:
         for edge in spec["edges"]:
             edges.append({**edge, "data": {**edge["data"], "source": prefix + edge["data"]["source"], "target": prefix + edge["data"]["target"]}})
     return {**specs[0], "nodes": nodes, "edges": edges, "height": specs[0]["height"] * len(specs)}
+
+
+############################################################
+# Animating einsum
+
+EINSUM_HIGHLIGHT = "#ffe0b2"  # Light orange: the entries being multiplied (and the output entry they're added to)
+
+
+def escape_html(s: str) -> str:
+    return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+
+
+def html_table(indices: list[str], name: str, rows: list[tuple[dict, str]], highlighted: list[dict] = []) -> str:
+    """
+    HTML table (to show with `text`) with a column per index (e.g., "a") and a column of values headed by `name` (MathJax),
+    where `rows` are (assignment of the indices, value) pairs, highlighting the rows whose assignments are in `highlighted`.
+    """
+    cell_style = "padding: 1px 8px; text-align: center; border-bottom: 1px solid #eee"
+    header = "".join(f"<th style='{cell_style}; font-style: italic; font-family: serif'>{i}</th>" for i in indices)
+    header += f"<th style='{cell_style}'>${name}$</th>"
+    body = ""
+    for assignment, value in rows:
+        style = f"background: {EINSUM_HIGHLIGHT}; font-weight: bold" if assignment in highlighted else ""
+        body += f"<tr style='{style}'>" + "".join(f"<td style='{cell_style}'>{assignment[i]}</td>" for i in indices)
+        body += f"<td style='{cell_style}'>{value}</td></tr>"
+    return f"<table style='border-collapse: collapse; font-size: 14px; margin: 0'><tr>{header}</tr>{body}</table>"
+
+
+def animate_einsum(pattern: str, operands: list[np.ndarray], names: list[str], output_name: str,
+                   granularity: str = "auto", max_frames: int = 40, skip_zeros: bool = True) -> np.ndarray:
+    """
+    Compute einsum (e.g., pattern = "b, e, b e a -> b e a"), showing how each output entry is computed
+    as a sum of products (one frame per rendering, so call it on a line with @animate):
+    - The input tables, with the entries being multiplied highlighted
+    - The sum of products for the current output entry, with the current product and running sum
+    - The output table, filled in so far
+    `names` (one per operand) and `output_name` are MathJax templates for the tables (e.g., r"p({a} \\mid {b}, {e})"),
+    where {x} is replaced by the index x in the table header and by its value in the equation.
+    `granularity`: "term" (one frame per product), "cell" (one frame per output entry), or "auto" (term unless too many frames).
+    If `skip_zeros`, products with a factor of 0 (e.g., from evidence indicators) are omitted (unless all of them are 0).
+    """
+    import itertools
+    from edtrace import text
+    from einops import einsum
+
+    # Parse the pattern
+    lhs, rhs = pattern.split("->")
+    operand_indices = [term.split() for term in lhs.split(",")]
+    output_indices = rhs.split()
+    assert len(operand_indices) == len(operands), (pattern, len(operands))
+    sizes = {}
+    for indices, operand in zip(operand_indices, operands):
+        assert len(indices) == operand.ndim, (indices, operand.shape)
+        for index, size in zip(indices, operand.shape):
+            sizes[index] = size
+    summed_indices = [index for index in sizes if index not in output_indices]
+    assignments = lambda indices: [dict(zip(indices, values)) for values in itertools.product(*[range(sizes[i]) for i in indices])]
+
+    def fmt(x: float) -> str:
+        return f"{float(x):.4g}"
+
+    def fill(template: str, assignment: dict | None) -> str:
+        """Substitute {x} in `template` with the value of x in `assignment` (or x itself if None)."""
+        for index in sizes:
+            if assignment is None or index in assignment:
+                template = template.replace("{" + index + "}", index if assignment is None else str(assignment[index]))
+        return template
+
+    def entry(operand_index: int, assignment: dict) -> float:
+        return operands[operand_index][tuple(assignment[i] for i in operand_indices[operand_index])]
+
+    # For each output entry, the products to add up
+    cells = []
+    for out in assignments(output_indices):
+        terms = []
+        for summed in assignments(summed_indices):
+            full = {**out, **summed}
+            factors = [entry(k, full) for k in range(len(operands))]
+            terms.append({"assignment": full, "factors": factors, "product": float(np.prod(factors))})
+        num_terms = len(terms)
+        if skip_zeros and any(term["product"] != 0 for term in terms):
+            terms = [term for term in terms if term["product"] != 0]
+        cells.append({"assignment": out, "terms": terms, "num_skipped": num_terms - len(terms),
+                      "value": sum(term["product"] for term in terms)})
+
+    if granularity == "auto":
+        granularity = "term" if sum(len(cell["terms"]) for cell in cells) <= max_frames else "cell"
+
+    def frame(cell_index: int | None, term_index: int | None):
+        """Show the frame for the given output entry and product (both None for the final frame)."""
+        cell = cells[cell_index] if cell_index is not None else None
+        if cell is None:
+            current_terms = []
+        elif term_index is None:
+            current_terms = cell["terms"]
+        else:
+            current_terms = [cell["terms"][term_index]]
+
+        # Input tables (highlighting the entries in the current products)
+        panels = []
+        for k, (indices, name) in enumerate(zip(operand_indices, names)):
+            rows = [(a, fmt(entry(k, a))) for a in assignments(indices)]
+            highlighted = [{i: term["assignment"][i] for i in indices} for term in current_terms]
+            panels.append(html_table(indices, fill(name, None), rows, highlighted))
+
+        # Output table (filled in so far: earlier entries done, the current one has the running sum)
+        rows = []
+        for j, other in enumerate(cells):
+            if cell_index is None or j < cell_index:
+                value = fmt(other["value"])
+            elif j == cell_index:
+                done = other["terms"] if term_index is None else other["terms"][:term_index + 1]
+                value = fmt(sum(term["product"] for term in done))
+            else:
+                value = "<span style='color: #bbb'>?</span>"
+            rows.append((other["assignment"], value))
+        output = html_table(output_indices, fill(output_name, None), rows, [cell["assignment"]] if cell else [])
+
+        separator = "<span style='font-size: 18px; color: #888'>{}</span>"
+        # The pattern in small gray letters, a bit to the right of the output table
+        pattern_label = (f"<span style='margin-left: 84px; font-size: 12px; font-family: monospace; white-space: nowrap; color: #888'>"
+                         f"({escape_html(pattern)})</span>")
+        html = (f"<div style='display: flex; flex-wrap: wrap; align-items: center; gap: 12px'>"
+                + separator.format("×").join(panels) + separator.format("→") + output + pattern_label + "</div>")
+
+        # The sum of products for the current output entry
+        if cell is not None:
+            products = []
+            for t, term in enumerate(cell["terms"]):
+                product = " × ".join(fmt(f) for f in term["factors"])
+                if len(cell["terms"]) > 1 and len(term["factors"]) > 1:
+                    product = f"({product})"
+                if term_index is None or t == term_index:
+                    style = f"background: {EINSUM_HIGHLIGHT}; font-weight: bold"
+                elif t < term_index:
+                    style = ""
+                else:
+                    style = "color: #bbb"
+                products.append(f"<span style='{style}; padding: 0 2px'>{product}</span>")
+            equation = f"${fill(output_name, cell['assignment'])}$ = " + " + ".join(products)
+            # The value so far (unless there's nothing to compute)
+            done = cell["terms"] if term_index is None else cell["terms"][:term_index + 1]
+            if len(cell["terms"]) > 1 or len(cell["terms"][0]["factors"]) > 1:
+                equation += f" = {fmt(sum(term['product'] for term in done))}"
+            if cell["num_skipped"] > 0:
+                equation += f"<br><span style='color: #888'>(omitting {cell['num_skipped']} product{'s' if cell['num_skipped'] > 1 else ''} with a factor of 0)</span>"
+            html += f"<div style='margin-top: 8px'>{equation}</div>"
+        text(html)
+
+    for c, cell in enumerate(cells):
+        if granularity == "term":
+            for t in range(len(cell["terms"])):
+                frame(c, t)
+        else:
+            frame(c, None)
+    frame(None, None)
+
+    return einsum(*operands, pattern)
+
+
+def fill_template(template: str, indices: list[str], assignment: dict | None) -> str:
+    """Substitute {x} in `template` (for each index x) with its value in `assignment` (or x itself if None)."""
+    for index in indices:
+        if assignment is None or index in assignment:
+            template = template.replace("{" + index + "}", index if assignment is None else str(assignment[index]))
+    return template
+
+
+def animate_divide(pattern: str, numerator: np.ndarray, denominator: np.ndarray,
+                   names: tuple[str, str], output_name: str) -> np.ndarray:
+    """
+    Compute numerator / denominator (e.g., pattern = "b / -> b", where the denominator's indices are a subset of the numerator's),
+    showing how each output entry is computed (one frame per output entry, so call it on a line with @animate):
+    - The numerator and denominator tables, with the entries being divided highlighted
+    - The fraction for the current output entry
+    - The output table, filled in so far
+    `names` (numerator, denominator) and `output_name` are MathJax templates as in `animate_einsum`.
+    """
+    import itertools
+    from edtrace import text
+
+    lhs, output_indices = pattern.split("->")
+    num_indices, den_indices = [side.split() for side in lhs.split("/")]
+    output_indices = output_indices.split()
+    assert sorted(num_indices) == sorted(output_indices) and set(den_indices) <= set(num_indices), pattern
+    sizes = dict(zip(num_indices, numerator.shape))
+    indices = list(sizes)
+    assignments = lambda idxs: [dict(zip(idxs, values)) for values in itertools.product(*[range(sizes[i]) for i in idxs])]
+    fmt = lambda x: f"{float(x):.4g}"
+    num_entry = lambda a: numerator[tuple(a[i] for i in num_indices)]
+    den_entry = lambda a: denominator[tuple(a[i] for i in den_indices)]
+    cells = [{"assignment": a, "num": num_entry(a), "den": den_entry(a), "value": num_entry(a) / den_entry(a)}
+             for a in assignments(output_indices)]
+    num_name, den_name = names
+
+    def frame(cell_index: int | None):
+        cell = cells[cell_index] if cell_index is not None else None
+        highlight = lambda idxs: [{i: cell["assignment"][i] for i in idxs}] if cell else []
+        num_table = html_table(num_indices, fill_template(num_name, indices, None),
+                               [(a, fmt(num_entry(a))) for a in assignments(num_indices)], highlight(num_indices))
+        den_table = html_table(den_indices, fill_template(den_name, indices, None),
+                               [(a, fmt(denominator[tuple(a[i] for i in den_indices)])) for a in assignments(den_indices)],
+                               highlight(den_indices))
+        rows = []
+        for j, other in enumerate(cells):
+            done = cell_index is None or j <= cell_index
+            rows.append((other["assignment"], fmt(other["value"]) if done else "<span style='color: #bbb'>?</span>"))
+        output = html_table(output_indices, fill_template(output_name, indices, None), rows, highlight(output_indices))
+
+        separator = "<span style='font-size: 18px; color: #888'>{}</span>"
+        html = (f"<div style='display: flex; flex-wrap: wrap; align-items: center; gap: 12px'>"
+                + num_table + separator.format("÷") + den_table + separator.format("→") + output + "</div>")
+        if cell is not None:
+            a = cell["assignment"]
+            equation = (rf"$\displaystyle {fill_template(output_name, indices, a)} = "
+                        rf"\frac{{{fill_template(num_name, indices, a)}}}{{{fill_template(den_name, indices, a)}}} = "
+                        rf"\frac{{{fmt(cell['num'])}}}{{{fmt(cell['den'])}}} = {fmt(cell['value'])}$")
+            html += f"<div style='margin-top: 8px'>{equation}</div>"
+        text(html)
+
+    for c in range(len(cells)):
+        frame(c)
+    frame(None)
+
+    return numerator / denominator
