@@ -26,25 +26,24 @@ def main():
 
 def review_bayesian_networks():
     text("**Joint distribution**: like a database that specifies how the world works")
-    text("1. Define a set of random variables: X = (X_1, ..., X_n)")
+    text(r"1. Define a set of random variables: $X = (X_1, \dots, X_n)$")
     text("Example: B(urglary), E(arthquake), A(larm)")
 
     text("2. Define a directed acyclic graph (DAG) over the variables")
-    text("Example: B → A, E → A")
     image("images/alarm-bayes.png", width=200)
 
-    text("3. For each node, define a local conditional distribution: p(x_i | parents(x_i)).")
-    text("Example: p(b), p(e), p(a | b, e)")
+    text(r"3. For each node, define a local conditional distribution: $p(x_i \mid \text{parents}(x_i))$.")
+    text(r"Example: $p(b)$, $p(e)$, $p(a \mid b, e)$")
     p_b = ProbTable("B", [0.95, 0.05]) # p(b) @inspect p_b @stepover
     p_e = ProbTable("E", [0.95, 0.05]) # p(e) @inspect p_e @stepover
     p_a_given_be = ProbTable("A | B E", lambda b, e, a: a == (b or e), shape=(2, 2, 2)) # p(a | b, e) @inspect p_a_given_be @stepover
 
-    text("4. Define the joint distribution: P(X_1, ..., X_n) = Π_i p(x_i | parents(x_i))")
-    text("Example: P(B, E, A) = p(b) p(e) p(a | b, e)")
+    text(r"4. Define the joint distribution: $\displaystyle P(X_1, \dots, X_n) = \prod_i p(x_i \mid \text{parents}(x_i))$")
+    text(r"Example: $P(B, E, A) = p(b) p(e) p(a \mid b, e)$")
     P_BEA = ProbTable("B E A", einsum(p_b.p, p_e.p, p_a_given_be.p, "b, e, b e a -> b e a"))  # P(B, E, A) @inspect P_BEA @stepover
 
     text("**Probabilistic inference**: answer questions (like SQL) on the joint distribution")  # @clear p_b p_e p_a_given_be
-    text("Example: P(B | A = 1)")
+    text(r"Example: $P(B \mid A = 1)$")
     text("Step 1: Get appropriate variables")
     text(r"a. Condition on evidence: $P(B, E, A = 1)$")
     P_BEA1 = ProbTable("B E A=1", P_BEA.p[:, :, 1])  # @inspect P_BEA1 @stepover
@@ -131,16 +130,16 @@ def introduce_gibbs_sampling():
 
 def gibbs_telephone():
     text("**Example**: telephone")
-    text("Bayesian network: A → B → C")
-    text("Intuition: A sends a bit to B, B sends a bit to C, where at each step message might be corrupted")
+    text(r"Bayesian network: $A \to B \to C$")
+    text(r"Intuition: $A$ sends a bit to $B$, $B$ sends a bit to $C$, where at each step message might be corrupted")
 
     text("Here's the definition of the Bayesian network:")
     p_a = ProbTable("A", [0.5, 0.5]) # p(a) @inspect p_a @stepover
     p_b_given_a = ProbTable("B | A", lambda a, b: 0.8 if b == a else 0.2, shape=(2, 2)) # p(b | a) @inspect p_b_given_a @stepover
     p_c_given_b = ProbTable("C | B", lambda b, c: 0.8 if c == b else 0.2, shape=(2, 2)) # p(c | b) @inspect p_c_given_b @stepover
 
-    text("Probabilistic inference goal: P(A | C = 1)")
-    text("Intuition: C=1 encourages A=1, but weakly through two steps of corruption")
+    text(r"Probabilistic inference goal: $P(A \mid C = 1)$")
+    text(r"Intuition: $C = 1$ encourages $A = 1$, but weakly through two steps of corruption")
 
     text("Let's first run rejection sampling:")  # @clear p_a p_b_given_a p_c_given_b
     set_random_seed(3)
@@ -159,24 +158,24 @@ def gibbs_telephone():
     set_random_seed(3)
     text("Let's now run Gibbs sampling:")  # @clear sample rejection_probs
     text("Start with an initialization (full assignment)")
-    text("For each variable X_i, change it based on all other variables")
-    text("- Compute the conditional distribution of X_i given all other variables")
-    text("- Sample X_i from this conditional distribution")
+    text(r"For each variable $X_i$, change it based on all other variables")
+    text(r"- Compute the conditional distribution of $X_i$ given all other variables")
+    text(r"- Sample $X_i$ from this conditional distribution")
 
-    text("Initialize with an arbitrary sample that satisfies the evidence (D = 1):")
+    text(r"Initialize with an arbitrary sample that satisfies the evidence ($C = 1$):")
     x = {"A": 1, "B": 0, "C": 1}  # @inspect x
 
     text("**Conditional distribution**")
-    text("Suppose the goal is to sample B given A = a and C = c.")
+    text(r"Suppose the goal is to sample $B$ given $A = a$ and $C = c$.")
 
     text("Express conditional probability in terms of joint probability:")
-    text("P(B = b | A = a, C = c) = P(A = a, B = b, C = c) / P(A = a, C = c)")
+    text(r"$\displaystyle P(B = b \mid A = a, C = c) = \frac{P(A = a, B = b, C = c)}{P(A = a, C = c)}$")
 
     text("...with a normalizer which is probability of all other variables we're not sampling")
-    text("P(A = a, C = c) = Σ_b P(A = a, B = b, C = c)")
+    text(r"$\displaystyle P(A = a, C = c) = \sum_b P(A = a, B = b, C = c)$")
 
     text("The joint probability is the product of the local conditional probabilities:")
-    text("P(A = a, B = b, C = c) = p(a) p(b | a) p(c | b)")
+    text(r"$P(A = a, B = b, C = c) = p(a) p(b \mid a) p(c \mid b)$")
     text("Note: we don't have to instantiate the entire joint distribution (could be exponentially large).")
 
     def joint_prob(x, var, value):  # @inspect x var value
@@ -190,14 +189,14 @@ def gibbs_telephone():
     text("Note we don't instantiate the joint distribution here.")
     text("But we do have to touch every variable (we'll come back to this later).")
 
-    text("Let's say we were sampling B ∈ {0, 1}:")
+    text(r"Let's say we were sampling $B \in \{0, 1\}$:")
     p_ab0c = joint_prob(x, "B", 0)  # P(A = 1, B = 0, C = 1) @inspect p_ab0c
     p_ab1c = joint_prob(x, "B", 1)  # P(A = 1, B = 1, C = 1) @inspect p_ab1c
     p_ac = p_ab0c + p_ab1c  # P(A = 1, C = 1) @inspect p_ac
     p_b0_given_ac = p_ab0c / p_ac  # P(B = 0 | A = 1, C = 1) @inspect p_b0_given_ac
     p_b1_given_ac = p_ab1c / p_ac  # P(B = 1 | A = 1, C = 1) @inspect p_b1_given_ac
     x["B"] = sample_dict({0: p_b0_given_ac, 1: p_b1_given_ac})  # @inspect x
-    text("Note that B gets pulled to 1 because of A=1 and C=1.")
+    text(r"Note that $B$ gets pulled to 1 because of $A = 1$ and $C = 1$.")
 
     text("Let's define Gibbs sampling in greater generality:")  # @clear p_ab0c p_ab1c p_ac p_b0_given_ac p_b1_given_ac x
     gibbs_probs = gibbs_sampling(x, vars=["A", "B"], query=query, joint_prob=joint_prob, num_iterations=1)  # @inspect gibbs_probs
@@ -218,30 +217,30 @@ def gibbs_telephone():
 
 
 def markov_blanket():
-    text("Joint probability: p(a) p(b | a) p(c | b) p(d | c) p(e | d)")
+    text(r"Joint probability: $p(a) p(b \mid a) p(c \mid b) p(d \mid c) p(e \mid d)$")
     text("Can we avoid having to compute the full joint probability every time we sample a variable?")
     text("Intuitively, only one variable changes...")
 
-    text("Recall the telephone Bayesian network: A → B → C")
+    text(r"Recall the telephone Bayesian network: $A \to B \to C$")
     p_a = ProbTable("A", [0.5, 0.5]) # p(a) @inspect p_a @stepover
     p_b_given_a = ProbTable("B | A", lambda a, b: 0.8 if b == a else 0.2, shape=(2, 2))  # p(b | a) @inspect p_b_given_a @stepover
     p_c_given_b = ProbTable("C | B", lambda b, c: 0.8 if c == b else 0.2, shape=(2, 2))  # p(c | b) @inspect p_c_given_b @stepover
 
-    text("Suppose we're sampling P(A | B = b, C = c)")
+    text(r"Suppose we're sampling $P(A \mid B = b, C = c)$")
     text("Let's look at the joint distribution:")
-    text("P(A = 0, B = b, C = c) = p(a = 0) p(b | a = 0) p(c | b)")
-    text("P(A = 1, B = b, C = c) = p(a = 1) p(b | a = 1) p(c | b)")
-    text("P(B = b, C = c) = Σ_a p(a) p(b | a) p(c | b)")
-    text("Notice that p(c | b) shows up in both cases, and does not impact P(A | B = b, C = c).")
+    text(r"$P(A = 0, B = b, C = c) = p(a = 0) p(b \mid a = 0) p(c \mid b)$")
+    text(r"$P(A = 1, B = b, C = c) = p(a = 1) p(b \mid a = 1) p(c \mid b)$")
+    text(r"$\displaystyle P(B = b, C = c) = \sum_a p(a) p(b \mid a) p(c \mid b)$")
+    text(r"Notice that $p(c \mid b)$ shows up in both cases, and does not impact $P(A \mid B = b, C = c)$.")
     text("So we can just ignore it!")
 
     text("In general, we need to only include local conditional probabilities that involve the variable we're sampling.")
     text("Evaluating these local conditional probabilities requires knowing all involved variables.")
     text("This set of variables is called the **Markov blanket**.")
     text("The Markov blanket of a variable is all its children and parents.")
-    text("MarkovBlanket(A) = {B}")
-    text("MarkovBlanket(B) = {A, C}")
-    text("MarkovBlanket(C) = {B}")
+    text(r"$\text{MarkovBlanket}(A) = \{B\}$")
+    text(r"$\text{MarkovBlanket}(B) = \{A, C\}$")
+    text(r"$\text{MarkovBlanket}(C) = \{B\}$")
 
     text("Instead of computing the joint probability")
     text("...let us just include the variables in the Markov blanket.")
@@ -297,22 +296,22 @@ def gibbs_alarm():
 def compare_gibbs_and_rejection():
     text("What examples are hard for rejection sampling?")
     text("Answer: when evidence has low probability.")
-    text("A → B")
+    text(r"$A \to B$")
     p_a = ProbTable("A", [0.5, 0.5]) # p(a) @inspect p_a @stepover
     p_b_given_a = ProbTable("B | A", [[0.9999, 0.0001], [0.9998, 0.0002]])  # p(b | a) @inspect p_b_given_a @stepover
-    text("Compute P(A | B = 1)")
+    text(r"Compute $P(A \mid B = 1)$")
     text("Reason: need to reject all samples that don't match the evidence.")
-    text("Gibbs sample conditions on B = 1, so will work fine.")
+    text(r"Gibbs sample conditions on $B = 1$, so will work fine.")
 
     text("What examples are hard for Gibbs sampling?")  # @clear p_a p_b_given_a
     text("Answer: when variables are highly correlated.")
-    text("A → B")
+    text(r"$A \to B$")
     p_a = ProbTable("A", [0.5, 0.5]) # p(a) @inspect p_a @stepover
     p_b_given_a = ProbTable("B | A", lambda a, b: a == b, shape=(2, 2))  # p(b | a) @inspect p_b_given_a @stepover
-    text("Probabilistic inference: P(A) [no evidence]")
+    text(r"Probabilistic inference: $P(A)$ [no evidence]")
     x = {"A": 0, "B": 0}
     text("Rejection sampling generates from scratch every time, so works perfectly (no rejection).")
-    text("Gibbs sampling gets stuck and will not explore A = 1.")
+    text(r"Gibbs sampling gets stuck and will not explore $A = 1$.")
     query = lambda sample: sample["A"]
     def joint_prob(x, var, value):
         y = x | {var: value}
@@ -364,59 +363,59 @@ def introduce_conditional_independence():
     text("We will connect graph properties to probabilistic properties (in particularly independence).")
 
     text("**Independence**")
-    text("Two variables A and B are independent iff:")
-    text("P(A = a, B = b) = P(A = a) P(B = b) for all a, b")
+    text(r"Two variables $A$ and $B$ are independent iff:")
+    text(r"$P(A = a, B = b) = P(A = a) P(B = b)$ for all $a, b$")
 
-    text("Example 1 (A B):")
-    text("P(A = a, B = b) = p(a) p(b)")
-    text("A and B are independent")
+    text(r"Example 1 ($A$ $B$):")
+    text(r"$P(A = a, B = b) = p(a) p(b)$")
+    text(r"$A$ and $B$ are independent")
 
-    text("Example 2 (A → B):")
-    text("P(A = a, B = b) = p(a) p(b | a)")
-    text("A and B are not independent")
+    text(r"Example 2 ($A \to B$):")
+    text(r"$P(A = a, B = b) = p(a) p(b \mid a)$")
+    text(r"$A$ and $B$ are not independent")
 
-    text("Example 3 (A, B → C):")
-    text("P(A = a, B = b, C = c) = p(a) p(b | a) p(c | b, a)")
-    text("P(A = a, B = b) = Σ_c P(A = a, B = b, C = c) = Σ_c p(a) p(b) p(c | b, a) = p(a) p(b)")
-    text("A and B are independent (even if they are connected)!")
+    text(r"Example 3 ($A, B \to C$):")
+    text(r"$P(A = a, B = b, C = c) = p(a) p(b) p(c \mid a, b)$")
+    text(r"$\displaystyle P(A = a, B = b) = \sum_c P(A = a, B = b, C = c) = \sum_c p(a) p(b) p(c \mid a, b) = p(a) p(b)$")
+    text(r"$A$ and $B$ are independent (even if they are connected)!")
 
-    text("Example 4 (C → A, B):")
-    text("P(A = a, B = b, C = c) = p(c) p(a | c) p(b | c)")
-    text("P(A = a, B = b) = Σ_c P(A = a, B = b, C = c) = Σ_c p(c) p(a | c) p(b | c)")
-    text("A and B are not independent!")
+    text(r"Example 4 ($C \to A, B$):")
+    text(r"$P(A = a, B = b, C = c) = p(c) p(a \mid c) p(b \mid c)$")
+    text(r"$\displaystyle P(A = a, B = b) = \sum_c P(A = a, B = b, C = c) = \sum_c p(c) p(a \mid c) p(b \mid c)$")
+    text(r"$A$ and $B$ are not independent!")
 
     text("**Conditional independence**")
-    text("Two variables A and B are conditionally independent given C = c iff:")
-    text("P(A = a, B = b | C = c) = P(A = a | C = c) P(B = b | C = c) for all a, b")
+    text(r"Two variables $A$ and $B$ are conditionally independent given $C = c$ iff:")
+    text(r"$P(A = a, B = b \mid C = c) = P(A = a \mid C = c) P(B = b \mid C = c)$ for all $a, b$")
 
-    text("Example 4 again (C → A, B):")
-    text("P(A = a, B = b | C = c) = p(c) p(a | c) p(b | c) / p(c) = p(a | c) p(b | c)")
-    text("A and B are conditionally independent given C = c")
+    text(r"Example 4 again ($C \to A, B$):")
+    text(r"$\displaystyle P(A = a, B = b \mid C = c) = \frac{p(c) p(a \mid c) p(b \mid c)}{p(c)} = p(a \mid c) p(b \mid c)$")
+    text(r"$A$ and $B$ are conditionally independent given $C = c$")
 
-    text("Example 3 again (A, B → C):")
-    text("P(A = a, B = b | C = c) = p(a) p(b) p(c | a, b)")
-    text("A and B are not conditionally independent given C = c")
+    text(r"Example 3 again ($A, B \to C$):")
+    text(r"$P(A = a, B = b \mid C = c) \propto p(a) p(b) p(c \mid a, b)$")
+    text(r"$A$ and $B$ are not conditionally independent given $C = c$")
 
     text("**Alarm example**")
-    text("Variables: Burglary B, Earthquake E, Alarm A")
+    text(r"Variables: Burglary $B$, Earthquake $E$, Alarm $A$")
     image("images/alarm-bayes.png", width=200)
-    text("B and E are independent")
-    text("B and E are not conditionally independent given A = 1")
+    text(r"$B$ and $E$ are independent")
+    text(r"$B$ and $E$ are not conditionally independent given $A = 1$")
 
     text("**General algorithm**")
-    text("Question: are A and B independent given C?")
-    text("1. Shade in the variables C")
+    text(r"Question: are $A$ and $B$ independent given $C$?")
+    text(r"1. Shade in the variables $C$")
     text("2. Recursively remove any non-shaded leaves")
     text("3. Connect parents to each other (marriage)")
-    text("3. Return whether there is a path from A to B that doesn't go through any shaded nodes")
+    text(r"3. Return whether there is a path from $A$ to $B$ that doesn't go through any shaded nodes")
 
     text("**Medical diagnosis example**")
-    text("Variables: Cold C, Allergies A, Cough H, Itchy eyes I")
+    text(r"Variables: Cold $C$, Allergies $A$, Cough $H$, Itchy eyes $I$")
     image("images/medical-bayes.png", width=200)
-    text("C and A are independent")
-    text("C and I are independent")
-    text("C and I are independent given A")
-    text("C and I are independent given A, H")
+    text(r"$C$ and $A$ are independent")
+    text(r"$C$ and $I$ are independent")
+    text(r"$C$ and $I$ are independent given $A$")
+    text(r"$C$ and $I$ are independent given $A, H$")
 
 
 if __name__ == "__main__":
