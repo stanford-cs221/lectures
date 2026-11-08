@@ -1,6 +1,6 @@
 {
   "files": {
-    "bayes.py": "from typing import Callable\nfrom edtrace import text, image, link, graph, make_graph\nfrom einops import einsum\nfrom collections import defaultdict\nimport numpy as np\nfrom util import set_random_seed, animate_einsum, animate_divide, html_table\nfrom games import Node, draw_game_tree\n\n\n# Exact answers (from exact inference), to compare with the estimates from rejection sampling\nexact_probs = {}\n\n\ndef main():\n    text(\"# Bayesian networks\")\n    text(\"...a new modeling paradigm...\")\n\n    model_based_motivation()\n    review_probability()\n    introduce_probabilistic_inference()\n    introduce_alarm()\n    introduce_medical_diagnosis()\n    introduce_bayesian_networks()\n    language_models()\n    introduce_rejection_sampling()\n    discussion()\n\n    text(\"Summary:\")\n    text(\"- Probability: joint distributions, marginalization, conditioning\")\n    text(\"- Probability tables are tensors, so we can use einsum to express computations\")\n    text(\"- Bayesian networks: directed acyclic graphs of random variables\")\n    text(r\"- Probabilistic inference: answer questions $P(\\text{query} \\mid \\text{evidence})$\")\n    text(\"- Probabilistic programming: programs as representations of joint distributions\")\n    text(\"- Rejection sampling: approximate inference by drawing samples\")\n\n    text(\"Next time: more efficient probabilistic inference!\")\n\n\ndef model_based_motivation():\n    text(\"Recall the ingredients of intelligence:\")\n    image(\"images/perceive-reason-act-learn.svg\", width=560)\n\n    text(\"Where we started:\")\n    text(\"- \ud83d\udcc8 Machine learning: percepts \u2192 actions (predictor)\")\n\n    text(\"Last few weeks: state-based models for reasoning\")\n    text(\"- \ud83d\uddfa\ufe0f Search problems: actions have deterministic outcomes\")\n    text(\"- \ud83c\udfb0 MDPs: actions have stochastic outcomes\")\n    text(\"- \u265f\ufe0f Games: there is an adversary (or an unknown opponent strategy)\")\n\n    text(\"**Model-free** methods:\")\n    text(\"- We directly learn what actions to take (or how much utility they will produce)\")\n    text(\"- Examples: classification, regression, SARSA, Q-learning, TD learning\")\n\n    text(\"**Model-based** methods:\")\n    text(\"- We understand how the world works (and reason with that model)\")\n    text(\"- Examples: search, value iteration (MDPs), minimax (games)\")\n    graph(draw_game_tree(  # @stepover\n        Node(\"max\", 1, children=[  # @hide\n            Node(\"min\", -50, children=[-50, 50]),  # @hide\n            Node(\"min\", 1, children=[1, 3]),  # @hide\n            Node(\"min\", -5, children=[-5, 15]),  # @hide\n        ])  # @hide\n    ))  # @hide\n\n    text(\"Model-free methods are more direct and cheaper...\")\n    text(\"...but model-based methods are more modular\")\n    text(\"- Example: change the reward function without changing the transitions\")\n\n    text(\"Key question for model-based methods:\")\n    text(\"- How should we represent the state of the world?\")\n\n\ndef review_probability():\n    text(\"Intuition: represent the state of the world by a set of (random) variables.\")\n\n    text(\"**Random variables** \ud83c\udfb2 (representing attributes of the world):\")\n    text(r\"- Sunshine $S \\in \\{0, 1\\}$\")\n    text(r\"- Rain $R \\in \\{0, 1\\}$\")\n\n    text(\"Possible states of the world \ud83c\udf0d (**assignments** to the random variables):\")\n    text(r\"- $\\{S = 0, R = 0\\}$: no sunshine and no rain\")\n    text(r\"- $\\{S = 0, R = 1\\}$: no sunshine and rain\")\n    text(r\"- $\\{S = 1, R = 0\\}$: sunshine and no rain\")\n    text(r\"- $\\{S = 1, R = 1\\}$: sunshine and rain\")\n\n    text(\"**Joint distribution** \ud83d\udcca (probability for each assignment):\")\n    text(r\"- $P(S = 0, R = 0) = 0.20$\")\n    text(r\"- $P(S = 0, R = 1) = 0.08$\")\n    text(r\"- $P(S = 1, R = 0) = 0.70$\")\n    text(r\"- $P(S = 1, R = 1) = 0.02$\")\n    P_SR = prob_table(\"S R\", [[0.20, 0.08], [0.70, 0.02]], render=True)  # @stepover\n\n    text(\"Probability tables are just tensors...\")\n    text(r\"- $P(S, R)$ is an order-2 tensor\")\n    text(\"- Probability table: each row is an element of that tensor\")\n    P_SR = prob_table(\"S R\", [[0.20, 0.08], [0.70, 0.02]])  # @stepover @inspect P_SR P_SR.p\n\n    text(\"**Marginalization** \u2795:\")\n    text(\"- Motivation: what is the probability of sun?\")\n    text(\"- In math: given $P(S, R)$, compute $P(S)$ (marginalizing out $R$)\")\n    text(r\"- Strategy: accumulate assignments that only differ in $R$\")\n    P_S = prob_einsum(\"S\", \"s r -> s\", P_SR, render=True)  # @stepover @animate\n    text(r\"- $P(S = 0) = P(S = 0, R = 0) + P(S = 0, R = 1) = 0.20 + 0.08 = 0.28$\")\n    text(r\"- $P(S = 1) = P(S = 1, R = 0) + P(S = 1, R = 1) = 0.70 + 0.02 = 0.72$\")\n\n    text(r\"For each $s$: $\\displaystyle P(S = s) = \\sum_r P(S = s, R = r)$\")\n    text(\"Because probability tables are tensors, we can use einsum to express computations!\")\n    P_S = prob_einsum(\"S\", \"s r -> s\", P_SR)  # @stepover @inspect P_S P_S.p\n\n    text(\"**Conditioning** \ud83d\udd0d:\")\n    text(\"- Motivation: what is the probability of sun given rain?\")\n    text(r\"- In math: given $P(S, R)$, compute $P(S \\mid R = 1)$ (conditioning on $R=1$)\")\n    text(\"We can also use einsum to compute the conditional distribution...\")\n    text(\"...but there are a few steps.\")\n\n    text(r\"1. Conditioning on $R = 1$ means selecting only the assignments that satisfy the condition:\")\n    R1 = np.array([0, 1])  # Evidence [R = 1]\n    P_SR1 = prob_einsum(\"S R=1\", \"s r, r -> s\", P_SR, R1, render=True)  # Select r = 1: P(S, R = 1) @stepover @animate\n    text(r\"  * $P(S = 0, R = 1) = 0.08$\")\n    text(r\"  * $P(S = 1, R = 1) = 0.02$\")\n\n    text(\"2. Compute the probability of the evidence:\")\n    P_R1 = prob_einsum(\"R=1\", \"s ->\", P_SR1, render=True)  # P(R = 1) @stepover @animate\n    text(r\"  * $P(R = 1) = P(S = 0, R = 1) + P(S = 1, R = 1) = 0.08 + 0.02 = 0.1$\")\n\n    text(\"3. Divide by the probability of the evidence:\")\n    P_S_given_R1 = prob_divide(\"S | R=1\", P_SR1, P_R1, render=True)  # P(S | R = 1) @stepover @animate\n    text(r\"  * $\\displaystyle P(S = 0 \\mid R = 1) = \\frac{P(S = 0, R = 1)}{P(R = 1)} = \\frac{0.08}{0.1} = 0.8$\")\n    text(r\"  * $\\displaystyle P(S = 1 \\mid R = 1) = \\frac{P(S = 1, R = 1)}{P(R = 1)} = \\frac{0.02}{0.1} = 0.2$\")\n\n    text(\"Summary:\")\n    text(\"- Joint distribution: source of truth\")\n    text(\"- Marginalization: accumulate assignments that differ only in the marginalized variables\")\n    text(\"- Conditioning: select via evidence, compute the probability of the evidence, then divide\")\n    text(\"- Probability tables are tensors, so we can use einsum to express computations!\")\n\n\ndef introduce_probabilistic_inference():\n    text(\"Random variables:\")\n    text(r\"- $S \\in \\{0, 1\\}$ (sunshine)\")\n    text(r\"- $R \\in \\{0, 1\\}$ (rain)\")\n    text(r\"- $T \\in \\{0, 1\\}$ (traffic)\")\n    text(r\"- $A \\in \\{0, 1\\}$ (autumn)\")\n\n    text(r\"Joint distribution (source of truth): $P(S, R, T, A)$\")\n    P_SRTA = prob_table(\"S R T A\", [  # @stepover\n        [[[0.108, 0.024], [0.027, 0.006]], [[0.018, 0.024], [0.042, 0.056]]],  # @hide\n        [[[0.432, 0.096], [0.108, 0.024]], [[0.005, 0.006], [0.010, 0.014]]],  # @hide\n    ], render=True)  # @hide\n\n    text(\"What is the probability of rain given that there's traffic and it's autumn?\")\n\n    text(\"**Probabilistic inference** \ud83d\udd2e: answer questions on the joint distribution\")\n    text(\"Analogy: executing SQL queries on a database\")\n\n    text(\"A question includes:\")\n    text(r\"- **Condition** on evidence: $T = 1, A = 1$ (traffic and autumn)\")\n    text(r\"- Interested in **query**: $R$ (rain?)\")\n\n    text(\"In probability notation:\")\n    text(r\"$P(R \\mid T = 1, A = 1)$\")\n    P_R_given_T1A1 = prob_table(\"R | T=1 A=1\", [0.3, 0.7], render=True)  # P(R | T = 1, A = 1) @stepover\n    text(\"Rain is likely given traffic in autumn!\")\n\n    text(r\"Note: marginalize out all variables not in the evidence or query (here, $S$)\")\n    image(\"images/inference-variables.svg\", width=470)\n\n\ndef introduce_alarm():\n    text(\"\ud83d\udea8 Problem: earthquakes, burglaries, and alarms\")\n    text(r\"- Earthquakes and burglaries are independent events (each with probability $\\epsilon = 0.05$).\")\n    text(\"- Either will cause an alarm to go off.\")\n    text(\"- Suppose you hear an alarm.\")\n    text(\"- How does hearing that there's an earthquake change the probability of a burglary?\")\n\n    text(r\"Joint distribution: $P(B, E, A)$\")\n    text(\"Which is larger?\")\n    text(r\"- $P(B = 1 \\mid A = 1)$: burglary given alarm only\")\n    text(r\"- $P(B = 1 \\mid A = 1, E = 1)$: burglary given alarm and earthquake\")\n\n    text(\"To solve this problem, let's use Bayesian networks.\")\n    text(\"We need to do two things:\")\n    text(\"- Construct a joint distribution\")\n    text(\"- Perform probabilistic inference\")\n\n    text(\"### Constructing the joint distribution\")\n    text(\"Let's start by constructing the joint distribution.\")\n    text(\"We could write down a huge table directly...\")\n    text(\"...but let's do it in a more intuitive way.\")\n\n    text(\"There are 4 steps:\")\n    text(r\"1. Define the variables ($B, E, A$)\")\n    text(r\"2. Connect the variables with directed edges ($B \\to A$, $E \\to A$)\")\n    text(r\"3. Write down a local conditional distribution for each variable (e.g., $p(a \\mid b, e)$)\")\n    text(\"4. Define the joint distribution as the product of the local conditional distributions\")\n\n    text(r\"**Step 1**: Define the variables ($B, E, A$)\")\n\n    text(r\"**Step 2**: Connect the variables with directed edges suggesting direct influence ($B \\to A$, $E \\to A$)\")\n    graph(draw_alarm_net())  # @stepover\n\n    text(r\"**Step 3**: Write down a local conditional distribution for each variable (e.g., $p(a \\mid b, e)$)\")\n    epsilon = 0.05  # Probability of rare event\n    p_b = prob_table(\"B\", [1 - epsilon, epsilon], local=True, render=True)  # p(b) @stepover\n    p_e = prob_table(\"E\", [1 - epsilon, epsilon], local=True, render=True)  # p(e) @stepover\n    p_a_given_be = prob_table(\"A | B E\", lambda b, e, a: a == (b or e), shape=(2, 2, 2), local=True, render=True)  # p(a | b, e) @stepover\n\n    text(\"**Step 4**: Define the joint distribution as the product of the local conditional distributions\")\n\n    text(r\"For all $b, e, a$:\")\n    text(r\"- $P(B = b, E = e, A = a) = p(b) \\, p(e) \\, p(a \\mid b, e)$\")\n    P_BEA = prob_einsum(\"B E A\", \"b, e, b e a -> b e a\", p_b, p_e, p_a_given_be, render=True)  # P(B, E, A) @stepover @animate\n\n    text(\"### Probabilistic inference\")\n    text(\"Now given the joint distribution, we can answer any query we want.\")\n\n    text(r\"**Query** $P(B = 1)$: burglary given no information\")\n\n    P_B = prob_einsum(\"B\", \"b e a -> b\", P_BEA, render=True)  # P(B) @stepover @animate\n    text(r\"Note: the marginal $P(B = b)$ matches the local conditional $p(b)$ (low chance of burglary).\")\n\n    text(r\"**Query** $P(B = 1 \\mid A = 1)$: burglary given alarm only\")\n\n    text(r\"Select based on the evidence ($A = 1$) and marginalize out $E$:\")\n    a1 = np.array([0, 1])  # Evidence [A = 1]\n    P_BA1 = prob_einsum(\"B A=1\", \"b e a, a -> b\", P_BEA, a1, render=True)  # P(B, A = 1) @stepover @animate\n\n    text(r\"Compute the probability of the evidence ($A = 1$):\")\n    P_A1 = prob_einsum(\"A=1\", \"b ->\", P_BA1, render=True)  # P(A = 1) @stepover @animate\n\n    text(\"Divide by the probability of the evidence to get the conditional distribution:\")\n    P_B_given_A1 = prob_divide(\"B | A=1\", P_BA1, P_A1, render=True)  # P(B | A = 1) @stepover @animate\n    exact_probs[\"P(B | A = 1)\"] = {b: float(prob) for b, prob in enumerate(P_B_given_A1.p)}  # @stepover @hide\n\n    text(\"Note: burglary is much more likely given alarm!\")\n    text(\"- $P(B = 1) = 0.05$\")\n    text(r\"- $P(B = 1 \\mid A = 1) = 0.5128$\")\n\n    text(r\"**Query** $P(B = 1 \\mid A = 1, E = 1)$: burglary given alarm and earthquake\")\n\n    text(\"Select based on the evidence:\")\n    a1 = np.array([0, 1])  # Evidence [A = 1]\n    e1 = np.array([0, 1])  # Evidence [E = 1]\n    P_BA1E1 = prob_einsum(\"B A=1 E=1\", \"b e a, a, e -> b\", P_BEA, a1, e1, render=True)  # P(B, A = 1, E = 1) @stepover @animate\n\n    text(r\"Compute the probability of the evidence ($A = 1, E = 1$):\")\n    P_A1E1 = prob_einsum(\"A=1 E=1\", \"b ->\", P_BA1E1, render=True)  # P(A = 1, E = 1) @stepover @animate\n\n    text(\"Divide by the probability of the evidence to get the conditional distribution:\")\n    P_B_given_A1E1 = prob_divide(\"B | A=1 E=1\", P_BA1E1, P_A1E1, render=True)  # P(B | A = 1, E = 1) @stepover @animate\n\n    text(\"Note: burglary is again unlikely after hearing about the earthquake.\")\n    text(\"- $P(B = 1) = 0.05$\")\n    text(r\"- $P(B = 1 \\mid A = 1) = 0.5128$\")\n    text(r\"- $P(B = 1 \\mid A = 1, E = 1) = 0.05$\")\n    text(\"Intuition: why did the alarm sound?  The earthquake explains away the alarm.\")\n\n    text(\"Key idea: **explaining away**\")\n    graph(draw_alarm_net())  # @stepover\n    text(r\"- Suppose you have two causes ($B, E$) positively influencing an effect ($A$).\")\n    text(r\"- Condition on the effect ($A = 1$).\")\n    text(r\"- Further conditioning on one cause ($E = 1$) reduces the probability of the other cause ($B = 1$).\")\n    text(r\"- In symbols: $P(B = 1 \\mid A = 1, E = 1) < P(B = 1 \\mid A = 1)$.\")\n    text(\"- Important: this happens even if the causes are independent! \ud83e\udd2f\")\n\n    text(\"Reminder about notation:\")\n    text(r\"- Lowercase ($e$): a particular value\")\n    text(r\"- Uppercase ($E$): a random variable\")\n    text(r\"- Lowercase $p(e)$: local conditional distributions (given by definition)\")\n    text(r\"- Uppercase $P(E)$: marginal/conditional distributions derived from the joint distribution (by the laws of probability)\")\n    text(r\"- Uppercase $P(E = e)$: probability (a number) from a marginal/conditional distribution\")\n\n    text(\"Summary:\")\n    text(\"- Define the joint distribution: 4 steps (variables, edges, local conditional distributions, joint distribution)\")\n    text(\"- Perform probabilistic inference: select on evidence, compute probability of evidence, divide\")\n    text(\"- Explaining away: qualitative reasoning pattern that follows from the math\")\n\n\ndef introduce_medical_diagnosis():\n    text(\"\ud83e\ude7a Problem: medical diagnosis\")\n    text(\"- You are coughing and have itchy eyes.\")\n    text(\"- Do you have a cold?\")\n\n    text(\"Let's model this problem using a Bayesian network.\")\n\n    text(\"**Step 1**: Define the random variables\")\n    text(r\"- Cold $C \\in \\{0, 1\\}$\")\n    text(r\"- Allergies $A \\in \\{0, 1\\}$\")\n    text(r\"- Cough $H \\in \\{0, 1\\}$\")\n    text(r\"- Itchy eyes $I \\in \\{0, 1\\}$\")\n\n    text(\"**Step 2**: Connect the variables with directed edges\")\n    graph(draw_medical_net())  # @stepover\n\n    text(\"**Step 3**: Write down a local conditional distribution for each variable\")\n    p_c = prob_table(\"C\", [0.9, 0.1], local=True, render=True)  # p(c) @stepover\n    p_a = prob_table(\"A\", [0.8, 0.2], local=True, render=True)  # p(a) @stepover\n    p_h_given_ca = prob_table(\"H | C A\", lambda c, a, h: 0.9 if h == (c or a) else 0.1, shape=(2, 2, 2), local=True, render=True)  # p(h | c, a) @stepover\n    p_i_given_a = prob_table(\"I | A\", lambda a, i: 0.9 if i == a else 0.1, shape=(2, 2), local=True, render=True)  # p(i | a) @stepover\n\n    text(\"**Step 4**: Define the joint distribution as the product of the local conditional distributions\")\n    text(r\"For all $c, a, h, i$: $P(C = c, A = a, H = h, I = i) = p(c) \\, p(a) \\, p(h \\mid c, a) \\, p(i \\mid a)$\")\n    P_CAHI = prob_einsum(\"C A H I\", \"c, a, c a h, a i -> c a h i\", p_c, p_a, p_h_given_ca, p_i_given_a, render=True)  # P(C, A, H, I) @stepover @animate\n\n    text(\"Now we can answer any question we want.\")\n\n    text(r\"**Query** $P(C = 1 \\mid H = 1)$: cold given cough?\")\n\n    text(\"Select based on the evidence, marginalizing out the variables not in the query or evidence:\")\n    h1 = np.array([0, 1])  # Evidence [H = 1]\n    P_CH1 = prob_einsum(\"C H=1\", \"c a h i, h -> c\", P_CAHI, h1, render=True)  # P(C, H = 1) @stepover @animate\n\n    text(r\"Compute the probability of the evidence ($H = 1$):\")\n    P_H1 = prob_einsum(\"H=1\", \"c ->\", P_CH1, render=True)  # P(H = 1) @stepover @animate\n\n    text(\"Divide by the probability of the evidence to get the conditional distribution:\")\n    P_C_given_H1 = prob_divide(\"C | H=1\", P_CH1, P_H1, render=True)  # P(C | H = 1) @stepover @animate\n    exact_probs[\"P(C | H = 1)\"] = {c: float(prob) for c, prob in enumerate(P_C_given_H1.p)}  # @stepover @hide\n\n    text(r\"Answer: $P(C = 1 \\mid H = 1) = 0.2778$\")\n\n    text(r\"**Query** $P(C = 1 \\mid H = 1, I = 1)$: cold given cough and itchy eyes?\")\n\n    text(\"Select based on the evidence, marginalizing out the variables not in the query or evidence:\")\n    h1 = np.array([0, 1])  # Evidence [H = 1]\n    i1 = np.array([0, 1])  # Evidence [I = 1]\n    P_CH1I1 = prob_einsum(\"C H=1 I=1\", \"c a h i, h, i -> c\", P_CAHI, h1, i1, render=True)  # P(C, H = 1, I = 1) @stepover @animate\n\n    text(r\"Compute the probability of the evidence ($H = 1, I = 1$):\")\n    P_H1I1 = prob_einsum(\"H=1 I=1\", \"c ->\", P_CH1I1, render=True)  # P(H = 1, I = 1) @stepover @animate\n\n    text(\"Divide by the probability of the evidence to get the conditional distribution:\")\n    P_C_given_H1I1 = prob_divide(\"C | H=1 I=1\", P_CH1I1, P_H1I1, render=True)  # P(C | H = 1, I = 1) @stepover @animate\n\n    text(\"Note: the probability of a cold is lower if you also have itchy eyes!\")\n    assert P_C_given_H1I1.p[1] < P_C_given_H1.p[1]  # @stepover @inspect P_C_given_H1 P_C_given_H1I1\n\n    text(\"This is another, more subtle example of explaining away!\")\n    graph(draw_medical_net())  # @stepover\n    text(r\"- The effect ($H$) has two causes ($C, A$).\")\n    text(r\"- Itchy eyes ($I$) is not a cause of the effect ($H$)...\")\n    text(r\"- ...but observing itchy eyes ($I = 1$) increases the probability of allergies ($A = 1$), which is a cause...\")\n    text(r\"- ...which explains away the cough, decreasing the probability of a cold ($C = 1$).\")\n    text(\"- Intuition: information propagates through the network\")\n\n    text(\"Summary:\")\n    text(\"- Same recipe (joint distribution + probabilistic inference)\")\n    text(\"- Explaining away shows up in more complex ways\")\n\n\ndef introduce_bayesian_networks():\n    text(\"We have seen two examples of Bayesian networks:\")\n\n    text(\"\ud83d\udea8 Alarm:\")\n    graph(draw_alarm_net())  # @stepover\n    text(\"\ud83e\ude7a Medical diagnosis:\")\n    graph(draw_medical_net())  # @stepover\n\n    text(\"Now let's introduce the general case.\")\n    text(r\"1. Define a set of random variables $X = (X_1, \\dots, X_n)$.\")\n    text(\"2. Define any directed acyclic graph (DAG) over the variables.\")\n    text(r\"3. For each variable $X_i$, define a local conditional distribution $p(x_i \\mid x_{\\text{Parents}(i)})$.\")\n    text(r\"4. Define the joint distribution:\")\n    text(r\"  * $\\displaystyle P(X_1 = x_1, \\dots, X_n = x_n) = \\prod_{i=1}^n p(x_i \\mid x_{\\text{Parents}(i)})$\")\n\n    text(\"Reminders:\")\n    text(\"- One local conditional distribution per variable (not per edge!)\")\n    text(\"- The local conditional distribution depends on *all* the parents at once\")\n    text(r\"- Difference between:\")\n    text(\"  * $p$ (local conditional distributions, by definition) and\")\n    text(\"  * $P$ (derived from the joint distribution)\")\n\n    text(\"**Probabilistic inference**\")\n    text(\"Given:\")\n    text(r\"- Bayesian network $P(X_1, \\dots, X_n)$\")\n    text(r\"- Evidence $E = e$ where $E \\subseteq X$\")\n    text(\"  * Example: $E = (X_3, X_7)$, $e = (0, 1)$\")\n    text(r\"- Query $Q \\subseteq X$\")\n    text(\"  * Example: $Q = (X_2, X_4)$\")\n    text(\"Output:\")\n    text(r\"- $\\boxed{P(Q \\mid E = e)}$\")\n\n\ndef language_models():\n    text(\"Lots of things are secretly Bayesian networks.\")\n    text(\"For example, autoregressive language models.\")\n\n    text(r\"1. Random variables: tokens $X_1, \\dots, X_T$\")\n    text(r\"2. Edges from all previous tokens to the current token ($X_1, \\dots, X_{t-1}$ to $X_t$)\")\n    text(r\"3. Local conditional distribution (Transformer): $p(x_t \\mid x_1, \\dots, x_{t-1})$\")\n    text(r\"4. Joint distribution: $\\displaystyle P(X_1 = x_1, \\dots, X_T = x_T) = \\prod_{t=1}^T p(x_t \\mid x_1, \\dots, x_{t-1})$\")\n    tokens = [f\"X{chr(ord('\u2081') + t)}\" for t in range(5)]  # @stepover @hide\n    graph(draw_bayes_net(  # @stepover\n        {token: (90 * t, 0) for t, token in enumerate(tokens)},  # @hide\n        [(tokens[s], tokens[t]) for t in range(5) for s in range(t)],  # @hide\n        curves={(tokens[s], tokens[t]) : -30 * (t - s - 1) for t in range(5) for s in range(t - 1)},  # @hide\n    ))  # @hide\n\n    text(\"Typically, you just sample forward using a language model (prompt \u2192 response):\")\n    text(r\"$\\underbrace{X_1, X_2, X_3}_\\text{prompt} \\to \\underbrace{X_4, X_5, X_6}_\\text{response}$\")\n\n    text(\"What would doing probabilistic inference mean?\")\n    text(r\"$\\underbrace{X_4, X_5, X_6}_\\text{response} \\to \\underbrace{X_1, X_2, X_3}_\\text{prompt}$\")\n    text(r\"  * $P(X_1, X_2, X_3 \\mid X_4 = x_4, X_5 = x_5, X_6 = x_6)$\")\n\n    text(\"Application: jailbreaking language models \ud83d\udd13 \"), link(\"https://arxiv.org/abs/2502.01236\")\n    text(\"- Given a particular response (e.g., \\\"Sure, here's how you make a bomb\\\")...\")\n    text(\"- ...find prompts that are likely to have generated it.\")\n\n\ndef Bernoulli(prob: float) -> int:\n    \"\"\"Return 1 with probability `prob` and 0 with probability `1 - prob`.\"\"\"\n    return np.random.choice([0, 1], p=[1 - prob, prob])\n\n\ndef introduce_rejection_sampling():\n    text(\"So far:\")\n    text(\"- We have defined Bayesian networks by writing down local conditional distributions.\")\n    text(\"- Then we performed exact probabilistic inference by multiplying tensors and summing (einsum).\")\n\n    text(\"Next:\")\n    text(\"- Define Bayesian networks via **probabilistic programs**.\")\n    text(\"- Perform approximate probabilistic inference by running the program repeatedly and rejecting bad outcomes.\")\n\n    set_random_seed(4)\n\n    text(\"Primitive: sample a Bernoulli random variable:\")\n    x = Bernoulli(0.2)  # @inspect x\n    x = Bernoulli(0.2)  # @inspect x @stepover\n    x = Bernoulli(0.2)  # @inspect x @stepover\n\n    text(\"Let's revisit our old alarm example.\")\n    graph(draw_alarm_net())  # @stepover\n    text(\"A Bayesian network is just a Python program that returns an assignment to its random variables!\")\n    sample = alarm()  # @inspect sample\n    sample = alarm()  # @inspect sample @stepover\n    sample = alarm()  # @inspect sample @stepover\n    sample = alarm()  # @inspect sample @stepover\n    sample = alarm()  # @inspect sample @stepover\n    sample = alarm()  # @inspect sample @stepover\n    sample = alarm()  # @inspect sample @stepover\n    sample = alarm()  # @inspect sample @stepover\n    sample = alarm()  # @inspect sample @stepover\n    sample = alarm()  # @inspect sample @stepover\n\n    text(\"Now let's do probabilistic inference.\")\n    text(r\"Example: $P(B \\mid A = 1)$\")\n\n    text(\"Writing down a distribution as a program...\")\n    text(\"...gives us a natural way to do approximate probabilistic inference:\")\n    text(\"...**rejection sampling**!\")\n\n    text(\"Algorithm (rejection sampling) \ud83d\udeab:\")\n    text(\"- Draw a ton of samples\")\n    text(\"- Select the samples that match the evidence\")\n    text(\"- Record the query\")\n\n    text(r\"Generalize the evidence and the query to arbitrary functions of the sample assignment.\")\n    query = lambda sample: sample[\"B\"]          # Interested in B\n    evidence = lambda sample: sample[\"A\"] == 1  # Evidence: A = 1\n\n    set_random_seed(4)\n    result = rejection_sampling(alarm, query, evidence, num_samples=10)  # @inspect result\n    result = rejection_sampling(alarm, query, evidence, num_samples=3000)  # @inspect result @stepover\n    exact = exact_probs[\"P(B | A = 1)\"]  # Computed exactly before (compare with result) @inspect exact\n\n    text(\"As the number of samples increases to infinity, this converges to the true probability!\")\n    text(\"Downside: if the evidence is rare, this is very inefficient (most samples are rejected).\")\n    text(r\"- Example: $P(A = 1) = 0.0975$, so about 90% of the samples are rejected\")\n\n    text(\"\ud83e\ude7a **Medical diagnosis**\")\n    graph(draw_medical_net())  # @stepover\n    text(r\"Example: cold given cough? $P(C \\mid H = 1)$\")\n    sample = medical_diagnosis()  # @inspect sample\n\n    query = lambda sample: sample[\"C\"]          # Interested in C (cold?)\n    evidence = lambda sample: sample[\"H\"] == 1  # Evidence: H = 1 (have cough)\n\n    result = rejection_sampling(medical_diagnosis, query, evidence, num_samples=200)  # @inspect result @stepover\n    exact = exact_probs[\"P(C | H = 1)\"]  # Computed exactly before (compare with result) @inspect exact\n\n    text(\"\ud83d\udccd **Hidden Markov models for object tracking**\")\n    text(r\"- Object starts at 0 and moves right with probability $\\frac{1}{2}$ each time step\")\n    text(r\"- Observe position + noise at each time step\")\n    text(r\"- $H_t$: position of the object at time $t$ (hidden)\")\n    text(r\"- $E_t$: sensor reading at time $t$ (observed)\")\n    H = [f\"H{chr(ord('\u2081') + t)}\" for t in range(5)]  # @stepover @hide\n    E = [f\"E{chr(ord('\u2081') + t)}\" for t in range(5)]  # @stepover @hide\n    graph(draw_bayes_net(  # @stepover\n        {**{h: (90 * t, 0) for t, h in enumerate(H)}, **{e: (90 * t, 90) for t, e in enumerate(E)}},  # @hide\n        [(H[t], H[t + 1]) for t in range(4)] + [(H[t], E[t]) for t in range(5)],  # @hide\n        observed=set(E),  # @hide\n    ))  # @hide\n    text(r\"Example: where is the object at time 3 given the sensor reading at time 5? $P(H_3 \\mid E_5 = 2)$\")\n    sample = hidden_markov_model()  # @inspect sample\n\n    query = lambda sample: sample[\"H\"][2]          # Interested in H_3 (where is the object at time 3?)\n    evidence = lambda sample: sample[\"E\"][4] == 2  # Evidence: E_5 = 2 (the sensor reads 2 at time 5)\n\n    result = rejection_sampling(hidden_markov_model, query, evidence, num_samples=200)  # @inspect result @stepover\n\n    text(\"Summary:\")\n    text(\"- Probabilistic programming: programs as representations of joint distributions\")\n    text(\"- Rejection sampling: approximate inference by drawing samples (very flexible but very slow)\")\n\n\ndef alarm():\n    B = Bernoulli(0.05)  # Burglary @stepover @inspect B\n    E = Bernoulli(0.05)  # Earthquake @stepover @inspect E\n    A = B or E           # Alarm @inspect A\n    return {\"B\": B, \"E\": E, \"A\": A}\n\n\ndef medical_diagnosis():\n    C = Bernoulli(0.1)                      # Cold @stepover @inspect C\n    A = Bernoulli(0.2)                      # Allergies @stepover @inspect A\n    H = Bernoulli(0.9 if C or A else 0.1)   # Cough @stepover @inspect H\n    I = Bernoulli(0.9 if A else 0.1)        # Itchy eyes @stepover @inspect I\n    return {\"C\": C, \"A\": A, \"H\": H, \"I\": I}\n\n\ndef hidden_markov_model():\n    \"\"\"\n    A simple hidden Markov model.\n    The hidden variables are the positions of the object (H_1, ..., H_T).\n    The observed variables are the sensor readings (E_1, ..., E_T).\n    \"\"\"\n    num_steps = 5\n    H = [None] * num_steps  # Positions @inspect H\n    E = [None] * num_steps  # Sensor readings @inspect E\n\n    for t in range(num_steps):\n        H[t] = (H[t - 1] if t > 0 else 0) + Bernoulli(0.5)  # Move right with probability 0.5 @stepover @inspect H\n        E[t] = H[t] + Bernoulli(0.5)  # Noisy reading of the position @stepover @inspect E\n\n    return {\"H\": H, \"E\": E}\n\n\ndef rejection_sampling(program: Callable, query: Callable, evidence: Callable, num_samples: int) -> dict:\n    \"\"\"Perform rejection sampling given:\n    - program: defines the Bayesian network, returns a sample\n    - query: sample -> value of interest\n    - evidence: sample -> whether to keep the sample\n    - num_samples: number of samples to draw\n    Return the estimated distribution over query values (given the evidence).\n    \"\"\"\n    counts = defaultdict(int)  # Record how many of each query value we got  @inspect counts\n\n    for _ in range(num_samples):\n        sample = program()  # @inspect sample @stepover\n        if evidence(sample):  # @stepover\n            counts[query(sample)] += 1  # @stepover @inspect counts\n\n    # Normalize counts to obtain probabilities\n    total_count = sum(counts.values())  # @inspect total_count\n    probs = {q: counts[q] / total_count for q in sorted(counts)}  # @inspect probs\n\n    return probs\n\n\ndef discussion():\n    text(\"If you're used to thinking about classifiers, using Bayesian networks requires a shift in mindset.\")\n    graph(draw_medical_net())  # @stepover\n    text(\"Example: predict cold given cough?\")\n    image(\"images/discriminative-vs-generative.svg\", width=720)\n\n    text(\"Advantages of Bayesian networks:\")\n    text(\"- \ud83e\udde9 Handle **heterogeneously** missing information, both at training and test time\")\n    text(\"- \ud83d\udcda Incorporate **prior knowledge** (e.g., Mendelian inheritance, laws of physics)\")\n    text(\"- \ud83d\udd2c Can **interpret** all the intermediate variables\")\n    text(\"- \ud83d\udd00 Precursor to **causal** models (can do interventions and counterfactuals)\")\n\n\n############################################################\n# Utilities (not stepped into)\n\nclass ProbTable:\n    \"\"\"\n    Represents an arbitrary probability table: could be a local conditional\n    distribution, a marginal distribution, or a conditional distribution.\n\n    description:\n\n      A         B=1          | C          D=1\n      gen-vars  gen-vals       cond-vars  cond-vals\n\n    data could be:\n    - tensor corresponding to the probabilities (axes are cond-vars + gen-vars)\n    - function mapping cond-vars + gen-vars assignments to probabilities\n\n    shape: only needed if data is a function, to determine the shape of the tensor\n    \"\"\"\n    def __init__(self, description: str, data: np.ndarray | Callable, shape: tuple[int] | None = None, local: bool = False):\n        self.local = local  # Local conditional distribution (written with lowercase p)\n        if isinstance(data, Callable):\n            # Build up the probabilities\n            self.probs = np.empty(shape)\n            def recurse(assignment: list[int]):\n                if len(assignment) == len(shape):\n                    self.probs[tuple(assignment)] = data(*assignment)\n                else:\n                    for i in range(shape[len(assignment)]):\n                        recurse(assignment + [i])\n            recurse([])\n        else:\n            self.probs = np.array(data)\n\n        # Parse the description into variables and values for both the generation and conditioning side\n        self.cond_vars = []\n        self.gen_vars = []\n        self.cond_vals = []\n        self.gen_vals = []\n\n        items = description.split(\" \")\n        on_conditioning_side = False\n        for item in items:\n            if item == \"|\":\n                on_conditioning_side = True\n            elif on_conditioning_side:\n                if \"=\" in item:\n                    self.cond_vals.append(item)\n                else:\n                    self.cond_vars.append(item)\n            else:\n                if \"=\" in item:\n                    self.gen_vals.append(item)\n                else:\n                    self.gen_vars.append(item)\n\n        assert len(self.cond_vars) + len(self.gen_vars) == len(self.probs.shape), [self.cond_vars, self.gen_vars, self.probs.shape]\n\n    def name(self) -> str:\n        \"\"\"MathJax template for the table (for `animate_einsum`), e.g., \"P(B = {b}, A = 1)\" or \"p({a} \\\\mid {b}, {e})\".\"\"\"\n        if self.local:\n            gen = [f\"{{{var.lower()}}}\" for var in self.gen_vars]\n            cond = [f\"{{{var.lower()}}}\" for var in self.cond_vars]\n        else:\n            gen = [f\"{var} = {{{var.lower()}}}\" for var in self.gen_vars]\n            cond = [f\"{var} = {{{var.lower()}}}\" for var in self.cond_vars]\n        gen += [val.replace(\"=\", \" = \") for val in self.gen_vals]\n        cond += [val.replace(\"=\", \" = \") for val in self.cond_vals]\n        args = \", \".join(gen) + (r\" \\mid \" + \", \".join(cond) if cond else \"\")\n        return (\"p\" if self.local else \"P\") + f\"({args})\"\n\n    def html(self) -> str:\n        \"\"\"HTML table of the probabilities (as in `animate_einsum`).\"\"\"\n        indices = [var.lower() for var in self.cond_vars + self.gen_vars]\n        name = self.name()\n        for index in indices:\n            name = name.replace(\"{\" + index + \"}\", index)\n        rows = [(dict(zip(indices, values)), f\"{float(self.probs[values]):.4g}\") for values in np.ndindex(*self.probs.shape)]\n        return html_table(indices, name, rows)\n\n    @property\n    def p(self):\n        return self.probs\n\n    def asdict(self):\n        \"\"\"\n        Returns a nice matrix representation of the probability table.\n        a  b  P(A = a, B = b)\n        0  0  0.1\n        0  1  0.2\n        1  0  0.3\n        1  1  0.4\n        \"\"\"\n        vars = self.cond_vars + self.gen_vars\n\n        # Description string (e.g., \"P(A = a, B = b)\")\n        output = []\n        output.append(\", \".join([f\"{var}={var.lower()}\" for var in self.gen_vars] + self.gen_vals))\n        if len(self.cond_vars) > 0 or len(self.cond_vals) > 0:\n            output.append(\"|\")\n            output.append(\", \".join([f\"{var}={var.lower()}\" for var in self.cond_vars] + self.cond_vals))\n        prob_str = \"P(\" + \" \".join(output) + \")\"\n\n        rows = []\n        rows.append([var.lower() for var in vars] + [prob_str])\n        def recurse(assignment: list):\n            if len(assignment) == len(vars):\n                rows.append(assignment + [self.probs[tuple(assignment)]])\n            else:\n                for value in range(self.probs.shape[len(assignment)]):\n                    recurse(assignment + [value])\n        recurse([])\n        return np.array(rows)\n\n\ndef draw_bayes_net(positions: dict[str, tuple[float, float]], edges: list[tuple[str, str]],\n                   observed: set[str] = set(), curves: dict[tuple[str, str], float] = {}) -> dict:\n    \"\"\"\n    Return the graph of a Bayesian network (to show with `graph`):\n    - `positions`: variable name (e.g., \"H\u2081\") -> (x, y)\n    - `edges`: (parent, child) pairs\n    - `observed`: variables that are observed (shaded)\n    - `curves`: (parent, child) -> how much to curve that edge (e.g., to go around other nodes)\n    \"\"\"\n    nodes = [{\"id\": name, \"x\": x, \"y\": y, \"classes\": \"observed\" if name in observed else \"\"}\n             for name, (x, y) in positions.items()]\n    edges = [{\"source\": source, \"target\": target, **({\"curve\": curves[(source, target)]} if (source, target) in curves else {})}\n             for source, target in edges]\n    stylesheet = [\n        # Variables in italic serif (like math)\n        {\"selector\": \"node\", \"style\": {\"width\": 44, \"height\": 44, \"font-family\": \"Times New Roman, serif\", \"font-style\": \"italic\",\n                                       \"font-size\": 22, \"color\": \"#222\"}},\n        {\"selector\": \"node.observed\", \"style\": {\"background-color\": \"#ccc\"}},\n        {\"selector\": \"edge\", \"style\": {\"line-color\": \"#555\", \"target-arrow-color\": \"#555\"}},\n        {\"selector\": \"edge[curve]\", \"style\": {\"curve-style\": \"unbundled-bezier\", \"control-point-weights\": 0.5,\n                                              \"control-point-distances\": \"data(curve)\"}},\n    ]\n    xs = [x for x, y in positions.values()]\n    ys = [y for x, y in positions.values()]\n    extra_height = max([abs(curve) for curve in curves.values()], default=0) / 2\n    width = max(xs) - min(xs) + 90\n    height = max(ys) - min(ys) + 90 + extra_height\n    return make_graph(nodes, edges, stylesheet=stylesheet, width=round(width), height=round(height))\n\n\ndef draw_alarm_net() -> dict:\n    return draw_bayes_net({\"B\": (0, 0), \"E\": (160, 0), \"A\": (80, 90)}, [(\"B\", \"A\"), (\"E\", \"A\")])\n\n\ndef draw_medical_net() -> dict:\n    return draw_bayes_net({\"C\": (0, 0), \"A\": (140, 0), \"H\": (0, 100), \"I\": (140, 100)},\n                          [(\"C\", \"H\"), (\"A\", \"H\"), (\"A\", \"I\")])\n\n\ndef prob_table(description: str, data: np.ndarray | Callable, shape: tuple[int] | None = None, local: bool = False,\n               render: bool = False) -> ProbTable:\n    \"\"\"Return a ProbTable (arguments as in `ProbTable`), showing it as a table if `render`.\"\"\"\n    table = ProbTable(description, data, shape=shape, local=local)\n    if render:\n        text(table.html())\n    return table\n\n\ndef prob_einsum(description: str, pattern: str, *operands: \"ProbTable | np.ndarray\", render: bool = False) -> ProbTable:\n    \"\"\"\n    Return the ProbTable (with `description`) computed by einsum `pattern` on `operands`\n    (ProbTables, or indicator vectors for evidence).\n    If `render`, animate how each entry is computed (use with @animate).\n    \"\"\"\n    operand_indices = [term.split() for term in pattern.split(\"->\")[0].split(\",\")]\n    names = []\n    for indices, operand in zip(operand_indices, operands):\n        if isinstance(operand, ProbTable):\n            names.append(operand.name())\n        else:  # Indicator of evidence (e.g., [0, 1] for a = 1)\n            names.append(rf\"\\mathbb{{1}}[{{{indices[0]}}} = {int(np.argmax(operand))}]\")\n    arrays = [operand.p if isinstance(operand, ProbTable) else operand for operand in operands]\n    output = ProbTable(description, einsum(*arrays, pattern))\n    if render:\n        animate_einsum(pattern, arrays, names, output.name())\n    return output\n\n\ndef prob_divide(description: str, numerator: ProbTable, denominator: ProbTable, render: bool = False) -> ProbTable:\n    \"\"\"\n    Return the ProbTable (with `description`) numerator / denominator (e.g., P(B, A = 1) / P(A = 1) to get P(B | A = 1)).\n    If `render`, animate how each entry is computed (use with @animate).\n    \"\"\"\n    num_indices = [var.lower() for var in numerator.cond_vars + numerator.gen_vars]\n    den_indices = [var.lower() for var in denominator.cond_vars + denominator.gen_vars]\n    output = ProbTable(description, numerator.p / denominator.p)\n    pattern = f\"{' '.join(num_indices)} / {' '.join(den_indices)} -> {' '.join(num_indices)}\"\n    if render:\n        animate_divide(pattern, numerator.p, denominator.p, (numerator.name(), denominator.name()), output.name())\n    return output\n\n\nif __name__ == \"__main__\":\n    main()\n"
+    "bayes.py": "from typing import Callable\nfrom edtrace import text, image, link, graph, make_graph\nfrom einops import einsum\nfrom collections import defaultdict\nimport numpy as np\nfrom util import set_random_seed, animate_einsum, animate_divide, html_table\nfrom games import Node, draw_game_tree\n\n\n# Exact answers (from exact inference), to compare with the estimates from rejection sampling\nexact_probs = {}\n\n\ndef main():\n    text(\"# Bayesian networks\")\n    text(\"...a new modeling paradigm...\")\n\n    model_based_motivation()\n    review_probability()\n    introduce_probabilistic_inference()\n    introduce_alarm()\n    introduce_medical_diagnosis()\n    introduce_bayesian_networks()\n    language_models()\n    introduce_rejection_sampling()\n    discussion()\n\n    text(\"Summary:\")\n    text(\"- Probability: joint distributions, marginalization, conditioning\")\n    text(\"- Probability tables are tensors, so we can use einsum to express computations\")\n    text(\"- Bayesian networks: directed acyclic graphs of random variables\")\n    text(r\"- Probabilistic inference: answer questions $P(\\text{query} \\mid \\text{evidence})$\")\n    text(\"- Probabilistic programming: programs as representations of joint distributions\")\n    text(\"- Rejection sampling: approximate inference by drawing samples\")\n\n    text(\"Next time: more efficient probabilistic inference!\")\n\n\ndef model_based_motivation():\n    text(\"Recall the ingredients of intelligence:\")\n    image(\"images/perceive-reason-act-learn.svg\", width=560)\n\n    text(\"Where we started:\")\n    text(\"- \ud83d\udcc8 Machine learning: percepts \u2192 actions (predictor)\")\n\n    text(\"Last few weeks: state-based models for reasoning\")\n    text(\"- \ud83d\uddfa\ufe0f Search problems: actions have deterministic outcomes\")\n    text(\"- \ud83c\udfb0 MDPs: actions have stochastic outcomes\")\n    text(\"- \u265f\ufe0f Games: there is an adversary (or an unknown opponent strategy)\")\n\n    text(\"**Model-free** methods:\")\n    text(\"- We directly learn what actions to take (or how much utility they will produce)\")\n    text(\"- Examples: classification, regression, SARSA, Q-learning, TD learning\")\n\n    text(\"**Model-based** methods:\")\n    text(\"- We understand how the world works (and reason with that model)\")\n    text(\"- Examples: search, value iteration (MDPs), minimax (games)\")\n    graph(draw_game_tree(  # @stepover\n        Node(\"max\", 1, children=[  # @hide\n            Node(\"min\", -50, children=[-50, 50]),  # @hide\n            Node(\"min\", 1, children=[1, 3]),  # @hide\n            Node(\"min\", -5, children=[-5, 15]),  # @hide\n        ])  # @hide\n    ))  # @hide\n\n    text(\"Model-free methods are more direct and cheaper...\")\n    text(\"...but model-based methods are more modular\")\n    text(\"- Example: change the reward function without changing the transitions\")\n\n    text(\"Key question for model-based methods:\")\n    text(\"- How should we represent the state of the world?\")\n\n\ndef review_probability():\n    text(\"Intuition: represent the state of the world by a set of (random) variables.\")\n\n    text(\"**Random variables** \ud83c\udfb2 (representing attributes of the world):\")\n    text(r\"- Sunshine $S \\in \\{0, 1\\}$\")\n    text(r\"- Rain $R \\in \\{0, 1\\}$\")\n\n    text(\"Possible states of the world \ud83c\udf0d (**assignments** to the random variables):\")\n    text(r\"- $\\{S = 0, R = 0\\}$: no sunshine and no rain\")\n    text(r\"- $\\{S = 0, R = 1\\}$: no sunshine and rain\")\n    text(r\"- $\\{S = 1, R = 0\\}$: sunshine and no rain\")\n    text(r\"- $\\{S = 1, R = 1\\}$: sunshine and rain\")\n\n    text(\"**Joint distribution** \ud83d\udcca (probability for each assignment):\")\n    text(r\"- $P(S = 0, R = 0) = 0.20$\")\n    text(r\"- $P(S = 0, R = 1) = 0.08$\")\n    text(r\"- $P(S = 1, R = 0) = 0.70$\")\n    text(r\"- $P(S = 1, R = 1) = 0.02$\")\n    P_SR = prob_table(\"S R\", [[0.20, 0.08], [0.70, 0.02]], render=True)  # @stepover\n\n    text(\"Probability tables are just tensors...\")\n    text(r\"- $P(S, R)$ is an order-2 tensor\")\n    text(\"- Probability table: each row is an element of that tensor\")\n    P_SR = prob_table(\"S R\", [[0.20, 0.08], [0.70, 0.02]])  # @stepover @inspect P_SR P_SR.p\n\n    text(\"**Marginalization** \u2795:\")\n    text(\"- Motivation: what is the probability of sun?\")\n    text(\"- In math: given $P(S, R)$, compute $P(S)$ (marginalizing out $R$)\")\n    text(r\"- Strategy: accumulate assignments that only differ in $R$\")\n    P_S = prob_einsum(\"S\", \"s r -> s\", P_SR, render=True)  # @stepover @animate\n    text(r\"- $P(S = 0) = P(S = 0, R = 0) + P(S = 0, R = 1) = 0.20 + 0.08 = 0.28$\")\n    text(r\"- $P(S = 1) = P(S = 1, R = 0) + P(S = 1, R = 1) = 0.70 + 0.02 = 0.72$\")\n\n    text(r\"For each $s$: $\\displaystyle P(S = s) = \\sum_r P(S = s, R = r)$\")\n    text(\"Because probability tables are tensors, we can use einsum to express computations!\")\n    P_S = prob_einsum(\"S\", \"s r -> s\", P_SR)  # @stepover @inspect P_S P_S.p\n\n    text(\"**Conditioning** \ud83d\udd0d:\")\n    text(\"- Motivation: what is the probability of sun given rain?\")\n    text(r\"- In math: given $P(S, R)$, compute $P(S \\mid R = 1)$ (conditioning on $R=1$)\")\n    text(\"We can also use einsum to compute the conditional distribution...\")\n    text(\"...but there are a few steps.\")\n\n    text(r\"1. Conditioning on $R = 1$ means selecting only the assignments that satisfy the condition:\")\n    R1 = np.array([0, 1])  # Evidence [R = 1]\n    P_SR1 = prob_einsum(\"S R=1\", \"s r, r -> s\", P_SR, R1, render=True)  # Select r = 1: P(S, R = 1) @stepover @animate\n    text(r\"  * $P(S = 0, R = 1) = 0.08$\")\n    text(r\"  * $P(S = 1, R = 1) = 0.02$\")\n\n    text(\"2. Compute the probability of the evidence:\")\n    P_R1 = prob_einsum(\"R=1\", \"s ->\", P_SR1, render=True)  # P(R = 1) @stepover @animate\n    text(r\"  * $P(R = 1) = P(S = 0, R = 1) + P(S = 1, R = 1) = 0.08 + 0.02 = 0.1$\")\n\n    text(\"3. Divide by the probability of the evidence:\")\n    P_S_given_R1 = prob_divide(\"S | R=1\", P_SR1, P_R1, render=True)  # P(S | R = 1) @stepover @animate\n    text(r\"  * $\\displaystyle P(S = 0 \\mid R = 1) = \\frac{P(S = 0, R = 1)}{P(R = 1)} = \\frac{0.08}{0.1} = 0.8$\")\n    text(r\"  * $\\displaystyle P(S = 1 \\mid R = 1) = \\frac{P(S = 1, R = 1)}{P(R = 1)} = \\frac{0.02}{0.1} = 0.2$\")\n\n    text(\"Summary:\")\n    text(\"- Joint distribution: source of truth\")\n    text(\"- Marginalization: accumulate assignments that differ only in the marginalized variables\")\n    text(\"- Conditioning: select via evidence, compute the probability of the evidence, then divide\")\n    text(\"- Probability tables are tensors, so we can use einsum to express computations!\")\n\n\ndef introduce_probabilistic_inference():\n    text(\"Random variables:\")\n    text(r\"- $S \\in \\{0, 1\\}$ (sunshine)\")\n    text(r\"- $R \\in \\{0, 1\\}$ (rain)\")\n    text(r\"- $T \\in \\{0, 1\\}$ (traffic)\")\n    text(r\"- $A \\in \\{0, 1\\}$ (autumn)\")\n\n    text(r\"Joint distribution (source of truth): $P(S, R, T, A)$\")\n    P_SRTA = prob_table(\"S R T A\", [  # @stepover\n        [[[0.108, 0.024], [0.027, 0.006]], [[0.018, 0.024], [0.042, 0.056]]],  # @hide\n        [[[0.432, 0.096], [0.108, 0.024]], [[0.005, 0.006], [0.010, 0.014]]],  # @hide\n    ], render=True)  # @hide\n\n    text(\"What is the probability of rain given that there's traffic and it's autumn?\")\n\n    text(\"**Probabilistic inference** \ud83d\udd2e: answer questions on the joint distribution\")\n    text(\"Analogy: executing SQL queries on a database\")\n\n    text(\"A question includes:\")\n    text(r\"- **Condition** on evidence: $T = 1, A = 1$ (traffic and autumn)\")\n    text(r\"- Interested in **query**: $R$ (rain?)\")\n\n    text(\"In probability notation:\")\n    text(r\"$P(R \\mid T = 1, A = 1)$\")\n    P_R_given_T1A1 = prob_table(\"R | T=1 A=1\", [0.3, 0.7], render=True)  # P(R | T = 1, A = 1) @stepover\n    text(\"Rain is likely given traffic in autumn!\")\n\n    text(r\"Note: marginalize out all variables not in the evidence or query (here, $S$)\")\n    image(\"images/inference-variables.svg\", width=470)\n\n\ndef introduce_alarm():\n    text(\"\ud83d\udea8 Problem: earthquakes, burglaries, and alarms\")\n    text(r\"- Earthquakes and burglaries are independent events (each with probability $\\epsilon = 0.05$).\")\n    text(\"- Either will cause an alarm to go off.\")\n    text(\"- Suppose you hear an alarm.\")\n    text(\"- How does hearing that there's an earthquake change the probability of a burglary?\")\n\n    text(r\"Joint distribution: $P(B, E, A)$\")\n    text(\"Which is larger?\")\n    text(r\"- $P(B = 1 \\mid A = 1)$: burglary given alarm only\")\n    text(r\"- $P(B = 1 \\mid A = 1, E = 1)$: burglary given alarm and earthquake\")\n\n    text(\"To solve this problem, let's use Bayesian networks.\")\n    text(\"We need to do two things:\")\n    text(\"- Construct a joint distribution\")\n    text(\"- Perform probabilistic inference\")\n\n    text(\"### Constructing the joint distribution\")\n    text(\"Let's start by constructing the joint distribution.\")\n    text(\"We could write down a huge table directly...\")\n    text(\"...but let's do it in a more intuitive way.\")\n\n    text(\"There are 4 steps:\")\n    text(r\"1. Define the variables ($B, E, A$)\")\n    text(r\"2. Connect the variables with directed edges ($B \\to A$, $E \\to A$)\")\n    text(r\"3. Write down a local conditional distribution for each variable (e.g., $p(a \\mid b, e)$)\")\n    text(\"4. Define the joint distribution as the product of the local conditional distributions\")\n\n    text(r\"**Step 1**: Define the variables ($B, E, A$)\")\n\n    text(r\"**Step 2**: Connect the variables with directed edges suggesting direct influence ($B \\to A$, $E \\to A$)\")\n    graph(draw_alarm_net())  # @stepover\n\n    text(r\"**Step 3**: Write down a local conditional distribution for each variable (e.g., $p(a \\mid b, e)$)\")\n    epsilon = 0.05  # Probability of rare event\n    p_b = prob_table(\"B\", [1 - epsilon, epsilon], local=True, render=True)  # p(b) @stepover\n    p_e = prob_table(\"E\", [1 - epsilon, epsilon], local=True, render=True)  # p(e) @stepover\n    p_a_given_be = prob_table(\"A | B E\", lambda b, e, a: a == (b or e), shape=(2, 2, 2), local=True, render=True)  # p(a | b, e) @stepover\n\n    text(\"**Step 4**: Define the joint distribution as the product of the local conditional distributions\")\n\n    text(r\"For all $b, e, a$:\")\n    text(r\"- $P(B = b, E = e, A = a) = p(b) \\, p(e) \\, p(a \\mid b, e)$\")\n    P_BEA = prob_einsum(\"B E A\", \"b, e, b e a -> b e a\", p_b, p_e, p_a_given_be, render=True)  # P(B, E, A) @stepover @animate\n\n    text(\"### Probabilistic inference\")\n    text(\"Now given the joint distribution, we can answer any query we want.\")\n\n    text(r\"**Query** $P(B = 1)$: burglary given no information\")\n\n    P_B = prob_einsum(\"B\", \"b e a -> b\", P_BEA, render=True)  # P(B) @stepover @animate\n    text(r\"Note: the marginal $P(B = b)$ matches the local conditional $p(b)$ (low chance of burglary).\")\n\n    text(r\"**Query** $P(B = 1 \\mid A = 1)$: burglary given alarm only\")\n\n    text(r\"Select based on the evidence ($A = 1$) and marginalize out $E$:\")\n    a1 = np.array([0, 1])  # Evidence [A = 1]\n    P_BA1 = prob_einsum(\"B A=1\", \"b e a, a -> b\", P_BEA, a1, render=True)  # P(B, A = 1) @stepover @animate\n\n    text(r\"Compute the probability of the evidence ($A = 1$):\")\n    P_A1 = prob_einsum(\"A=1\", \"b ->\", P_BA1, render=True)  # P(A = 1) @stepover @animate\n\n    text(\"Divide by the probability of the evidence to get the conditional distribution:\")\n    P_B_given_A1 = prob_divide(\"B | A=1\", P_BA1, P_A1, render=True)  # P(B | A = 1) @stepover @animate\n    exact_probs[\"P(B | A = 1)\"] = {b: float(prob) for b, prob in enumerate(P_B_given_A1.p)}  # @stepover @hide\n\n    text(\"Note: burglary is much more likely given alarm!\")\n    text(\"- $P(B = 1) = 0.05$\")\n    text(r\"- $P(B = 1 \\mid A = 1) = 0.5128$\")\n\n    text(r\"**Query** $P(B = 1 \\mid A = 1, E = 1)$: burglary given alarm and earthquake\")\n\n    text(\"Select based on the evidence:\")\n    a1 = np.array([0, 1])  # Evidence [A = 1]\n    e1 = np.array([0, 1])  # Evidence [E = 1]\n    P_BA1E1 = prob_einsum(\"B A=1 E=1\", \"b e a, a, e -> b\", P_BEA, a1, e1, render=True)  # P(B, A = 1, E = 1) @stepover @animate\n\n    text(r\"Compute the probability of the evidence ($A = 1, E = 1$):\")\n    P_A1E1 = prob_einsum(\"A=1 E=1\", \"b ->\", P_BA1E1, render=True)  # P(A = 1, E = 1) @stepover @animate\n\n    text(\"Divide by the probability of the evidence to get the conditional distribution:\")\n    P_B_given_A1E1 = prob_divide(\"B | A=1 E=1\", P_BA1E1, P_A1E1, render=True)  # P(B | A = 1, E = 1) @stepover @animate\n\n    text(\"Note: burglary is again unlikely after hearing about the earthquake.\")\n    text(\"- $P(B = 1) = 0.05$\")\n    text(r\"- $P(B = 1 \\mid A = 1) = 0.5128$\")\n    text(r\"- $P(B = 1 \\mid A = 1, E = 1) = 0.05$\")\n    text(\"Intuition: why did the alarm sound?  The earthquake explains away the alarm.\")\n\n    text(\"Key idea: **explaining away**\")\n    graph(draw_alarm_net())  # @stepover\n    text(r\"- Suppose you have two causes ($B, E$) positively influencing an effect ($A$).\")\n    text(r\"- Condition on the effect ($A = 1$).\")\n    text(r\"- Further conditioning on one cause ($E = 1$) reduces the probability of the other cause ($B = 1$).\")\n    text(r\"- In symbols: $P(B = 1 \\mid A = 1, E = 1) < P(B = 1 \\mid A = 1)$.\")\n    text(\"- Important: this happens even if the causes are independent! \ud83e\udd2f\")\n\n    text(\"Reminder about notation:\")\n    text(r\"- Lowercase ($e$): a particular value\")\n    text(r\"- Uppercase ($E$): a random variable\")\n    text(r\"- Lowercase $p(e)$: local conditional distributions (given by definition)\")\n    text(r\"- Uppercase $P(E)$: marginal/conditional distributions derived from the joint distribution (by the laws of probability)\")\n    text(r\"- Uppercase $P(E = e)$: probability (a number) from a marginal/conditional distribution\")\n\n    text(\"Summary:\")\n    text(\"- Define the joint distribution: 4 steps (variables, edges, local conditional distributions, joint distribution)\")\n    text(\"- Perform probabilistic inference: select on evidence, compute probability of evidence, divide\")\n    text(\"- Explaining away: qualitative reasoning pattern that follows from the math\")\n\n\ndef introduce_medical_diagnosis():\n    text(\"\ud83e\ude7a Problem: medical diagnosis\")\n    text(\"- You are coughing and have itchy eyes.\")\n    text(\"- Do you have a cold?\")\n\n    text(\"Let's model this problem using a Bayesian network.\")\n\n    text(\"**Step 1**: Define the random variables\")\n    text(r\"- Cold $C \\in \\{0, 1\\}$\")\n    text(r\"- Allergies $A \\in \\{0, 1\\}$\")\n    text(r\"- Cough $H \\in \\{0, 1\\}$\")\n    text(r\"- Itchy eyes $I \\in \\{0, 1\\}$\")\n\n    text(\"**Step 2**: Connect the variables with directed edges\")\n    graph(draw_medical_net())  # @stepover\n\n    text(\"**Step 3**: Write down a local conditional distribution for each variable\")\n    p_c = prob_table(\"C\", [0.9, 0.1], local=True, render=True)  # p(c) @stepover\n    p_a = prob_table(\"A\", [0.8, 0.2], local=True, render=True)  # p(a) @stepover\n    p_h_given_ca = prob_table(\"H | C A\", lambda c, a, h: 0.9 if h == (c or a) else 0.1, shape=(2, 2, 2), local=True, render=True)  # p(h | c, a) @stepover\n    p_i_given_a = prob_table(\"I | A\", lambda a, i: 0.9 if i == a else 0.1, shape=(2, 2), local=True, render=True)  # p(i | a) @stepover\n\n    text(\"**Step 4**: Define the joint distribution as the product of the local conditional distributions\")\n    text(r\"For all $c, a, h, i$: $P(C = c, A = a, H = h, I = i) = p(c) \\, p(a) \\, p(h \\mid c, a) \\, p(i \\mid a)$\")\n    P_CAHI = prob_einsum(\"C A H I\", \"c, a, c a h, a i -> c a h i\", p_c, p_a, p_h_given_ca, p_i_given_a, render=True)  # P(C, A, H, I) @stepover @animate\n\n    text(\"Now we can answer any question we want.\")\n\n    text(r\"**Query** $P(C = 1 \\mid H = 1)$: cold given cough?\")\n\n    text(\"Select based on the evidence, marginalizing out the variables not in the query or evidence:\")\n    h1 = np.array([0, 1])  # Evidence [H = 1]\n    P_CH1 = prob_einsum(\"C H=1\", \"c a h i, h -> c\", P_CAHI, h1, render=True)  # P(C, H = 1) @stepover @animate\n\n    text(r\"Compute the probability of the evidence ($H = 1$):\")\n    P_H1 = prob_einsum(\"H=1\", \"c ->\", P_CH1, render=True)  # P(H = 1) @stepover @animate\n\n    text(\"Divide by the probability of the evidence to get the conditional distribution:\")\n    P_C_given_H1 = prob_divide(\"C | H=1\", P_CH1, P_H1, render=True)  # P(C | H = 1) @stepover @animate\n    exact_probs[\"P(C | H = 1)\"] = {c: float(prob) for c, prob in enumerate(P_C_given_H1.p)}  # @stepover @hide\n\n    text(r\"Answer: $P(C = 1 \\mid H = 1) = 0.2778$\")\n\n    text(r\"**Query** $P(C = 1 \\mid H = 1, I = 1)$: cold given cough and itchy eyes?\")\n\n    text(\"Select based on the evidence, marginalizing out the variables not in the query or evidence:\")\n    h1 = np.array([0, 1])  # Evidence [H = 1]\n    i1 = np.array([0, 1])  # Evidence [I = 1]\n    P_CH1I1 = prob_einsum(\"C H=1 I=1\", \"c a h i, h, i -> c\", P_CAHI, h1, i1, render=True)  # P(C, H = 1, I = 1) @stepover @animate\n\n    text(r\"Compute the probability of the evidence ($H = 1, I = 1$):\")\n    P_H1I1 = prob_einsum(\"H=1 I=1\", \"c ->\", P_CH1I1, render=True)  # P(H = 1, I = 1) @stepover @animate\n\n    text(\"Divide by the probability of the evidence to get the conditional distribution:\")\n    P_C_given_H1I1 = prob_divide(\"C | H=1 I=1\", P_CH1I1, P_H1I1, render=True)  # P(C | H = 1, I = 1) @stepover @animate\n\n    text(\"Note: the probability of a cold is lower if you also have itchy eyes!\")\n    assert P_C_given_H1I1.p[1] < P_C_given_H1.p[1]  # @stepover @inspect P_C_given_H1 P_C_given_H1I1\n\n    text(\"This is another, more subtle example of explaining away!\")\n    graph(draw_medical_net())  # @stepover\n    text(r\"- The effect ($H$) has two causes ($C, A$).\")\n    text(r\"- Itchy eyes ($I$) is not a cause of the effect ($H$)...\")\n    text(r\"- ...but observing itchy eyes ($I = 1$) increases the probability of allergies ($A = 1$), which is a cause...\")\n    text(r\"- ...which explains away the cough, decreasing the probability of a cold ($C = 1$).\")\n    text(\"- Intuition: information propagates through the network\")\n\n    text(\"Summary:\")\n    text(\"- Same recipe (joint distribution + probabilistic inference)\")\n    text(\"- Explaining away shows up in more complex ways\")\n\n\ndef introduce_bayesian_networks():\n    text(\"We have seen two examples of Bayesian networks:\")\n\n    text(\"\ud83d\udea8 Alarm:\")\n    graph(draw_alarm_net())  # @stepover\n    text(\"\ud83e\ude7a Medical diagnosis:\")\n    graph(draw_medical_net())  # @stepover\n\n    text(\"Now let's introduce the general case.\")\n    text(r\"1. Define a set of random variables $X = (X_1, \\dots, X_n)$.\")\n    text(\"2. Define any directed acyclic graph (DAG) over the variables.\")\n    text(r\"3. For each variable $X_i$, define a local conditional distribution $p(x_i \\mid x_{\\text{Parents}(i)})$.\")\n    text(r\"4. Define the joint distribution:\")\n    text(r\"  * $\\displaystyle P(X_1 = x_1, \\dots, X_n = x_n) = \\prod_{i=1}^n p(x_i \\mid x_{\\text{Parents}(i)})$\")\n\n    text(\"Reminders:\")\n    text(\"- One local conditional distribution per variable (not per edge!)\")\n    text(\"- The local conditional distribution depends on *all* the parents at once\")\n    text(r\"- Difference between:\")\n    text(\"  * $p$ (local conditional distributions, by definition) and\")\n    text(\"  * $P$ (derived from the joint distribution)\")\n\n    text(\"**Probabilistic inference**\")\n    text(\"Given:\")\n    text(r\"- Bayesian network $P(X_1, \\dots, X_n)$\")\n    text(r\"- Evidence $E = e$ where $E \\subseteq X$\")\n    text(\"  * Example: $E = (X_3, X_7)$, $e = (0, 1)$\")\n    text(r\"- Query $Q \\subseteq X$\")\n    text(\"  * Example: $Q = (X_2, X_4)$\")\n    text(\"Output:\")\n    text(r\"- $\\boxed{P(Q \\mid E = e)}$\")\n\n\ndef language_models():\n    text(\"Lots of things are secretly Bayesian networks.\")\n    text(\"For example, autoregressive language models.\")\n\n    text(r\"1. Random variables: tokens $X_1, \\dots, X_T$\")\n    text(r\"2. Edges from all previous tokens to the current token ($X_1, \\dots, X_{t-1}$ to $X_t$)\")\n    text(r\"3. Local conditional distribution (Transformer): $p(x_t \\mid x_1, \\dots, x_{t-1})$\")\n    text(r\"4. Joint distribution: $\\displaystyle P(X_1 = x_1, \\dots, X_T = x_T) = \\prod_{t=1}^T p(x_t \\mid x_1, \\dots, x_{t-1})$\")\n    tokens = [f\"X{chr(ord('\u2081') + t)}\" for t in range(5)]  # @stepover @hide\n    graph(draw_bayes_net(  # @stepover\n        {token: (90 * t, 0) for t, token in enumerate(tokens)},  # @hide\n        [(tokens[s], tokens[t]) for t in range(5) for s in range(t)],  # @hide\n        curves={(tokens[s], tokens[t]) : -30 * (t - s - 1) for t in range(5) for s in range(t - 1)},  # @hide\n    ))  # @hide\n\n    text(\"Typically, you just sample forward using a language model (prompt \u2192 response):\")\n    text(r\"$\\underbrace{X_1, X_2, X_3}_\\text{prompt} \\to \\underbrace{X_4, X_5, X_6}_\\text{response}$\")\n\n    text(\"What would doing probabilistic inference mean?\")\n    text(r\"$\\underbrace{X_4, X_5, X_6}_\\text{response} \\to \\underbrace{X_1, X_2, X_3}_\\text{prompt}$\")\n    text(r\"  * $P(X_1, X_2, X_3 \\mid X_4 = x_4, X_5 = x_5, X_6 = x_6)$\")\n\n    text(\"Application: jailbreaking language models \ud83d\udd13 \"), link(\"https://arxiv.org/abs/2502.01236\")\n    text(\"- Given a particular response (e.g., \\\"Sure, here's how you make a bomb\\\")...\")\n    text(\"- ...find prompts that are likely to have generated it.\")\n\n\ndef Bernoulli(prob: float) -> int:\n    \"\"\"Return 1 with probability `prob` and 0 with probability `1 - prob`.\"\"\"\n    return np.random.choice([0, 1], p=[1 - prob, prob])\n\n\ndef introduce_rejection_sampling():\n    text(\"So far:\")\n    text(\"- We have defined Bayesian networks by writing down local conditional distributions.\")\n    text(\"- Then we performed exact probabilistic inference by multiplying tensors and summing (einsum).\")\n\n    text(\"Next:\")\n    text(\"- Define Bayesian networks via **probabilistic programs**.\")\n    text(\"- Perform approximate probabilistic inference by running the program repeatedly and rejecting bad outcomes.\")\n\n    set_random_seed(4)\n\n    text(\"Primitive: sample a Bernoulli random variable:\")\n    x = Bernoulli(0.2)  # @inspect x\n    x = Bernoulli(0.2)  # @inspect x @stepover\n    x = Bernoulli(0.2)  # @inspect x @stepover\n\n    text(\"Let's revisit our old alarm example.\")\n    graph(draw_alarm_net())  # @stepover\n    text(\"A Bayesian network is just a Python program that returns an assignment to its random variables!\")\n    sample = alarm()  # @inspect sample\n    sample = alarm()  # @inspect sample @stepover\n    sample = alarm()  # @inspect sample @stepover\n    sample = alarm()  # @inspect sample @stepover\n    sample = alarm()  # @inspect sample @stepover\n    sample = alarm()  # @inspect sample @stepover\n    sample = alarm()  # @inspect sample @stepover\n    sample = alarm()  # @inspect sample @stepover\n    sample = alarm()  # @inspect sample @stepover\n    sample = alarm()  # @inspect sample @stepover\n\n    text(\"Now let's do probabilistic inference.\")\n    text(r\"Example: $P(B \\mid A = 1)$\")\n\n    text(\"Writing down a distribution as a program...\")\n    text(\"...gives us a natural way to do approximate probabilistic inference:\")\n    text(\"...**rejection sampling**!\")\n\n    text(\"Algorithm (rejection sampling) \ud83d\udeab:\")\n    text(\"- Draw a ton of samples\")\n    text(\"- Select the samples that match the evidence\")\n    text(\"- Record the query\")\n\n    text(r\"Generalize the evidence and the query to arbitrary functions of the sample assignment.\")\n    query = lambda sample: sample[\"B\"]          # Interested in B\n    evidence = lambda sample: sample[\"A\"] == 1  # Evidence: A = 1\n\n    set_random_seed(4)\n    result = rejection_sampling(alarm, query, evidence, num_samples=10)  # @inspect result\n    result = rejection_sampling(alarm, query, evidence, num_samples=3000)  # @inspect result @stepover\n    exact = exact_probs[\"P(B | A = 1)\"]  # Computed exactly before (compare with result) @inspect exact\n\n    text(\"As the number of samples increases to infinity, this converges to the true probability!\")\n    text(\"Downside: if the evidence is rare, this is very inefficient (most samples are rejected).\")\n    text(r\"- Example: $P(A = 1) = 0.0975$, so about 90% of the samples are rejected\")\n\n    text(\"\ud83e\ude7a **Medical diagnosis**\")\n    graph(draw_medical_net())  # @stepover\n    text(r\"Example: cold given cough? $P(C \\mid H = 1)$\")\n    sample = medical_diagnosis()  # @inspect sample\n\n    query = lambda sample: sample[\"C\"]          # Interested in C (cold?)\n    evidence = lambda sample: sample[\"H\"] == 1  # Evidence: H = 1 (have cough)\n\n    result = rejection_sampling(medical_diagnosis, query, evidence, num_samples=200)  # @inspect result @stepover\n    exact = exact_probs[\"P(C | H = 1)\"]  # Computed exactly before (compare with result) @inspect exact\n\n    text(\"\ud83d\udccd **Hidden Markov models for object tracking**\")\n    text(r\"- Object starts at 0 and moves right with probability $\\frac{1}{2}$ each time step\")\n    text(r\"- Observe position + noise at each time step\")\n    text(r\"- $H_t$: position of the object at time $t$ (hidden)\")\n    text(r\"- $E_t$: sensor reading at time $t$ (observed)\")\n    H = [f\"H{chr(ord('\u2081') + t)}\" for t in range(5)]  # @stepover @hide\n    E = [f\"E{chr(ord('\u2081') + t)}\" for t in range(5)]  # @stepover @hide\n    graph(draw_bayes_net(  # @stepover\n        {**{h: (90 * t, 0) for t, h in enumerate(H)}, **{e: (90 * t, 90) for t, e in enumerate(E)}},  # @hide\n        [(H[t], H[t + 1]) for t in range(4)] + [(H[t], E[t]) for t in range(5)],  # @hide\n        observed=set(E),  # @hide\n    ))  # @hide\n    text(r\"Example: where is the object at time 3 given the sensor reading at time 5? $P(H_3 \\mid E_5 = 2)$\")\n    sample = hidden_markov_model()  # @inspect sample\n\n    query = lambda sample: sample[\"H\"][2]          # Interested in H_3 (where is the object at time 3?)\n    evidence = lambda sample: sample[\"E\"][4] == 2  # Evidence: E_5 = 2 (the sensor reads 2 at time 5)\n\n    result = rejection_sampling(hidden_markov_model, query, evidence, num_samples=200)  # @inspect result @stepover\n\n    text(\"Summary:\")\n    text(\"- Probabilistic programming: programs as representations of joint distributions\")\n    text(\"- Rejection sampling: approximate inference by drawing samples (very flexible but very slow)\")\n\n\ndef alarm():\n    B = Bernoulli(0.05)  # Burglary @stepover @inspect B\n    E = Bernoulli(0.05)  # Earthquake @stepover @inspect E\n    A = B or E           # Alarm @inspect A\n    return {\"B\": B, \"E\": E, \"A\": A}\n\n\ndef medical_diagnosis():\n    C = Bernoulli(0.1)                      # Cold @stepover @inspect C\n    A = Bernoulli(0.2)                      # Allergies @stepover @inspect A\n    H = Bernoulli(0.9 if C or A else 0.1)   # Cough @stepover @inspect H\n    I = Bernoulli(0.9 if A else 0.1)        # Itchy eyes @stepover @inspect I\n    return {\"C\": C, \"A\": A, \"H\": H, \"I\": I}\n\n\ndef hidden_markov_model():\n    \"\"\"\n    A simple hidden Markov model.\n    The hidden variables are the positions of the object (H_1, ..., H_T).\n    The observed variables are the sensor readings (E_1, ..., E_T).\n    \"\"\"\n    num_steps = 5\n    H = [None] * num_steps  # Positions @inspect H\n    E = [None] * num_steps  # Sensor readings @inspect E\n\n    for t in range(num_steps):\n        H[t] = (H[t - 1] if t > 0 else 0) + Bernoulli(0.5)  # Move right with probability 0.5 @stepover @inspect H\n        E[t] = H[t] + Bernoulli(0.5)  # Noisy reading of the position @stepover @inspect E\n\n    return {\"H\": H, \"E\": E}\n\n\ndef rejection_sampling(program: Callable, query: Callable, evidence: Callable, num_samples: int) -> dict:\n    \"\"\"Perform rejection sampling given:\n    - program: defines the Bayesian network, returns a sample\n    - query: sample -> value of interest\n    - evidence: sample -> whether to keep the sample\n    - num_samples: number of samples to draw\n    Return the estimated distribution over query values (given the evidence).\n    \"\"\"\n    counts = defaultdict(int)  # Record how many of each query value we got  @inspect counts\n\n    for _ in range(num_samples):\n        sample = program()  # @inspect sample @stepover\n        if evidence(sample):  # @stepover\n            counts[query(sample)] += 1  # @stepover @inspect counts\n\n    # Normalize counts to obtain probabilities\n    total_count = sum(counts.values())  # @inspect total_count\n    probs = {q: counts[q] / total_count for q in sorted(counts)}  # @inspect probs\n\n    return probs\n\n\ndef discussion():\n    text(\"If you're used to thinking about classifiers, using Bayesian networks requires a shift in mindset.\")\n    graph(draw_medical_net())  # @stepover\n    text(\"Example: predict cold given cough?\")\n    image(\"images/discriminative-vs-generative.svg\", width=720)\n\n    text(\"Advantages of Bayesian networks:\")\n    text(\"- \ud83e\udde9 Handle **heterogeneously** missing information, both at training and test time\")\n    text(\"- \ud83d\udcda Incorporate **prior knowledge** (e.g., Mendelian inheritance, laws of physics)\")\n    text(\"- \ud83d\udd2c Can **interpret** all the intermediate variables\")\n    text(\"- \ud83d\udd00 Precursor to **causal** models (can do interventions and counterfactuals)\")\n\n\n############################################################\n# Utilities (not stepped into)\n\nclass ProbTable:\n    \"\"\"\n    Represents an arbitrary probability table: could be a local conditional\n    distribution, a marginal distribution, or a conditional distribution.\n\n    description:\n\n      A         B=1          | C          D=1\n      gen-vars  gen-vals       cond-vars  cond-vals\n\n    data could be:\n    - tensor corresponding to the probabilities (axes are cond-vars + gen-vars)\n    - function mapping cond-vars + gen-vars assignments to probabilities\n\n    shape: only needed if data is a function, to determine the shape of the tensor\n    \"\"\"\n    def __init__(self, description: str, data: np.ndarray | Callable, shape: tuple[int] | None = None, local: bool = False):\n        self.local = local  # Local conditional distribution (written with lowercase p)\n        if isinstance(data, Callable):\n            # Build up the probabilities\n            self.probs = np.empty(shape)\n            def recurse(assignment: list[int]):\n                if len(assignment) == len(shape):\n                    self.probs[tuple(assignment)] = data(*assignment)\n                else:\n                    for i in range(shape[len(assignment)]):\n                        recurse(assignment + [i])\n            recurse([])\n        else:\n            self.probs = np.array(data)\n\n        # Parse the description into variables and values for both the generation and conditioning side\n        self.cond_vars = []\n        self.gen_vars = []\n        self.cond_vals = []\n        self.gen_vals = []\n\n        items = description.split(\" \")\n        on_conditioning_side = False\n        for item in items:\n            if item == \"|\":\n                on_conditioning_side = True\n            elif on_conditioning_side:\n                if \"=\" in item:\n                    self.cond_vals.append(item)\n                else:\n                    self.cond_vars.append(item)\n            else:\n                if \"=\" in item:\n                    self.gen_vals.append(item)\n                else:\n                    self.gen_vars.append(item)\n\n        assert len(self.cond_vars) + len(self.gen_vars) == len(self.probs.shape), [self.cond_vars, self.gen_vars, self.probs.shape]\n\n    def name(self) -> str:\n        \"\"\"MathJax template for the table (for `animate_einsum`), e.g., \"P(B = {b}, A = 1)\" or \"p({a} \\\\mid {b}, {e})\".\"\"\"\n        if self.local:\n            gen = [f\"{{{var.lower()}}}\" for var in self.gen_vars]\n            cond = [f\"{{{var.lower()}}}\" for var in self.cond_vars]\n        else:\n            gen = [f\"{var} = {{{var.lower()}}}\" for var in self.gen_vars]\n            cond = [f\"{var} = {{{var.lower()}}}\" for var in self.cond_vars]\n        gen += [val.replace(\"=\", \" = \") for val in self.gen_vals]\n        cond += [val.replace(\"=\", \" = \") for val in self.cond_vals]\n        args = \", \".join(gen) + (r\" \\mid \" + \", \".join(cond) if cond else \"\")\n        return (\"p\" if self.local else \"P\") + f\"({args})\"\n\n    def html(self) -> str:\n        \"\"\"HTML table of the probabilities (as in `animate_einsum`).\"\"\"\n        indices = [var.lower() for var in self.cond_vars + self.gen_vars]\n        name = self.name()\n        for index in indices:\n            name = name.replace(\"{\" + index + \"}\", index)\n        rows = [(dict(zip(indices, values)), f\"{float(self.probs[values]):.4g}\") for values in np.ndindex(*self.probs.shape)]\n        return html_table(indices, name, rows)\n\n    @property\n    def p(self):\n        return self.probs\n\n    def asdict(self):\n        \"\"\"\n        Returns a nice matrix representation of the probability table.\n        a  b  P(A = a, B = b)\n        0  0  0.1\n        0  1  0.2\n        1  0  0.3\n        1  1  0.4\n        \"\"\"\n        vars = self.cond_vars + self.gen_vars\n\n        # Description string (e.g., \"P(A = a, B = b)\")\n        output = []\n        output.append(\", \".join([f\"{var}={var.lower()}\" for var in self.gen_vars] + self.gen_vals))\n        if len(self.cond_vars) > 0 or len(self.cond_vals) > 0:\n            output.append(\"|\")\n            output.append(\", \".join([f\"{var}={var.lower()}\" for var in self.cond_vars] + self.cond_vals))\n        prob_str = \"P(\" + \" \".join(output) + \")\"\n\n        rows = []\n        rows.append([var.lower() for var in vars] + [prob_str])\n        def recurse(assignment: list):\n            if len(assignment) == len(vars):\n                rows.append(assignment + [self.probs[tuple(assignment)]])\n            else:\n                for value in range(self.probs.shape[len(assignment)]):\n                    recurse(assignment + [value])\n        recurse([])\n        return np.array(rows)\n\n\ndef draw_bayes_net(positions: dict[str, tuple[float, float]], edges: list[tuple[str, str]],\n                   observed: set[str] = set(), curves: dict[tuple[str, str], float] = {},\n                   classes: dict[str | tuple[str, str], str] = {}, directed: bool = True) -> dict:\n    \"\"\"\n    Return the graph of a Bayesian network (to show with `graph`):\n    - `positions`: variable name (e.g., \"H\u2081\") -> (x, y)\n    - `edges`: (parent, child) pairs\n    - `observed`: variables that are observed (shaded)\n    - `curves`: (parent, child) -> how much to curve that edge (e.g., to go around other nodes)\n    - `classes`: variable or edge -> extra style class: \"query\" or \"blanket\" (variables), \"married\" (edges)\n    - `directed`: whether to draw arrowheads (False for undirected graphs)\n    \"\"\"\n    def node_classes(name: str) -> str:\n        return \" \".join(c for c in [\"observed\" if name in observed else \"\", classes.get(name, \"\")] if c)\n    nodes = [{\"id\": name, \"x\": x, \"y\": y, \"classes\": node_classes(name)} for name, (x, y) in positions.items()]\n    edges = [{\"source\": source, \"target\": target, \"classes\": classes.get((source, target), \"\"),\n              **({\"curve\": curves[(source, target)]} if (source, target) in curves else {})}\n             for source, target in edges]\n    stylesheet = [\n        # Variables in italic serif (like math)\n        {\"selector\": \"node\", \"style\": {\"width\": 44, \"height\": 44, \"font-family\": \"Times New Roman, serif\", \"font-style\": \"italic\",\n                                       \"font-size\": 22, \"color\": \"#222\"}},\n        {\"selector\": \"node.observed\", \"style\": {\"background-color\": \"#ccc\"}},\n        {\"selector\": \"node.query\", \"style\": {\"border-color\": \"#f77f00\", \"border-width\": 4}},\n        {\"selector\": \"node.blanket\", \"style\": {\"border-color\": \"#f77f00\", \"border-style\": \"dashed\", \"border-width\": 3}},\n        {\"selector\": \"edge\", \"style\": {\"line-color\": \"#555\", \"target-arrow-color\": \"#555\",\n                                       \"target-arrow-shape\": \"triangle\" if directed else \"none\"}},\n        {\"selector\": \"edge.married\", \"style\": {\"line-color\": \"#f77f00\", \"line-style\": \"dashed\"}},\n        {\"selector\": \"edge[curve]\", \"style\": {\"curve-style\": \"unbundled-bezier\", \"control-point-weights\": 0.5,\n                                              \"control-point-distances\": \"data(curve)\"}},\n    ]\n    xs = [x for x, y in positions.values()]\n    ys = [y for x, y in positions.values()]\n    extra_height = max([abs(curve) for curve in curves.values()], default=0) / 2\n    width = max(xs) - min(xs) + 90\n    height = max(ys) - min(ys) + 90 + extra_height\n    return make_graph(nodes, edges, stylesheet=stylesheet, width=round(width), height=round(height))\n\n\ndef draw_alarm_net() -> dict:\n    return draw_bayes_net({\"B\": (0, 0), \"E\": (160, 0), \"A\": (80, 90)}, [(\"B\", \"A\"), (\"E\", \"A\")])\n\n\ndef draw_medical_net() -> dict:\n    return draw_bayes_net({\"C\": (0, 0), \"A\": (140, 0), \"H\": (0, 100), \"I\": (140, 100)},\n                          [(\"C\", \"H\"), (\"A\", \"H\"), (\"A\", \"I\")])\n\n\ndef prob_table(description: str, data: np.ndarray | Callable, shape: tuple[int] | None = None, local: bool = False,\n               render: bool = False) -> ProbTable:\n    \"\"\"Return a ProbTable (arguments as in `ProbTable`), showing it as a table if `render`.\"\"\"\n    table = ProbTable(description, data, shape=shape, local=local)\n    if render:\n        text(table.html())\n    return table\n\n\ndef prob_einsum(description: str, pattern: str, *operands: \"ProbTable | np.ndarray\", render: bool = False) -> ProbTable:\n    \"\"\"\n    Return the ProbTable (with `description`) computed by einsum `pattern` on `operands`\n    (ProbTables, or indicator vectors for evidence).\n    If `render`, animate how each entry is computed (use with @animate).\n    \"\"\"\n    operand_indices = [term.split() for term in pattern.split(\"->\")[0].split(\",\")]\n    names = []\n    for indices, operand in zip(operand_indices, operands):\n        if isinstance(operand, ProbTable):\n            names.append(operand.name())\n        else:  # Indicator of evidence (e.g., [0, 1] for a = 1)\n            names.append(rf\"\\mathbb{{1}}[{{{indices[0]}}} = {int(np.argmax(operand))}]\")\n    arrays = [operand.p if isinstance(operand, ProbTable) else operand for operand in operands]\n    output = ProbTable(description, einsum(*arrays, pattern))\n    if render:\n        animate_einsum(pattern, arrays, names, output.name())\n    return output\n\n\ndef prob_divide(description: str, numerator: ProbTable, denominator: ProbTable, render: bool = False) -> ProbTable:\n    \"\"\"\n    Return the ProbTable (with `description`) numerator / denominator (e.g., P(B, A = 1) / P(A = 1) to get P(B | A = 1)).\n    If `render`, animate how each entry is computed (use with @animate).\n    \"\"\"\n    num_indices = [var.lower() for var in numerator.cond_vars + numerator.gen_vars]\n    den_indices = [var.lower() for var in denominator.cond_vars + denominator.gen_vars]\n    output = ProbTable(description, numerator.p / denominator.p)\n    pattern = f\"{' '.join(num_indices)} / {' '.join(den_indices)} -> {' '.join(num_indices)}\"\n    if render:\n        animate_divide(pattern, numerator.p, denominator.p, (numerator.name(), denominator.name()), output.name())\n    return output\n\n\nif __name__ == \"__main__\":\n    main()\n"
   },
   "hidden_line_numbers": {
     "bayes.py": [
@@ -4076,12 +4076,14 @@
             ],
             "edges": [
               {
+                "classes": "",
                 "data": {
                   "source": "B",
                   "target": "A"
                 }
               },
               {
+                "classes": "",
                 "data": {
                   "source": "E",
                   "target": "A"
@@ -4110,10 +4112,33 @@
                 }
               },
               {
+                "selector": "node.query",
+                "style": {
+                  "border-color": "#f77f00",
+                  "border-width": 4
+                }
+              },
+              {
+                "selector": "node.blanket",
+                "style": {
+                  "border-color": "#f77f00",
+                  "border-style": "dashed",
+                  "border-width": 3
+                }
+              },
+              {
                 "selector": "edge",
                 "style": {
                   "line-color": "#555",
-                  "target-arrow-color": "#555"
+                  "target-arrow-color": "#555",
+                  "target-arrow-shape": "triangle"
+                }
+              },
+              {
+                "selector": "edge.married",
+                "style": {
+                  "line-color": "#f77f00",
+                  "line-style": "dashed"
                 }
               },
               {
@@ -5454,12 +5479,14 @@
             ],
             "edges": [
               {
+                "classes": "",
                 "data": {
                   "source": "B",
                   "target": "A"
                 }
               },
               {
+                "classes": "",
                 "data": {
                   "source": "E",
                   "target": "A"
@@ -5488,10 +5515,33 @@
                 }
               },
               {
+                "selector": "node.query",
+                "style": {
+                  "border-color": "#f77f00",
+                  "border-width": 4
+                }
+              },
+              {
+                "selector": "node.blanket",
+                "style": {
+                  "border-color": "#f77f00",
+                  "border-style": "dashed",
+                  "border-width": 3
+                }
+              },
+              {
                 "selector": "edge",
                 "style": {
                   "line-color": "#555",
-                  "target-arrow-color": "#555"
+                  "target-arrow-color": "#555",
+                  "target-arrow-shape": "triangle"
+                }
+              },
+              {
+                "selector": "edge.married",
+                "style": {
+                  "line-color": "#f77f00",
+                  "line-style": "dashed"
                 }
               },
               {
@@ -6298,18 +6348,21 @@
             ],
             "edges": [
               {
+                "classes": "",
                 "data": {
                   "source": "C",
                   "target": "H"
                 }
               },
               {
+                "classes": "",
                 "data": {
                   "source": "A",
                   "target": "H"
                 }
               },
               {
+                "classes": "",
                 "data": {
                   "source": "A",
                   "target": "I"
@@ -6338,10 +6391,33 @@
                 }
               },
               {
+                "selector": "node.query",
+                "style": {
+                  "border-color": "#f77f00",
+                  "border-width": 4
+                }
+              },
+              {
+                "selector": "node.blanket",
+                "style": {
+                  "border-color": "#f77f00",
+                  "border-style": "dashed",
+                  "border-width": 3
+                }
+              },
+              {
                 "selector": "edge",
                 "style": {
                   "line-color": "#555",
-                  "target-arrow-color": "#555"
+                  "target-arrow-color": "#555",
+                  "target-arrow-shape": "triangle"
+                }
+              },
+              {
+                "selector": "edge.married",
+                "style": {
+                  "line-color": "#f77f00",
+                  "line-style": "dashed"
                 }
               },
               {
@@ -7556,18 +7632,21 @@
             ],
             "edges": [
               {
+                "classes": "",
                 "data": {
                   "source": "C",
                   "target": "H"
                 }
               },
               {
+                "classes": "",
                 "data": {
                   "source": "A",
                   "target": "H"
                 }
               },
               {
+                "classes": "",
                 "data": {
                   "source": "A",
                   "target": "I"
@@ -7596,10 +7675,33 @@
                 }
               },
               {
+                "selector": "node.query",
+                "style": {
+                  "border-color": "#f77f00",
+                  "border-width": 4
+                }
+              },
+              {
+                "selector": "node.blanket",
+                "style": {
+                  "border-color": "#f77f00",
+                  "border-style": "dashed",
+                  "border-width": 3
+                }
+              },
+              {
                 "selector": "edge",
                 "style": {
                   "line-color": "#555",
-                  "target-arrow-color": "#555"
+                  "target-arrow-color": "#555",
+                  "target-arrow-shape": "triangle"
+                }
+              },
+              {
+                "selector": "edge.married",
+                "style": {
+                  "line-color": "#f77f00",
+                  "line-style": "dashed"
                 }
               },
               {
@@ -7990,12 +8092,14 @@
             ],
             "edges": [
               {
+                "classes": "",
                 "data": {
                   "source": "B",
                   "target": "A"
                 }
               },
               {
+                "classes": "",
                 "data": {
                   "source": "E",
                   "target": "A"
@@ -8024,10 +8128,33 @@
                 }
               },
               {
+                "selector": "node.query",
+                "style": {
+                  "border-color": "#f77f00",
+                  "border-width": 4
+                }
+              },
+              {
+                "selector": "node.blanket",
+                "style": {
+                  "border-color": "#f77f00",
+                  "border-style": "dashed",
+                  "border-width": 3
+                }
+              },
+              {
                 "selector": "edge",
                 "style": {
                   "line-color": "#555",
-                  "target-arrow-color": "#555"
+                  "target-arrow-color": "#555",
+                  "target-arrow-shape": "triangle"
+                }
+              },
+              {
+                "selector": "edge.married",
+                "style": {
+                  "line-color": "#f77f00",
+                  "line-style": "dashed"
                 }
               },
               {
@@ -8144,18 +8271,21 @@
             ],
             "edges": [
               {
+                "classes": "",
                 "data": {
                   "source": "C",
                   "target": "H"
                 }
               },
               {
+                "classes": "",
                 "data": {
                   "source": "A",
                   "target": "H"
                 }
               },
               {
+                "classes": "",
                 "data": {
                   "source": "A",
                   "target": "I"
@@ -8184,10 +8314,33 @@
                 }
               },
               {
+                "selector": "node.query",
+                "style": {
+                  "border-color": "#f77f00",
+                  "border-width": 4
+                }
+              },
+              {
+                "selector": "node.blanket",
+                "style": {
+                  "border-color": "#f77f00",
+                  "border-style": "dashed",
+                  "border-width": 3
+                }
+              },
+              {
                 "selector": "edge",
                 "style": {
                   "line-color": "#555",
-                  "target-arrow-color": "#555"
+                  "target-arrow-color": "#555",
+                  "target-arrow-shape": "triangle"
+                }
+              },
+              {
+                "selector": "edge.married",
+                "style": {
+                  "line-color": "#f77f00",
+                  "line-style": "dashed"
                 }
               },
               {
@@ -9233,12 +9386,14 @@
             ],
             "edges": [
               {
+                "classes": "",
                 "data": {
                   "source": "X\u2081",
                   "target": "X\u2082"
                 }
               },
               {
+                "classes": "",
                 "data": {
                   "source": "X\u2081",
                   "target": "X\u2083",
@@ -9246,12 +9401,14 @@
                 }
               },
               {
+                "classes": "",
                 "data": {
                   "source": "X\u2082",
                   "target": "X\u2083"
                 }
               },
               {
+                "classes": "",
                 "data": {
                   "source": "X\u2081",
                   "target": "X\u2084",
@@ -9259,6 +9416,7 @@
                 }
               },
               {
+                "classes": "",
                 "data": {
                   "source": "X\u2082",
                   "target": "X\u2084",
@@ -9266,12 +9424,14 @@
                 }
               },
               {
+                "classes": "",
                 "data": {
                   "source": "X\u2083",
                   "target": "X\u2084"
                 }
               },
               {
+                "classes": "",
                 "data": {
                   "source": "X\u2081",
                   "target": "X\u2085",
@@ -9279,6 +9439,7 @@
                 }
               },
               {
+                "classes": "",
                 "data": {
                   "source": "X\u2082",
                   "target": "X\u2085",
@@ -9286,6 +9447,7 @@
                 }
               },
               {
+                "classes": "",
                 "data": {
                   "source": "X\u2083",
                   "target": "X\u2085",
@@ -9293,6 +9455,7 @@
                 }
               },
               {
+                "classes": "",
                 "data": {
                   "source": "X\u2084",
                   "target": "X\u2085"
@@ -9321,10 +9484,33 @@
                 }
               },
               {
+                "selector": "node.query",
+                "style": {
+                  "border-color": "#f77f00",
+                  "border-width": 4
+                }
+              },
+              {
+                "selector": "node.blanket",
+                "style": {
+                  "border-color": "#f77f00",
+                  "border-style": "dashed",
+                  "border-width": 3
+                }
+              },
+              {
                 "selector": "edge",
                 "style": {
                   "line-color": "#555",
-                  "target-arrow-color": "#555"
+                  "target-arrow-color": "#555",
+                  "target-arrow-shape": "triangle"
+                }
+              },
+              {
+                "selector": "edge.married",
+                "style": {
+                  "line-color": "#f77f00",
+                  "line-style": "dashed"
                 }
               },
               {
@@ -10060,12 +10246,14 @@
             ],
             "edges": [
               {
+                "classes": "",
                 "data": {
                   "source": "B",
                   "target": "A"
                 }
               },
               {
+                "classes": "",
                 "data": {
                   "source": "E",
                   "target": "A"
@@ -10094,10 +10282,33 @@
                 }
               },
               {
+                "selector": "node.query",
+                "style": {
+                  "border-color": "#f77f00",
+                  "border-width": 4
+                }
+              },
+              {
+                "selector": "node.blanket",
+                "style": {
+                  "border-color": "#f77f00",
+                  "border-style": "dashed",
+                  "border-width": 3
+                }
+              },
+              {
                 "selector": "edge",
                 "style": {
                   "line-color": "#555",
-                  "target-arrow-color": "#555"
+                  "target-arrow-color": "#555",
+                  "target-arrow-shape": "triangle"
+                }
+              },
+              {
+                "selector": "edge.married",
+                "style": {
+                  "line-color": "#f77f00",
+                  "line-style": "dashed"
                 }
               },
               {
@@ -12791,18 +13002,21 @@
             ],
             "edges": [
               {
+                "classes": "",
                 "data": {
                   "source": "C",
                   "target": "H"
                 }
               },
               {
+                "classes": "",
                 "data": {
                   "source": "A",
                   "target": "H"
                 }
               },
               {
+                "classes": "",
                 "data": {
                   "source": "A",
                   "target": "I"
@@ -12831,10 +13045,33 @@
                 }
               },
               {
+                "selector": "node.query",
+                "style": {
+                  "border-color": "#f77f00",
+                  "border-width": 4
+                }
+              },
+              {
+                "selector": "node.blanket",
+                "style": {
+                  "border-color": "#f77f00",
+                  "border-style": "dashed",
+                  "border-width": 3
+                }
+              },
+              {
                 "selector": "edge",
                 "style": {
                   "line-color": "#555",
-                  "target-arrow-color": "#555"
+                  "target-arrow-color": "#555",
+                  "target-arrow-shape": "triangle"
+                }
+              },
+              {
+                "selector": "edge.married",
+                "style": {
+                  "line-color": "#f77f00",
+                  "line-style": "dashed"
                 }
               },
               {
@@ -13654,54 +13891,63 @@
             ],
             "edges": [
               {
+                "classes": "",
                 "data": {
                   "source": "H\u2081",
                   "target": "H\u2082"
                 }
               },
               {
+                "classes": "",
                 "data": {
                   "source": "H\u2082",
                   "target": "H\u2083"
                 }
               },
               {
+                "classes": "",
                 "data": {
                   "source": "H\u2083",
                   "target": "H\u2084"
                 }
               },
               {
+                "classes": "",
                 "data": {
                   "source": "H\u2084",
                   "target": "H\u2085"
                 }
               },
               {
+                "classes": "",
                 "data": {
                   "source": "H\u2081",
                   "target": "E\u2081"
                 }
               },
               {
+                "classes": "",
                 "data": {
                   "source": "H\u2082",
                   "target": "E\u2082"
                 }
               },
               {
+                "classes": "",
                 "data": {
                   "source": "H\u2083",
                   "target": "E\u2083"
                 }
               },
               {
+                "classes": "",
                 "data": {
                   "source": "H\u2084",
                   "target": "E\u2084"
                 }
               },
               {
+                "classes": "",
                 "data": {
                   "source": "H\u2085",
                   "target": "E\u2085"
@@ -13730,10 +13976,33 @@
                 }
               },
               {
+                "selector": "node.query",
+                "style": {
+                  "border-color": "#f77f00",
+                  "border-width": 4
+                }
+              },
+              {
+                "selector": "node.blanket",
+                "style": {
+                  "border-color": "#f77f00",
+                  "border-style": "dashed",
+                  "border-width": 3
+                }
+              },
+              {
                 "selector": "edge",
                 "style": {
                   "line-color": "#555",
-                  "target-arrow-color": "#555"
+                  "target-arrow-color": "#555",
+                  "target-arrow-shape": "triangle"
+                }
+              },
+              {
+                "selector": "edge.married",
+                "style": {
+                  "line-color": "#f77f00",
+                  "line-style": "dashed"
                 }
               },
               {
@@ -15158,18 +15427,21 @@
             ],
             "edges": [
               {
+                "classes": "",
                 "data": {
                   "source": "C",
                   "target": "H"
                 }
               },
               {
+                "classes": "",
                 "data": {
                   "source": "A",
                   "target": "H"
                 }
               },
               {
+                "classes": "",
                 "data": {
                   "source": "A",
                   "target": "I"
@@ -15198,10 +15470,33 @@
                 }
               },
               {
+                "selector": "node.query",
+                "style": {
+                  "border-color": "#f77f00",
+                  "border-width": 4
+                }
+              },
+              {
+                "selector": "node.blanket",
+                "style": {
+                  "border-color": "#f77f00",
+                  "border-style": "dashed",
+                  "border-width": 3
+                }
+              },
+              {
                 "selector": "edge",
                 "style": {
                   "line-color": "#555",
-                  "target-arrow-color": "#555"
+                  "target-arrow-color": "#555",
+                  "target-arrow-shape": "triangle"
+                }
+              },
+              {
+                "selector": "edge.married",
+                "style": {
+                  "line-color": "#f77f00",
+                  "line-style": "dashed"
                 }
               },
               {

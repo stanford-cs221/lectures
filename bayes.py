@@ -688,24 +688,33 @@ class ProbTable:
 
 
 def draw_bayes_net(positions: dict[str, tuple[float, float]], edges: list[tuple[str, str]],
-                   observed: set[str] = set(), curves: dict[tuple[str, str], float] = {}) -> dict:
+                   observed: set[str] = set(), curves: dict[tuple[str, str], float] = {},
+                   classes: dict[str | tuple[str, str], str] = {}, directed: bool = True) -> dict:
     """
     Return the graph of a Bayesian network (to show with `graph`):
     - `positions`: variable name (e.g., "H₁") -> (x, y)
     - `edges`: (parent, child) pairs
     - `observed`: variables that are observed (shaded)
     - `curves`: (parent, child) -> how much to curve that edge (e.g., to go around other nodes)
+    - `classes`: variable or edge -> extra style class: "query" or "blanket" (variables), "married" (edges)
+    - `directed`: whether to draw arrowheads (False for undirected graphs)
     """
-    nodes = [{"id": name, "x": x, "y": y, "classes": "observed" if name in observed else ""}
-             for name, (x, y) in positions.items()]
-    edges = [{"source": source, "target": target, **({"curve": curves[(source, target)]} if (source, target) in curves else {})}
+    def node_classes(name: str) -> str:
+        return " ".join(c for c in ["observed" if name in observed else "", classes.get(name, "")] if c)
+    nodes = [{"id": name, "x": x, "y": y, "classes": node_classes(name)} for name, (x, y) in positions.items()]
+    edges = [{"source": source, "target": target, "classes": classes.get((source, target), ""),
+              **({"curve": curves[(source, target)]} if (source, target) in curves else {})}
              for source, target in edges]
     stylesheet = [
         # Variables in italic serif (like math)
         {"selector": "node", "style": {"width": 44, "height": 44, "font-family": "Times New Roman, serif", "font-style": "italic",
                                        "font-size": 22, "color": "#222"}},
         {"selector": "node.observed", "style": {"background-color": "#ccc"}},
-        {"selector": "edge", "style": {"line-color": "#555", "target-arrow-color": "#555"}},
+        {"selector": "node.query", "style": {"border-color": "#f77f00", "border-width": 4}},
+        {"selector": "node.blanket", "style": {"border-color": "#f77f00", "border-style": "dashed", "border-width": 3}},
+        {"selector": "edge", "style": {"line-color": "#555", "target-arrow-color": "#555",
+                                       "target-arrow-shape": "triangle" if directed else "none"}},
+        {"selector": "edge.married", "style": {"line-color": "#f77f00", "line-style": "dashed"}},
         {"selector": "edge[curve]", "style": {"curve-style": "unbundled-bezier", "control-point-weights": 0.5,
                                               "control-point-distances": "data(curve)"}},
     ]

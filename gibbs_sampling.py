@@ -1,415 +1,508 @@
-from edtrace import text, image
 from typing import Callable
 from collections import defaultdict
-from random import random
-from bayes import ProbTable, Bernoulli
-from util import sample_dict, normalize_dict, set_random_seed
+import numpy as np
 from einops import einsum
+from edtrace import text, link, graph
+from bayes import Bernoulli, prob_table, prob_einsum, prob_divide, rejection_sampling
+from bayes import draw_bayes_net, draw_alarm_net, draw_medical_net, ProbTable
+from util import sample_dict, normalize_dict, set_random_seed
+
 
 def main():
-    text("### Lecture 13: Gibbs sampling")
+    text("# Gibbs sampling")
 
-    text("Last time: Bayesian networks, rejection sampling")
-    text("This time: faster probabilistic inference methods (Gibbs sampling) + conditional independence")
+    text("Last time: Bayesian networks, exact inference, rejection sampling")
+    text("This time: faster probabilistic inference (Gibbs sampling) + conditional independence")
 
     review_bayesian_networks()
     introduce_gibbs_sampling()
     introduce_conditional_independence()
 
     text("Summary:")
-    text("- Exact probabilistic inference: form the joint distribution and marginalize/condition (einops)")
+    text("- Exact probabilistic inference: form the joint distribution, then select, marginalize, and normalize (einsum)")
     text("- Approximate probabilistic inference: rejection sampling, Gibbs sampling")
-    text("- Conditional independence: determine whether two variables are independent given evidence?")
+    text("- Markov blanket: what a variable's conditional distribution depends on")
+    text("- Conditional independence: read off from the graph structure")
 
-    text("Next time: learning parameters of Bayesian networks")
+    text("Next time: learning the parameters of Bayesian networks")
 
 
 def review_bayesian_networks():
-    text("**Joint distribution**: like a database that specifies how the world works")
-    text("1. Define a set of random variables: X = (X_1, ..., X_n)")
-    text("Example: B(urglary), E(arthquake), A(larm)")
+    text("📊 **Joint distribution**: like a database that specifies how the world works")
+
+    text(r"1. Define a set of random variables $X = (X_1, \dots, X_n)$")
+    text(r"  * Example: Burglary $B$, Earthquake $E$, Alarm $A$")
 
     text("2. Define a directed acyclic graph (DAG) over the variables")
-    text("Example: B → A, E → A")
-    image("images/alarm-bayes.png", width=200)
+    text(r"  * Example: $B \to A$, $E \to A$")
+    graph(draw_alarm_net())  # @stepover
 
-    text("3. For each node, define a local conditional distribution: p(x_i | parents(x_i)).")
-    text("Example: p(b), p(e), p(a | b, e)")
-    p_b = ProbTable("B", [0.95, 0.05]) # p(b) @inspect p_b @stepover
-    p_e = ProbTable("E", [0.95, 0.05]) # p(e) @inspect p_e @stepover
-    p_a_given_be = ProbTable("A | B E", lambda b, e, a: a == (b or e), shape=(2, 2, 2)) # p(a | b, e) @inspect p_a_given_be @stepover
+    text(r"3. For each variable, define a local conditional distribution $p(x_i \mid x_{\text{Parents}(i)})$")
+    text(r"  * Example: $p(b)$, $p(e)$, $p(a \mid b, e)$")
+    p_b = prob_table("B", [0.95, 0.05], local=True, render=True)  # p(b) @stepover
+    p_e = prob_table("E", [0.95, 0.05], local=True, render=True)  # p(e) @stepover
+    p_a_given_be = prob_table("A | B E", lambda b, e, a: a == (b or e), shape=(2, 2, 2), local=True, render=True)  # p(a | b, e) @stepover
 
-    text("4. Define the joint distribution: P(X_1, ..., X_n) = Π_i p(x_i | parents(x_i))")
-    text("Example: P(B, E, A) = p(b) p(e) p(a | b, e)")
-    P_BEA = ProbTable("B E A", einsum(p_b.p, p_e.p, p_a_given_be.p, "b, e, b e a -> b e a"))  # P(B, E, A) @inspect P_BEA @stepover
+    text(r"4. Define the joint distribution: $\displaystyle P(X_1 = x_1, \dots, X_n = x_n) = \prod_{i=1}^n p(x_i \mid x_{\text{Parents}(i)})$")
+    text(r"  * Example: $P(B = b, E = e, A = a) = p(b) \, p(e) \, p(a \mid b, e)$")
+    P_BEA = prob_einsum("B E A", "b, e, b e a -> b e a", p_b, p_e, p_a_given_be, render=True)  # P(B, E, A) @stepover @animate
 
-    text("**Probabilistic inference**: answer questions (like SQL) on the joint distribution")  # @clear p_b p_e p_a_given_be
-    text("Example: P(B | A = 1)")
-    P_BEA1 = ProbTable("B E A=1", P_BEA.p[:, :, 1])  # Condition on evidence: P(B, E, A = 1) @inspect P_BEA1 @stepover
-    P_BA1 = ProbTable("B A=1", einsum(P_BEA1.p, "b e -> b"))  # Marginalize out other variables: P(B, A = 1) @inspect P_BA1 @stepover
-    P_A1 = ProbTable("A=1", einsum(P_BA1.p, "b ->"))  # Probability of evidence: P(A = 1) @inspect P_A1 @stepover
-    P_B_given_A1 = ProbTable("B | A=1", P_BA1.p / P_A1.p)  # Normalize to get conditional: P(B | A = 1) @inspect P_B_given_A1 @stepover
+    text("🔮 **Probabilistic inference**: answer questions (like SQL queries) on the joint distribution")
+    text(r"Example: $P(B \mid A = 1)$")
+    a1 = np.array([0, 1])  # Evidence [A = 1]
+    P_BA1 = prob_einsum("B A=1", "b e a, a -> b", P_BEA, a1, render=True)  # Select evidence, marginalize: P(B, A = 1) @stepover @animate
+    P_A1 = prob_einsum("A=1", "b ->", P_BA1, render=True)  # Probability of evidence: P(A = 1) @stepover @animate
+    P_B_given_A1 = prob_divide("B | A=1", P_BA1, P_A1, render=True)  # Normalize: P(B | A = 1) @stepover @animate
 
-    text("Forming the joint distribution can be exponentially slow...")
+    text("Problem: the joint distribution is exponentially large in the number of variables...")
 
-    text("**Probabilistic program**")  # @clear P_BEA P_BEA1 P_BA1 P_A1 P_B_given_A1
-    text("A probabilistic program returns a sample from the joint distribution")
+    text("🎲 **Probabilistic programs**")
+    text("A probabilistic program returns a sample from the joint distribution...")
     text("...thereby defining it.")
+    set_random_seed(1)
     def alarm():
-        B = Bernoulli(0.05)  # @inspect B
-        E = Bernoulli(0.05)  # @inspect E
-        A = B or E  # @inspect A
+        B = Bernoulli(0.05)  # Burglary @stepover @inspect B
+        E = Bernoulli(0.05)  # Earthquake @stepover @inspect E
+        A = B or E           # Alarm @inspect A
         return {"B": B, "E": E, "A": A}
     sample = alarm()  # @inspect sample
 
-    text("**Rejection sampling**")  # @clear sample
-    query = lambda sample: sample["B"]
-    evidence = lambda sample: sample["A"] == 1
-    result = rejection_sampling(alarm, query, evidence, num_samples=1)  # @inspect result
-    result = rejection_sampling(alarm, query, evidence, num_samples=300)  # @inspect result P_B_given_A1 @stepover
+    text("🚫 **Rejection sampling**: draw samples, keep the ones that match the evidence, record the query")  # @clear sample
+    query = lambda sample: sample["B"]           # Interested in B
+    evidence = lambda sample: sample["A"] == 1   # Evidence: A = 1
+    result = rejection_sampling(alarm, query, evidence, num_samples=3000)  # @inspect result @stepover
+    exact = as_dict(P_B_given_A1)  # Exact answer (compare with result) @stepover @inspect exact
 
-    text("But rejection sampling can also be quite slow if the evidence is rare.")
+    text(r"But rejection sampling is slow if the evidence is rare ($P(A = 1) \approx 0.1$, so ~90% of samples are wasted).")
     text("How can we perform probabilistic inference faster?")
 
 
-def rejection_sampling(program: Callable, query: Callable, evidence: Callable, num_samples: int) -> float:
-    """Perform rejection sampling given:
-    - program: defines the Bayesian network, returns a sample
-    - query: sample -> value of interest
-    - evidence: sample -> whether to keep the sample
-    - num_samples: number of samples to draw
-    """
-    counts = defaultdict(int)  # Record how many of each query value we got  @inspect counts
-
-    for _ in range(num_samples):
-        sample = program()  # @inspect sample @stepover
-        if evidence(sample):  # @stepover
-            counts[query(sample)] += 1  # @stepover @inspect counts
-
-    # Normalize counts to obtain probabilities
-    total_count = sum(counts.values())  # @inspect total_count
-    probs = {q: counts[q] / total_count for q in counts}  # @inspect probs
-
-    return probs
-
-
 def introduce_gibbs_sampling():
-    text("**Rejection sampling**")
+    text("🚫 **Rejection sampling**")
     text("sample ~~sample~~ sample ~~sample~~ ~~sample~~ sample")
-    text("- Pro: each sample is independent")
-    text("- Con: we have to start from scratch for every sample")
-    text("- Con: not using evidence while generating sample, leading to rejection")
+    text("- ✅ Each sample is independent")
+    text("- ❌ Have to start from scratch for every sample")
+    text("- ❌ Doesn't use the evidence while generating a sample, leading to rejections")
 
-    text("**Gibbs sampling**: start with the previous sample (which always satisfies the evidence)")
-    text("Basic idea:")
-    text("- Start with an arbitrary sample")
-    text("- Iteratively change one variable at a time conditioned on the other variables")
-
-    text("Gibbs sampling is a special case of Markov chain Monte Carlo (MCMC)")
+    text("🔁 **Gibbs sampling**: start from the previous sample (which always satisfies the evidence)")
     text("sample → sample → sample → sample")
-    text("- Pro: Start with samples that satisfy the evidence, so don't have to reject anything")
-    text("- Con: samples are not independent, so require more samples")
+    text("Basic idea:")
+    text("- Start with an arbitrary assignment (that satisfies the evidence)")
+    text("- Repeatedly resample one variable at a time conditioned on all the other variables")
+    text("- ✅ Every sample satisfies the evidence, so nothing is rejected")
+    text("- ❌ Samples are not independent, so we need more of them")
 
-    gibbs_telephone()              # Gibbs sampling on a telephone example
+    gibbs_telephone()              # Gibbs sampling on the telephone example
     markov_blanket()               # Introduce the Markov blanket to speed things up
     gibbs_alarm()                  # Gibbs sampling on the alarm Bayesian network
-    compare_gibbs_and_rejection()  # When does it work versus rejection sampling?
+    compare_gibbs_and_rejection()  # When does each one work?
 
     text("Further reading:")
-    text("- Gibbs sampling is an example of a Markov chain Monte Carlo (MCMC) algorithm.")
-    text("- A more general MCMC algorithm is Metropolis-Hastings (uses a proposal distribution).")
-    text("- Theory: use mixing times to study effective running time (how correlated samples are)?")
-    text("- Practice: simple and effective, but can be slow")
+    text("- Gibbs sampling is an example of a **Markov chain Monte Carlo (MCMC)** algorithm "), link("https://en.wikipedia.org/wiki/Gibbs_sampling")
+    text("- A more general MCMC algorithm is Metropolis-Hastings (uses a proposal distribution)")
+    text("- Theory: mixing times measure how fast the samples forget the initialization")
+    text("- Practice: simple and general, but can be slow to mix")
 
 
 def gibbs_telephone():
-    text("**Example**: telephone")
-    text("Bayesian network: A → B → C")
-    text("Intuition: A sends a bit to B, B sends a bit to C, where at each step message might be corrupted")
+    text("📞 **Example**: telephone")
+    graph(draw_bayes_net(TELEPHONE_POSITIONS, TELEPHONE_EDGES))  # @stepover
+    text(r"Intuition: $A$ sends a bit to $B$, $B$ sends a bit to $C$, and each step might corrupt the bit (with probability 0.2)")
 
-    text("Here's the definition of the Bayesian network:")
-    p_a = ProbTable("A", [0.5, 0.5]) # p(a) @inspect p_a @stepover
-    p_b_given_a = ProbTable("B | A", lambda a, b: 0.8 if b == a else 0.2, shape=(2, 2)) # p(b | a) @inspect p_b_given_a @stepover
-    p_c_given_b = ProbTable("C | B", lambda b, c: 0.8 if c == b else 0.2, shape=(2, 2)) # p(c | b) @inspect p_c_given_b @stepover
+    p_a = prob_table("A", [0.5, 0.5], local=True, render=True)  # p(a) @stepover
+    p_b_given_a = prob_table("B | A", lambda a, b: 0.8 if b == a else 0.2, shape=(2, 2), local=True, render=True)  # p(b | a) @stepover
+    p_c_given_b = prob_table("C | B", lambda b, c: 0.8 if c == b else 0.2, shape=(2, 2), local=True, render=True)  # p(c | b) @stepover
 
-    text("Probabilistic inference goal: P(A | C = 1)")
-    text("Intuition: C=1 encourages A=1, but weakly through two steps of corruption")
+    text(r"Probabilistic inference: $P(A \mid C = 1)$")
+    text(r"Intuition: $C = 1$ suggests $A = 1$, but only weakly (two steps of corruption)")
+    c1 = np.array([0, 1])  # Evidence [C = 1]
+    exact = exact_inference("a, a b, b c, c -> a", p_a, p_b_given_a, p_c_given_b, c1)  # P(A | C = 1) (exact, via einsum) @stepover @inspect exact
 
-    text("Let's first run rejection sampling:")  # @clear p_a p_b_given_a p_c_given_b
+    text("Let's first run rejection sampling:")  # @clear exact
     set_random_seed(3)
     def telephone():
-        A = Bernoulli(0.5)  # @inspect A
-        B = Bernoulli(0.8 if A == 1 else 0.2)  # @inspect B
-        C = Bernoulli(0.8 if B == 1 else 0.2)  # @inspect C
+        A = Bernoulli(0.5)                      # @stepover @inspect A
+        B = Bernoulli(0.8 if A == 1 else 0.2)   # @stepover @inspect B
+        C = Bernoulli(0.8 if B == 1 else 0.2)   # @stepover @inspect C
         return {"A": A, "B": B, "C": C}
-
     sample = telephone()  # @inspect sample
 
-    query = lambda sample: sample["A"]
-    evidence = lambda sample: sample["C"] == 1
+    query = lambda sample: sample["A"]           # Interested in A
+    evidence = lambda sample: sample["C"] == 1   # Evidence: C = 1
     rejection_probs = rejection_sampling(telephone, query, evidence, num_samples=100)  # @inspect rejection_probs @stepover
 
+    text("Now let's run Gibbs sampling:")  # @clear sample rejection_probs
+    text("- Start with an initialization (a full assignment that satisfies the evidence)")
+    text(r"- For each (non-evidence) variable $X_i$:")
+    text(r"  * Compute the conditional distribution of $X_i$ given all the other variables")
+    text(r"  * Sample $X_i$ from this conditional distribution")
     set_random_seed(3)
-    text("Let's now run Gibbs sampling:")  # @clear sample rejection_probs
-    text("Start with an initialization (full assignment)")
-    text("For each variable X_i, change it based on all other variables")
-    text("- Compute the conditional distribution of X_i given all other variables")
-    text("- Sample X_i from this conditional distribution")
 
-    text("Initialize with an arbitrary sample that satisfies the evidence (D = 1):")
+    text(r"Initialize with an arbitrary assignment that satisfies the evidence ($C = 1$):")
     x = {"A": 1, "B": 0, "C": 1}  # @inspect x
 
     text("**Conditional distribution**")
-    text("Suppose the goal is to sample B given A = a and C = c.")
-
-    text("Express conditional probability in terms of joint probability:")
-    text("P(B = b | A = a, C = c) = P(A = a, B = b, C = c) / P(A = a, C = c)")
-
-    text("...with a normalizer which is probability of all other variables we're not sampling")
-    text("P(A = a, C = c) = Σ_b P(A = a, B = b, C = c)")
-
+    text(r"Suppose we're resampling $B$ given $A = a$ and $C = c$.")
+    text("Express the conditional probability in terms of the joint probability:")
+    text(r"$\displaystyle P(B = b \mid A = a, C = c) = \frac{P(A = a, B = b, C = c)}{P(A = a, C = c)}$")
+    text(r"...where the normalizer only sums over the values of $B$:")
+    text(r"$\displaystyle P(A = a, C = c) = \sum_{b'} P(A = a, B = b', C = c)$")
     text("The joint probability is the product of the local conditional probabilities:")
-    text("P(A = a, B = b, C = c) = p(a) p(b | a) p(c | b)")
-    text("Note: we don't have to instantiate the entire joint distribution (could be exponentially large).")
+    text(r"$P(A = a, B = b, C = c) = p(a) \, p(b \mid a) \, p(c \mid b)$")
+    text("Note: we never instantiate the joint distribution (which could be exponentially large)...")
+    text("...we only evaluate it at one assignment at a time.")
 
-    def joint_prob(x, var, value):  # @inspect x var value
-        # x is an assignment (e.g., {A: 0, B: 0, C: 1})#
-        # var: value is a change to the assignment (e.g., "B": 1)
-        # Let y be the updated assignment (e.g., {A: 0, B: 1, C: 1})
-        y = x | {var: value}  # @inspect y
-        # Compute joint probability with updated assignment: P(y)
-        return p_a.p[y["A"]] * p_b_given_a.p[y["A"], y["B"]] * p_c_given_b.p[y["B"], y["C"]]
+    def joint_prob(x: dict, var: str, value: int) -> float:  # @inspect x var value
+        """Return P(y), where y is the assignment `x` with `var` changed to `value`."""
+        y = x | {var: value}  # e.g., {A: 1, B: 0, C: 1} with B = 1 -> {A: 1, B: 1, C: 1} @inspect y
+        return p_a.p[y["A"]] * p_b_given_a.p[y["A"], y["B"]] * p_c_given_b.p[y["B"], y["C"]]  # p(a) p(b | a) p(c | b)
 
-    text("Note we don't instantiate the joint distribution here.")
-    text("But we do have to touch every variable (we'll come back to this later).")
-
-    text("Let's say we were sampling B ∈ {0, 1}:")
+    text(r"Let's resample $B \in \{0, 1\}$:")
     p_ab0c = joint_prob(x, "B", 0)  # P(A = 1, B = 0, C = 1) @inspect p_ab0c
-    p_ab1c = joint_prob(x, "B", 1)  # P(A = 1, B = 1, C = 1) @inspect p_ab1c
+    p_ab1c = joint_prob(x, "B", 1)  # P(A = 1, B = 1, C = 1) @inspect p_ab1c @stepover
     p_ac = p_ab0c + p_ab1c  # P(A = 1, C = 1) @inspect p_ac
     p_b0_given_ac = p_ab0c / p_ac  # P(B = 0 | A = 1, C = 1) @inspect p_b0_given_ac
     p_b1_given_ac = p_ab1c / p_ac  # P(B = 1 | A = 1, C = 1) @inspect p_b1_given_ac
-    x["B"] = sample_dict({0: p_b0_given_ac, 1: p_b1_given_ac})  # @inspect x
-    text("Note that B gets pulled to 1 because of A=1 and C=1.")
+    x["B"] = int(sample_dict({0: p_b0_given_ac, 1: p_b1_given_ac}))  # @inspect x
+    text(r"Note: $B$ gets pulled toward 1 because $A = 1$ and $C = 1$.")
+    text("But we still have to touch every variable to compute the joint probability (we'll come back to this).")
 
-    text("Let's define Gibbs sampling in greater generality:")  # @clear p_ab0c p_ab1c p_ac p_b0_given_ac p_b1_given_ac x
-    gibbs_probs = gibbs_sampling(x, vars=["A", "B"], query=query, joint_prob=joint_prob, num_iterations=1)  # @inspect gibbs_probs
+    text("Let's now define Gibbs sampling in general:")  # @clear p_ab0c p_ab1c p_ac p_b0_given_ac p_b1_given_ac x
+    gibbs_probs = gibbs_sampling(x, variables=["A", "B"], query=query, joint_prob=joint_prob, num_iterations=1)  # @inspect gibbs_probs
 
-    text("Run Gibbs sampling for multiple iterations:")
-    gibbs_probs = gibbs_sampling(x, vars=["A", "B"], query=query, joint_prob=joint_prob, num_iterations=100)  # @inspect gibbs_probs @stepover
+    text("Run Gibbs sampling for more iterations:")
+    gibbs_probs = gibbs_sampling(x, variables=["A", "B"], query=query, joint_prob=joint_prob, num_iterations=100)  # @inspect gibbs_probs @stepover
+    text("Compare with rejection sampling and the exact answer:")
+    exact = exact_inference("a, a b, b c, c -> a", p_a, p_b_given_a, p_c_given_b, c1)  # @stepover @hide
+    text("All are in the same ballpark.")  # @inspect rejection_probs exact
 
-    text("Comparing with rejection sampling, both are in the ballpark.") # @inspect rejection_probs
-
-    text("Running time: O(#iterations * #variables * |domain| * #variables)")
+    text(r"Running time: $O(\#\text{iterations} \cdot n \cdot |\text{Domain}| \cdot n)$ for $n$ variables")
+    text("- The last factor of $n$ comes from computing the joint probability")
 
     text("Summary:")
-    text("- Update one variable at a time using its conditional distribution given all other variables")
-    text("- Compute the conditional distribution using the joint distribution")
-    text("- Only have to sum over domain of the variable we're sampling")
+    text("- Update one variable at a time from its conditional distribution given all the other variables")
+    text("- Compute the conditional distribution from the joint probability")
+    text("- Only have to sum over the domain of the variable being resampled")
 
-    text("Can we be even more efficient and not touch variables we're not sampling?")
+    text("Can we avoid touching the variables that we're not resampling?")
 
 
 def markov_blanket():
-    text("Joint probability: p(a) p(b | a) p(c | b) p(d | c) p(e | d)")
-    text("Can we avoid having to compute the full joint probability every time we sample a variable?")
-    text("Intuitively, only one variable changes...")
+    text("Consider a longer telephone chain:")
+    graph(draw_bayes_net({v: (90 * i, 0) for i, v in enumerate("ABCDE")}, [(s, t) for s, t in zip("ABCD", "BCDE")]))  # @stepover
+    text(r"$P(A = a, B = b, C = c, D = d, E = e) = p(a) \, p(b \mid a) \, p(c \mid b) \, p(d \mid c) \, p(e \mid d)$")
+    text(r"When we resample $C$, only $c$ changes, so most of these factors are the same for every value of $c$...")
 
-    text("Recall the telephone Bayesian network: A → B → C")
-    p_a = ProbTable("A", [0.5, 0.5]) # p(a) @inspect p_a @stepover
-    p_b_given_a = ProbTable("B | A", lambda a, b: 0.8 if b == a else 0.2, shape=(2, 2))  # p(b | a) @inspect p_b_given_a @stepover
-    p_c_given_b = ProbTable("C | B", lambda b, c: 0.8 if c == b else 0.2, shape=(2, 2))  # p(c | b) @inspect p_c_given_b @stepover
+    text(r"Back to the telephone network $A \to B \to C$:")
+    p_a = prob_table("A", [0.5, 0.5], local=True)  # p(a) @stepover
+    p_b_given_a = prob_table("B | A", lambda a, b: 0.8 if b == a else 0.2, shape=(2, 2), local=True)  # p(b | a) @stepover
+    p_c_given_b = prob_table("C | B", lambda b, c: 0.8 if c == b else 0.2, shape=(2, 2), local=True)  # p(c | b) @stepover
 
-    text("Suppose we're sampling P(A | B = b, C = c)")
-    text("Let's look at the joint distribution:")
-    text("P(A = 0, B = b, C = c) = p(a = 0) p(b | a = 0) p(c | b)")
-    text("P(A = 1, B = b, C = c) = p(a = 1) p(b | a = 1) p(c | b)")
-    text("P(B = b, C = c) = Σ_a p(a) p(b | a) p(c | b)")
-    text("Notice that p(c | b) shows up in both cases, and does not impact P(A | B = b, C = c).")
-    text("So we can just ignore it!")
+    text(r"Suppose we're resampling $A$ given $B = b, C = c$:")
+    text(r"$\displaystyle P(A = a \mid B = b, C = c) = \frac{p(a) \, p(b \mid a) \, p(c \mid b)}{\sum_{a'} p(a') \, p(b \mid a') \, p(c \mid b)} = \frac{p(a) \, p(b \mid a)}{\sum_{a'} p(a') \, p(b \mid a')}$")
+    text(r"The factor $p(c \mid b)$ doesn't depend on $a$, so it cancels: we can just ignore it!")
 
-    text("In general, we need to only include local conditional probabilities that involve the variable we're sampling.")
-    text("Evaluating these local conditional probabilities requires knowing all involved variables.")
-    text("This set of variables is called the **Markov blanket**.")
-    text("The Markov blanket of a variable is all its children and parents.")
-    text("MarkovBlanket(A) = {B}")
-    text("MarkovBlanket(B) = {A, C}")
-    text("MarkovBlanket(C) = {B}")
+    text("In general, we only need the local conditional probabilities that mention the variable being resampled:")
+    text("- its own local conditional distribution, and")
+    text("- the local conditional distributions of its children.")
+    text("Evaluating these requires knowing the variable's **Markov blanket**:")
+    text("- its parents,")
+    text("- its children, and")
+    text("- the other parents of its children.")
 
-    text("Instead of computing the joint probability")
-    text("...let us just include the variables in the Markov blanket.")
-    def markov_prob(x, var, value):
-        y = x | {var: value}
+    text(r"Example (telephone): $\text{MarkovBlanket}(B) = \{A, C\}$")
+    graph(draw_bayes_net(TELEPHONE_POSITIONS, TELEPHONE_EDGES, classes={"B": "query", "A": "blanket", "C": "blanket"}))  # @stepover
+    text(r"Example (alarm): $\text{MarkovBlanket}(B) = \{A, E\}$ ($E$ is another parent of the child $A$)")
+    graph(draw_bayes_net(ALARM_POSITIONS, ALARM_EDGES, classes={"B": "query", "A": "blanket", "E": "blanket"}))  # @stepover
+
+    text("Instead of computing the joint probability...")
+    text("...only multiply the factors that involve the variable being resampled:")
+    def markov_blanket_prob(x: dict, var: str, value: int) -> float:  # @inspect x var value
+        """Return P(y) up to factors not involving `var`, where y is `x` with `var` changed to `value`."""
+        y = x | {var: value}  # @inspect y
         if var == "A":
-            return p_a.p[y["A"]] * p_b_given_a.p[y["A"], y["B"]]  # no p(c | b)
+            return p_a.p[y["A"]] * p_b_given_a.p[y["A"], y["B"]]  # p(a) p(b | a) (no p(c | b))
         elif var == "B":
-            return p_b_given_a.p[y["A"], y["B"]] * p_c_given_b.p[y["B"], y["C"]]  # no p(a)
+            return p_b_given_a.p[y["A"], y["B"]] * p_c_given_b.p[y["B"], y["C"]]  # p(b | a) p(c | b) (no p(a))
         else:
             raise ValueError(f"Unknown variable: {var}")
 
     text("Now we can run Gibbs sampling with the Markov blanket:")
-    x = {"A": 0, "B": 0, "C": 1}
+    set_random_seed(3)
+    x = {"A": 0, "B": 0, "C": 1}  # @inspect x
     query = lambda sample: sample["A"]
-    probs = gibbs_sampling(x, vars=["A", "B"], query=query, joint_prob=markov_prob, num_iterations=100)  # @inspect probs @stepover
+    probs = gibbs_sampling(x, variables=["A", "B"], query=query, joint_prob=markov_blanket_prob, num_iterations=100)  # @inspect probs @stepover
+    c1 = np.array([0, 1])  # Evidence [C = 1] @stepover @hide
+    exact = exact_inference("a, a b, b c, c -> a", p_a, p_b_given_a, p_c_given_b, c1)  # P(A | C = 1) (exact) @stepover @inspect exact
 
-    text("Running time with joint_prob: O(#iterations * #variables * |domain| * #variables)")
-    text("Running time with markov_prob: O(#iterations * #variables * |domain| * **|markov_blanket|**)")
+    text("Running time:")
+    text(r"- With the joint probability: $O(\#\text{iterations} \cdot n \cdot |\text{Domain}| \cdot n)$")
+    text(r"- With the Markov blanket: $O(\#\text{iterations} \cdot n \cdot |\text{Domain}| \cdot |\text{MarkovBlanket}|)$")
 
     text("Summary:")
-    text("- Markov blanket of a node: all its children and parents")
-    text("- Gibbs sampling requires local conditional probabilities of node and its Markov blanket")
-    text("- Much more efficient if Markov blankets are small")
+    text("- Markov blanket of a variable: its parents, children, and the other parents of its children")
+    text("- Resampling a variable only requires the local conditional distributions of it and its children")
+    text("- Much more efficient when Markov blankets are small")
 
 
 def gibbs_alarm():
-    text("Let's now run Gibbs sampling on the alarm Bayesian network.")
+    text("🚨 Let's now run Gibbs sampling on the alarm Bayesian network.")
+    graph(draw_bayes_net(ALARM_POSITIONS, ALARM_EDGES, observed={"A"}))  # @stepover
+    p_b = prob_table("B", [0.95, 0.05], local=True)  # p(b) @stepover
+    p_e = prob_table("E", [0.95, 0.05], local=True)  # p(e) @stepover
+    p_a_given_be = prob_table("A | B E", lambda b, e, a: a == (b or e), shape=(2, 2, 2), local=True)  # p(a | b, e) @stepover
 
-    image("images/alarm-bayes.png", width=200)
-    p_b = ProbTable("B", [0.95, 0.05]) # p(b) @inspect p_b @stepover
-    p_e = ProbTable("E", [0.95, 0.05]) # p(e) @inspect p_e @stepover
-    p_a_given_be = ProbTable("A | B E", lambda b, e, a: a == (b or e), shape=(2, 2, 2)) # p(a | b, e) @inspect p_a_given_be @stepover
-
-    # Initialize with an arbitrary sample that satisfies the evidence
+    text(r"Query: $P(B \mid A = 1)$")
+    text(r"Initialize with an arbitrary assignment that satisfies the evidence ($A = 1$):")
     x = {"B": 1, "E": 1, "A": 1}  # @inspect x
 
-    # Iterate over each variable (that's not evidence)
-    def compute_prob(x, var, value):
+    text(r"Both $B$ and $E$ have Markov blanket = all the other variables, so we just use the joint probability:")
+    def joint_prob(x: dict, var: str, value: int) -> float:
         y = x | {var: value}
-        return p_b.p[y["B"]] * p_e.p[y["E"]] * p_a_given_be.p[y["B"], y["E"], y["A"]]
+        return p_b.p[y["B"]] * p_e.p[y["E"]] * p_a_given_be.p[y["B"], y["E"], y["A"]]  # p(b) p(e) p(a | b, e)
 
-    # We're interesting in P(B | ...)
-    query = lambda sample: sample["B"]
+    query = lambda sample: sample["B"]  # Interested in B
 
-    # Run Gibbs sampling
-    probs = gibbs_sampling(x, vars=["B", "E"], query=query, joint_prob=compute_prob, num_iterations=100)  # @inspect probs @stepover
-    probs = gibbs_sampling(x, vars=["B", "E"], query=query, joint_prob=compute_prob, num_iterations=200)  # @inspect probs @stepover
+    text(r"Resample only the non-evidence variables ($B$ and $E$):")
+    set_random_seed(1)
+    probs = gibbs_sampling(x, variables=["B", "E"], query=query, joint_prob=joint_prob, num_iterations=100)  # @inspect probs @stepover
+    probs = gibbs_sampling(x, variables=["B", "E"], query=query, joint_prob=joint_prob, num_iterations=1000)  # @inspect probs @stepover
+    a1 = np.array([0, 1])  # Evidence [A = 1] @stepover @hide
+    exact = exact_inference("b, e, b e a, a -> b", p_b, p_e, p_a_given_be, a1)  # P(B | A = 1) (exact) @stepover @inspect exact
 
-    text("Note that the estimates aren't quite accurate...")
+    text("The estimates are slow to converge. Why?")
+    text(r"- From $(B, E) = (0, 1)$, getting to $B = 1$ requires sampling $B = 1$ given $E = 1$ (probability 0.05)")
+    text(r"- $(B, E) = (0, 0)$ is impossible given $A = 1$, so the chain must pass through $(1, 1)$, which is rare")
+    text("- The sampler gets stuck in one mode for a long time")
 
 
 def compare_gibbs_and_rejection():
-    text("What examples are hard for rejection sampling?")
-    text("Answer: when evidence has low probability.")
-    text("A → B")
-    p_a = ProbTable("A", [0.5, 0.5]) # p(a) @inspect p_a @stepover
-    p_b_given_a = ProbTable("B | A", [[0.9999, 0.0001], [0.9998, 0.0002]])  # p(b | a) @inspect p_b_given_a @stepover
-    text("Compute P(A | B = 1)")
-    text("Reason: need to reject all samples that don't match the evidence.")
-    text("Gibbs sample conditions on B = 1, so will work fine.")
+    text("When is rejection sampling slow?")
+    text("Answer: when the evidence has low probability.")
+    graph(draw_bayes_net(PAIR_POSITIONS, PAIR_EDGES, observed={"B"}))  # @stepover
+    p_a = prob_table("A", [0.5, 0.5], local=True, render=True)  # p(a) @stepover
+    p_b_given_a = prob_table("B | A", [[0.9999, 0.0001], [0.9998, 0.0002]], local=True, render=True)  # p(b | a) @stepover
+    text(r"Query: $P(A \mid B = 1)$")
+    def rare():
+        A = Bernoulli(0.5)
+        B = Bernoulli(0.0002 if A else 0.0001)
+        return {"A": A, "B": B}
+    query = lambda sample: sample["A"]           # Interested in A
+    evidence = lambda sample: sample["B"] == 1   # Evidence: B = 1
+    set_random_seed(1)
+    rejection_probs = rejection_sampling(rare, query, evidence, num_samples=1000)  # Almost every sample is rejected! @inspect rejection_probs @stepover
 
-    text("What examples are hard for Gibbs sampling?")  # @clear p_a p_b_given_a
-    text("Answer: when variables are highly correlated.")
-    text("A → B")
-    p_a = ProbTable("A", [0.5, 0.5]) # p(a) @inspect p_a @stepover
-    p_b_given_a = ProbTable("B | A", lambda a, b: a == b, shape=(2, 2))  # p(b | a) @inspect p_b_given_a @stepover
-    text("Probabilistic inference: P(A) [no evidence]")
-    x = {"A": 0, "B": 0}
-    text("Rejection sampling generates from scratch every time, so works perfectly (no rejection).")
-    text("Gibbs sampling gets stuck and will not explore A = 1.")
-    query = lambda sample: sample["A"]
-    def joint_prob(x, var, value):
+    text(r"Gibbs sampling clamps $B = 1$, so it has no problem:")
+    def joint_prob(x: dict, var: str, value: int) -> float:
         y = x | {var: value}
-        return p_a.p[y["A"]] * p_b_given_a.p[y["A"], y["B"]]
-    gibbs_probs = gibbs_sampling(x, vars=["A", "B"], query=query, joint_prob=joint_prob, num_iterations=50)  # @inspect gibbs_probs @stepover
+        return p_a.p[y["A"]] * p_b_given_a.p[y["A"], y["B"]]  # p(a) p(b | a)
+    gibbs_probs = gibbs_sampling({"A": 0, "B": 1}, variables=["A"], query=query, joint_prob=joint_prob, num_iterations=1000)  # @inspect gibbs_probs @stepover
+    b1 = np.array([0, 1])  # Evidence [B = 1] @stepover @hide
+    exact = exact_inference("a, a b, b -> a", p_a, p_b_given_a, b1)  # P(A | B = 1) (exact) @stepover @inspect exact
+
+    text("When is Gibbs sampling slow?")  # @clear rejection_probs gibbs_probs exact
+    text("Answer: when variables are highly correlated.")
+    graph(draw_bayes_net(PAIR_POSITIONS, PAIR_EDGES))  # @stepover
+    p_a = prob_table("A", [0.5, 0.5], local=True, render=True)  # p(a) @stepover
+    p_b_given_a = prob_table("B | A", lambda a, b: a == b, shape=(2, 2), local=True, render=True)  # p(b | a): B is a copy of A @stepover
+    text(r"Query: $P(A)$ (no evidence)")
+    query = lambda sample: sample["A"]   # Interested in A
+    evidence = lambda sample: True       # No evidence
+
+    text("Rejection sampling generates each sample from scratch, so it works perfectly (nothing is rejected):")
+    def copy():
+        A = Bernoulli(0.5)
+        B = A
+        return {"A": A, "B": B}
+    rejection_probs = rejection_sampling(copy, query, evidence, num_samples=1000)  # @inspect rejection_probs @stepover
+
+    text(r"Gibbs sampling gets stuck: changing $A$ alone (or $B$ alone) has probability 0!")
+    def joint_prob(x: dict, var: str, value: int) -> float:
+        y = x | {var: value}
+        return p_a.p[y["A"]] * p_b_given_a.p[y["A"], y["B"]]  # p(a) p(b | a)
+    gibbs_probs = gibbs_sampling({"A": 0, "B": 0}, variables=["A", "B"], query=query, joint_prob=joint_prob, num_iterations=1000)  # Never explores A = 1 @inspect gibbs_probs @stepover
 
     text("Summary:")
-    text("- Rare events are hard for rejection sampling")
+    text("- Rare evidence is hard for rejection sampling")
     text("- Highly correlated variables are hard for Gibbs sampling")
 
 
-def gibbs_sampling(init_x: dict, vars: list[str], query: Callable, joint_prob: Callable, num_iterations: int) -> dict:
+def gibbs_sampling(init_x: dict, variables: list[str], query: Callable, joint_prob: Callable, num_iterations: int) -> dict:
     """
-    Run Gibbs sampling from the initial assignment `init_x`.
-    Cycle `num_iterations` over `vars` (excludes evidence variables).
-    Return the estimated distribution over query.
+    Run Gibbs sampling starting from the assignment `init_x`:
+    - `variables`: the variables to resample (excludes the evidence variables)
+    - `query`: sample -> value of interest
+    - `joint_prob`: (x, var, value) -> joint probability (up to a constant) of `x` with `var` changed to `value`
+    - `num_iterations`: number of passes over `variables`
+    Return the estimated distribution over query values.
     """
-    # Initialize the assignment
     x = dict(init_x)  # Make a copy (good hygiene) @inspect x
+    counts = defaultdict(int)  # Number of times we've seen each query value @inspect counts
 
-    # Track counts of query values
-    counts = defaultdict(int)
-
-    # Keep iterating over all the variables
     for _ in range(num_iterations):
-        for var in vars:  # @inspect var
-            # Compute probabilities for each assignment of {var: value}
-            probs = {value: joint_prob(x, var, value) for value in [0, 1]}  # value -> P(..., var=value) @inspect probs @stepover
+        for var in variables:  # @inspect var
+            # Unnormalized probability of each value of var (keeping the other variables fixed)
+            probs = {value: joint_prob(x, var, value) for value in [0, 1]}  # @inspect probs @stepover
 
-            # Normalize probabilities
+            # Normalize to get the conditional distribution of var given the other variables
             probs = normalize_dict(probs)  # @inspect probs
 
-            # Sample the variable
-            x[var] = sample_dict(probs)  # @inspect x
+            # Resample var
+            x[var] = int(sample_dict(probs))  # @inspect x
 
             # Record the query value
             counts[query(x)] += 1  # @inspect counts
 
-    # Normalize to get the estimated distribution over query
-    probs = normalize_dict(counts)  # @inspect probs
-
+    # Normalize the counts to get the estimated distribution over query values
+    probs = normalize_dict({q: counts[q] for q in sorted(counts)})  # @inspect probs
     return probs
 
 
 def introduce_conditional_independence():
-    text("So far: can do probabilistic inference on Bayesian networks")
-    text("They have been fairly agnostic to the structure of the Bayesian network.")
-    text("Now: let's explore some properties of the Bayesian network.")
-    text("We will connect graph properties to probabilistic properties (in particularly independence).")
+    text("So far: probabilistic inference algorithms that are fairly agnostic to the structure of the Bayesian network.")
+    text("Now: let's connect **graph properties** to **probabilistic properties** (independence).")
 
     text("**Independence**")
-    text("Two variables A and B are independent iff:")
-    text("P(A = a, B = b) = P(A = a) P(B = b) for all a, b")
+    text(r"Two variables $A$ and $B$ are independent ($A \perp B$) iff for all $a, b$:")
+    text(r"$P(A = a, B = b) = P(A = a) \, P(B = b)$")
 
-    text("Example 1 (A B):")
-    text("P(A = a, B = b) = p(a) p(b)")
-    text("A and B are independent")
+    text("Example 1 (no edges):")
+    graph(draw_bayes_net(PAIR_POSITIONS, []))  # @stepover
+    text(r"- $P(A = a, B = b) = p(a) \, p(b)$")
+    text(r"- $A$ and $B$ are independent")
 
-    text("Example 2 (A → B):")
-    text("P(A = a, B = b) = p(a) p(b | a)")
-    text("A and B are not independent")
+    text("Example 2 (chain):")
+    graph(draw_bayes_net(PAIR_POSITIONS, PAIR_EDGES))  # @stepover
+    text(r"- $P(A = a, B = b) = p(a) \, p(b \mid a)$")
+    text(r"- $A$ and $B$ are not independent (in general)")
 
-    text("Example 3 (A, B → C):")
-    text("P(A = a, B = b, C = c) = p(a) p(b | a) p(c | b, a)")
-    text("P(A = a, B = b) = Σ_c P(A = a, B = b, C = c) = Σ_c p(a) p(b) p(c | b, a) = p(a) p(b)")
-    text("A and B are independent (even if they are connected)!")
+    text("Example 3 (common effect):")
+    graph(draw_bayes_net(V_POSITIONS, [("A", "C"), ("B", "C")]))  # @stepover
+    text(r"- $P(A = a, B = b, C = c) = p(a) \, p(b) \, p(c \mid a, b)$")
+    text(r"- $\displaystyle P(A = a, B = b) = \sum_c p(a) \, p(b) \, p(c \mid a, b) = p(a) \, p(b) \sum_c p(c \mid a, b) = p(a) \, p(b)$")
+    text(r"- $A$ and $B$ are independent (even though they are connected)!")
 
-    text("Example 4 (C → A, B):")
-    text("P(A = a, B = b, C = c) = p(c) p(a | c) p(b | c)")
-    text("P(A = a, B = b) = Σ_c P(A = a, B = b, C = c) = Σ_c p(c) p(a | c) p(b | c)")
-    text("A and B are not independent!")
+    text("Example 4 (common cause):")
+    graph(draw_bayes_net(CAUSE_POSITIONS, [("C", "A"), ("C", "B")]))  # @stepover
+    text(r"- $P(A = a, B = b, C = c) = p(c) \, p(a \mid c) \, p(b \mid c)$")
+    text(r"- $\displaystyle P(A = a, B = b) = \sum_c p(c) \, p(a \mid c) \, p(b \mid c)$, which doesn't factor in general")
+    text(r"- $A$ and $B$ are not independent!")
 
     text("**Conditional independence**")
-    text("Two variables A and B are conditionally independent given C = c iff:")
-    text("P(A = a, B = b | C = c) = P(A = a | C = c) P(B = b | C = c) for all a, b")
+    text(r"Two variables $A$ and $B$ are conditionally independent given $C$ ($A \perp B \mid C$) iff for all $a, b, c$:")
+    text(r"$P(A = a, B = b \mid C = c) = P(A = a \mid C = c) \, P(B = b \mid C = c)$")
 
-    text("Example 4 again (C → A, B):")
-    text("P(A = a, B = b | C = c) = p(c) p(a | c) p(b | c) / p(c) = p(a | c) p(b | c)")
-    text("A and B are conditionally independent given C = c")
+    text("Example 4 again (common cause):")
+    graph(draw_bayes_net(CAUSE_POSITIONS, [("C", "A"), ("C", "B")], observed={"C"}))  # @stepover
+    text(r"- $\displaystyle P(A = a, B = b \mid C = c) = \frac{p(c) \, p(a \mid c) \, p(b \mid c)}{p(c)} = p(a \mid c) \, p(b \mid c)$")
+    text(r"- $A$ and $B$ are conditionally independent given $C$")
 
-    text("Example 3 again (A, B → C):")
-    text("P(A = a, B = b | C = c) = p(a) p(b) p(c | a, b)")
-    text("A and B are not conditionally independent given C = c")
+    text("Example 3 again (common effect):")
+    graph(draw_bayes_net(V_POSITIONS, [("A", "C"), ("B", "C")], observed={"C"}))  # @stepover
+    text(r"- $\displaystyle P(A = a, B = b \mid C = c) = \frac{p(a) \, p(b) \, p(c \mid a, b)}{P(C = c)}$, which doesn't factor in general")
+    text(r"- $A$ and $B$ are not conditionally independent given $C$ (explaining away!)")
 
-    text("**Alarm example**")
-    text("Variables: Burglary B, Earthquake E, Alarm A")
-    image("images/alarm-bayes.png", width=200)
-    text("B and E are independent")
-    text("B and E are not conditionally independent given A = 1")
+    text("🚨 **Alarm example**")
+    graph(draw_alarm_net())  # @stepover
+    text(r"- $B \perp E$ (burglaries and earthquakes are independent)")
+    text(r"- $B \not\perp E \mid A$ (explaining away: $P(B = 1 \mid A = 1, E = 1) < P(B = 1 \mid A = 1)$)")
 
     text("**General algorithm**")
-    text("Question: are A and B independent given C?")
-    text("1. Shade in the variables C")
-    text("2. Recursively remove any non-shaded leaves")
-    text("3. Connect parents to each other (marriage)")
-    text("3. Return whether there is a path from A to B that doesn't go through any shaded nodes")
+    text(r"Question: are $A$ and $B$ conditionally independent given a set of variables $C$?")
+    text(r"1. Shade the variables in $C$")
+    text(r"2. Repeatedly remove leaves that are not shaded (and are not $A$ or $B$)")
+    text("3. Connect the parents of each variable (\"marry\" them), then drop the directions of the edges")
+    text(r"4. $A \perp B \mid C$ iff there is no path from $A$ to $B$ that avoids the shaded variables")
 
-    text("**Medical diagnosis example**")
-    text("Variables: Cold C, Allergies A, Cough H, Itchy eyes I")
-    image("images/medical-bayes.png", width=200)
-    text("C and A are independent")
-    text("C and I are independent")
-    text("C and I are independent given A")
-    text("C and I are independent given A, H")
+    text(r"Let's run it on the alarm example: $B \perp E \mid A$?")
+    result = conditionally_independent(ALARM_POSITIONS, ALARM_EDGES, "B", "E", given={"A"}, render=True)  # @inspect result
+    result = conditionally_independent(ALARM_POSITIONS, ALARM_EDGES, "B", "E", given=set())  # B ⊥ E? @inspect result @stepover
+
+    text("🩺 **Medical diagnosis example**")  # @clear result
+    text(r"Cold $C$, Allergies $A$, Cough $H$, Itchy eyes $I$")
+    graph(draw_medical_net())  # @stepover
+    result = conditionally_independent(MEDICAL_POSITIONS, MEDICAL_EDGES, "C", "A", given=set())  # C ⊥ A? @inspect result @stepover
+    result = conditionally_independent(MEDICAL_POSITIONS, MEDICAL_EDGES, "C", "A", given={"H"})  # C ⊥ A | H? @inspect result @stepover
+    result = conditionally_independent(MEDICAL_POSITIONS, MEDICAL_EDGES, "C", "I", given=set())  # C ⊥ I? @inspect result @stepover
+    result = conditionally_independent(MEDICAL_POSITIONS, MEDICAL_EDGES, "C", "I", given={"H"})  # C ⊥ I | H? @inspect result @stepover
+    result = conditionally_independent(MEDICAL_POSITIONS, MEDICAL_EDGES, "C", "I", given={"A"})  # C ⊥ I | A? @inspect result @stepover
+    result = conditionally_independent(MEDICAL_POSITIONS, MEDICAL_EDGES, "C", "I", given={"A", "H"})  # C ⊥ I | A, H? @inspect result @stepover
+    text(r"Note: $C \not\perp I \mid H$ is the explaining away we saw last time (itchy eyes lowered the probability of a cold given a cough).")
+
+    text("Connection to Gibbs sampling:")
+    text("- A variable is conditionally independent of all other variables given its Markov blanket")
+    text(r"- Example: $\text{MarkovBlanket}(C) = \{H, A\}$, and indeed $C \perp I \mid A, H$")
+    text("- That's why resampling a variable only needs its Markov blanket!")
+
+
+def conditionally_independent(positions: dict[str, tuple[float, float]], edges: list[tuple[str, str]],
+                              a: str, b: str, given: set[str], render: bool = False) -> bool:
+    """Return whether `a` and `b` are conditionally independent given `given` in the Bayesian network (`positions`, `edges`)."""
+    # Step 1: shade the variables in `given`
+    if render:
+        graph(draw_bayes_net(positions, edges, observed=given, classes={a: "query", b: "query"}))  # @stepover
+
+    # Step 2: repeatedly remove leaves that are not shaded (and are not a or b)
+    nodes = set(positions)
+    while True:
+        leaves = {node for node in nodes - given - {a, b} if not any(parent == node for parent, child in edges)}  # @inspect leaves
+        if len(leaves) == 0:
+            break
+        nodes -= leaves  # @inspect nodes
+        edges = [(parent, child) for parent, child in edges if parent in nodes and child in nodes]
+    if render:
+        graph(draw_bayes_net({node: positions[node] for node in nodes}, edges, observed=given, classes={a: "query", b: "query"}))  # @stepover
+
+    # Step 3: marry the parents of each variable, then drop the directions of the edges
+    parents = {node: [parent for parent, child in edges if child == node] for node in nodes}  # @inspect parents
+    married = sorted({(p, q) for node in nodes for p in parents[node] for q in parents[node] if p < q})  # @inspect married
+    if render:
+        classes = {a: "query", b: "query", **{edge: "married" for edge in married}}  # Highlight the married edges
+        graph(draw_bayes_net({node: positions[node] for node in nodes}, edges + married, observed=given, classes=classes, directed=False))  # @stepover
+    neighbors = defaultdict(set)
+    for p, q in edges + married:
+        neighbors[p].add(q)
+        neighbors[q].add(p)
+
+    # Step 4: search for a path from a to b that avoids the shaded variables
+    visited = {a}
+    frontier = [a]
+    while len(frontier) > 0:
+        node = frontier.pop()
+        for neighbor in neighbors[node] - given - visited:
+            visited.add(neighbor)
+            frontier.append(neighbor)
+    return b not in visited  # Independent iff b is not reachable from a
+
+
+############################################################
+# Utilities (not stepped into)
+
+TELEPHONE_POSITIONS = {"A": (0, 0), "B": (90, 0), "C": (180, 0)}
+TELEPHONE_EDGES = [("A", "B"), ("B", "C")]
+ALARM_POSITIONS = {"B": (0, 0), "E": (160, 0), "A": (80, 90)}
+ALARM_EDGES = [("B", "A"), ("E", "A")]
+MEDICAL_POSITIONS = {"C": (0, 0), "A": (140, 0), "H": (0, 100), "I": (140, 100)}
+MEDICAL_EDGES = [("C", "H"), ("A", "H"), ("A", "I")]
+PAIR_POSITIONS = {"A": (0, 0), "B": (90, 0)}
+PAIR_EDGES = [("A", "B")]
+V_POSITIONS = {"A": (0, 0), "B": (160, 0), "C": (80, 90)}      # A → C ← B
+CAUSE_POSITIONS = {"C": (80, 0), "A": (0, 90), "B": (160, 90)}  # A ← C → B
+
+
+def as_dict(table: ProbTable) -> dict:
+    """Return a distribution over one variable as a dict (value -> probability)."""
+    return {value: round(float(prob), 4) for value, prob in enumerate(table.p)}
+
+
+def exact_inference(pattern: str, *operands: "ProbTable | np.ndarray") -> dict:
+    """
+    Return the exact conditional distribution over the query (one variable) given the evidence:
+    select the evidence and marginalize with einsum `pattern` (as in the last lecture), then normalize.
+    """
+    arrays = [operand.p if isinstance(operand, ProbTable) else operand for operand in operands]
+    unnormalized = einsum(*arrays, pattern)
+    return {value: round(float(prob), 4) for value, prob in enumerate(unnormalized / unnormalized.sum())}
 
 
 if __name__ == "__main__":
