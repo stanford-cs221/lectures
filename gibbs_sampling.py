@@ -45,10 +45,17 @@ def review_bayesian_networks():
 
     text("**Probabilistic inference**: answer questions (like SQL) on the joint distribution")  # @clear p_b p_e p_a_given_be
     text("Example: P(B | A = 1)")
-    P_BEA1 = ProbTable("B E A=1", P_BEA.p[:, :, 1])  # Condition on evidence: P(B, E, A = 1) @inspect P_BEA1 @stepover
-    P_BA1 = ProbTable("B A=1", einsum(P_BEA1.p, "b e -> b"))  # Marginalize out other variables: P(B, A = 1) @inspect P_BA1 @stepover
-    P_A1 = ProbTable("A=1", einsum(P_BA1.p, "b ->"))  # Probability of evidence: P(A = 1) @inspect P_A1 @stepover
-    P_B_given_A1 = ProbTable("B | A=1", P_BA1.p / P_A1.p)  # Normalize to get conditional: P(B | A = 1) @inspect P_B_given_A1 @stepover
+    text("Step 1: Get appropriate variables")
+    text("a. Condition on evidence: P(B, E, A = 1)")
+    P_BEA1 = ProbTable("B E A=1", P_BEA.p[:, :, 1])  # @inspect P_BEA1 @stepover
+    text("b. Marginalize out other variables: P(B, A = 1)")
+    P_BA1 = ProbTable("B A=1", einsum(P_BEA1.p, "b e -> b"))  # @inspect P_BA1 @stepover
+
+    text("Step 2: Normalize")
+    text("a. Compute probability of evidence: P(A = 1)")
+    P_A1 = ProbTable("A=1", einsum(P_BA1.p, "b ->"))  # @inspect P_A1 @stepover
+    text("b. Divide to get conditional: P(B | A = 1)")
+    P_B_given_A1 = ProbTable("B | A=1", P_BA1.p / P_A1.p)  # @inspect P_B_given_A1 @stepover
 
     text("Forming the joint distribution can be exponentially slow...")
 
