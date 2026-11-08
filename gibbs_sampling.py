@@ -46,15 +46,15 @@ def review_bayesian_networks():
     text("**Probabilistic inference**: answer questions (like SQL) on the joint distribution")  # @clear p_b p_e p_a_given_be
     text("Example: P(B | A = 1)")
     text("Step 1: Get appropriate variables")
-    text("a. Condition on evidence: P(B, E, A = 1)")
+    text(r"a. Condition on evidence: $P(B, E, A = 1)$, i.e., for each $b, e$: $\displaystyle P(B = b, E = e, A = 1)$ (keep only the rows of $P(B, E, A)$ where $A = 1$)")
     P_BEA1 = ProbTable("B E A=1", P_BEA.p[:, :, 1])  # @inspect P_BEA1 @stepover
-    text("b. Marginalize out other variables: P(B, A = 1)")
+    text(r"b. Marginalize out other variables: for each $b$: $\displaystyle P(B = b, A = 1) = \sum_e P(B = b, E = e, A = 1)$")
     P_BA1 = ProbTable("B A=1", einsum(P_BEA1.p, "b e -> b"))  # @inspect P_BA1 @stepover
 
     text("Step 2: Normalize")
-    text("a. Compute probability of evidence: P(A = 1)")
+    text(r"a. Compute probability of evidence: $\displaystyle P(A = 1) = \sum_b P(B = b, A = 1)$")
     P_A1 = ProbTable("A=1", einsum(P_BA1.p, "b ->"))  # @inspect P_A1 @stepover
-    text("b. Divide to get conditional: P(B | A = 1)")
+    text(r"b. Divide to get conditional: for each $b$: $\displaystyle P(B = b \mid A = 1) = \frac{P(B = b, A = 1)}{P(A = 1)}$")
     P_B_given_A1 = ProbTable("B | A=1", P_BA1.p / P_A1.p)  # @inspect P_B_given_A1 @stepover
 
     text("Forming the joint distribution can be exponentially slow...")
