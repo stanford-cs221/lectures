@@ -13,5 +13,11 @@ fi
 export VITE_EDTRACE_BASE_DIR=${1:-/lectures}  # Default: hosted at stanford-cs221.github.io/lectures (not the checkout's directory name)
 export VITE_EDTRACE_DIST_DIR=$PWD
 npm --prefix edtrace/frontend install
+if [ -n "$1" ]; then
+  # When previewing, the viewer is opened as <base>/index.html, which the router doesn't match (it only has "/");
+  # temporarily add a catch-all route to the edtrace clone.
+  trap 'git -C edtrace checkout frontend/src/App.jsx' EXIT
+  sed -i 's|^\( *\)<Route path="/" element={<TraceViewer />} />|&\n\1<Route path="*" element={<TraceViewer />} />|' edtrace/frontend/src/App.jsx
+fi
 rm -rf assets  # Remove stale hashed assets
 npm --prefix edtrace/frontend run build
