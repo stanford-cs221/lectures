@@ -11,8 +11,8 @@ from util import sample_dict, normalize_dict, set_random_seed
 def main():
     text("# Gibbs sampling")
 
-    text("Last time: Bayesian networks, exact inference, rejection sampling")
-    text("This time: faster probabilistic inference (Gibbs sampling) + conditional independence")
+    text("Last unit: Bayesian networks, exact inference, rejection sampling")
+    text("This unit: faster probabilistic inference (Gibbs sampling) + conditional independence")
 
     review_bayesian_networks()
     introduce_gibbs_sampling()
@@ -34,7 +34,6 @@ def review_bayesian_networks():
     text(r"  * Example: Burglary $B$, Earthquake $E$, Alarm $A$")
 
     text("2. Define a directed acyclic graph (DAG) over the variables")
-    text(r"  * Example: $B \to A$, $E \to A$")
     graph(draw_alarm_net())  # @stepover
 
     text(r"3. For each variable, define a local conditional distribution $p(x_i \mid x_{\text{Parents}(i)})$")
@@ -43,7 +42,8 @@ def review_bayesian_networks():
     p_e = prob_table("E", [0.95, 0.05], local=True, render=True)  # p(e) @stepover
     p_a_given_be = prob_table("A | B E", lambda b, e, a: a == (b or e), shape=(2, 2, 2), local=True, render=True)  # p(a | b, e) @stepover
 
-    text(r"4. Define the joint distribution: $\displaystyle P(X_1 = x_1, \dots, X_n = x_n) = \prod_{i=1}^n p(x_i \mid x_{\text{Parents}(i)})$")
+    text("4. Define the joint distribution:")
+    text(r"$\displaystyle P(X_1 = x_1, \dots, X_n = x_n) = \prod_{i=1}^n p(x_i \mid x_{\text{Parents}(i)})$")
     text(r"  * Example: $P(B = b, E = e, A = a) = p(b) \, p(e) \, p(a \mid b, e)$")
     P_BEA = prob_einsum("B E A", "b, e, b e a -> b e a", p_b, p_e, p_a_given_be, render=True)  # P(B, E, A) @stepover @animate
 
