@@ -50,9 +50,17 @@ def review_bayesian_networks():
     text("🔮 **Probabilistic inference**: answer questions (like SQL queries) on the joint distribution")
     text(r"Example: $P(B \mid A = 1)$")
     a1 = np.array([0, 1])  # Evidence [A = 1]
-    P_BA1 = prob_einsum("B A=1", "b e a, a -> b", P_BEA, a1, render=True)  # Select evidence, marginalize: P(B, A = 1) @stepover @animate
-    P_A1 = prob_einsum("A=1", "b ->", P_BA1, render=True)  # Probability of evidence: P(A = 1) @stepover @animate
-    P_B_given_A1 = prob_divide("B | A=1", P_BA1, P_A1, render=True)  # Normalize: P(B | A = 1) @stepover @animate
+    text("Step 1: Get appropriate variables")
+    text(r"a. Condition on evidence: $P(B, E, A = 1)$")
+    P_BEA1 = prob_einsum("B E A=1", "b e a, a -> b e", P_BEA, a1, render=True)  # @stepover @animate
+    text(r"b. Marginalize out other variables: $\displaystyle P(B, A = 1) = \sum_e P(B, e, A = 1)$")
+    P_BA1 = prob_einsum("B A=1", "b e -> b", P_BEA1, render=True)  # @stepover @animate
+
+    text("Step 2: Normalize")
+    text(r"a. Compute probability of evidence: $\displaystyle P(A = 1) = \sum_b P(b, A = 1)$")
+    P_A1 = prob_einsum("A=1", "b ->", P_BA1, render=True)  # @stepover @animate
+    text(r"b. Divide: $\displaystyle P(B \mid A = 1) = \frac{P(B, A = 1)}{P(A = 1)}$")
+    P_B_given_A1 = prob_divide("B | A=1", P_BA1, P_A1, render=True)  # @stepover @animate
 
     text("Problem: the joint distribution is exponentially large in the number of variables...")
 
