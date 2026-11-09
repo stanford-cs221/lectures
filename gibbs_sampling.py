@@ -49,6 +49,9 @@ def review_bayesian_networks():
 
     text("🔮 **Probabilistic inference**: answer questions (like SQL queries) on the joint distribution")
     text(r"Example question: $P(B \mid A = 1)$")
+    text(r"  * Step 1: Get $P(B, A = 1)$")
+    text(r"  * Step 2: Normalize to get $P(B \mid A = 1)$")
+    text("Let's go through each step in detail:")
     text("Step 1: Get appropriate variables")
     text(r"a. Condition on evidence: $P(B, E, A = 1)$")
     a1 = np.array([0, 1])  # Evidence [A = 1]
