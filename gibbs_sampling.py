@@ -48,18 +48,19 @@ def review_bayesian_networks():
     P_BEA = prob_einsum("B E A", "b, e, b e a -> b e a", p_b, p_e, p_a_given_be, render=True)  # P(B, E, A) @stepover @animate
 
     text("🔮 **Probabilistic inference**: answer questions (like SQL queries) on the joint distribution")
-    text(r"Example question: $P(B \mid A = 1)$")
-    text(r"  * Step 1: Get $P(B, A = 1)$")
-    text(r"  * Step 2: Normalize to get $P(B \mid A = 1)$")
-    text("Let's go through each step in detail:")
-    text("Step 1: Get appropriate variables")
+    text(r"Example: given $P(B, E, A)$, compute $P(B \mid A = 1)$")
+    text("Two steps:")
+    text(r"1. Focus on relevant variables/values (example: compute $P(B, A = 1)$)")
+    text(r"2. Normalize distribution (example: compute $P(B \mid A = 1)$)")
+
+    text("Step 1: focus on relevant variables/values")
     text(r"a. Condition on evidence: $P(B, E, A = 1)$")
     a1 = np.array([0, 1])  # Evidence [A = 1]
     P_BEA1 = prob_einsum("B E A=1", "b e a, a -> b e", P_BEA, a1, render=True)  # @stepover @animate
     text(r"b. Marginalize out other variables: $\displaystyle P(B, A = 1) = \sum_e P(B, e, A = 1)$")
     P_BA1 = prob_einsum("B A=1", "b e -> b", P_BEA1, render=True)  # @stepover @animate
 
-    text("Step 2: Normalize")
+    text("Step 2: Normalize distribution")
     text(r"a. Compute probability of evidence: $\displaystyle P(A = 1) = \sum_b P(b, A = 1)$")
     P_A1 = prob_einsum("A=1", "b ->", P_BA1, render=True)  # @stepover @animate
     text(r"b. Divide: $\displaystyle P(B \mid A = 1) = \frac{P(B, A = 1)}{P(A = 1)}$")
@@ -70,18 +71,22 @@ def review_bayesian_networks():
     text("🎲 **Probabilistic programs**")
     text("A probabilistic program returns a sample from the joint distribution...")
     text("...thereby defining it.")
-    set_random_seed(1)
+    set_random_seed(2)
     def alarm():
         B = Bernoulli(0.05)  # Burglary @stepover @inspect B
         E = Bernoulli(0.05)  # Earthquake @stepover @inspect E
         A = B or E           # Alarm @inspect A
         return {"B": B, "E": E, "A": A}
     sample = alarm()  # @inspect sample
+    sample = alarm()  # @inspect sample @stepover
+    sample = alarm()  # @inspect sample @stepover
+    sample = alarm()  # @inspect sample @stepover
+    sample = alarm()  # @inspect sample @stepover
 
     text("🚫 **Rejection sampling**: draw samples, keep the ones that match the evidence, record the query")  # @clear sample
     query = lambda sample: sample["B"]           # Interested in B
     evidence = lambda sample: sample["A"] == 1   # Evidence: A = 1
-    result = rejection_sampling(alarm, query, evidence, num_samples=3000)  # @inspect result @stepover
+    result = rejection_sampling(alarm, query, evidence, num_samples=3000)  # @inspect result
     exact = as_dict(P_B_given_A1)  # Exact answer (compare with result) @stepover @inspect exact
 
     text(r"But rejection sampling is slow if the evidence is rare ($P(A = 1) \approx 0.1$, so ~90% of samples are wasted).")
@@ -91,17 +96,17 @@ def review_bayesian_networks():
 def introduce_gibbs_sampling():
     text("🚫 **Rejection sampling**")
     text("sample ~~sample~~ sample ~~sample~~ ~~sample~~ sample")
-    text("- ✅ Each sample is independent")
-    text("- ❌ Have to start from scratch for every sample")
-    text("- ❌ Doesn't use the evidence while generating a sample, leading to rejections")
+    text("- ✅️ Each sample is independent")
+    text("- ❌️ Have to start from scratch for every sample")
+    text("- ❌️ Doesn't use the evidence while generating a sample, leading to rejections")
 
     text("🔁 **Gibbs sampling**: start from the previous sample (which always satisfies the evidence)")
     text("sample → sample → sample → sample")
     text("Basic idea:")
     text("- Start with an arbitrary assignment (that satisfies the evidence)")
     text("- Repeatedly resample one variable at a time conditioned on all the other variables")
-    text("- ✅ Every sample satisfies the evidence, so nothing is rejected")
-    text("- ❌ Samples are not independent, so we need more of them")
+    text("- ✅️ Every sample satisfies the evidence, so nothing is rejected")
+    text("- ❌️ Samples are not independent, so we need more of them")
 
     gibbs_telephone()              # Gibbs sampling on the telephone example
     markov_blanket()               # Introduce the Markov blanket to speed things up
