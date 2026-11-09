@@ -1,4 +1,6 @@
+import html as html_lib
 from typing import Callable
+from urllib.parse import quote
 from edtrace import text, image, link, graph, make_graph
 from einops import einsum
 from collections import defaultdict
@@ -687,9 +689,39 @@ class ProbTable:
         return np.array(rows)
 
 
+NODE_SIZE = 44  # Diameter of a variable's circle in `draw_bayes_net`
+TABLE_GAP = 20  # Space between a variable and the table above it
+
+
+def table_svg(table: "ProbTable") -> tuple[str, int, int]:
+    """Return (SVG data URI, width, height) of a picture of `table` (as a grid), to use as a Cytoscape node image."""
+    indices = [var.lower() for var in table.cond_vars + table.gen_vars]
+    name = table.name()
+    for index in indices:
+        name = name.replace("{" + index + "}", index)
+    name = name.replace(r" \mid ", " | ")
+    rows = [list(map(str, values)) + [f"{float(table.probs[values]):.4g}"] for values in np.ndindex(*table.probs.shape)]
+    row_height, index_width = 16, 20
+    prob_width = max(36, round(5.5 * len(name)) + 8)
+    widths = [index_width] * len(indices) + [prob_width]
+    width, height = sum(widths), row_height * (len(rows) + 1)
+
+    def cell(column: int, row: int, content: str, italic: bool = False, fill: str = "white") -> str:
+        x = sum(widths[:column])
+        font = "font-family='Times New Roman, serif' font-style='italic'" if italic else "font-family='Helvetica, Arial, sans-serif'"
+        return (f"<rect x='{x}' y='{row * row_height}' width='{widths[column]}' height='{row_height}' fill='{fill}' stroke='#999'/>"
+                f"<text x='{x + widths[column] / 2}' y='{row * row_height + 12}' text-anchor='middle' font-size='12' {font} fill='#222'>"
+                f"{html_lib.escape(content)}</text>")
+    cells = [cell(column, 0, header, italic=True, fill="#eee") for column, header in enumerate(indices + [name])]
+    cells += [cell(column, row + 1, content) for row, values in enumerate(rows) for column, content in enumerate(values)]
+    svg = f"<svg xmlns='http://www.w3.org/2000/svg' width='{width}' height='{height}'>{''.join(cells)}</svg>"
+    return "data:image/svg+xml;utf8," + quote(svg), width, height
+
+
 def draw_bayes_net(positions: dict[str, tuple[float, float]], edges: list[tuple[str, str]],
                    observed: set[str] = set(), curves: dict[tuple[str, str], float] = {},
-                   classes: dict[str | tuple[str, str], str] = {}, directed: bool = True) -> dict:
+                   classes: dict[str | tuple[str, str], str] = {}, directed: bool = True,
+                   tables: dict[str, "ProbTable"] = {}) -> dict:
     """
     Return the graph of a Bayesian network (to show with `graph`):
     - `positions`: variable name (e.g., "H₁") -> (x, y)
@@ -698,13 +730,25 @@ def draw_bayes_net(positions: dict[str, tuple[float, float]], edges: list[tuple[
     - `curves`: (parent, child) -> how much to curve that edge (e.g., to go around other nodes)
     - `classes`: variable or edge -> extra style class: "query" or "blanket" (variables), "married" (edges)
     - `directed`: whether to draw arrowheads (False for undirected graphs)
+    - `tables`: variable name -> its local conditional distribution, drawn above the variable
+      with a gray dotted arrow pointing to it
     """
     def node_classes(name: str) -> str:
         return " ".join(c for c in ["observed" if name in observed else "", classes.get(name, "")] if c)
     nodes = [{"id": name, "x": x, "y": y, "classes": node_classes(name)} for name, (x, y) in positions.items()]
+    table_edges = []
+    boxes = [(x - NODE_SIZE / 2, y - NODE_SIZE / 2, x + NODE_SIZE / 2, y + NODE_SIZE / 2) for x, y in positions.values()]
+    for name, table in tables.items():
+        x, y = positions[name]
+        svg, table_width, table_height = table_svg(table)
+        table_y = y - NODE_SIZE / 2 - TABLE_GAP - table_height / 2
+        nodes.append({"id": f"{name}-table", "x": x, "y": table_y, "classes": "table", "label": "",
+                      "svg": svg, "table_width": table_width, "table_height": table_height})
+        table_edges.append({"source": f"{name}-table", "target": name, "classes": "table"})
+        boxes.append((x - table_width / 2, table_y - table_height / 2, x + table_width / 2, table_y + table_height / 2))
     edges = [{"source": source, "target": target, "classes": classes.get((source, target), ""),
               **({"curve": curves[(source, target)]} if (source, target) in curves else {})}
-             for source, target in edges]
+             for source, target in edges] + table_edges
     stylesheet = [
         # Variables in italic serif (like math)
         {"selector": "node", "style": {"width": 44, "height": 44, "font-family": "Times New Roman, serif", "font-style": "italic",
@@ -714,15 +758,19 @@ def draw_bayes_net(positions: dict[str, tuple[float, float]], edges: list[tuple[
         {"selector": "node.blanket", "style": {"border-color": "#f77f00", "border-style": "dashed", "border-width": 3}},
         {"selector": "edge", "style": {"line-color": "#555", "target-arrow-color": "#555",
                                        "target-arrow-shape": "triangle" if directed else "none"}},
+        # Probability tables (drawn as images) with a gray dotted arrow to their variable
+        {"selector": "node.table", "style": {"width": "data(table_width)", "height": "data(table_height)", "shape": "rectangle",
+                                             "background-opacity": 0, "border-width": 0, "background-image": "data(svg)",
+                                             "background-fit": "contain", "events": "no"}},
+        {"selector": "edge.table", "style": {"line-color": "#999", "line-style": "dotted", "width": 1.5,
+                                             "target-arrow-color": "#999", "target-arrow-shape": "triangle", "events": "no"}},
         {"selector": "edge.married", "style": {"line-color": "#f77f00", "line-style": "dashed"}},
         {"selector": "edge[curve]", "style": {"curve-style": "unbundled-bezier", "control-point-weights": 0.5,
                                               "control-point-distances": "data(curve)"}},
     ]
-    xs = [x for x, y in positions.values()]
-    ys = [y for x, y in positions.values()]
     extra_height = max([abs(curve) for curve in curves.values()], default=0) / 2
-    width = max(xs) - min(xs) + 90
-    height = max(ys) - min(ys) + 90 + extra_height
+    width = max(box[2] for box in boxes) - min(box[0] for box in boxes) + 46
+    height = max(box[3] for box in boxes) - min(box[1] for box in boxes) + 46 + extra_height
     return make_graph(nodes, edges, stylesheet=stylesheet, width=round(width), height=round(height))
 
 
