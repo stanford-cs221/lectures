@@ -49,9 +49,9 @@ def review_bayesian_networks():
 
     text("🔮 **Probabilistic inference**: answer questions (like SQL queries) on the joint distribution")
     text(r"Example: $P(B \mid A = 1)$")
-    a1 = np.array([0, 1])  # Evidence [A = 1]
     text("Step 1: Get appropriate variables")
     text(r"a. Condition on evidence: $P(B, E, A = 1)$")
+    a1 = np.array([0, 1])  # Evidence [A = 1]
     P_BEA1 = prob_einsum("B E A=1", "b e a, a -> b e", P_BEA, a1, render=True)  # @stepover @animate
     text(r"b. Marginalize out other variables: $\displaystyle P(B, A = 1) = \sum_e P(B, e, A = 1)$")
     P_BA1 = prob_einsum("B A=1", "b e -> b", P_BEA1, render=True)  # @stepover @animate
