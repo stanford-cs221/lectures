@@ -774,8 +774,10 @@ def draw_bayes_net(positions: dict[str, tuple[float, float]], edges: list[tuple[
     return make_graph(nodes, edges, stylesheet=stylesheet, width=round(width), height=round(height))
 
 
-def draw_alarm_net() -> dict:
-    return draw_bayes_net({"B": (0, 0), "E": (160, 0), "A": (80, 90)}, [("B", "A"), ("E", "A")])
+def draw_alarm_net(tables: dict[str, "ProbTable"] = {}, observed: set[str] = set()) -> dict:
+    """The alarm network (B → A ← E); if `tables` are given, spread out the nodes to make room for them above the nodes."""
+    positions = {"B": (0, 0), "E": (500, 0), "A": (250, 150)} if tables else {"B": (0, 0), "E": (160, 0), "A": (80, 90)}
+    return draw_bayes_net(positions, [("B", "A"), ("E", "A")], observed=observed, tables=tables)
 
 
 def draw_medical_net() -> dict:
