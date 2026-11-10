@@ -218,7 +218,7 @@ def gibbs_telephone():
 def markov_blanket():
     text("Consider a longer telephone chain:")
     chain_positions = {v: (90 * i, 0) for i, v in enumerate("ABCDE")}  # @hide
-    chain_edges = [(s, t) for s, t in zip("ABCD", "BCDE")]
+    chain_edges = [(s, t) for s, t in zip("ABCD", "BCDE")]  # @hide
     graph(draw_bayes_net(chain_positions, chain_edges))  # @stepover
     text(r"$P(A = a, B = b, C = c, D = d, E = e) = p(a) \, p(b \mid a) \, p(c \mid b) \, p(d \mid c) \, p(e \mid d)$")
     text(r"When we resample $C$, only $c$ changes, so most of these factors are the same for every value of $c$...")
