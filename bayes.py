@@ -1,4 +1,5 @@
 import html as html_lib
+import re
 from typing import Callable
 from urllib.parse import quote
 from edtrace import text, image, link, graph, make_graph
@@ -691,37 +692,81 @@ class ProbTable:
 
 NODE_SIZE = 44  # Diameter of a variable's circle in `draw_bayes_net`
 TABLE_GAP = 20  # Space between a variable and the table above it
+VALUE_HEIGHT = 24  # Space taken by the value of a variable (shown above it) in `draw_bayes_net`
 
 
-def table_svg(table: "ProbTable") -> tuple[str, int, int]:
-    """Return (SVG data URI, width, height) of a picture of `table` (as a grid), to use as a Cytoscape node image."""
+def table_svg(table: "ProbTable", unknown_probs: bool = False) -> tuple[str, int, int]:
+    """
+    Return (SVG data URI, width, height) of a picture of `table` (as a grid), to use as a Cytoscape node image.
+    If `unknown_probs`, show a red "?" instead of each probability.
+    """
     indices = [var.lower() for var in table.cond_vars + table.gen_vars]
     name = table.name()
     for index in indices:
         name = name.replace("{" + index + "}", index)
     name = name.replace(r" \mid ", " | ")
-    rows = [list(map(str, values)) + [f"{float(table.probs[values]):.4g}"] for values in np.ndindex(*table.probs.shape)]
-    row_height, index_width = 16, 20
-    prob_width = max(36, round(5.5 * len(name)) + 8)
-    widths = [index_width] * len(indices) + [prob_width]
+    rows = [list(map(str, values)) + ["?" if unknown_probs else f"{float(table.probs[values]):.4g}"] for values in np.ndindex(*table.probs.shape)]
+    return rows_svg(indices, name, rows, red_last_column=unknown_probs)
+
+
+def svg_subscripts(content: str) -> str:
+    """SVG text content for `content` with each `_x` (e.g., in "p_G(g)") drawn as a smaller subscript."""
+    parts = re.split(r"_(\w+)", content)  # Alternates: text, subscript, text, ...
+    out = ""
+    for i, part in enumerate(parts):
+        if i % 2 == 1:
+            out += f"<tspan dy='3' font-size='9'>{html_lib.escape(part)}</tspan><tspan dy='-3'>"
+        else:
+            out += html_lib.escape(part) + ("</tspan>" if i > 0 else "")
+    return out
+
+
+def rows_svg(indices: list[str], name: str, rows: list[list[str]], red_last_column: bool = False) -> tuple[str, int, int]:
+    """
+    Return (SVG data URI, width, height) of a picture of a table (as a grid): a column per index (e.g., "g")
+    and a last column of values headed by `name` (plain text); each row has a value per column
+    (the values of the last column in red if `red_last_column`).
+    """
+    row_height = 16
+    char_width = lambda column: max([len(str(row[column])) for row in rows] + [len(([*indices, name])[column])])
+    widths = [max(20, round(6.5 * char_width(column)) + 8) for column in range(len(indices))]
+    widths.append(max(36, round(5.5 * char_width(len(indices))) + 8))
     width, height = sum(widths), row_height * (len(rows) + 1)
 
     def cell(column: int, row: int, content: str, italic: bool = False, fill: str = "white") -> str:
         x = sum(widths[:column])
         font = "font-family='Times New Roman, serif' font-style='italic'" if italic else "font-family='Helvetica, Arial, sans-serif'"
+        color = "#d62728" if red_last_column and row > 0 and column == len(indices) else "#222"
+        weight = " font-weight='bold'" if color != "#222" else ""
         return (f"<rect x='{x}' y='{row * row_height}' width='{widths[column]}' height='{row_height}' fill='{fill}' stroke='#999'/>"
-                f"<text x='{x + widths[column] / 2}' y='{row * row_height + 12}' text-anchor='middle' font-size='12' {font} fill='#222'>"
-                f"{html_lib.escape(content)}</text>")
+                f"<text x='{x + widths[column] / 2}' y='{row * row_height + 12}' text-anchor='middle' font-size='12' {font}{weight} fill='{color}'>"
+                f"{svg_subscripts(content)}</text>")
     cells = [cell(column, 0, header, italic=True, fill="#eee") for column, header in enumerate(indices + [name])]
     cells += [cell(column, row + 1, content) for row, values in enumerate(rows) for column, content in enumerate(values)]
     svg = f"<svg xmlns='http://www.w3.org/2000/svg' width='{width}' height='{height}'>{''.join(cells)}</svg>"
     return "data:image/svg+xml;utf8," + quote(svg), width, height
 
 
+def count_rows(counts: dict) -> list[list[str]]:
+    """The rows of a table of counts (nested dicts: parents' values (a tuple if several) -> value -> count), one value per column."""
+    rows = []
+    def recurse(prefix: tuple, counts: dict):
+        for key, value in sorted(counts.items(), key=lambda item: str(item[0])):
+            assignment = prefix + (key if isinstance(key, tuple) else (key,))
+            if isinstance(value, dict):
+                recurse(assignment, value)
+            else:
+                rows.append([*map(str, assignment), f"{float(value):.4g}"])
+    recurse((), counts)
+    return rows
+
+
 def draw_bayes_net(positions: dict[str, tuple[float, float]], edges: list[tuple[str, str]],
                    observed: set[str] = set(), curves: dict[tuple[str, str], float] = {},
                    classes: dict[str | tuple[str, str], str] = {}, directed: bool = True,
-                   tables: dict[str, "ProbTable"] = {}) -> dict:
+                   tables: dict[str, "ProbTable"] = {}, unknown_probs: bool = False,
+                   assignment: dict[str, object] | None = None, counts: dict[str, dict] | None = None,
+                   probs: dict[str, dict] | None = None, values_below: set[str] = set()) -> dict:
     """
     Return the graph of a Bayesian network (to show with `graph`):
     - `positions`: variable name (e.g., "H₁") -> (x, y)
@@ -732,16 +777,36 @@ def draw_bayes_net(positions: dict[str, tuple[float, float]], edges: list[tuple[
     - `directed`: whether to draw arrowheads (False for undirected graphs)
     - `tables`: variable name -> its local conditional distribution, drawn above the variable
       with a gray dotted arrow pointing to it
+    - `unknown_probs`: show a red "?" instead of each probability in the `tables`
+    - `assignment`: variable name -> value, shown in blue above each variable (e.g., a training example)
+      (below the variables in `values_below`, e.g., the observed variables at the bottom of a hidden Markov model)
+    - `counts`: variable name -> how many times each value occurred (for each assignment of its parents), shown above
+      the variable like a table (nested dicts: parents' values (a tuple if several) -> value -> count, e.g., `counts_gr[g][r]`)
+    - `probs`: like `counts`, but the probabilities of the local conditional distribution of each variable (e.g., `p_r_given_g[g][r]`)
     """
     def node_classes(name: str) -> str:
         return " ".join(c for c in ["observed" if name in observed else "", classes.get(name, "")] if c)
     nodes = [{"id": name, "x": x, "y": y, "classes": node_classes(name)} for name, (x, y) in positions.items()]
     table_edges = []
     boxes = [(x - NODE_SIZE / 2, y - NODE_SIZE / 2, x + NODE_SIZE / 2, y + NODE_SIZE / 2) for x, y in positions.values()]
-    for name, table in tables.items():
+    value_height = {name: VALUE_HEIGHT if assignment and name in assignment and name not in values_below else 0 for name in positions}
+    for name, value in (assignment or {}).items():
         x, y = positions[name]
-        svg, table_width, table_height = table_svg(table)
-        table_y = y - NODE_SIZE / 2 - TABLE_GAP - table_height / 2
+        value_y = y + (NODE_SIZE / 2 + VALUE_HEIGHT / 2 if name in values_below else -NODE_SIZE / 2 - VALUE_HEIGHT / 2)
+        nodes.append({"id": f"{name}-value", "x": x, "y": value_y, "classes": "value", "label": str(value)})
+        boxes.append((x - 12, value_y - VALUE_HEIGHT / 2, x + 12, value_y + VALUE_HEIGHT / 2))
+    parents = {name: [parent for parent, child in edges if child == name] for name in positions}
+    pictures = {name: table_svg(table, unknown_probs) for name, table in tables.items()}
+    for name, name_counts in (counts or {}).items():
+        indices = [parent.lower() for parent in parents[name]] + [name.lower()]
+        pictures[name] = rows_svg(indices, "count", count_rows(name_counts))
+    for name, name_probs in (probs or {}).items():
+        indices = [parent.lower() for parent in parents[name]] + [name.lower()]
+        given = " | " + ", ".join(parent.lower() for parent in parents[name]) if parents[name] else ""
+        pictures[name] = rows_svg(indices, f"p({name.lower()}{given})", count_rows(name_probs))
+    for name, (svg, table_width, table_height) in pictures.items():
+        x, y = positions[name]
+        table_y = y - NODE_SIZE / 2 - value_height[name] - TABLE_GAP - table_height / 2
         nodes.append({"id": f"{name}-table", "x": x, "y": table_y, "classes": "table", "label": "",
                       "svg": svg, "table_width": table_width, "table_height": table_height})
         table_edges.append({"source": f"{name}-table", "target": name, "classes": "table"})
@@ -758,6 +823,10 @@ def draw_bayes_net(positions: dict[str, tuple[float, float]], edges: list[tuple[
         {"selector": "node.blanket", "style": {"border-color": "#f77f00", "border-style": "dashed", "border-width": 3}},
         {"selector": "edge", "style": {"line-color": "#555", "target-arrow-color": "#555",
                                        "target-arrow-shape": "triangle" if directed else "none"}},
+        # Values of the variables (e.g., in a training example)
+        {"selector": "node.value", "style": {"width": 24, "height": 20, "shape": "rectangle", "background-opacity": 0, "border-width": 0,
+                                             "font-family": "Helvetica, Arial, sans-serif", "font-style": "normal", "font-weight": "bold",
+                                             "font-size": 18, "color": "#1f5fbf", "events": "no"}},
         # Probability tables (drawn as images) with a gray dotted arrow to their variable
         {"selector": "node.table", "style": {"width": "data(table_width)", "height": "data(table_height)", "shape": "rectangle",
                                              "background-opacity": 0, "border-width": 0, "background-image": "data(svg)",
@@ -774,10 +843,35 @@ def draw_bayes_net(positions: dict[str, tuple[float, float]], edges: list[tuple[
     return make_graph(nodes, edges, stylesheet=stylesheet, width=round(width), height=round(height))
 
 
-def draw_alarm_net(tables: dict[str, "ProbTable"] = {}, observed: set[str] = set()) -> dict:
+def draw_training_data(training_data: list[dict[str, object]], positions: dict[str, tuple[float, float]],
+                       edges: list[tuple[str, str]], columns: int | None = None, gap: float = 30, max_width: float = 720, **kwargs) -> dict:
+    """
+    Return the graph (to show with `graph`) of the training examples, each one the Bayesian network (`positions`, `edges`)
+    with the values of the example shown in blue above the variables.  The examples are laid out in a grid with `columns` columns
+    (as many as fit in `max_width` pixels by default).  Other arguments (e.g., `observed`) are passed on to `draw_bayes_net`.
+    """
+    specs = [draw_bayes_net(positions, edges, assignment=example, **kwargs) for example in training_data]
+    stride_x = specs[0]["width"] - 46 + gap
+    stride_y = specs[0]["height"]
+    columns = columns or max(1, int((max_width + gap - 46) // stride_x))
+    nodes, graph_edges = [], []
+    for i, spec in enumerate(specs):
+        prefix = f"example{i}-"  # Keep the ids of the copies distinct
+        dx, dy = (i % columns) * stride_x, (i // columns) * stride_y
+        for node in spec["nodes"]:
+            nodes.append({**node, "data": {**node["data"], "id": prefix + node["data"]["id"]},
+                          "position": {"x": node["position"]["x"] + dx, "y": node["position"]["y"] + dy}})
+        for edge in spec["edges"]:
+            graph_edges.append({**edge, "data": {**edge["data"], "source": prefix + edge["data"]["source"], "target": prefix + edge["data"]["target"]}})
+    num_columns, num_rows = min(len(specs), columns), (len(specs) + columns - 1) // columns
+    return {**specs[0], "nodes": nodes, "edges": graph_edges,
+            "width": round(num_columns * stride_x - gap + 46), "height": round(num_rows * stride_y)}
+
+
+def draw_alarm_net(tables: dict[str, "ProbTable"] = {}, observed: set[str] = set(), unknown_probs: bool = False) -> dict:
     """The alarm network (B → A ← E); if `tables` are given, spread out the nodes to make room for them above the nodes."""
     positions = {"B": (0, 0), "E": (500, 0), "A": (250, 150)} if tables else {"B": (0, 0), "E": (160, 0), "A": (80, 90)}
-    return draw_bayes_net(positions, [("B", "A"), ("E", "A")], observed=observed, tables=tables)
+    return draw_bayes_net(positions, [("B", "A"), ("E", "A")], observed=observed, tables=tables, unknown_probs=unknown_probs)
 
 
 def draw_medical_net() -> dict:

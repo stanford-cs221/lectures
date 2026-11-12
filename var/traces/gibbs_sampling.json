@@ -352,6 +352,22 @@
                 }
               },
               {
+                "selector": "node.value",
+                "style": {
+                  "width": 24,
+                  "height": 20,
+                  "shape": "rectangle",
+                  "background-opacity": 0,
+                  "border-width": 0,
+                  "font-family": "Helvetica, Arial, sans-serif",
+                  "font-style": "normal",
+                  "font-weight": "bold",
+                  "font-size": 18,
+                  "color": "#1f5fbf",
+                  "events": "no"
+                }
+              },
+              {
                 "selector": "node.table",
                 "style": {
                   "width": "data(table_width)",
@@ -712,6 +728,22 @@
                   "line-color": "#555",
                   "target-arrow-color": "#555",
                   "target-arrow-shape": "triangle"
+                }
+              },
+              {
+                "selector": "node.value",
+                "style": {
+                  "width": 24,
+                  "height": 20,
+                  "shape": "rectangle",
+                  "background-opacity": 0,
+                  "border-width": 0,
+                  "font-family": "Helvetica, Arial, sans-serif",
+                  "font-style": "normal",
+                  "font-weight": "bold",
+                  "font-size": 18,
+                  "color": "#1f5fbf",
+                  "events": "no"
                 }
               },
               {
@@ -2790,6 +2822,22 @@
                 }
               },
               {
+                "selector": "node.value",
+                "style": {
+                  "width": 24,
+                  "height": 20,
+                  "shape": "rectangle",
+                  "background-opacity": 0,
+                  "border-width": 0,
+                  "font-family": "Helvetica, Arial, sans-serif",
+                  "font-style": "normal",
+                  "font-weight": "bold",
+                  "font-size": 18,
+                  "color": "#1f5fbf",
+                  "events": "no"
+                }
+              },
+              {
                 "selector": "node.table",
                 "style": {
                   "width": "data(table_width)",
@@ -3252,6 +3300,22 @@
                   "line-color": "#555",
                   "target-arrow-color": "#555",
                   "target-arrow-shape": "triangle"
+                }
+              },
+              {
+                "selector": "node.value",
+                "style": {
+                  "width": 24,
+                  "height": 20,
+                  "shape": "rectangle",
+                  "background-opacity": 0,
+                  "border-width": 0,
+                  "font-family": "Helvetica, Arial, sans-serif",
+                  "font-style": "normal",
+                  "font-weight": "bold",
+                  "font-size": 18,
+                  "color": "#1f5fbf",
+                  "events": "no"
                 }
               },
               {
@@ -8858,6 +8922,22 @@
                 }
               },
               {
+                "selector": "node.value",
+                "style": {
+                  "width": 24,
+                  "height": 20,
+                  "shape": "rectangle",
+                  "background-opacity": 0,
+                  "border-width": 0,
+                  "font-family": "Helvetica, Arial, sans-serif",
+                  "font-style": "normal",
+                  "font-weight": "bold",
+                  "font-size": 18,
+                  "color": "#1f5fbf",
+                  "events": "no"
+                }
+              },
+              {
                 "selector": "node.table",
                 "style": {
                   "width": "data(table_width)",
@@ -9494,6 +9574,22 @@
                 }
               },
               {
+                "selector": "node.value",
+                "style": {
+                  "width": 24,
+                  "height": 20,
+                  "shape": "rectangle",
+                  "background-opacity": 0,
+                  "border-width": 0,
+                  "font-family": "Helvetica, Arial, sans-serif",
+                  "font-style": "normal",
+                  "font-weight": "bold",
+                  "font-size": 18,
+                  "color": "#1f5fbf",
+                  "events": "no"
+                }
+              },
+              {
                 "selector": "node.table",
                 "style": {
                   "width": "data(table_width)",
@@ -9716,6 +9812,22 @@
                 }
               },
               {
+                "selector": "node.value",
+                "style": {
+                  "width": 24,
+                  "height": 20,
+                  "shape": "rectangle",
+                  "background-opacity": 0,
+                  "border-width": 0,
+                  "font-family": "Helvetica, Arial, sans-serif",
+                  "font-style": "normal",
+                  "font-weight": "bold",
+                  "font-size": 18,
+                  "color": "#1f5fbf",
+                  "events": "no"
+                }
+              },
+              {
                 "selector": "node.table",
                 "style": {
                   "width": "data(table_width)",
@@ -9935,6 +10047,22 @@
                   "line-color": "#555",
                   "target-arrow-color": "#555",
                   "target-arrow-shape": "triangle"
+                }
+              },
+              {
+                "selector": "node.value",
+                "style": {
+                  "width": 24,
+                  "height": 20,
+                  "shape": "rectangle",
+                  "background-opacity": 0,
+                  "border-width": 0,
+                  "font-family": "Helvetica, Arial, sans-serif",
+                  "font-style": "normal",
+                  "font-weight": "bold",
+                  "font-size": 18,
+                  "color": "#1f5fbf",
+                  "events": "no"
                 }
               },
               {
@@ -10301,6 +10429,22 @@
                   "line-color": "#555",
                   "target-arrow-color": "#555",
                   "target-arrow-shape": "triangle"
+                }
+              },
+              {
+                "selector": "node.value",
+                "style": {
+                  "width": 24,
+                  "height": 20,
+                  "shape": "rectangle",
+                  "background-opacity": 0,
+                  "border-width": 0,
+                  "font-family": "Helvetica, Arial, sans-serif",
+                  "font-style": "normal",
+                  "font-weight": "bold",
+                  "font-size": 18,
+                  "color": "#1f5fbf",
+                  "events": "no"
                 }
               },
               {
@@ -11141,6 +11285,22 @@
                   "line-color": "#555",
                   "target-arrow-color": "#555",
                   "target-arrow-shape": "triangle"
+                }
+              },
+              {
+                "selector": "node.value",
+                "style": {
+                  "width": 24,
+                  "height": 20,
+                  "shape": "rectangle",
+                  "background-opacity": 0,
+                  "border-width": 0,
+                  "font-family": "Helvetica, Arial, sans-serif",
+                  "font-style": "normal",
+                  "font-weight": "bold",
+                  "font-size": 18,
+                  "color": "#1f5fbf",
+                  "events": "no"
                 }
               },
               {
@@ -22318,6 +22478,22 @@
                 }
               },
               {
+                "selector": "node.value",
+                "style": {
+                  "width": 24,
+                  "height": 20,
+                  "shape": "rectangle",
+                  "background-opacity": 0,
+                  "border-width": 0,
+                  "font-family": "Helvetica, Arial, sans-serif",
+                  "font-style": "normal",
+                  "font-weight": "bold",
+                  "font-size": 18,
+                  "color": "#1f5fbf",
+                  "events": "no"
+                }
+              },
+              {
                 "selector": "node.table",
                 "style": {
                   "width": "data(table_width)",
@@ -22953,6 +23129,22 @@
                   "line-color": "#555",
                   "target-arrow-color": "#555",
                   "target-arrow-shape": "triangle"
+                }
+              },
+              {
+                "selector": "node.value",
+                "style": {
+                  "width": 24,
+                  "height": 20,
+                  "shape": "rectangle",
+                  "background-opacity": 0,
+                  "border-width": 0,
+                  "font-family": "Helvetica, Arial, sans-serif",
+                  "font-style": "normal",
+                  "font-weight": "bold",
+                  "font-size": 18,
+                  "color": "#1f5fbf",
+                  "events": "no"
                 }
               },
               {
@@ -23828,6 +24020,22 @@
                 }
               },
               {
+                "selector": "node.value",
+                "style": {
+                  "width": 24,
+                  "height": 20,
+                  "shape": "rectangle",
+                  "background-opacity": 0,
+                  "border-width": 0,
+                  "font-family": "Helvetica, Arial, sans-serif",
+                  "font-style": "normal",
+                  "font-weight": "bold",
+                  "font-size": 18,
+                  "color": "#1f5fbf",
+                  "events": "no"
+                }
+              },
+              {
                 "selector": "node.table",
                 "style": {
                   "width": "data(table_width)",
@@ -24053,6 +24261,22 @@
                   "line-color": "#555",
                   "target-arrow-color": "#555",
                   "target-arrow-shape": "triangle"
+                }
+              },
+              {
+                "selector": "node.value",
+                "style": {
+                  "width": 24,
+                  "height": 20,
+                  "shape": "rectangle",
+                  "background-opacity": 0,
+                  "border-width": 0,
+                  "font-family": "Helvetica, Arial, sans-serif",
+                  "font-style": "normal",
+                  "font-weight": "bold",
+                  "font-size": 18,
+                  "color": "#1f5fbf",
+                  "events": "no"
                 }
               },
               {
@@ -24299,6 +24523,22 @@
                   "line-color": "#555",
                   "target-arrow-color": "#555",
                   "target-arrow-shape": "triangle"
+                }
+              },
+              {
+                "selector": "node.value",
+                "style": {
+                  "width": 24,
+                  "height": 20,
+                  "shape": "rectangle",
+                  "background-opacity": 0,
+                  "border-width": 0,
+                  "font-family": "Helvetica, Arial, sans-serif",
+                  "font-style": "normal",
+                  "font-weight": "bold",
+                  "font-size": 18,
+                  "color": "#1f5fbf",
+                  "events": "no"
                 }
               },
               {
@@ -24572,6 +24812,22 @@
                   "line-color": "#555",
                   "target-arrow-color": "#555",
                   "target-arrow-shape": "triangle"
+                }
+              },
+              {
+                "selector": "node.value",
+                "style": {
+                  "width": 24,
+                  "height": 20,
+                  "shape": "rectangle",
+                  "background-opacity": 0,
+                  "border-width": 0,
+                  "font-family": "Helvetica, Arial, sans-serif",
+                  "font-style": "normal",
+                  "font-weight": "bold",
+                  "font-size": 18,
+                  "color": "#1f5fbf",
+                  "events": "no"
                 }
               },
               {
@@ -24929,6 +25185,22 @@
                 }
               },
               {
+                "selector": "node.value",
+                "style": {
+                  "width": 24,
+                  "height": 20,
+                  "shape": "rectangle",
+                  "background-opacity": 0,
+                  "border-width": 0,
+                  "font-family": "Helvetica, Arial, sans-serif",
+                  "font-style": "normal",
+                  "font-weight": "bold",
+                  "font-size": 18,
+                  "color": "#1f5fbf",
+                  "events": "no"
+                }
+              },
+              {
                 "selector": "node.table",
                 "style": {
                   "width": "data(table_width)",
@@ -25175,6 +25447,22 @@
                 }
               },
               {
+                "selector": "node.value",
+                "style": {
+                  "width": 24,
+                  "height": 20,
+                  "shape": "rectangle",
+                  "background-opacity": 0,
+                  "border-width": 0,
+                  "font-family": "Helvetica, Arial, sans-serif",
+                  "font-style": "normal",
+                  "font-weight": "bold",
+                  "font-size": 18,
+                  "color": "#1f5fbf",
+                  "events": "no"
+                }
+              },
+              {
                 "selector": "node.table",
                 "style": {
                   "width": "data(table_width)",
@@ -25418,6 +25706,22 @@
                   "line-color": "#555",
                   "target-arrow-color": "#555",
                   "target-arrow-shape": "triangle"
+                }
+              },
+              {
+                "selector": "node.value",
+                "style": {
+                  "width": 24,
+                  "height": 20,
+                  "shape": "rectangle",
+                  "background-opacity": 0,
+                  "border-width": 0,
+                  "font-family": "Helvetica, Arial, sans-serif",
+                  "font-style": "normal",
+                  "font-weight": "bold",
+                  "font-size": 18,
+                  "color": "#1f5fbf",
+                  "events": "no"
                 }
               },
               {
@@ -25965,6 +26269,22 @@
                 }
               },
               {
+                "selector": "node.value",
+                "style": {
+                  "width": 24,
+                  "height": 20,
+                  "shape": "rectangle",
+                  "background-opacity": 0,
+                  "border-width": 0,
+                  "font-family": "Helvetica, Arial, sans-serif",
+                  "font-style": "normal",
+                  "font-weight": "bold",
+                  "font-size": 18,
+                  "color": "#1f5fbf",
+                  "events": "no"
+                }
+              },
+              {
                 "selector": "node.table",
                 "style": {
                   "width": "data(table_width)",
@@ -26078,17 +26398,6 @@
               },
               {
                 "position": {
-                  "x": 160,
-                  "y": 0
-                },
-                "classes": "query",
-                "data": {
-                  "id": "E",
-                  "label": "E"
-                }
-              },
-              {
-                "position": {
                   "x": 80,
                   "y": 90
                 },
@@ -26096,6 +26405,17 @@
                 "data": {
                   "id": "A",
                   "label": "A"
+                }
+              },
+              {
+                "position": {
+                  "x": 160,
+                  "y": 0
+                },
+                "classes": "query",
+                "data": {
+                  "id": "E",
+                  "label": "E"
                 }
               }
             ],
@@ -26157,6 +26477,22 @@
                   "line-color": "#555",
                   "target-arrow-color": "#555",
                   "target-arrow-shape": "triangle"
+                }
+              },
+              {
+                "selector": "node.value",
+                "style": {
+                  "width": 24,
+                  "height": 20,
+                  "shape": "rectangle",
+                  "background-opacity": 0,
+                  "border-width": 0,
+                  "font-family": "Helvetica, Arial, sans-serif",
+                  "font-style": "normal",
+                  "font-weight": "bold",
+                  "font-size": 18,
+                  "color": "#1f5fbf",
+                  "events": "no"
                 }
               },
               {
@@ -26273,17 +26609,6 @@
               },
               {
                 "position": {
-                  "x": 160,
-                  "y": 0
-                },
-                "classes": "query",
-                "data": {
-                  "id": "E",
-                  "label": "E"
-                }
-              },
-              {
-                "position": {
                   "x": 80,
                   "y": 90
                 },
@@ -26291,6 +26616,17 @@
                 "data": {
                   "id": "A",
                   "label": "A"
+                }
+              },
+              {
+                "position": {
+                  "x": 160,
+                  "y": 0
+                },
+                "classes": "query",
+                "data": {
+                  "id": "E",
+                  "label": "E"
                 }
               }
             ],
@@ -26359,6 +26695,22 @@
                   "line-color": "#555",
                   "target-arrow-color": "#555",
                   "target-arrow-shape": "none"
+                }
+              },
+              {
+                "selector": "node.value",
+                "style": {
+                  "width": 24,
+                  "height": 20,
+                  "shape": "rectangle",
+                  "background-opacity": 0,
+                  "border-width": 0,
+                  "font-family": "Helvetica, Arial, sans-serif",
+                  "font-style": "normal",
+                  "font-weight": "bold",
+                  "font-size": 18,
+                  "color": "#1f5fbf",
+                  "events": "no"
                 }
               },
               {
@@ -26743,6 +27095,22 @@
                 }
               },
               {
+                "selector": "node.value",
+                "style": {
+                  "width": 24,
+                  "height": 20,
+                  "shape": "rectangle",
+                  "background-opacity": 0,
+                  "border-width": 0,
+                  "font-family": "Helvetica, Arial, sans-serif",
+                  "font-style": "normal",
+                  "font-weight": "bold",
+                  "font-size": 18,
+                  "color": "#1f5fbf",
+                  "events": "no"
+                }
+              },
+              {
                 "selector": "node.table",
                 "style": {
                   "width": "data(table_width)",
@@ -26912,6 +27280,22 @@
                 }
               },
               {
+                "selector": "node.value",
+                "style": {
+                  "width": 24,
+                  "height": 20,
+                  "shape": "rectangle",
+                  "background-opacity": 0,
+                  "border-width": 0,
+                  "font-family": "Helvetica, Arial, sans-serif",
+                  "font-style": "normal",
+                  "font-weight": "bold",
+                  "font-size": 18,
+                  "color": "#1f5fbf",
+                  "events": "no"
+                }
+              },
+              {
                 "selector": "node.table",
                 "style": {
                   "width": "data(table_width)",
@@ -27078,6 +27462,22 @@
                   "line-color": "#555",
                   "target-arrow-color": "#555",
                   "target-arrow-shape": "none"
+                }
+              },
+              {
+                "selector": "node.value",
+                "style": {
+                  "width": 24,
+                  "height": 20,
+                  "shape": "rectangle",
+                  "background-opacity": 0,
+                  "border-width": 0,
+                  "font-family": "Helvetica, Arial, sans-serif",
+                  "font-style": "normal",
+                  "font-weight": "bold",
+                  "font-size": 18,
+                  "color": "#1f5fbf",
+                  "events": "no"
                 }
               },
               {
@@ -27400,6 +27800,22 @@
                 }
               },
               {
+                "selector": "node.value",
+                "style": {
+                  "width": 24,
+                  "height": 20,
+                  "shape": "rectangle",
+                  "background-opacity": 0,
+                  "border-width": 0,
+                  "font-family": "Helvetica, Arial, sans-serif",
+                  "font-style": "normal",
+                  "font-weight": "bold",
+                  "font-size": 18,
+                  "color": "#1f5fbf",
+                  "events": "no"
+                }
+              },
+              {
                 "selector": "node.table",
                 "style": {
                   "width": "data(table_width)",
@@ -27738,6 +28154,22 @@
                 }
               },
               {
+                "selector": "node.value",
+                "style": {
+                  "width": 24,
+                  "height": 20,
+                  "shape": "rectangle",
+                  "background-opacity": 0,
+                  "border-width": 0,
+                  "font-family": "Helvetica, Arial, sans-serif",
+                  "font-style": "normal",
+                  "font-weight": "bold",
+                  "font-size": 18,
+                  "color": "#1f5fbf",
+                  "events": "no"
+                }
+              },
+              {
                 "selector": "node.table",
                 "style": {
                   "width": "data(table_width)",
@@ -27907,6 +28339,22 @@
                 }
               },
               {
+                "selector": "node.value",
+                "style": {
+                  "width": 24,
+                  "height": 20,
+                  "shape": "rectangle",
+                  "background-opacity": 0,
+                  "border-width": 0,
+                  "font-family": "Helvetica, Arial, sans-serif",
+                  "font-style": "normal",
+                  "font-weight": "bold",
+                  "font-size": 18,
+                  "color": "#1f5fbf",
+                  "events": "no"
+                }
+              },
+              {
                 "selector": "node.table",
                 "style": {
                   "width": "data(table_width)",
@@ -28073,6 +28521,22 @@
                   "line-color": "#555",
                   "target-arrow-color": "#555",
                   "target-arrow-shape": "none"
+                }
+              },
+              {
+                "selector": "node.value",
+                "style": {
+                  "width": 24,
+                  "height": 20,
+                  "shape": "rectangle",
+                  "background-opacity": 0,
+                  "border-width": 0,
+                  "font-family": "Helvetica, Arial, sans-serif",
+                  "font-style": "normal",
+                  "font-weight": "bold",
+                  "font-size": 18,
+                  "color": "#1f5fbf",
+                  "events": "no"
                 }
               },
               {
@@ -28494,6 +28958,22 @@
                 }
               },
               {
+                "selector": "node.value",
+                "style": {
+                  "width": 24,
+                  "height": 20,
+                  "shape": "rectangle",
+                  "background-opacity": 0,
+                  "border-width": 0,
+                  "font-family": "Helvetica, Arial, sans-serif",
+                  "font-style": "normal",
+                  "font-weight": "bold",
+                  "font-size": 18,
+                  "color": "#1f5fbf",
+                  "events": "no"
+                }
+              },
+              {
                 "selector": "node.table",
                 "style": {
                   "width": "data(table_width)",
@@ -28607,17 +29087,6 @@
               },
               {
                 "position": {
-                  "x": 0,
-                  "y": 100
-                },
-                "classes": "observed",
-                "data": {
-                  "id": "H",
-                  "label": "H"
-                }
-              },
-              {
-                "position": {
                   "x": 140,
                   "y": 0
                 },
@@ -28625,6 +29094,17 @@
                 "data": {
                   "id": "A",
                   "label": "A"
+                }
+              },
+              {
+                "position": {
+                  "x": 0,
+                  "y": 100
+                },
+                "classes": "observed",
+                "data": {
+                  "id": "H",
+                  "label": "H"
                 }
               }
             ],
@@ -28686,6 +29166,22 @@
                   "line-color": "#555",
                   "target-arrow-color": "#555",
                   "target-arrow-shape": "triangle"
+                }
+              },
+              {
+                "selector": "node.value",
+                "style": {
+                  "width": 24,
+                  "height": 20,
+                  "shape": "rectangle",
+                  "background-opacity": 0,
+                  "border-width": 0,
+                  "font-family": "Helvetica, Arial, sans-serif",
+                  "font-style": "normal",
+                  "font-weight": "bold",
+                  "font-size": 18,
+                  "color": "#1f5fbf",
+                  "events": "no"
                 }
               },
               {
@@ -28802,17 +29298,6 @@
               },
               {
                 "position": {
-                  "x": 0,
-                  "y": 100
-                },
-                "classes": "observed",
-                "data": {
-                  "id": "H",
-                  "label": "H"
-                }
-              },
-              {
-                "position": {
                   "x": 140,
                   "y": 0
                 },
@@ -28820,6 +29305,17 @@
                 "data": {
                   "id": "A",
                   "label": "A"
+                }
+              },
+              {
+                "position": {
+                  "x": 0,
+                  "y": 100
+                },
+                "classes": "observed",
+                "data": {
+                  "id": "H",
+                  "label": "H"
                 }
               }
             ],
@@ -28888,6 +29384,22 @@
                   "line-color": "#555",
                   "target-arrow-color": "#555",
                   "target-arrow-shape": "none"
+                }
+              },
+              {
+                "selector": "node.value",
+                "style": {
+                  "width": 24,
+                  "height": 20,
+                  "shape": "rectangle",
+                  "background-opacity": 0,
+                  "border-width": 0,
+                  "font-family": "Helvetica, Arial, sans-serif",
+                  "font-style": "normal",
+                  "font-weight": "bold",
+                  "font-size": 18,
+                  "color": "#1f5fbf",
+                  "events": "no"
                 }
               },
               {
@@ -29309,6 +29821,22 @@
                 }
               },
               {
+                "selector": "node.value",
+                "style": {
+                  "width": 24,
+                  "height": 20,
+                  "shape": "rectangle",
+                  "background-opacity": 0,
+                  "border-width": 0,
+                  "font-family": "Helvetica, Arial, sans-serif",
+                  "font-style": "normal",
+                  "font-weight": "bold",
+                  "font-size": 18,
+                  "color": "#1f5fbf",
+                  "events": "no"
+                }
+              },
+              {
                 "selector": "node.table",
                 "style": {
                   "width": "data(table_width)",
@@ -29423,23 +29951,23 @@
               {
                 "position": {
                   "x": 140,
-                  "y": 0
-                },
-                "classes": "",
-                "data": {
-                  "id": "A",
-                  "label": "A"
-                }
-              },
-              {
-                "position": {
-                  "x": 140,
                   "y": 100
                 },
                 "classes": "query",
                 "data": {
                   "id": "I",
                   "label": "I"
+                }
+              },
+              {
+                "position": {
+                  "x": 140,
+                  "y": 0
+                },
+                "classes": "",
+                "data": {
+                  "id": "A",
+                  "label": "A"
                 }
               }
             ],
@@ -29494,6 +30022,22 @@
                   "line-color": "#555",
                   "target-arrow-color": "#555",
                   "target-arrow-shape": "triangle"
+                }
+              },
+              {
+                "selector": "node.value",
+                "style": {
+                  "width": 24,
+                  "height": 20,
+                  "shape": "rectangle",
+                  "background-opacity": 0,
+                  "border-width": 0,
+                  "font-family": "Helvetica, Arial, sans-serif",
+                  "font-style": "normal",
+                  "font-weight": "bold",
+                  "font-size": 18,
+                  "color": "#1f5fbf",
+                  "events": "no"
                 }
               },
               {
@@ -29611,23 +30155,23 @@
               {
                 "position": {
                   "x": 140,
-                  "y": 0
-                },
-                "classes": "",
-                "data": {
-                  "id": "A",
-                  "label": "A"
-                }
-              },
-              {
-                "position": {
-                  "x": 140,
                   "y": 100
                 },
                 "classes": "query",
                 "data": {
                   "id": "I",
                   "label": "I"
+                }
+              },
+              {
+                "position": {
+                  "x": 140,
+                  "y": 0
+                },
+                "classes": "",
+                "data": {
+                  "id": "A",
+                  "label": "A"
                 }
               }
             ],
@@ -29682,6 +30226,22 @@
                   "line-color": "#555",
                   "target-arrow-color": "#555",
                   "target-arrow-shape": "none"
+                }
+              },
+              {
+                "selector": "node.value",
+                "style": {
+                  "width": 24,
+                  "height": 20,
+                  "shape": "rectangle",
+                  "background-opacity": 0,
+                  "border-width": 0,
+                  "font-family": "Helvetica, Arial, sans-serif",
+                  "font-style": "normal",
+                  "font-weight": "bold",
+                  "font-size": 18,
+                  "color": "#1f5fbf",
+                  "events": "no"
                 }
               },
               {
@@ -30103,6 +30663,22 @@
                 }
               },
               {
+                "selector": "node.value",
+                "style": {
+                  "width": 24,
+                  "height": 20,
+                  "shape": "rectangle",
+                  "background-opacity": 0,
+                  "border-width": 0,
+                  "font-family": "Helvetica, Arial, sans-serif",
+                  "font-style": "normal",
+                  "font-weight": "bold",
+                  "font-size": 18,
+                  "color": "#1f5fbf",
+                  "events": "no"
+                }
+              },
+              {
                 "selector": "node.table",
                 "style": {
                   "width": "data(table_width)",
@@ -30216,13 +30792,13 @@
               },
               {
                 "position": {
-                  "x": 0,
+                  "x": 140,
                   "y": 100
                 },
-                "classes": "observed",
+                "classes": "query",
                 "data": {
-                  "id": "H",
-                  "label": "H"
+                  "id": "I",
+                  "label": "I"
                 }
               },
               {
@@ -30238,13 +30814,13 @@
               },
               {
                 "position": {
-                  "x": 140,
+                  "x": 0,
                   "y": 100
                 },
-                "classes": "query",
+                "classes": "observed",
                 "data": {
-                  "id": "I",
-                  "label": "I"
+                  "id": "H",
+                  "label": "H"
                 }
               }
             ],
@@ -30313,6 +30889,22 @@
                   "line-color": "#555",
                   "target-arrow-color": "#555",
                   "target-arrow-shape": "triangle"
+                }
+              },
+              {
+                "selector": "node.value",
+                "style": {
+                  "width": 24,
+                  "height": 20,
+                  "shape": "rectangle",
+                  "background-opacity": 0,
+                  "border-width": 0,
+                  "font-family": "Helvetica, Arial, sans-serif",
+                  "font-style": "normal",
+                  "font-weight": "bold",
+                  "font-size": 18,
+                  "color": "#1f5fbf",
+                  "events": "no"
                 }
               },
               {
@@ -30429,13 +31021,13 @@
               },
               {
                 "position": {
-                  "x": 0,
+                  "x": 140,
                   "y": 100
                 },
-                "classes": "observed",
+                "classes": "query",
                 "data": {
-                  "id": "H",
-                  "label": "H"
+                  "id": "I",
+                  "label": "I"
                 }
               },
               {
@@ -30451,13 +31043,13 @@
               },
               {
                 "position": {
-                  "x": 140,
+                  "x": 0,
                   "y": 100
                 },
-                "classes": "query",
+                "classes": "observed",
                 "data": {
-                  "id": "I",
-                  "label": "I"
+                  "id": "H",
+                  "label": "H"
                 }
               }
             ],
@@ -30533,6 +31125,22 @@
                   "line-color": "#555",
                   "target-arrow-color": "#555",
                   "target-arrow-shape": "none"
+                }
+              },
+              {
+                "selector": "node.value",
+                "style": {
+                  "width": 24,
+                  "height": 20,
+                  "shape": "rectangle",
+                  "background-opacity": 0,
+                  "border-width": 0,
+                  "font-family": "Helvetica, Arial, sans-serif",
+                  "font-style": "normal",
+                  "font-weight": "bold",
+                  "font-size": 18,
+                  "color": "#1f5fbf",
+                  "events": "no"
                 }
               },
               {
@@ -30954,6 +31562,22 @@
                 }
               },
               {
+                "selector": "node.value",
+                "style": {
+                  "width": 24,
+                  "height": 20,
+                  "shape": "rectangle",
+                  "background-opacity": 0,
+                  "border-width": 0,
+                  "font-family": "Helvetica, Arial, sans-serif",
+                  "font-style": "normal",
+                  "font-weight": "bold",
+                  "font-size": 18,
+                  "color": "#1f5fbf",
+                  "events": "no"
+                }
+              },
+              {
                 "selector": "node.table",
                 "style": {
                   "width": "data(table_width)",
@@ -31068,23 +31692,23 @@
               {
                 "position": {
                   "x": 140,
-                  "y": 0
-                },
-                "classes": "observed",
-                "data": {
-                  "id": "A",
-                  "label": "A"
-                }
-              },
-              {
-                "position": {
-                  "x": 140,
                   "y": 100
                 },
                 "classes": "query",
                 "data": {
                   "id": "I",
                   "label": "I"
+                }
+              },
+              {
+                "position": {
+                  "x": 140,
+                  "y": 0
+                },
+                "classes": "observed",
+                "data": {
+                  "id": "A",
+                  "label": "A"
                 }
               }
             ],
@@ -31139,6 +31763,22 @@
                   "line-color": "#555",
                   "target-arrow-color": "#555",
                   "target-arrow-shape": "triangle"
+                }
+              },
+              {
+                "selector": "node.value",
+                "style": {
+                  "width": 24,
+                  "height": 20,
+                  "shape": "rectangle",
+                  "background-opacity": 0,
+                  "border-width": 0,
+                  "font-family": "Helvetica, Arial, sans-serif",
+                  "font-style": "normal",
+                  "font-weight": "bold",
+                  "font-size": 18,
+                  "color": "#1f5fbf",
+                  "events": "no"
                 }
               },
               {
@@ -31256,23 +31896,23 @@
               {
                 "position": {
                   "x": 140,
-                  "y": 0
-                },
-                "classes": "observed",
-                "data": {
-                  "id": "A",
-                  "label": "A"
-                }
-              },
-              {
-                "position": {
-                  "x": 140,
                   "y": 100
                 },
                 "classes": "query",
                 "data": {
                   "id": "I",
                   "label": "I"
+                }
+              },
+              {
+                "position": {
+                  "x": 140,
+                  "y": 0
+                },
+                "classes": "observed",
+                "data": {
+                  "id": "A",
+                  "label": "A"
                 }
               }
             ],
@@ -31327,6 +31967,22 @@
                   "line-color": "#555",
                   "target-arrow-color": "#555",
                   "target-arrow-shape": "none"
+                }
+              },
+              {
+                "selector": "node.value",
+                "style": {
+                  "width": 24,
+                  "height": 20,
+                  "shape": "rectangle",
+                  "background-opacity": 0,
+                  "border-width": 0,
+                  "font-family": "Helvetica, Arial, sans-serif",
+                  "font-style": "normal",
+                  "font-weight": "bold",
+                  "font-size": 18,
+                  "color": "#1f5fbf",
+                  "events": "no"
                 }
               },
               {
@@ -31577,7 +32233,7 @@
         },
         "given": {
           "type": "set",
-          "contents": "{'H', 'A'}",
+          "contents": "{'A', 'H'}",
           "dtype": null,
           "shape": null
         }
@@ -31748,6 +32404,22 @@
                 }
               },
               {
+                "selector": "node.value",
+                "style": {
+                  "width": 24,
+                  "height": 20,
+                  "shape": "rectangle",
+                  "background-opacity": 0,
+                  "border-width": 0,
+                  "font-family": "Helvetica, Arial, sans-serif",
+                  "font-style": "normal",
+                  "font-weight": "bold",
+                  "font-size": 18,
+                  "color": "#1f5fbf",
+                  "events": "no"
+                }
+              },
+              {
                 "selector": "node.table",
                 "style": {
                   "width": "data(table_width)",
@@ -31861,13 +32533,13 @@
               },
               {
                 "position": {
-                  "x": 0,
+                  "x": 140,
                   "y": 100
                 },
-                "classes": "observed",
+                "classes": "query",
                 "data": {
-                  "id": "H",
-                  "label": "H"
+                  "id": "I",
+                  "label": "I"
                 }
               },
               {
@@ -31883,13 +32555,13 @@
               },
               {
                 "position": {
-                  "x": 140,
+                  "x": 0,
                   "y": 100
                 },
-                "classes": "query",
+                "classes": "observed",
                 "data": {
-                  "id": "I",
-                  "label": "I"
+                  "id": "H",
+                  "label": "H"
                 }
               }
             ],
@@ -31958,6 +32630,22 @@
                   "line-color": "#555",
                   "target-arrow-color": "#555",
                   "target-arrow-shape": "triangle"
+                }
+              },
+              {
+                "selector": "node.value",
+                "style": {
+                  "width": 24,
+                  "height": 20,
+                  "shape": "rectangle",
+                  "background-opacity": 0,
+                  "border-width": 0,
+                  "font-family": "Helvetica, Arial, sans-serif",
+                  "font-style": "normal",
+                  "font-weight": "bold",
+                  "font-size": 18,
+                  "color": "#1f5fbf",
+                  "events": "no"
                 }
               },
               {
@@ -32074,13 +32762,13 @@
               },
               {
                 "position": {
-                  "x": 0,
+                  "x": 140,
                   "y": 100
                 },
-                "classes": "observed",
+                "classes": "query",
                 "data": {
-                  "id": "H",
-                  "label": "H"
+                  "id": "I",
+                  "label": "I"
                 }
               },
               {
@@ -32096,13 +32784,13 @@
               },
               {
                 "position": {
-                  "x": 140,
+                  "x": 0,
                   "y": 100
                 },
-                "classes": "query",
+                "classes": "observed",
                 "data": {
-                  "id": "I",
-                  "label": "I"
+                  "id": "H",
+                  "label": "H"
                 }
               }
             ],
@@ -32178,6 +32866,22 @@
                   "line-color": "#555",
                   "target-arrow-color": "#555",
                   "target-arrow-shape": "none"
+                }
+              },
+              {
+                "selector": "node.value",
+                "style": {
+                  "width": 24,
+                  "height": 20,
+                  "shape": "rectangle",
+                  "background-opacity": 0,
+                  "border-width": 0,
+                  "font-family": "Helvetica, Arial, sans-serif",
+                  "font-style": "normal",
+                  "font-weight": "bold",
+                  "font-size": 18,
+                  "color": "#1f5fbf",
+                  "events": "no"
                 }
               },
               {

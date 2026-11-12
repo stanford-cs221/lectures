@@ -6,7 +6,7 @@ readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
     "altair>=5.5.0",
-    "edtrace>=0.1.23",
+    "edtrace>=0.1.24",
     "einops>=0.8.1",
     "graphviz>=0.21",
     "jaxtyping>=0.3.2",
