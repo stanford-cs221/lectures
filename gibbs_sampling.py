@@ -550,7 +550,7 @@ def remove_leaves(positions: dict[str, tuple[float, float]], edges: list[tuple[s
             break
         nodes -= leaves
         edges = [(parent, child) for parent, child in edges if parent in nodes and child in nodes]
-    positions = {node: positions[node] for node in nodes}
+    positions = {node: position for node, position in positions.items() if node in nodes}  # Keep the order (nodes is a set)
     return draw_bayes_net(positions, edges, observed=given, classes={a: "query", b: "query"}), positions, edges
 
 
