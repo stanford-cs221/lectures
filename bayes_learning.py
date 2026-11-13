@@ -9,7 +9,7 @@ import functools
 def main():
     text("# Learning parameters of Bayesian networks")
     text("Last unit: Bayesian networks, probabilistic inference, conditional independence")
-    text("This unit: learning the parameters of the Bayesian networks")
+    text("This unit: learning the parameters of Bayesian networks")
 
     review_bayesian_networks()
 
@@ -422,8 +422,8 @@ def maximum_likelihood():
 
     text("🎯 **Maximum likelihood** principle:")
     text(r"Find the parameters $\theta$ that maximize the likelihood of the data")
-    text(r"$\displaystyle \max_\theta \prod_x P(X = x; \theta)$")
-    text(r"$\displaystyle = \max_\theta \sum_x \log P(X = x; \theta)$")
+    text(r"$\displaystyle \arg\max_\theta \prod_x P(X = x; \theta)$")
+    text(r"$\displaystyle = \arg\max_\theta \sum_x \log P(X = x; \theta)$")
 
     text("Solution is count + normalize!")
     text("**Closed form** - no iterative optimization needed!")
@@ -448,7 +448,7 @@ def maximum_likelihood_one_variable():
 
     training_data = [{"R": 1}, {"R": 5}, {"R": 5}]
     graph(draw_data(training_data, SINGLE_NET))  # @stepover
-    text(r"$\max_\theta \, p_R(1) \, p_R(5) \, p_R(5)$")
+    text(r"$\arg\max_\theta \, p_R(1) \, p_R(5) \, p_R(5)$")
     text(r"subject to $p_R(1) + p_R(2) + p_R(3) + p_R(4) + p_R(5) = 1$")
 
     text("Sketch:")
@@ -473,15 +473,15 @@ def maximum_likelihood_two_variables():
     ]
     graph(draw_data(training_data, PAIR_NET))  # @stepover
 
-    text(r"$\max_\theta \, p_G(\text{drama}) \, p_R(4 \mid \text{drama}) \, p_G(\text{drama}) \, p_R(5 \mid \text{drama}) \, p_G(\text{comedy}) \, p_R(5 \mid \text{comedy})$")
+    text(r"$\arg\max_\theta \, p_G(\text{drama}) \, p_R(4 \mid \text{drama}) \, p_G(\text{drama}) \, p_R(5 \mid \text{drama}) \, p_G(\text{comedy}) \, p_R(5 \mid \text{comedy})$")
 
     text("Rearrange factors into groups that are actually connected:")
-    text(r"$\max_\theta \, [p_G(\text{drama}) \, p_G(\text{drama}) \, p_G(\text{comedy})] \, [p_R(4 \mid \text{drama}) \, p_R(5 \mid \text{drama})] \, [p_R(5 \mid \text{comedy})]$")
+    text(r"$\arg\max_\theta \, [p_G(\text{drama}) \, p_G(\text{drama}) \, p_G(\text{comedy})] \, [p_R(4 \mid \text{drama}) \, p_R(5 \mid \text{drama})] \, [p_R(5 \mid \text{comedy})]$")
 
     text("This splits up into separate optimization problems:")
-    text(r"- $\max_{p_G} \, [p_G(\text{drama}) \, p_G(\text{drama}) \, p_G(\text{comedy})]$")
-    text(r"- $\max_{p_R(\cdot \mid \text{drama})} \, [p_R(4 \mid \text{drama}) \, p_R(5 \mid \text{drama})]$")
-    text(r"- $\max_{p_R(\cdot \mid \text{comedy})} \, [p_R(5 \mid \text{comedy})]$")
+    text(r"- $\arg\max_{p_G} \, [p_G(\text{drama}) \, p_G(\text{drama}) \, p_G(\text{comedy})]$")
+    text(r"- $\arg\max_{p_R(\cdot \mid \text{drama})} \, [p_R(4 \mid \text{drama}) \, p_R(5 \mid \text{drama})]$")
+    text(r"- $\arg\max_{p_R(\cdot \mid \text{comedy})} \, [p_R(5 \mid \text{comedy})]$")
 
     text("Each optimization problem can be solved in the same way as the one variable case!")
 
@@ -555,9 +555,9 @@ def introduce_expectation_maximization():
 
     text("**Maximum likelihood**: maximize the likelihood of the observed data")
     text("Here, the data is whatever is observed!")
-    text(r"$\displaystyle \max_\theta \sum_x \log P(X = x; \theta)$")
-    text(r"$= \displaystyle \max_\theta \sum_{r_1, r_2} \log P(R_1 = r_1, R_2 = r_2; \theta)$")
-    text(r"$= \displaystyle \max_\theta \sum_{r_1, r_2} \log \sum_g P(G = g, R_1 = r_1, R_2 = r_2; \theta)$")
+    text(r"$\displaystyle \arg\max_\theta \sum_x \log P(X = x; \theta)$")
+    text(r"$= \displaystyle \arg\max_\theta \sum_{r_1, r_2} \log P(R_1 = r_1, R_2 = r_2; \theta)$")
+    text(r"$= \displaystyle \arg\max_\theta \sum_{r_1, r_2} \log \sum_g P(G = g, R_1 = r_1, R_2 = r_2; \theta)$")
 
     text("The players:")
     text(r"- Observed variables: $R_1$, $R_2$")
