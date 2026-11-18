@@ -484,7 +484,7 @@ def connection_to_bayesian_networks():
 
     text(r"Translating terminology between Bayesian networks $\leftrightarrow$ propositional logic")
     text(r"- Random variables $\leftrightarrow$ propositional symbols")
-    text(r"- Models $\leftrightarrow$ assignments")
+    text(r"- Assignments $\leftrightarrow$ models")
 
     text(r"Recall probabilistic inference: $P(\text{query} \mid \text{evidence})$")
     text(r"- Evidence $\leftrightarrow$ knowledge base KB")
