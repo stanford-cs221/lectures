@@ -1,5 +1,4 @@
-from re import T
-from edtrace import text, image
+from edtrace import text, image, graph, make_graph
 from propositional_logic import Formula, I, get_models, to_formula
 from dataclasses import dataclass
 from z3 import Bool, ExprRef, And, Or, Not, Implies, DeclareSort, Function, BoolSort, Const, ForAll, Exists, Solver, sat, unsat, Var
@@ -51,17 +50,17 @@ Happy = Function("Happy", Object, BoolSort())
 
 
 def main():
-    text("### Lecture 16: First-order logic")
+    text("# First-order logic")
 
     motivating_example()
     review_logic()
     limitations_of_propositional_logic()
     introduce_first_order_logic()
 
-    text("Summary:")
+    text("📝 Summary:")
     text("- First-order logic: more powerful than propositional logic")
     text("- Introduces terms (denote objects), functions, predicates")
-    text("- Introduces variables and quantifiers (∀, ∃) that operate over objects")
+    text(r"- Introduces variables and quantifiers ($\forall$, $\exists$) that operate over objects")
     text("- Model/interpretation function: maps symbols to objects in the domain")
     text("- Propositionalization: reduce first-order logic to propositional logic")
     text("- Modus ponens with substitution and unification: works on definite clauses")
@@ -113,8 +112,8 @@ def motivating_example():
     result = ask(kb, Snowing)  # @inspect result @stepover
 
     text("This is an example of performing inference in first-order logic.")
-    text("What can first-order logic represent?")
-    text("How can we do inference in first-order logic?")
+    text("What can first-order logic *represent*?")
+    text("How can we do *inference* in first-order logic?")
 
 
 def ask(kb: list[Formula], f: Formula) -> str:
@@ -136,62 +135,63 @@ def review_logic():
     text("Logic is a language for representing knowledge and reasoning about it.")
 
     text("To define a logic, we need to define its syntax, semantics, and inference rules.")
-    image("images/syntax-semantics-rules.png", width=600)
+    image("images/syntax-semantics-rules.svg", width=600)
 
-    text("**Syntax**: what are valid formulas?")
-    text("Propositional logic:")
-    text("- Propositional symbols (e.g., Rain Wet):")
+    text("🔤 **Syntax**: what are valid formulas?")
+    text("⚛️ Propositional logic:")
+    text(r"- Propositional symbols (e.g., $\text{Rain}$, $\text{Wet}$):")
     Rain = Bool("Rain")  # Rain
     Wet = Bool("Wet")  # Wet
     symbols = [Rain, Wet]
-    text("- Recursively combined using logical connectives (e.g., ∧, ∨, ¬, →, ↔)")
+    text(r"- Recursively combined using logical connectives (e.g., $\wedge$, $\vee$, $\neg$, $\to$, $\leftrightarrow$)")
     formula = And(Rain, Not(Wet))  # Rain ∧ ¬Wet
     text("These are just symbols.")
 
-    text("**Semantics**: what do these formulas mean?")
-    text("Propositional logic:")
+    text("💭 **Semantics**: what do these formulas mean?")
+    text("⚛️ Propositional logic:")
     text("- Models: assignments of truth values to propositional symbols")
     w = {Rain: True, Wet: False}
     text("- Interpretation function: maps a formula and a model to a truth value")
+    formula = Not(Rain)
     result = I(formula, w)  # @inspect result
-    text("- Models: maps a formula f to the set of models M(f) that satisfy it")
+    text(r"- Models of a formula: maps a formula $f$ to the set of models $\mathcal{M}(f)$ that satisfy it")
     models = get_models(formula, [Rain, Wet])  # @inspect models
 
     text("- Knowledge base: set of formulas (what we know)")
     kb = [Rain, Implies(Rain, Wet)]  # Rain ∧ (Rain → Wet)
     f = Wet
-    text("Relationship between knowledge base KB and formula f:")
-    text("Old models: M(KB)")
+    text(r"Relationship between knowledge base KB and formula $f$:")
+    text(r"Old models: $\mathcal{M}(\text{KB})$")
     old_models = get_models(to_formula(kb), symbols)  # @inspect old_models
-    text("New models: M(KB ∪ {f})")
+    text(r"New models: $\mathcal{M}(\text{KB} \cup \{f\})$")
     new_models = get_models(to_formula(kb + [f]), symbols)  # @inspect new_models
-    text("Entailment: M(KB) = M(KB ∪ {f})")
+    text(r"Entailment: $\mathcal{M}(\text{KB}) = \mathcal{M}(\text{KB} \cup \{f\})$")
     if old_models == new_models:
         result = "Entailment"
-    text("Contradiction: M(KB ∪ {f}) = ∅")
+    text(r"Contradiction: $\mathcal{M}(\text{KB} \cup \{f\}) = \emptyset$")
     if new_models == []:
         result = "Contradiction"
-    text("Contingency: ∅ ≠ M(KB ∪ {f}) ≠ M(KB)")
+    text(r"Contingency: $\emptyset \neq \mathcal{M}(\text{KB} \cup \{f\}) \neq \mathcal{M}(\text{KB})$")
     if new_models != [] and new_models != old_models:
         result = "Contingency"
 
     text("Used to implement:")
-    text("- Ask[f]: check if f is entailed by the KB")
-    text("- Tell[f]: add f to the KB if it is contingent on the KB")
+    text(r"- $\text{Ask}[f]$: check if $f$ is entailed by the KB")
+    text(r"- $\text{Tell}[f]$: add $f$ to the KB if it is contingent with respect to the KB")
 
-    text("Satisfiability: KB is satisfiable iff M(KB) ≠ ∅")
-    text("Model checking: determine if a KB is satisfiable")
-    text("Reduce entailment/contradiction/contingency to satisfiability")
+    text(r"Satisfiability: KB is satisfiable iff $\mathcal{M}(\text{KB}) \neq \emptyset$")
+    text("- Model checking: determine if a KB is satisfiable")
+    text("- Reduce entailment/contradiction/contingency to satisfiability")
 
-    text("**Inference rules**: how to derive new valid formulas from existing ones?")
-    text("Set of rules (e.g., modus ponens) operate on the syntax")
-    text("Modus ponens: p, p → q ⊢ q")
-    text("Syntax: KB derives/proves f (KB ⊢ f) if exists set of rules that produce f")
-    text("Semantics: KB entails f (KB ⊧ f) if M(KB) = M(KB ∪ {f})")
+    text("⚙️ **Inference rules**: how to derive new valid formulas from existing ones?")
+    text("Rules (e.g., modus ponens) operate on the syntax")
+    text(r"Modus ponens: $p, p \to q \vdash q$")
+    text(r"Syntax: KB derives/proves $f$ ($\text{KB} \vdash f$) if there is a set of rules that produce $f$")
+    text(r"Semantics: KB entails $f$ ($\text{KB} \models f$) if $\mathcal{M}(\text{KB}) = \mathcal{M}(\text{KB} \cup \{f\})$")
 
     text("Relationship between syntax and semantics:")
-    text("- Soundness: if KB ⊢ f, then KB ⊧ f")
-    text("- Completeness: if KB ⊧ f, then KB ⊢ f")
+    text(r"- Soundness: if $\text{KB} \vdash f$, then $\text{KB} \models f$")
+    text(r"- Completeness: if $\text{KB} \models f$, then $\text{KB} \vdash f$")
     text("Ideally want soundness (nothing but the truth) and completeness (the whole truth).")
 
 
@@ -206,7 +206,11 @@ def limitations_of_propositional_logic():
     text("*All students know arithmetic.*")
     AliceIsStudent = Bool("AliceIsStudent")
     BobIsStudent = Bool("BobIsStudent")
-    formula = And(Implies(AliceIsStudent, AliceKnowsArithmetic), Implies(BobIsStudent, BobKnowsArithmetic))
+    StanfordIsStudent = Bool("StanfordIsStudent")
+    StanfordKnowsArithmetic = Bool("StanfordKnowsArithmetic")
+    formula = And(Implies(AliceIsStudent, AliceKnowsArithmetic),
+                  Implies(BobIsStudent, BobKnowsArithmetic),
+                  Implies(StanfordIsStudent, StanfordKnowsArithmetic))
 
     text("*Every even integer greater than 2 is the sum of two prime numbers.*")
     text("???")
@@ -214,12 +218,12 @@ def limitations_of_propositional_logic():
     text("In these cases, propositional logic is very clunky or not expressive enough.")
 
     text("What's missing?")
-    text("- Objects and predicates: propositions (e.g., AliceKnowsArithmetic) have more internal structure (alice, Knows, arithmetic)")
-    text("- Quantifiers and variables: *all* is a quantifier that applies to all people, don't/can't enumerate them all")
+    text(r"- Objects and predicates: propositions (e.g., $\text{AliceKnowsArithmetic}$) have more internal structure ($\text{alice}$, $\text{Knows}$, $\text{arithmetic}$)")
+    text("- Quantifiers and variables: *all* is a quantifier that applies to all objects, don't/can't enumerate them all")
 
 
 def introduce_first_order_logic():
-    image("images/syntax-semantics-rules.png", width=600)
+    image("images/syntax-semantics-rules.svg", width=600)
     first_order_logic_syntax()
     first_order_logic_semantics()
     propositionalization()
@@ -228,63 +232,63 @@ def introduce_first_order_logic():
 
 
 def first_order_logic_syntax():
-    text("**Syntax**: what are valid formulas?")
+    text("🔤 **Syntax**: what are valid formulas?")
 
     text("In propositional logic, formulas denote truth values.")
     text("In first-order logic, formulas denote truth values and terms denote objects.")
 
-    text("**Terms** (denote objects)")
+    text("🧱 **Terms** (denote objects)")
 
-    text("Constants:")
-    alice = Const("Alice", Object)  # alice
+    text("🔹 Constants:")
+    alice = Const("alice", Object)  # alice
     arithmetic = Const("arithmetic", Object)  # arithmetic
 
-    text("Variables:")
+    text("🔸 Variables:")
     x = Const("x", Object)  # x
     y = Const("y", Object)  # y
 
-    text("Functions:")
+    text("⚙️ Functions:")
     father = Function("father", Object, Object)  # father
     add = Function("add", Object, Object, Object)  # add
     term = father(alice)  # father(alice)
     term = add(x, y)  # add(x, y)
 
-    text("**Formulas** (denote truth values)")
+    text("📋 **Formulas** (denote truth values)")
 
-    text("Atomic formulas (predicate applied to terms):")
+    text("⚛️ Atomic formulas (predicate applied to terms):")
     Snowing = Bool("Snowing")  # 0-arity predicate (from propositional logic)
     Student = Function("Student", Object, BoolSort())  # 1-arity predicate (unary)
     Knows = Function("Knows", Object, Object, BoolSort())  # 2-arity predicate (binary)
     formula = Knows(x, arithmetic)  # Knows(x, arithmetic)
 
-    text("Connectives applied to formulas (just like propositional logic):")
+    text("🔗 Connectives applied to formulas (just like propositional logic):")
     formula = Implies(Student(x), Knows(x, arithmetic))  # Student(x) → Knows(x, arithmetic)
 
-    text("Quantifiers applied to formulas:")
+    text("♾️ Quantifiers applied to formulas:")
     # ∀x. Student(x) → Knows(x, arithmetic)
     formula = ForAll([x], Implies(Student(x), Knows(x, arithmetic)))
     # ∃x. Student(x) ∧ Knows(x, arithmetic)
     formula = Exists([x], And(Student(x), Knows(x, arithmetic)))
 
-    text("Non-formulas (in first-order logic):")
+    text("🚫 Non-formulas (in first-order logic):")
     # father(x) is a term, not a formula
-    text("- father(x)")
+    text(r"- $\text{father}(x)$")
     # Student is a predicate, not a term
-    text("- Knows(Student, arithmetic)")
-    # Can't apply function (Foo, etc.) to formula
-    text("- Foo(Knows(alice, arithmetic))")
+    text(r"- $\text{Knows}(\text{Student}, \text{arithmetic})$")
+    # Can't apply function (Student, etc.) to formula
+    text(r"- $\text{Student}(\text{Knows}(\text{alice}, \text{arithmetic}))$")
 
-    text("Convention:")
-    text("- Use lowercase for terms (e.g., alice, x, father(alice))")
-    text("- Use uppercase for formulas (e.g., Knows(x, arithmetic))")
+    text("📏 Convention:")
+    text(r"- Use lowercase for terms (e.g., $\text{alice}$, $x$, $\text{father}(\text{alice})$)")
+    text(r"- Use uppercase for formulas (e.g., $\text{Knows}(x, \text{arithmetic})$)")
 
-    text("Summary:")
-    text("- Terms (denote objects): arithmetic, x, y, father(x)")
-    text("- Formulas (denote truth values): ∀x. Student(x) → Knows(x, arithmetic)")
+    text("📝 Summary:")
+    text(r"- Terms (denote objects): $\text{arithmetic}$, $x$, $y$, $\text{father}(x)$")
+    text(r"- Formulas (denote truth values): $\forall x. \, \text{Student}(x) \to \text{Knows}(x, \text{arithmetic})$")
 
 
 def first_order_logic_semantics():
-    text("**Semantics**: what do these formulas mean?")
+    text("💭 **Semantics**: what do these formulas mean?")
 
     text("Recall that a model represents a possible world.")
 
@@ -295,40 +299,39 @@ def first_order_logic_semantics():
 
     text("What about in first-order logic?")
 
-    text("**Attempt 1**")
+    text("🧪 **Attempt 1**")
     text("Recall that in first-order logic, atomic formulas are predicates applied to terms.")
-    term = Knows(alice, arithmetic)  # formula Knows(alice, arithmetic)
-    term = Student(alice)  # formula Student(alice)
+    formula = Knows(alice, arithmetic)
+    formula = Student(alice)
 
     text("So let's define a model as an assignment of truth values to atomic formulas.")
     w = {Student(alice): True, Knows(alice, arithmetic): True}
 
-    text("Problem 1: what about atomic formulas with functions?")
+    text("🚧 Problem 1: what about atomic formulas with functions?")
     father = Function("father", Object, Object)  # function father
     term = father(alice)
     term = father(father(alice))
     term = father(father(father(alice)))
     term = father(father(father(father(alice))))
     text("There are an infinite number of atomic formulas!")
-    text("So a single model has to assign truth values to an infinite number of atomic formulas...not good.")
+    text("👎 So a single model has to assign truth values to an infinite number of atomic formulas...not good.")
 
-    text("Problem 2: two terms (different syntax) might actual refer to the same object.")
+    text("🚧 Problem 2: two terms (different syntax) might actually refer to the same object.")
     term = father(alice)
     term = bob
     text("It could be the case that Bob is Alice's father!")
     text("But these two terms behave independently of each other in the model...not good.")
     w = {Knows(father(alice), arithmetic): True, Knows(bob, arithmetic): False}
 
-    text("**Attempt 2**")
-    text("Key idea: introduce a layer of indirection")
+    text("💡 **Attempt 2**")
+    text("🔑 Key idea: introduce a layer of indirection")
 
     text("Define **domain** to be a set of objects.")
     domain = ["o1", "o2", "o3"]
 
-    text("Define **interpretation function** to map symbols to objects in the domain.")
+    text("Define **interpretation function** to map symbols to objects (or tuples of objects).")
 
     text("We start with the primitive symbols: constants, functions, and predicates.")
-    text("Each symbol is mapped to something involving the objects in the domain.")
 
     constants = {
         alice: "o1",
@@ -362,18 +365,18 @@ def first_order_logic_semantics():
         interpretation=interpretation,
     )  # @inspect w
 
-    image("images/fol-example.png", width=400)
+    graph(draw_model(w))  # @stepover
 
     text("The interpretation of an arbitrary formula is defined recursively.")
-    text("As in propositional logic, we define the interpretation function ℐ(f, w)...")
-    text("...to map a formula f and a model w to a truth value (true/false).")
+    text(r"As in propositional logic, we define the interpretation function $\mathcal{I}(f, w)$...")
+    text(r"...to map a formula $f$ and a model $w$ to a truth value (true/false).")
 
     result = interpret_formula(Knows(alice, arithmetic), w)  # @inspect result
     result = interpret_formula(ForAll([x], Knows(x, arithmetic)), w)  # @inspect result
 
-    text("Summary:")
-    text("- Semantics defined by interpretation function ℐ(f, w)")
-    text("- Model w = (domain, interpretation)")
+    text("📝 Summary:")
+    text(r"- Semantics defined by interpretation function $\mathcal{I}(f, w)$")
+    text(r"- Model $w = (\text{domain}, \text{interpretation})$")
     text("- Interpretation maps symbols (constants, functions, predicates) to objects in the domain")
     text("- Recursively interpret larger formulas and terms")
 
@@ -398,7 +401,7 @@ class FirstOrderLogicModel:
 def interpret_formula(f: Formula, w: FirstOrderLogicModel, subst: dict[Variable, str] = {}) -> bool:  # @inspect f w subst
     """
     Interpretation function: given a formula f and a model w, compute whether w satisfies f.
-    Substitution: a dictionary mapping variables to terms.
+    Substitution: a dictionary mapping variables to objects in the domain.
     """
     if is_quantifier(f) and f.is_forall():
         # Universal quantifier (e.g., ∀x. Student(x))
@@ -414,7 +417,7 @@ def interpret_formula(f: Formula, w: FirstOrderLogicModel, subst: dict[Variable,
     elif is_quantifier(f) and f.is_exists():
         # Existential quantifier (e.g., ∃x. Student(x))
         assert f.num_vars() == 1  # Only support one variable for now
-        variable = Var(f.var_name(0), f.var_sort(0))  # @inspect variable
+        variable = Var(0, f.var_sort(0))  # @inspect variable # Warning: this doesn't work for nested quantifiers
         body = f.body()  # @inspect body
 
         # Bind the variable to each object in the domain and check if the formula is true.
@@ -463,7 +466,7 @@ def interpret_formula(f: Formula, w: FirstOrderLogicModel, subst: dict[Variable,
     return result
 
 
-def interpret_term(t: Term, w: FirstOrderLogicModel, subst: dict[Variable, str]) -> bool:  # @inspect t w subst
+def interpret_term(t: Term, w: FirstOrderLogicModel, subst: dict[Variable, str]) -> str:  # @inspect t w subst
     """Interpret a term in a model with a substitution."""
     if is_var(t):
         # Variable (e.g., x)
@@ -478,7 +481,7 @@ def interpret_term(t: Term, w: FirstOrderLogicModel, subst: dict[Variable, str])
         func, args = t.decl(), t.args()  # @inspect func args
         func_value = w.interpretation.functions[func]  # @inspect func_value
         arg_values = [interpret_term(arg, w, subst) for arg in args]  # @inspect arg_values
-        result = func_value[arg_values] # @inspect result
+        result = func_value[arg_values[0] if len(arg_values) == 1 else tuple(arg_values)] # @inspect result
 
     return result
 
@@ -498,9 +501,9 @@ def propositionalization():
     text("We can't do this in general (because first-order logic is more powerful).")
 
     text("But we can do it if we assume two things about the model:")
-    image("images/unique-names-domain-closure.png", width=600)
-    text("- Unique names: each object corresponds to **at most one** constant (not w_2).")
-    text("- Domain closure: each object corresponds to **at least one** constant (not w_3).")
+    image("images/unique-names-domain-closure.svg", width=600)
+    text(r"- Unique names: each object corresponds to **at most one** constant (not $w_2$).")
+    text(r"- Domain closure: each object corresponds to **at least one** constant (not $w_3$).")
 
     text("In this case, we can **propositionalize** the knowledge base.")
     StudentAlice = Bool("StudentAlice")
@@ -513,7 +516,7 @@ def propositionalization():
         And(Implies(StudentAlice, KnowsAliceArithmetic), Implies(StudentBob, KnowsBobArithmetic)),
         Or(And(StudentAlice, KnowsAliceArithmetic), And(StudentBob, KnowsBobArithmetic)),
     ]
-    text("This is just propositional logic, and we can use any techniques from last time (e.g., model checking).")
+    text("This is just propositional logic, and we can use any techniques from before (e.g., model checking).")
 
     text("In this regime, first-order logic is syntactic sugar for propositional logic.")
     text("In other words, it's the same expressivity, but easier to read/write.")
@@ -525,30 +528,30 @@ def first_order_logic_inference_rules():
     text("Recall that inference rules match formulas in the KB and produce new formulas.")
     text("Let us now define the modus ponens inference rule.")
 
-    text("This rule operate a special type of formula called a definite clause.")
+    text("This rule operates on a special type of formula called a definite clause.")
 
     text("Definition: a **definite clause** is a formula of the following form:")
-    text("∀ x_1 ... x_n. (a_1 ∧ ... ∧ a_k) → b")
-    text("...where x_1, ..., x_n are variables, a_1, ..., a_k, b are atomic formulas.")
+    text(r"$\forall x_1, \dots, x_n. \, (a_1 \wedge \dots \wedge a_k) \to b$")
+    text(r"...where $x_1, \dots, x_n$ are variables, $a_1, \dots, a_k, b$ are atomic formulas.")
 
-    text("Example: ∀ x, y, z. (Takes(x, y) ∧ Covers(y, z)) → Knows(x, z)")
+    text(r"Example: $\forall x, y, z. \, (\text{Takes}(x, y) \wedge \text{Covers}(y, z)) \to \text{Knows}(x, z)$")
     text("Here:")
-    text("- Variables are x, y, z")
-    text("- Atomic formulas are a_1 = Takes(x, y), a_2 = Covers(y, z), b = Knows(x, z)")
+    text(r"- Variables are $x, y, z$")
+    text(r"- Atomic formulas are $a_1 = \text{Takes}(x, y)$, $a_2 = \text{Covers}(y, z)$, $b = \text{Knows}(x, z)$")
     formula = ForAll([x, y, z], Implies(And(Takes(x, y), Covers(y, z)), Knows(x, z)))
 
     text("Non-example (disjunction):")
     formula = Or(Student(alice), Student(bob))
     formula = Exists([x], And(Student(x), Knows(x, arithmetic)))
 
-    text("Attempt 1: modus ponens with exact match")
+    text("🧪 **Attempt 1**: modus ponens with exact match")
     text("Premises:")
-    text("- a_1")
-    text("- ...")
-    text("- a_k")
-    text("- ∀ x_1 ... x_n. (a_1 ∧ ... ∧ a_k) → b")
+    text(r"- $a_1$")
+    text(r"- $\dots$")
+    text(r"- $a_k$")
+    text(r"- $\forall x_1, \dots, x_n. \, (a_1 \wedge \dots \wedge a_k) \to b$")
     text("Conclusion:")
-    text("- b")
+    text(r"- $b$")
 
     kb = [
         # a_1: Takes(alice, cs221)
@@ -558,24 +561,24 @@ def first_order_logic_inference_rules():
         # ∀ x, y, z. (Takes(x, y) ∧ Covers(y, z)) → Knows(x, z)
         ForAll([x, y, z], Implies(And(Takes(x, y), Covers(y, z)), Knows(x, z))),
     ]
-    text("We would like conclude b: Knows(alice, logic)")
+    text(r"We would like to conclude $b$: $\text{Knows}(\text{alice}, \text{logic})$")
 
-    text("However, Takes(alice, cs221) ≠ Takes(x, y)")
+    text(r"However, $\text{Takes}(\text{alice}, \text{cs221}) \neq \text{Takes}(x, y)$")
     text("So we can't apply the rule (no exact match).")
 
-    text("Solution: substitution and unification")
+    text("💡 Solution: substitution and unification")
     introduce_substitution()
     introduce_unification()
 
-    text("**Attempt 2**: modus ponens with substitution and unification")
+    text("💡 **Attempt 2**: modus ponens with substitution and unification")
     text("Premises:")
-    text("- a_1'")
-    text("- ...")
-    text("- a_k'")
-    text("- ∀ x_1 ... x_n. (a_1 ∧ ... ∧ a_k) → b")
-    text("- θ = unify(a_1' ∧ ... ∧ a_k', a_1 ∧ ... ∧ a_k)")
+    text(r"- $a_1'$")
+    text(r"- $\dots$")
+    text(r"- $a_k'$")
+    text(r"- $\forall x_1, \dots, x_n. \, (a_1 \wedge \dots \wedge a_k) \to b$")
+    text(r"- $\theta = \text{unify}(a_1' \wedge \dots \wedge a_k', a_1 \wedge \dots \wedge a_k)$")
     text("Conclusion:")
-    text("- substitute(b, θ) = b'")
+    text(r"- $\text{substitute}(b, \theta) = b'$")
 
     kb = [
         # a_1': Takes(alice, cs221)
@@ -586,29 +589,30 @@ def first_order_logic_inference_rules():
         ForAll([x, y, z], Implies(And(Takes(x, y), Covers(y, z)), Knows(x, z))),
     ]
 
-    text("Find the substitution to make a_1' ∧ a_2' equal to a_1 ∧ a_2")
-    theta = unify(  # @inspect theta
+    text(r"Find the substitution to make $a_1' \wedge a_2'$ equal to $a_1 \wedge a_2$")
+    theta = unify(  # @inspect theta @stepover
         And(Takes(alice, cs221), Covers(cs221, logic)),
         And(Takes(x, y), Covers(y, z)),
     {})
     if theta is not None:
         result = substitute(Knows(x, z), theta) # @inspect result @stepover
 
-    text("Complexity:")
-    text("- Each application of Modus ponens produces an aotmic formula (e.g., Knows(alice, logic))")
-    text("- If we have no functions, then complexity is num-constant-symbols^(maximum-predicate-arity)")
-    text("- If we have functions, then complexity then possibly infinite:")
+    text("⏱️ Complexity:")
+    text(r"- Each application of modus ponens produces an atomic formula (e.g., $\text{Knows}(\text{alice}, \text{logic})$)")
+    text(r"- If we have no functions, then the complexity is $(\text{number-of-constant-symbols})^{\text{maximum-predicate-arity}}$")
+    text("- If we have functions, then the complexity is possibly infinite:")
     Knows(alice, logic)
     Knows(father(alice), logic)
     Knows(father(father(alice)), logic)
     Knows(father(father(father(alice))), logic)
 
-    text("Properties of Modus ponens:")
-    text("- Sound: if KB proves f (KB ⊢ f), then KB entails f (KB ⊧ f)")
-    text("- Not complete: there are formulas where KB entails f (KB ⊧ f) but not KB proves f (KB ⊢ f)")
+    text("✅ Properties of modus ponens:")
+    text(r"- Sound: if KB proves $f$ ($\text{KB} \vdash f$), then KB entails $f$ ($\text{KB} \models f$)")
+    text(r"- Not complete: there are formulas where KB entails $f$ ($\text{KB} \models f$) but KB doesn't prove $f$ ($\text{KB} \vdash f$)")
+    text(r"  * Example: $\text{KB} = \{\text{Rain} \vee \text{Snow}, \text{Rain} \to \text{Wet}, \text{Snow} \to \text{Wet}\}$ entails $\text{Wet}$, but modus ponens can't derive it (the disjunction isn't a definite clause)")
     text("- Need the resolution rule to be complete")
 
-    text("Summary:")
+    text("📝 Summary:")
     text("- Modus ponens: works on definite clauses")
     text("- Intuition: no disjunction (or, exists) allowed")
     text("- Substitution: search and replace on terms in a formula")
@@ -616,7 +620,7 @@ def first_order_logic_inference_rules():
 
 
 def introduce_substitution():
-    text("Substitution: search and replace on terms in a formula")
+    text("🔁 Substitution: search and replace on terms in a formula")
 
     formula = Knows(x, y)
     subst = {x: alice, y: cs221}
@@ -624,7 +628,7 @@ def introduce_substitution():
 
     formula = And(Student(x), Knows(x, y))  # Student(x) ∧ Knows(x, y)
     subst = {x: alice, y: z}
-    result = substitute(formula, subst) # @inspect result
+    result = substitute(formula, subst) # @inspect result @stepover
 
 
 def substitute(f: Formula, subst: dict[Variable, Term]) -> Formula:  # @inspect f subst
@@ -638,7 +642,7 @@ def substitute(f: Formula, subst: dict[Variable, Term]) -> Formula:  # @inspect 
 
 
 def introduce_unification():
-    text("Unification: find a substitution that makes two terms equal")
+    text("🧩 Unification: find a substitution that makes two terms equal")
 
     result = unify(Knows(x, y), Knows(alice, bob), {}) # @inspect result
     result = unify(Knows(alice, y), Knows(x, z), {}) # @inspect result @stepover
@@ -686,10 +690,10 @@ def natural_language_to_first_order_logic():
     # ∃x. Student(x) ∧ Knows(x, arithmetic)
     formula = Exists([x], And(Student(x), Knows(x, arithmetic)))
 
-    text("Universal quantification (∀) is usually paired with an implication (→).")
-    text("Existential quantification (∃) is usually paired with a conjunction (∧).")
+    text(r"Universal quantification ($\forall$) is usually paired with an implication ($\to$).")
+    text(r"Existential quantification ($\exists$) is usually paired with a conjunction ($\wedge$).")
 
-    text("Probably wrong:")
+    text("⚠️ Probably wrong:")
     # ∀x. Student(x) ∧ Knows(x, arithmetic)
     formula = ForAll([x], And(Student(x), Knows(x, arithmetic)))
     text("*Every object is both a student and knows arithmetic.*")
@@ -702,13 +706,63 @@ def natural_language_to_first_order_logic():
     # ∃x. Course(x) ∧ ∀y. Student(y) → Takes(y, x)
     formula = Exists([x], And(Course(x), ForAll([y], Implies(Student(y), Takes(y, x)))))
 
+    text("*If a student takes a course and the course covers a concept, then the student knows the concept.*")
+    # ∀x, y, z. Student(x) ∧ Takes(x, y) ∧ Course(y) ∧ Covers(y, z) ∧ Concept(z) → Knows(x, z)
+    formula = ForAll([x, y, z], Implies(And(Student(x), Takes(x, y), Course(y), Covers(y, z), Concept(z)), Knows(x, z)))
+
     text("*Every even integer greater than 2 is the sum of two prime numbers.*")
     # ∀x. Even(x) ∧ GreaterThan(x, two) → ∃y, z. Prime(y) ∧ Prime(z) ∧ add(y, z) == x
     formula = ForAll([x], Implies(And(Even(x), GreaterThan(x, two)), Exists([y, z], And(Prime(y), Prime(z), add(y, z) == x))))
 
-    text("*If a student takes a course and the course covers a concept, then the student knows the concept.*")
-    # ∀x, y, z. Student(x) ∧ Takes(x, y) ∧ Course(y) ∧ Covers(y, z) ∧ Concept(z) → Knows(x, z)
-    formula = ForAll([x, y, z], Implies(And(Student(x), Takes(x, y), Course(y), Covers(y, z), Concept(z)), Knows(x, z)))
+
+############################################################
+# Utilities (not stepped into)
+
+def draw_model(w: FirstOrderLogicModel) -> dict:
+    """
+    The graph of a first-order logic model: a node per object in the domain, with the constants that denote it (green),
+    the unary predicates that hold of it (red), an edge for each binary predicate that holds of a pair (red label) and
+    for each unary function's value (blue label).
+    """
+    GREEN, RED, BLUE = "#008000", "#ff0000", "#1f5fbf"
+    subscript = str.maketrans("0123456789", "₀₁₂₃₄₅₆₇₈₉")
+    name = lambda symbol: symbol.decl().name() if hasattr(symbol, "decl") else symbol.name()
+    positions = {o: (180 * (i % 2) + (90 if i // 2 else 0), 170 * (i // 2)) for i, o in enumerate(w.domain)}
+    nodes = [{"id": o, "x": x, "y": y, "label": o.translate(subscript), "classes": "object"} for o, (x, y) in positions.items()]
+    edges = []
+    def add_label(text_: str, x: float, y: float, color: str):
+        nodes.append({"id": f"label{len(nodes)}", "x": x, "y": y, "label": text_, "classes": "symbol", "color": color})
+    middle = sum(x for x, _ in positions.values()) / len(positions)
+    for o, (x, y) in positions.items():
+        for k, constant in enumerate(c for c, value in w.interpretation.constants.items() if value == o):
+            width = 10 * len(name(constant))  # Rough width of the text
+            side = (-1 if x <= middle else 1) * (-1) ** k  # Outside the objects (the left ones to the left), then alternate
+            add_label(name(constant), x + side * (35 + width / 2), y, GREEN)
+        for k, predicate in enumerate(p for p, table in w.interpretation.predicates.items() if table.get(o)):
+            add_label(name(predicate), x, y - 45 - 28 * k, RED)
+    for predicate, table in w.interpretation.predicates.items():
+        for arguments, value in table.items():
+            if value and isinstance(arguments, tuple) and len(arguments) == 2:
+                edges.append({"source": arguments[0], "target": arguments[1], "label": name(predicate), "classes": "predicate"})
+    for function, table in w.interpretation.functions.items():
+        for argument, value in table.items():
+            edges.append({"source": argument, "target": value, "label": name(function), "classes": "function"})
+    stylesheet = [
+        {"selector": "node.object", "style": {"shape": "ellipse", "width": 56, "height": 56, "background-color": "white", "border-width": 2,
+                                              "border-color": "#000", "font-size": 26, "font-family": "Times New Roman, serif",
+                                              "font-style": "italic", "color": "#000"}},
+        {"selector": "node.symbol", "style": {"shape": "rectangle", "width": "label", "height": "label", "background-opacity": 0,
+                                              "border-width": 0, "color": "data(color)", "font-size": 24, "font-family": "Times New Roman, serif",
+                                              "events": "no"}},
+        {"selector": "edge", "style": {"line-color": "#000", "width": 1.5, "target-arrow-color": "#000", "target-arrow-shape": "triangle",
+                                       "curve-style": "bezier", "label": "data(label)", "font-size": 22, "font-family": "Times New Roman, serif",
+                                       "text-background-color": "white", "text-background-opacity": 1, "text-background-padding": 3}},
+        {"selector": "edge.predicate", "style": {"color": RED}},
+        {"selector": "edge.function", "style": {"color": BLUE}},
+    ]
+    xs = [node["x"] for node in nodes]
+    ys = [node["y"] for node in nodes]
+    return make_graph(nodes, edges, stylesheet=stylesheet, width=round(max(xs) - min(xs) + 260), height=round(max(ys) - min(ys) + 200))
 
 
 if __name__ == "__main__":
